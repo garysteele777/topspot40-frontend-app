@@ -1,0 +1,69 @@
+// src/lib/helpers/car/selectionFromUrl.ts
+import type { SelectionState } from './types';
+import type { PlaybackOrder } from './types';
+
+export function buildSelectionFromUrl(url: URL): SelectionState {
+	const sp = url.searchParams;
+
+	const decade = sp.get('decade') ?? '';
+	const genre = sp.get('genre') ?? '';
+	const collection = sp.get('collection') ?? '';
+
+	const language = sp.get('language') ?? 'en';
+	const startRank = Number(sp.get('startRank') ?? 1);
+
+	// ✅ FORCE SINGLE if categoryMode is single or endRank missing
+	const rawEndRank = sp.get('endRank');
+	const endRank = rawEndRank != null ? Number(rawEndRank) : startRank; // ✅ default single-track
+
+	const voices = (sp.get('voices') ?? 'intro').split(',');
+
+	const playbackOrder = (sp.get('playbackOrder') ?? 'up') as PlaybackOrder;
+	const voicePlayMode = sp.get('voicePlayMode') === 'over' ? 'over' : 'before';
+	const pauseMode = sp.get('pauseMode') === 'continuous' ? 'continuous' : 'pause';
+
+	const finalStartRank = startRank;
+	const finalEndRank = startRank === endRank ? startRank : endRank;
+
+	if (collection) {
+		return {
+			mode: 'collection',
+			language,
+			context: { collection_slug: collection },
+			startRank: finalStartRank,
+			endRank: finalEndRank,
+
+			playIntro: voices.includes('intro'),
+			playDetail: voices.includes('detail'),
+			playArtistDescription: voices.includes('artist'),
+			textIntro: false,
+			textDetail: false,
+			textArtistDescription: false,
+			voices,
+			playbackOrder,
+			voicePlayMode,
+			pauseMode,
+			categoryMode: 'single'
+		};
+	}
+
+	return {
+		mode: 'decade_genre',
+		language,
+		context: { decade, genre },
+		startRank: finalStartRank,
+		endRank: finalEndRank,
+
+		playIntro: voices.includes('intro'),
+		playDetail: voices.includes('detail'),
+		playArtistDescription: voices.includes('artist'),
+		textIntro: false,
+		textDetail: false,
+		textArtistDescription: false,
+		voices,
+		playbackOrder,
+		voicePlayMode,
+		pauseMode,
+		categoryMode: 'single'
+	};
+}
