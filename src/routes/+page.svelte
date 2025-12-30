@@ -1,329 +1,329 @@
 <script lang="ts">
-	/* eslint-disable svelte/no-navigation-without-resolve */
+    /* eslint-disable svelte/no-navigation-without-resolve */
 
-	import { onMount } from 'svelte';
+    import {onMount} from 'svelte';
 
-	// UI Components
-	import HeroHeader from '$lib/components/options/HeroHeader.svelte';
-	import ModeToggle from '$lib/components/options-v2/ModeToggle.svelte';
-	import CategoryModeSelector from '$lib/components/options-v2/CategoryModeSelector.svelte';
-	import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
-	import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
-	import TrackRangeSelector from '$lib/components/options-v2/TrackRangeSelector.svelte';
-	import PlaybackOrderSelector from '$lib/components/options-v2/PlaybackOrderSelector.svelte';
-	import VoicePlaybackSelector from '$lib/components/options-v2/VoicePlaybackSelector.svelte';
-	import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
+    // UI Components
+    import HeroHeader from '$lib/components/options/HeroHeader.svelte';
+    import ModeToggle from '$lib/components/options-v2/ModeToggle.svelte';
+    import CategoryModeSelector from '$lib/components/options-v2/CategoryModeSelector.svelte';
+    import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
+    import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
+    import TrackRangeSelector from '$lib/components/options-v2/TrackRangeSelector.svelte';
+    import PlaybackOrderSelector from '$lib/components/options-v2/PlaybackOrderSelector.svelte';
+    import VoicePlaybackSelector from '$lib/components/options-v2/VoicePlaybackSelector.svelte';
+    import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
 
-	import ListPicker from '$lib/components/options/ListPicker.svelte';
-	import type { PickerGroup } from '$lib/types/pickers';
+    import ListPicker from '$lib/components/options/ListPicker.svelte';
+    import type {PickerGroup} from '$lib/types/pickers';
 
-	import { loadResumeState, type ResumeState, saveResumeState } from '$lib/utils/smartResume';
-	import { launchWithPlayback } from '$lib/utils/buildLaunchUrl';
-
-
-	// Data
-	import type { GroupedCatalog } from '$lib/api/catalog';
-	import { fetchGroupedCatalog } from '$lib/api/catalog';
-	import { normalizeCatalog } from '$lib/helpers/normalizeCatalog';
-
-	// Types
-	type Language = 'en' | 'es' | 'ptbr';
-	type VoicePart = 'intro' | 'detail' | 'artist';
-	type PlaybackOrder = 'up' | 'down' | 'shuffle';
-	type VoicePlayMode = 'before' | 'over';
-	type PauseMode = 'pause' | 'continuous';
-	type CategoryMode = 'single' | 'multiple';
-	type ModeType = 'decade_genre' | 'collection';
-
-	// ---------------------------
-	// Local State
-	// ---------------------------
-	let activeGroup: ModeType = 'decade_genre';
-	let categoryMode: CategoryMode = 'single';
-	let language: Language = 'en';
-	let selectedVoices: VoicePart[] = ['intro'];
-
-	let startRank = 1;
-	let endRank = 40;
-
-	let playbackOrder: PlaybackOrder = 'up';
-	let voicePlayMode: VoicePlayMode = 'before';
-	let pauseMode: PauseMode = 'pause';
-
-	let decades: string[] = [];
-	let genres: string[] = [];
-	let collections: string[] = [];
-
-	let status: 'Loading…' | 'Ready' | '❌ Error loading catalog.' = 'Loading…';
-	let decadeOptions: { id: string; label: string }[] = [];
-	let genreOptions: { id: string; label: string }[] = [];
-	let collectionGroups: {
-		open: boolean;
-		name: string;
-		slug: string;
-		items: { id: number | string; name: string; slug: string }[];
-	}[] = [];
-
-	let decadeGenreSection: HTMLElement | null = null;
-	let collectionsSection: HTMLElement | null = null;
-
-	// Derived State
-	let globalMode: CategoryMode = 'single';
-	let modeLabel = '';
-	let rankLabel = '';
-	let voicesSummary = '';
-	let selectionSummary = '';
-	let canLaunchDecadeGenre = false;
-	let canLaunchCollection = false;
-
-	// keep globalMode in sync with categoryMode
-	$: globalMode = categoryMode;
-
-	// ---------------------------
-	// Load Catalog + Resume
-	// ---------------------------
-	onMount(async () => {
-		const resumed = loadResumeState();
-
-		if (resumed) {
-			activeGroup = resumed.mode === 'collection' ? 'collection' : 'decade_genre';
-
-			if (resumed.mode === 'decade_genre') {
-				decades = resumed.context?.decade ? [resumed.context.decade] : [];
-				genres = resumed.context?.genre ? [resumed.context.genre] : [];
-			} else {
-				collections = resumed.context?.collection_slug
-					? [resumed.context.collection_slug]
-					: [];
-			}
-
-			language = resumed.language as Language;
-			startRank = resumed.startRank;
-			endRank = resumed.endRank;
-			playbackOrder = resumed.playbackOrder as PlaybackOrder;
-			selectedVoices = resumed.voices.filter(
-				(v): v is VoicePart => v === 'intro' || v === 'detail' || v === 'artist'
-			);
-			pauseMode = resumed.autoAdvance ? 'continuous' : 'pause';
-		}
-
-		try {
-			const data: GroupedCatalog = await fetchGroupedCatalog();
-			const normalized = normalizeCatalog(data);
-
-			decadeOptions = normalized.decades;
-			genreOptions = normalized.genres;
-			collectionGroups = normalized.collectionGroups.map((g) => ({
-				...g,
-				open: false
-			}));
-
-			status = 'Ready';
-		} catch (err) {
-			console.error(err);
-			status = '❌ Error loading catalog.';
-		}
-	});
-
-	// ---------------------------
-	// Picker handlers
-	// ---------------------------
-	function handleActivate(e: CustomEvent<{ group: PickerGroup }>) {
-		const g = e.detail.group;
-		activeGroup = g === 'decade' || g === 'genre' ? 'decade_genre' : 'collection';
-	}
-
-	function handleChange(e: CustomEvent<{ group: PickerGroup; selected: string[] }>) {
-		const { group, selected } = e.detail;
-		if (group === 'decade') decades = selected;
-		if (group === 'genre') genres = selected;
-		if (group === 'collection') collections = selected;
-	}
-
-	// ---------------------------
-	// Collections helpers
-	// ---------------------------
-	function isCollectionSelected(slug: string) {
-		return collections.includes(slug);
-	}
-
-	function toggleCollection(slug: string) {
-		// ✅ Ensure Collections area is the active group when a collection is clicked
-		activeGroup = 'collection';
-
-		if (categoryMode === 'single') {
-			collections = collections.includes(slug) ? [] : [slug];
-			return;
-		}
-
-		collections = isCollectionSelected(slug)
-			? collections.filter((s) => s !== slug)
-			: [...collections, slug];
-	}
+    import {loadResumeState, type ResumeState, saveResumeState} from '$lib/utils/smartResume';
+    import {launchWithPlayback} from '$lib/utils/buildLaunchUrl';
 
 
-	function expandAll() {
-		collectionGroups = collectionGroups.map((g) => ({ ...g, open: true }));
-	}
+    // Data
+    import type {GroupedCatalog} from '$lib/api/catalog';
+    import {fetchGroupedCatalog} from '$lib/api/catalog';
+    import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
 
-	function collapseAll() {
-		collectionGroups = collectionGroups.map((g) => ({ ...g, open: false }));
-	}
+    // Types
+    type Language = 'en' | 'es' | 'ptbr';
+    type VoicePart = 'intro' | 'detail' | 'artist';
+    type PlaybackOrder = 'up' | 'down' | 'shuffle';
+    type VoicePlayMode = 'before' | 'over';
+    type PauseMode = 'pause' | 'continuous';
+    type CategoryMode = 'single' | 'multiple';
+    type ModeType = 'decade_genre' | 'collection';
 
-	function selectAllDecadeGenre() {
-		decades = decadeOptions.map((d) => d.id);
-		genres = genreOptions.map((g) => g.id);
-	}
+    // ---------------------------
+    // Local State
+    // ---------------------------
+    let activeGroup: ModeType = 'decade_genre';
+    let categoryMode: CategoryMode = 'single';
+    let language: Language = 'en';
+    let selectedVoices: VoicePart[] = ['intro'];
 
-	function clearDecadeGenre() {
-		decades = [];
-		genres = [];
-	}
+    let startRank = 1;
+    let endRank = 40;
 
-	function selectAllCollections() {
-		collections = collectionGroups.flatMap((g) => g.items.map((i) => i.slug));
-	}
+    let playbackOrder: PlaybackOrder = 'up';
+    let voicePlayMode: VoicePlayMode = 'before';
+    let pauseMode: PauseMode = 'pause';
 
-	function clearCollections() {
-		collections = [];
-	}
+    let decades: string[] = [];
+    let genres: string[] = [];
+    let collections: string[] = [];
 
-	function resetOptions() {
-		activeGroup = 'decade_genre';
-		categoryMode = 'single';
-		language = 'en';
-		selectedVoices = ['intro'];
-		startRank = 1;
-		endRank = 40;
-		playbackOrder = 'up';
-		voicePlayMode = 'before';
-		pauseMode = 'pause';
-		decades = [];
-		genres = [];
-		collections = [];
-		collectionGroups = collectionGroups.map((g) => ({ ...g, open: false }));
-	}
+    let status: 'Loading…' | 'Ready' | '❌ Error loading catalog.' = 'Loading…';
+    let decadeOptions: { id: string; label: string }[] = [];
+    let genreOptions: { id: string; label: string }[] = [];
+    let collectionGroups: {
+        open: boolean;
+        name: string;
+        slug: string;
+        items: { id: number | string; name: string; slug: string }[];
+    }[] = [];
+
+    let decadeGenreSection: HTMLElement | null = null;
+    let collectionsSection: HTMLElement | null = null;
+
+    // Derived State
+    let globalMode: CategoryMode = 'single';
+    let modeLabel = '';
+    let rankLabel = '';
+    let voicesSummary = '';
+    let selectionSummary = '';
+    let canLaunchDecadeGenre = false;
+    let canLaunchCollection = false;
+
+    // keep globalMode in sync with categoryMode
+    $: globalMode = categoryMode;
+
+    // ---------------------------
+    // Load Catalog + Resume
+    // ---------------------------
+    onMount(async () => {
+        const resumed = loadResumeState();
+
+        if (resumed) {
+            activeGroup = resumed.mode === 'collection' ? 'collection' : 'decade_genre';
+
+            if (resumed.mode === 'decade_genre') {
+                decades = resumed.context?.decade ? [resumed.context.decade] : [];
+                genres = resumed.context?.genre ? [resumed.context.genre] : [];
+            } else {
+                collections = resumed.context?.collection_slug
+                    ? [resumed.context.collection_slug]
+                    : [];
+            }
+
+            language = resumed.language as Language;
+            startRank = resumed.startRank;
+            endRank = resumed.endRank;
+            playbackOrder = resumed.playbackOrder as PlaybackOrder;
+            selectedVoices = resumed.voices.filter(
+                (v): v is VoicePart => v === 'intro' || v === 'detail' || v === 'artist'
+            );
+            pauseMode = resumed.autoAdvance ? 'continuous' : 'pause';
+        }
+
+        try {
+            const data: GroupedCatalog = await fetchGroupedCatalog();
+            const normalized = normalizeCatalog(data);
+
+            decadeOptions = normalized.decades;
+            genreOptions = normalized.genres;
+            collectionGroups = normalized.collectionGroups.map((g) => ({
+                ...g,
+                open: false
+            }));
+
+            status = 'Ready';
+        } catch (err) {
+            console.error(err);
+            status = '❌ Error loading catalog.';
+        }
+    });
+
+    // ---------------------------
+    // Picker handlers
+    // ---------------------------
+    function handleActivate(e: CustomEvent<{ group: PickerGroup }>) {
+        const g = e.detail.group;
+        activeGroup = g === 'decade' || g === 'genre' ? 'decade_genre' : 'collection';
+    }
+
+    function handleChange(e: CustomEvent<{ group: PickerGroup; selected: string[] }>) {
+        const {group, selected} = e.detail;
+        if (group === 'decade') decades = selected;
+        if (group === 'genre') genres = selected;
+        if (group === 'collection') collections = selected;
+    }
+
+    // ---------------------------
+    // Collections helpers
+    // ---------------------------
+    function isCollectionSelected(slug: string) {
+        return collections.includes(slug);
+    }
+
+    function toggleCollection(slug: string) {
+        // ✅ Ensure Collections area is the active group when a collection is clicked
+        activeGroup = 'collection';
+
+        if (categoryMode === 'single') {
+            collections = collections.includes(slug) ? [] : [slug];
+            return;
+        }
+
+        collections = isCollectionSelected(slug)
+            ? collections.filter((s) => s !== slug)
+            : [...collections, slug];
+    }
 
 
-	// ✅ Enforce single-selection when switching from multiple → single
-	$: if (categoryMode === 'single' && collections.length > 1) {
-		collections = collections.slice(0, 1);
-	}
+    function expandAll() {
+        collectionGroups = collectionGroups.map((g) => ({...g, open: true}));
+    }
+
+    function collapseAll() {
+        collectionGroups = collectionGroups.map((g) => ({...g, open: false}));
+    }
+
+    function selectAllDecadeGenre() {
+        decades = decadeOptions.map((d) => d.id);
+        genres = genreOptions.map((g) => g.id);
+    }
+
+    function clearDecadeGenre() {
+        decades = [];
+        genres = [];
+    }
+
+    function selectAllCollections() {
+        collections = collectionGroups.flatMap((g) => g.items.map((i) => i.slug));
+    }
+
+    function clearCollections() {
+        collections = [];
+    }
+
+    function resetOptions() {
+        activeGroup = 'decade_genre';
+        categoryMode = 'single';
+        language = 'en';
+        selectedVoices = ['intro'];
+        startRank = 1;
+        endRank = 40;
+        playbackOrder = 'up';
+        voicePlayMode = 'before';
+        pauseMode = 'pause';
+        decades = [];
+        genres = [];
+        collections = [];
+        collectionGroups = collectionGroups.map((g) => ({...g, open: false}));
+    }
 
 
-	// --------------------------------------------
-	// AUTO-SAVE resume state whenever settings change
-	// --------------------------------------------
-	$: {
-		const context: Record<string, string> = {};
+    // ✅ Enforce single-selection when switching from multiple → single
+    $: if (categoryMode === 'single' && collections.length > 1) {
+        collections = collections.slice(0, 1);
+    }
 
-		if (activeGroup === 'decade_genre') {
-			if (decades[0]) context.decade = decades[0];
-			if (genres[0]) context.genre = genres[0];
-		} else if (activeGroup === 'collection') {
-			if (collections[0]) context.collection_slug = collections[0];
-		}
 
-		const state: ResumeState = {
-			mode: activeGroup,
-			context,
-			language,
-			startRank,
-			endRank,
-			playbackOrder,
-			currentRank: startRank,
-			autoAdvance: pauseMode === 'continuous',
-			voices: selectedVoices
-		};
+    // --------------------------------------------
+    // AUTO-SAVE resume state whenever settings change
+    // --------------------------------------------
+    $: {
+        const context: Record<string, string> = {};
 
-		saveResumeState(state);
-	}
+        if (activeGroup === 'decade_genre') {
+            if (decades[0]) context.decade = decades[0];
+            if (genres[0]) context.genre = genres[0];
+        } else if (activeGroup === 'collection') {
+            if (collections[0]) context.collection_slug = collections[0];
+        }
 
-	// ---------------------------
-	// Summaries
-	// ---------------------------
-	function summarizeVoices(parts: VoicePart[]) {
-		const sorted = [...parts].sort();
-		if (sorted.length === 0) return 'No narration';
-		if (sorted.length === 3) return 'Intro + Detail + Artist';
-		if (sorted.length === 2) {
-			if (!sorted.includes('artist')) return 'Intro + Detail';
-			if (!sorted.includes('detail')) return 'Intro + Artist';
-			return 'Detail + Artist';
-		}
-		return sorted[0] === 'intro'
-			? 'Intro only'
-			: sorted[0] === 'detail'
-				? 'Detail only'
-				: 'Artist notes only';
-	}
+        const state: ResumeState = {
+            mode: activeGroup,
+            context,
+            language,
+            startRank,
+            endRank,
+            playbackOrder,
+            currentRank: startRank,
+            autoAdvance: pauseMode === 'continuous',
+            voices: selectedVoices
+        };
 
-	function summarizeSelection(
-		group: ModeType,
-		decadesSel: string[],
-		genresSel: string[],
-		collectionsSel: string[]
-	) {
-		if (group === 'decade_genre') {
-			if (!decadesSel.length && !genresSel.length) return 'No decade/genre selected';
-			const decadePart =
-				decadesSel.length === 0
-					? 'No decade'
-					: decadesSel.length === 1
-						? decadesSel[0]
-						: `${decadesSel.length} decades`;
-			const genrePart =
-				genresSel.length === 0
-					? 'No genre'
-					: genresSel.length === 1
-						? genresSel[0]
-						: `${genresSel.length} genres`;
-			return `${decadePart} • ${genrePart}`;
-		}
+        saveResumeState(state);
+    }
 
-		if (!collectionsSel.length) return 'No collection selected';
-		return collectionsSel.length === 1
-			? collectionsSel[0]
-			: `${collectionsSel.length} collections`;
-	}
+    // ---------------------------
+    // Summaries
+    // ---------------------------
+    function summarizeVoices(parts: VoicePart[]) {
+        const sorted = [...parts].sort();
+        if (sorted.length === 0) return 'No narration';
+        if (sorted.length === 3) return 'Intro + Detail + Artist';
+        if (sorted.length === 2) {
+            if (!sorted.includes('artist')) return 'Intro + Detail';
+            if (!sorted.includes('detail')) return 'Intro + Artist';
+            return 'Detail + Artist';
+        }
+        return sorted[0] === 'intro'
+            ? 'Intro only'
+            : sorted[0] === 'detail'
+                ? 'Detail only'
+                : 'Artist notes only';
+    }
 
-	// Derived crumbs + launch guards
-	$: modeLabel = activeGroup === 'decade_genre' ? 'Decade–Genre' : 'Collections';
-	$: rankLabel = `Rank ${startRank}–${endRank}`;
-	$: voicesSummary = summarizeVoices(selectedVoices);
-	$: selectionSummary = summarizeSelection(activeGroup, decades, genres, collections);
+    function summarizeSelection(
+        group: ModeType,
+        decadesSel: string[],
+        genresSel: string[],
+        collectionsSel: string[]
+    ) {
+        if (group === 'decade_genre') {
+            if (!decadesSel.length && !genresSel.length) return 'No decade/genre selected';
+            const decadePart =
+                decadesSel.length === 0
+                    ? 'No decade'
+                    : decadesSel.length === 1
+                        ? decadesSel[0]
+                        : `${decadesSel.length} decades`;
+            const genrePart =
+                genresSel.length === 0
+                    ? 'No genre'
+                    : genresSel.length === 1
+                        ? genresSel[0]
+                        : `${genresSel.length} genres`;
+            return `${decadePart} • ${genrePart}`;
+        }
 
-	$: canLaunchDecadeGenre =
-		activeGroup === 'decade_genre' && decades.length > 0 && genres.length > 0;
+        if (!collectionsSel.length) return 'No collection selected';
+        return collectionsSel.length === 1
+            ? collectionsSel[0]
+            : `${collectionsSel.length} collections`;
+    }
 
-	$: canLaunchCollection = activeGroup === 'collection' && collections.length > 0;
+    // Derived crumbs + launch guards
+    $: modeLabel = activeGroup === 'decade_genre' ? 'Decade–Genre' : 'Collections';
+    $: rankLabel = `Rank ${startRank}–${endRank}`;
+    $: voicesSummary = summarizeVoices(selectedVoices);
+    $: selectionSummary = summarizeSelection(activeGroup, decades, genres, collections);
+
+    $: canLaunchDecadeGenre =
+        activeGroup === 'decade_genre' && decades.length > 0 && genres.length > 0;
+
+    $: canLaunchCollection = activeGroup === 'collection' && collections.length > 0;
 </script>
 
 <div class="page-shell">
-	<HeroHeader />
+    <HeroHeader/>
 
-	<div class="page">
-		<!-- SUMMARY STRIP -->
-		<div class="breadcrumb">
-			<span class="crumb crumb--label">Now configuring:</span>
-			<span class="crumb crumb--strong">{modeLabel}</span>
-			<span class="crumb-sep">›</span>
-			<span class="crumb">{selectionSummary}</span>
-			<span class="crumb-sep">›</span>
-			<span class="crumb">{rankLabel}</span>
-			<span class="crumb-sep">›</span>
-			<span class="crumb">{language.toUpperCase()}</span>
-			<span class="crumb-sep">›</span>
-			<span class="crumb">{voicesSummary}</span>
-		</div>
+    <div class="page">
+        <!-- SUMMARY STRIP -->
+        <div class="breadcrumb">
+            <span class="crumb crumb--label">Now configuring:</span>
+            <span class="crumb crumb--strong">{modeLabel}</span>
+            <span class="crumb-sep">›</span>
+            <span class="crumb">{selectionSummary}</span>
+            <span class="crumb-sep">›</span>
+            <span class="crumb">{rankLabel}</span>
+            <span class="crumb-sep">›</span>
+            <span class="crumb">{language.toUpperCase()}</span>
+            <span class="crumb-sep">›</span>
+            <span class="crumb">{voicesSummary}</span>
+        </div>
 
-		<!-- TOP CONFIG GRID (Purdue layout: 4 + 4) -->
-		<section class="options-grid">
-			<!-- Row 1: Mode, Category Mode, Language, Voice Content -->
-			<div class="opt-cell opt-cell--row1">
-				<ModeToggle
-					modeType={activeGroup}
-					setMode={(mode) => {
+        <!-- TOP CONFIG GRID (Purdue layout: 4 + 4) -->
+        <section class="options-grid">
+            <!-- Row 1: Mode, Category Mode, Language, Voice Content -->
+            <div class="opt-cell opt-cell--row1">
+                <ModeToggle
+                        modeType={activeGroup}
+                        setMode={(mode) => {
             activeGroup = mode;
             if (mode === 'decade_genre') {
               collections = [];
@@ -332,166 +332,174 @@
               genres = [];
             }
           }}
-				/>
-			</div>
+                />
+            </div>
 
-			<div class="opt-cell opt-cell--row1">
-				<CategoryModeSelector bind:categoryMode />
-			</div>
+            <div class="opt-cell opt-cell--row1">
+                <CategoryModeSelector bind:categoryMode/>
+            </div>
 
-			<div class="opt-cell opt-cell--row1">
-				<LanguageSelector bind:language />
-			</div>
+            <div class="opt-cell opt-cell--row1">
+                <LanguageSelector bind:language/>
+            </div>
 
-			<div class="opt-cell opt-cell--row1">
-				<VoiceContentSelector bind:selectedVoices />
-			</div>
+            <div class="opt-cell opt-cell--row1">
+                <VoiceContentSelector bind:selectedVoices/>
+            </div>
 
-			<!-- Row 2: Track Range, Playback Order, Voice Playback, Pause Mode -->
-			<div class="opt-cell opt-cell--row2">
-				<TrackRangeSelector bind:startRank bind:endRank />
-			</div>
+            <!-- Row 2: Track Range, Playback Order, Voice Playback, Pause Mode -->
+            <div class="opt-cell opt-cell--row2">
+                <TrackRangeSelector bind:startRank bind:endRank/>
+            </div>
 
-			<div class="opt-cell opt-cell--row2">
-				<PlaybackOrderSelector bind:playbackOrder {globalMode} />
-			</div>
+            <div class="opt-cell opt-cell--row2">
+                <PlaybackOrderSelector bind:playbackOrder {globalMode}/>
+            </div>
 
-			<div class="opt-cell opt-cell--row2">
-				<VoicePlaybackSelector bind:voicePlayMode />
-			</div>
+            <div class="opt-cell opt-cell--row2">
+                <VoicePlaybackSelector bind:voicePlayMode/>
+            </div>
 
-			<div class="opt-cell opt-cell--row2">
-				<PauseModeSelector bind:pauseMode />
-			</div>
-		</section>
+            <div class="opt-cell opt-cell--row2">
+                <PauseModeSelector bind:pauseMode/>
+            </div>
+        </section>
 
-		<!-- MAIN GRID -->
-		<div class="grid">
-			<!-- LEFT: Decades/Genres -->
-			<div class="col col--left" bind:this={decadeGenreSection}>
-				<section class="picker-group" data-active={activeGroup === 'decade_genre'}>
-					<header class="picker-group__header">
-						<h3>Decade–Genre Selection</h3>
+        <!-- MAIN GRID -->
+        <div class="grid">
+            <!-- LEFT: Decades/Genres -->
+            <div class="col col--left" bind:this={decadeGenreSection}>
+                <section class="picker-group" data-active={activeGroup === 'decade_genre'}>
+                    <header class="picker-group__header">
+                        <h3>Decade–Genre Selection</h3>
 
-						{#if categoryMode === 'multiple' && activeGroup === 'decade_genre'}
-							<div class="picker-controls">
-								<button type="button" class="toolbar-btn" on:click={selectAllDecadeGenre}>
-									Select All
-								</button>
-								<button
-									type="button"
-									class="toolbar-btn toolbar-btn--ghost"
-									on:click={clearDecadeGenre}
-								>
-									Unselect All
-								</button>
-							</div>
-						{/if}
-					</header>
+                        {#if categoryMode === 'multiple' && activeGroup === 'decade_genre'}
+                            <div class="picker-controls">
+                                <button type="button" class="toolbar-btn" on:click={selectAllDecadeGenre}>
+                                    Select All
+                                </button>
+                                <button
+                                        type="button"
+                                        class="toolbar-btn toolbar-btn--ghost"
+                                        on:click={clearDecadeGenre}
+                                >
+                                    Unselect All
+                                </button>
+                            </div>
+                        {/if}
+                    </header>
 
-					<div class="picker-group__body picker-group__body--decade-genre">
-						<ListPicker
-							title="Decades"
-							group="decade"
-							mode={categoryMode}
-							activeGroup={activeGroup === 'decade_genre' ? 'decade' : null}
-							options={decadeOptions}
-							bind:selected={decades}
-							on:activate={handleActivate}
-							on:change={handleChange}
-						/>
+                    <div class="picker-group__body picker-group__body--decade-genre">
+                        {#if status !== 'Ready'}
+                            <p>{status}</p>
+                        {:else}
 
-						<ListPicker
-							title="Genres"
-							group="genre"
-							mode={categoryMode}
-							activeGroup={activeGroup === 'decade_genre' ? 'genre' : null}
-							options={genreOptions}
-							bind:selected={genres}
-							on:activate={handleActivate}
-							on:change={handleChange}
-						/>
-					</div>
-				</section>
-			</div>
-
-			<!-- RIGHT: Collections -->
-			<div class="col col--right" bind:this={collectionsSection}>
-				<section class="picker-group" data-active={activeGroup === 'collection'}>
-					<header class="picker-group__header">
-						<h3>Collection Group Selection</h3>
-
-						<div class="expand-controls">
-							<button type="button" class="toolbar-btn" on:click={expandAll}>
-								Expand All
-							</button>
-							<button type="button" class="toolbar-btn toolbar-btn--ghost" on:click={collapseAll}>
-								Collapse All
-							</button>
-
-							{#if categoryMode === 'multiple' && activeGroup === 'collection'}
-								<button type="button" class="toolbar-btn" on:click={selectAllCollections}>
-									Select All
-								</button>
-								<button
-									type="button"
-									class="toolbar-btn toolbar-btn--ghost"
-									on:click={clearCollections}
-								>
-									Unselect All
-								</button>
-							{/if}
-						</div>
-					</header>
-
-					<div class="picker-group__body picker-group__body--collections">
-						{#if status !== 'Ready'}
-							<p>{status}</p>
-						{:else}
-							{#each collectionGroups as group (group.slug)}
-								<details bind:open={group.open} class="collection-group">
-									<summary>
-										<span class="group-expander" aria-hidden="true">▸</span>
-										<span class="group-name">{group.name}</span>
-									</summary>
+                            <ListPicker
+                                    title="Decades"
+                                    group="decade"
+                                    mode={categoryMode}
+                                    activeGroup="decade"
+                                    options={decadeOptions}
+                                    bind:selected={decades}
+                                    on:activate={handleActivate}
+                                    on:change={handleChange}
+                            />
 
 
-									<ul>
-										{#each group.items as col (col.slug + ':' + collections.join(','))}
-											<li>
-												<button
-													type="button"
-													class="collection-row"
-													data-selected={isCollectionSelected(col.slug)}
-													aria-pressed={isCollectionSelected(col.slug)}
-													on:click={() => toggleCollection(col.slug)}
-												>
-													<span class="collection-dot"></span>
-													<span class="collection-name">{col.name}</span>
-												</button>
-											</li>
-										{/each}
-									</ul>
-								</details>
-							{/each}
+                            <ListPicker
+                                    title="Genres"
+                                    group="genre"
+                                    mode={categoryMode}
+                                    activeGroup="genre"
+                                    options={genreOptions}
+                                    bind:selected={genres}
+                                    on:activate={handleActivate}
+                                    on:change={handleChange}
+                            />
 
-						{/if}
-					</div>
-				</section>
-			</div>
-		</div>
-		<!-- LAUNCH BUTTONS -->
-		<div class="launch-modes">
-			<button class="launch-btn launch-btn--reset" type="button" on:click={resetOptions}>
-				⏮ Reset
-			</button>
+                        {/if}
 
-			{#if canLaunchDecadeGenre}
-				<!-- ✅ FIXED: Decade–Genre Car Mode -->
-				<button
-					class="launch-btn"
-					type="button"
-					on:click={async () => {
+                    </div>
+                </section>
+            </div>
+
+            <!-- RIGHT: Collections -->
+            <div class="col col--right" bind:this={collectionsSection}>
+                <section class="picker-group" data-active={activeGroup === 'collection'}>
+                    <header class="picker-group__header">
+                        <h3>Collection Group Selection</h3>
+
+                        <div class="expand-controls">
+                            <button type="button" class="toolbar-btn" on:click={expandAll}>
+                                Expand All
+                            </button>
+                            <button type="button" class="toolbar-btn toolbar-btn--ghost" on:click={collapseAll}>
+                                Collapse All
+                            </button>
+
+                            {#if categoryMode === 'multiple' && activeGroup === 'collection'}
+                                <button type="button" class="toolbar-btn" on:click={selectAllCollections}>
+                                    Select All
+                                </button>
+                                <button
+                                        type="button"
+                                        class="toolbar-btn toolbar-btn--ghost"
+                                        on:click={clearCollections}
+                                >
+                                    Unselect All
+                                </button>
+                            {/if}
+                        </div>
+                    </header>
+
+                    <div class="picker-group__body picker-group__body--collections">
+                        {#if status !== 'Ready'}
+                            <p>{status}</p>
+                        {:else}
+                            {#each collectionGroups as group (group.slug)}
+                                <details bind:open={group.open} class="collection-group">
+                                    <summary>
+                                        <span class="group-expander" aria-hidden="true">▸</span>
+                                        <span class="group-name">{group.name}</span>
+                                    </summary>
+
+
+                                    <ul>
+                                        {#each group.items as col (col.slug + ':' + collections.join(','))}
+                                            <li>
+                                                <button
+                                                        type="button"
+                                                        class="collection-row"
+                                                        data-selected={isCollectionSelected(col.slug)}
+                                                        aria-pressed={isCollectionSelected(col.slug)}
+                                                        on:click={() => toggleCollection(col.slug)}
+                                                >
+                                                    <span class="collection-dot"></span>
+                                                    <span class="collection-name">{col.name}</span>
+                                                </button>
+                                            </li>
+                                        {/each}
+                                    </ul>
+                                </details>
+                            {/each}
+
+                        {/if}
+                    </div>
+                </section>
+            </div>
+        </div>
+        <!-- LAUNCH BUTTONS -->
+        <div class="launch-modes">
+            <button class="launch-btn launch-btn--reset" type="button" on:click={resetOptions}>
+                ⏮ Reset
+            </button>
+
+            {#if canLaunchDecadeGenre}
+                <!-- ✅ FIXED: Decade–Genre Car Mode -->
+                <button
+                        class="launch-btn"
+                        type="button"
+                        on:click={async () => {
 				const url = await launchWithPlayback({
 					layoutMode: 'car',
 					decade: decades[0],
@@ -508,15 +516,15 @@
 				if (!url) return;
 				window.location.href = url;
 			}}
-				>
-					🚗 Load in Car Mode
-				</button>
+                >
+                    🚗 Load in Car Mode
+                </button>
 
-				<!-- ✅ FIXED: Decade–Genre List Mode -->
-				<button
-					class="launch-btn launch-btn--secondary"
-					type="button"
-					on:click={async () => {
+                <!-- ✅ FIXED: Decade–Genre List Mode -->
+                <button
+                        class="launch-btn launch-btn--secondary"
+                        type="button"
+                        on:click={async () => {
 				const url = await launchWithPlayback({
 					layoutMode: 'list',
 					decade: decades[0],
@@ -533,17 +541,17 @@
 				if (!url) return;
 				window.location.href = url;
 			}}
-				>
-					📋 Load in List Mode
-				</button>
-			{/if}
+                >
+                    📋 Load in List Mode
+                </button>
+            {/if}
 
-			{#if canLaunchCollection}
-				<!-- ✅ FIXED: Collection Car Mode (WAS BROKEN BEFORE) -->
-				<button
-					class="launch-btn"
-					type="button"
-					on:click={async () => {
+            {#if canLaunchCollection}
+                <!-- ✅ FIXED: Collection Car Mode (WAS BROKEN BEFORE) -->
+                <button
+                        class="launch-btn"
+                        type="button"
+                        on:click={async () => {
 				const url = await launchWithPlayback({
 					layoutMode: 'car',
 					collection: collections[0],   // ✅ CRITICAL FIX
@@ -559,15 +567,15 @@
 				if (!url) return;
 				window.location.href = url;
 			}}
-				>
-					🚗 Load in Car Mode
-				</button>
+                >
+                    🚗 Load in Car Mode
+                </button>
 
-				<!-- ✅ Collection List Mode (already correct, unchanged logic) -->
-				<button
-					class="launch-btn launch-btn--secondary"
-					type="button"
-					on:click={async () => {
+                <!-- ✅ Collection List Mode (already correct, unchanged logic) -->
+                <button
+                        class="launch-btn launch-btn--secondary"
+                        type="button"
+                        on:click={async () => {
 				const url = await launchWithPlayback({
 					layoutMode: 'list',
 					collection: collections[0],
@@ -583,12 +591,12 @@
 				if (!url) return;
 				window.location.href = url;
 			}}
-				>
-					📋 Load in List Mode
-				</button>
-			{/if}
-		</div>
-	</div>
+                >
+                    📋 Load in List Mode
+                </button>
+            {/if}
+        </div>
+    </div>
 </div>
 
 <style>
