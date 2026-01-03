@@ -5,8 +5,6 @@ import type { SelectionState } from '$lib/stores/selection';
 import type { LoadedTrack } from '$lib/utils/normalizeTrack';
 import { loadTrackSequence, loadFirstTrack } from '$lib/helpers/trackSequenceLoader';
 
-import type { DurationLike } from '$lib/helpers/car/types';
-
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
 export async function loadForSelection(
@@ -16,6 +14,8 @@ export async function loadForSelection(
 	status.set('Loading tracks…');
 	tracks.set([]);
 	currentTrack.set(null);
+
+	const isPauseMode = sel.pauseMode === 'pause';
 
 	try {
 		const key = cacheKey(sel);
@@ -28,15 +28,14 @@ export async function loadForSelection(
 
 		if (cached?.length) {
 			const orderedCached = applyPlaybackOrder(cached, sel.playbackOrder);
-
 			first = pickInitialTrack(orderedCached, sel.playbackOrder, sel.startRank, sel.endRank);
 		} else {
 			first = await loadFirstTrack(sel);
 		}
 
-		// ✅ OPTION B: DO NOT AUTO-PLAY
+		// ✅ Pause mode: do NOT auto-play
 		if (first) {
-			currentTrack.set(first as DurationLike); // ✅ UI only, no audio
+			currentTrack.set(first);
 		}
 
 		status.set('Tracks loaded. Press Play.');
@@ -56,17 +55,12 @@ export async function loadForSelection(
 				const ordered = applyPlaybackOrder(loaded, sel.playbackOrder);
 				tracks.set(ordered);
 
-				// ✅ OPTION B: Still no autoplay after background load
 				if (initialRank != null) {
 					const candidate = ordered.find((t) => t.rank === initialRank);
-					if (candidate) {
-						currentTrack.set(candidate as DurationLike);
-					}
+					if (candidate) currentTrack.set(candidate);
 				} else {
 					const first = pickInitialTrack(ordered, sel.playbackOrder, sel.startRank, sel.endRank);
-					if (first) {
-						currentTrack.set(first as DurationLike);
-					}
+					if (first) currentTrack.set(first);
 				}
 
 				status.set(`Loaded ${ordered.length} tracks.`);

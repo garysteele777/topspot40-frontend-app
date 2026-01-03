@@ -291,3 +291,13 @@ export async function clearAllPlayback(): Promise<void> {
 		}
 	}
 }
+
+// ─────────────────────────────────────────────
+// Explicit Play (used by Play button)
+// ─────────────────────────────────────────────
+export function playCurrentTrack(): void {
+	const track = get(currentTrack);
+	if (!track) return;
+
+	updateTrack(track, { launchBackend: true });
+}

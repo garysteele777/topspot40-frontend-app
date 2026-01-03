@@ -4,18 +4,18 @@ import type { SelectionState } from '$lib/stores/selection';
 import { normalizeTrack, type LoadedTrack } from '$lib/utils/normalizeTrack';
 
 import {
-	loadDecadeGenreFromSupabase,
 	loadCollectionFromSupabase,
-	type DecadeGenreResponse,
 	type CollectionResponse,
 	type SequenceItem
 } from '$lib/api/supabaseLoader';
+
+import { loadDecadeGenrePauseMode } from '$lib/api/playbackPauseLoader';
 
 // Svelte 5 reactive Map (silences ESLint warnings)
 import { SvelteMap } from 'svelte/reactivity';
 
 // ------------------------------------------------------------
-// Extend SequenceItem with all optional fields received from Supabase
+// Extend SequenceItem with all optional fields received
 // ------------------------------------------------------------
 type SequenceItemExtended = SequenceItem & {
 	info?: string | null;
@@ -34,7 +34,7 @@ type SequenceItemExtended = SequenceItem & {
 };
 
 // ------------------------------------------------------------
-// Local normalization helper (fast + no any casting)
+// Local normalization helper
 // ------------------------------------------------------------
 function preNormalizeRow(t: SequenceItemExtended): SequenceItemExtended {
 	return {
@@ -42,12 +42,17 @@ function preNormalizeRow(t: SequenceItemExtended): SequenceItemExtended {
 		intro: t.intro ?? t.info ?? null,
 		detail: t.detail ?? t.detail_text ?? null,
 		artistDescription: t.artistDescription ?? t.artist_detail ?? null,
-		artistImage: t.artistImage ?? t.artist_image ?? t.artist_artwork ?? t.artistArtwork ?? null
+		artistImage:
+			t.artistImage ??
+			t.artist_image ??
+			t.artist_artwork ??
+			t.artistArtwork ??
+			null
 	};
 }
 
 // ------------------------------------------------------------
-// Map + filter AFTER minimal normalization
+// Map + filter AFTER normalization
 // ------------------------------------------------------------
 function mapItemsToTracks(
 	rows: SequenceItemExtended[],
@@ -68,14 +73,17 @@ function mapItemsToTracks(
 }
 
 // ------------------------------------------------------------
-// SMALL INTERNAL CACHE (Supabase calls are expensive)
+// SMALL INTERNAL CACHE
 // ------------------------------------------------------------
 const loaderCache = new SvelteMap<string, LoadedTrack[]>();
 
 function mkCacheKey(sel: SelectionState): string {
 	if (sel.mode === 'collection') {
 		const slug =
-			sel.context?.collection_slug ?? sel.context?.collectionId ?? sel.context?.collection ?? '';
+			sel.context?.collection_slug ??
+			sel.context?.collectionId ??
+			sel.context?.collection ??
+			'';
 		return `c:${slug}:${sel.language}:${sel.startRank}:${sel.endRank}`;
 	}
 
@@ -87,42 +95,56 @@ function mkCacheKey(sel: SelectionState): string {
 // ------------------------------------------------------------
 // MAIN LOADER
 // ------------------------------------------------------------
-export async function loadTrackSequence(sel: SelectionState): Promise<LoadedTrack[]> {
+export async function loadTrackSequence(
+	sel: SelectionState
+): Promise<LoadedTrack[]> {
 	if (!sel?.mode || !sel.context) {
 		console.warn('⚠ loadTrackSequence called with invalid selection:', sel);
 		return [];
 	}
-	const ctx = sel.context as NonNullable<SelectionState['context']>;
 
-	// Cache lookup
+	const ctx = sel.context as NonNullable<SelectionState['context']>;
 	const key = mkCacheKey(sel);
+
+	// Cache hit
 	if (loaderCache.has(key)) {
 		return loaderCache.get(key)!;
 	}
 
-	const tts_language = (sel.language ?? 'en') as 'en' | 'es' | 'ptbr' | 'pt-BR';
 	const { startRank, endRank } = sel;
+	const tts_language = (sel.language ?? 'en') as
+		| 'en'
+		| 'es'
+		| 'ptbr'
+		| 'pt-BR';
 
 	try {
 		// --------------------------------------------------------
-		// COLLECTION MODE
+		// COLLECTION MODE (unchanged)
 		// --------------------------------------------------------
 		if (sel.mode === 'collection') {
 			const slug =
-				sel.context.collection_slug ?? sel.context.collectionId ?? sel.context.collection ?? '';
+				ctx.collection_slug ??
+				ctx.collectionId ??
+				ctx.collection ??
+				'';
 
 			if (!slug) {
-				console.warn('⚠ No slug found in collection mode context:', sel.context);
+				console.warn('⚠ No slug found in collection context:', ctx);
 				return [];
 			}
 
-			const data: CollectionResponse = await loadCollectionFromSupabase({
-				slug,
-				tts_language
-			});
+			const data: CollectionResponse =
+				await loadCollectionFromSupabase({
+					slug,
+					tts_language
+				});
 
 			const rows: SequenceItemExtended[] =
-				data.tracks ?? data.rankings ?? (data.rows as SequenceItemExtended[]) ?? [];
+				data.tracks ??
+				data.rankings ??
+				(data.rows as SequenceItemExtended[]) ??
+				[];
 
 			if (!rows.length) return [];
 
@@ -132,21 +154,20 @@ export async function loadTrackSequence(sel: SelectionState): Promise<LoadedTrac
 		}
 
 		// --------------------------------------------------------
-		// DECADE / GENRE MODE
+		// DECADE / GENRE MODE (Pause Mode via FastAPI)
 		// --------------------------------------------------------
 		const decade = ctx.decade ?? '';
 		const genre = ctx.genre ?? '';
 
 		if (!decade || !genre) return [];
 
-		const data: DecadeGenreResponse = await loadDecadeGenreFromSupabase({
+		const data = await loadDecadeGenrePauseMode({
 			decade,
-			genre,
-			tts_language
+			genre
 		});
 
-		const rows: SequenceItemExtended[] =
-			data.rankings ?? data.tracks ?? (data.rows as SequenceItemExtended[]) ?? [];
+		// backend guarantees `tracks`
+		const rows: SequenceItemExtended[] = data.tracks ?? [];
 
 		if (!rows.length) return [];
 
@@ -160,7 +181,7 @@ export async function loadTrackSequence(sel: SelectionState): Promise<LoadedTrac
 }
 
 // ------------------------------------------------------------
-// FAST FIRST-TRACK LOADER (for instant playback)
+// FAST FIRST-TRACK LOADER (UI-only)
 // ------------------------------------------------------------
 export async function loadFirstTrack(
 	sel: SelectionState
