@@ -72,7 +72,7 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
 	const rankVal = firstDefined(raw, ['rank', 'ranking']);
 
 	const trackNameVal = firstDefined(raw, ['trackName', 'track_name', 'title']);
-	const artistNameVal = firstDefined(raw, ['artistName', 'artist_name', 'artist_display_name']);
+	const artistNameVal = firstDefined(raw, ['artistName', 'artist_name', 'artist_display_name', 'artist', 'track_artist']);
 
 	const albumNameVal = firstDefined(raw, ['albumName', 'album_name']);
 	const albumArtworkVal = firstDefined(raw, ['albumArtwork', 'album_artwork', 'album_image_url']);

@@ -45,6 +45,9 @@
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
+    let showPhaseBanner = false;
+    let bannerTimer: number | null = null;
+
 
     // ─────────────────────────────────────────────
     // Helpers
@@ -72,6 +75,19 @@
             ? $currentSelection.mode
             : 'decade_genre';
 
+    $: if (phaseLabel($playbackPhase)) {
+        showPhaseBanner = true;
+
+        if (bannerTimer) {
+            clearTimeout(bannerTimer);
+        }
+
+        bannerTimer = window.setTimeout(() => {
+            showPhaseBanner = false;
+        }, 2500);
+    }
+
+
     function backToOptions() {
         if ($currentSelection && $currentTrack) {
             saveResumeState({
@@ -95,6 +111,24 @@
             window.location.href = '/options-v2';
         }
     }
+
+    function phaseLabel(phase: string): string {
+        switch (phase) {
+            case 'loading':
+                return 'Preparing playback…';
+            case 'intro':
+                return 'Now playing intro';
+            case 'detail':
+                return 'Now playing track details';
+            case 'artist':
+                return 'Now playing artist info';
+            case 'track':
+                return 'Now playing track';
+            default:
+                return '';
+        }
+    }
+
 
     // ─────────────────────────────────────────────
     // Lifecycle
@@ -150,43 +184,43 @@
 </script>
 
 
-{#if $currentSelection}
-    <CarModeHeader
-            decade={uiDecade}
-            genre={uiGenre}
-            collection={headerMode === 'collection' ? uiDecade : undefined}
-            mode={headerMode}
-            language={$currentSelection.language}
-            voices={$currentSelection.voices}
-            startRank={$currentSelection.startRank}
-            endRank={$currentSelection.endRank}
-            playbackOrder={$currentSelection.playbackOrder}
-            voicePlayMode={$currentSelection.voicePlayMode}
-            pauseMode={$currentSelection.pauseMode}
-            categoryMode="single"
-    />
+<div class="car-mode-root">
+    {#if $currentSelection}
+        <CarModeHeader
+                decade={uiDecade}
+                genre={uiGenre}
+                collection={headerMode === 'collection' ? uiDecade : undefined}
+                mode={headerMode}
+                language={$currentSelection.language}
+                voices={$currentSelection.voices}
+                startRank={$currentSelection.startRank}
+                endRank={$currentSelection.endRank}
+                playbackOrder={$currentSelection.playbackOrder}
+                voicePlayMode={$currentSelection.voicePlayMode}
+                pauseMode={$currentSelection.pauseMode}
+                categoryMode="single"
+        />
+    {/if}
 
-{/if}
-
-{#if $currentTrack}
-    {#key $currentTrack?.spotifyTrackId ?? $currentTrack?.rank}
-        <div class="w-full flex flex-col items-center" in:fade={{ duration: 150 }} out:fade={{ duration: 100 }}>
-            <!-- MiniPlayer -->
-            <div class="w-full max-w-xl mx-auto">
-                {#if playbackError}
-                    <p class="text-yellow-400 text-sm text-center mt-2">
-                        🎧 {playbackError}
-                    </p>
-                {/if}
+    {#if $currentTrack}
+        {#key $currentTrack?.spotifyTrackId ?? $currentTrack?.rank}
+            <div class="w-full flex flex-col items-center" in:fade={{ duration: 150 }} out:fade={{ duration: 100 }}>
+                <!-- MiniPlayer -->
+                <div class="w-full max-w-xl mx-auto">
+                    {#if playbackError}
+                        <p class="text-yellow-400 text-sm text-center mt-2">
+                            🎧 {playbackError}
+                        </p>
+                    {/if}
 
 
-                <MiniPlayer
-                        coverUrl={$currentTrack.albumArtwork ?? '/default_album.png'}
-                        trackTitle={titleCased}
-                        artistName={artistCased}
-                        isPlaying={$isPlaying}
-                        onPrev={prevTrack}
-                        onPlayPause={async () => {
+                    <MiniPlayer
+                            coverUrl={$currentTrack.albumArtwork ?? '/default_album.png'}
+                            trackTitle={titleCased}
+                            artistName={artistCased}
+                            isPlaying={$isPlaying}
+                            onPrev={prevTrack}
+                            onPlayPause={async () => {
 
     // 👇 ADD THIS LINE (FIRST LINE)
     console.log('🔥 PLAY BUTTON CLICKED');
@@ -257,70 +291,126 @@
 
 		startPlaybackPolling();
 	}}
-                        onNext={nextTrack}
-                        hideMeta={true}
-                />
+                            onNext={nextTrack}
+                            hideMeta={true}
+                    />
 
 
-            </div>
+                </div>
 
-            <!-- Meta + Progress Bar -->
-            <div class="w-full flex justify-center px-4 mt-4">
-                <div class="w-full max-w-xl">
-                    <CarModeTrackMeta
-                            currentTrack={$currentTrack}
-                            tracks={$tracks}
-                            elapsed={$elapsed}
-                            duration={$duration}
-                            progress={$progress}
-                            phase={$playbackPhase}
+                <!-- Meta + Progress Bar -->
+                <div class="w-full flex justify-center px-4 mt-4">
+                    <div class="w-full max-w-xl">
+                        <CarModeTrackMeta
+                                currentTrack={$currentTrack}
+                                tracks={$tracks}
+                                elapsed={$elapsed}
+                                duration={$duration}
+                                progress={$progress}
+                                phase={$playbackPhase}
+                        />
+                    </div>
+                </div>
+
+                <!-- STEP 3.1 TEMP DEBUG (REMOVE LATER) -->
+                <!--                <div style="font-family: monospace; font-size: 12px; opacity: 0.8; margin-top: 6px;">-->
+                <!--                    phase={$playbackPhase}-->
+                <!--                    elapsedSec={$elapsed}-->
+                <!--                    durationSec={$duration}-->
+
+                <!--                </div>-->
+
+                {#if showPhaseBanner}
+
+                    {#key $playbackPhase}
+                        <div class="now-playing-banner">
+                            <div class="now-playing-pill">
+                                {phaseLabel($playbackPhase)}
+                            </div>
+                        </div>
+
+                    {/key}
+                {/if}
+
+
+                <!-- Narration + Buttons -->
+                <div class="w-full flex justify-center px-4 mt-4">
+                    <CarModeNarration
+                            track={$currentTrack}
+                            onOpenModal={() => showNarrationModal.set(true)}
+                            onBackToOptions={backToOptions}
                     />
                 </div>
-            </div>
 
-            <!-- STEP 3.1 TEMP DEBUG (REMOVE LATER) -->
-            <div style="font-family: monospace; font-size: 12px; opacity: 0.8; margin-top: 6px;">
-                phase={$playbackPhase}
-                elapsedMs={$elapsed}
-                durationMs={$duration}
-            </div>
-
-
-            <!-- Narration + Buttons -->
-            <div class="w-full flex justify-center px-4 mt-4">
-                <CarModeNarration
+                <CarModeNarrationModal
                         track={$currentTrack}
-                        onOpenModal={() => showNarrationModal.set(true)}
-                        onBackToOptions={backToOptions}
+                        open={$showNarrationModal}
+                        onClose={() => showNarrationModal.set(false)}
                 />
             </div>
+        {/key}
+    {:else}
+        <p class="text-gray-400 italic text-center mt-10">{$status}</p>
+    {/if}
 
-            <CarModeNarrationModal
-                    track={$currentTrack}
-                    open={$showNarrationModal}
-                    onClose={() => showNarrationModal.set(false)}
-            />
+    {#if debugParams}
+        <div class="debug-panel">
+            <h4>Debug Params</h4>
+            <pre>{JSON.stringify({urlParams: debugParams, selection: $currentSelection}, null, 2)}</pre>
         </div>
-    {/key}
-{:else}
-    <p class="text-gray-400 italic text-center mt-10">{$status}</p>
-{/if}
+    {/if}
 
-{#if debugParams}
-    <div class="debug-panel">
-        <h4>Debug Params</h4>
-        <pre>{JSON.stringify({urlParams: debugParams, selection: $currentSelection}, null, 2)}</pre>
-    </div>
-{/if}
+    <style>
+        .debug-panel {
+            background: rgba(0, 0, 0, 0.45);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem auto;
+            max-width: 900px;
+            font-size: 0.85rem;
+            color: #ccc;
+        }
 
-<style>
-    .debug-panel {
-        background: rgba(0, 0, 0, 0.45);
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 1rem auto;
-        max-width: 900px;
-        font-size: 0.85rem;
-        color: #ccc;
-    }
-</style>
+        .car-mode-root {
+            min-height: 100vh;
+            width: 100%;
+            background: radial-gradient(
+                    circle at top,
+                    #1a1a1f 0%,
+                    #0e0e11 45%,
+                    #08080a 100%
+            );
+            color: #fff;
+        }
+
+
+        .now-playing-banner {
+            position: fixed;
+            bottom: 88px; /* safely above controls */
+            left: 50%;
+            transform: translateX(-50%);
+
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .now-playing-pill {
+            padding: 0.45rem 1.1rem;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+
+            color: #9ca3af;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(6px);
+
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+
+
+    </style>
+
+
+</div>
+
