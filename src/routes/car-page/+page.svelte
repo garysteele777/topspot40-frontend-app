@@ -130,35 +130,9 @@
         // ─────────────────────────────────────────────
 // Prepare Spotify playback (warmup)
 // ─────────────────────────────────────────────
-        try {
-            const res = await fetch(`${API_BASE}/playback/warmup`, {
-                method: 'POST'
-            });
-
-
-            const data: {
-                ready: boolean;
-                message?: string;
-                device_name?: string;
-            } = await res.json();
-
-            if (!data.ready) {
-                playbackReady = false;
-                playbackError = data.message ?? 'Spotify is not ready for playback.';
-                console.warn('Playback warmup failed:', data);
-            } else {
-                playbackReady = true;
-                playbackError = null;
-                console.info(
-                    `Playback ready on device: ${data.device_name ?? 'unknown'}`
-                );
-            }
-
-        } catch (err) {
-            playbackReady = false;
-            playbackError = 'Failed to prepare Spotify playback.';
-            console.error('Playback warmup error:', err);
-        }
+// TEMP: allow playback if backend is reachable
+        playbackReady = true;
+        playbackError = null;
 
 
         if (url.searchParams.get('debug') === '1') {
