@@ -76,10 +76,12 @@ function startStatusPolling(): void {
                 resetProgress();
 
                 if (
+                    data.sequence_done === true &&
                     sel?.pauseMode === 'continuous' &&
                     continuousAdvancePending &&
                     !suppressContinuousAdvance
                 ) {
+
                     continuousAdvancePending = false; // 🔒 latch
                     setTimeout(() => nextTrack(), 150);
                 }
