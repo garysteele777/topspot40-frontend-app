@@ -1,10 +1,13 @@
+import {get} from 'svelte/store';
 import {
-	isPlaying,
-	playbackPhase,
-	elapsed,
-	duration,
-	progress
+    isPlaying,
+    playbackPhase,
+    elapsed,
+    duration,
+    progress
 } from '$lib/carmode/CarMode.store';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 let pollTimer: number | null = null;
 
@@ -12,99 +15,86 @@ let pollTimer: number | null = null;
 let lastPhase: string | null = null;
 let waitingForPhaseReset = false;
 
+const POLL_INTERVAL_MS = Number(import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500);
+
+
 export function startPlaybackPolling() {
-	if (pollTimer) return;
+    if (pollTimer) return;
 
-	pollTimer = window.setInterval(async () => {
-		try {
-			const res = await fetch('http://127.0.0.1:8000/playback/status');
-			if (!res.ok) return;
+    pollTimer = window.setInterval(async () => {
+        try {
 
-			const data = await res.json();
+            const res = await fetch(`${API_BASE}/playback/status`);
+            if (!res.ok) return;
 
-			/*
-				Backend contract (source of truth):
-				- phase: 'idle' | 'loading' | 'intro' | 'detail' | 'artist' | 'track' | 'done'
-				- elapsed_ms: number
-				- duration_ms: number
-			*/
+            const data = await res.json();
 
-			const phase = data.phase ?? 'idle';
+            const phase = data.phase ?? 'idle';
 
-			// 🔹 Playback active for any non-idle, non-done phase
-			isPlaying.set(phase !== 'idle' && phase !== 'done');
+            // 🔹 Stop early if idle
+            if (phase === 'idle') {
+                stopPlaybackPolling();
+                return;
+            }
 
-			// 🔹 Phase label
-			playbackPhase.set(phase);
+            isPlaying.set(phase !== 'idle' && phase !== 'done');
+            playbackPhase.set(phase);
 
-			// 🧼 Detect phase change → reset UI and wait for backend to reset timing
-			if (phase !== lastPhase) {
-				lastPhase = phase;
-				waitingForPhaseReset = true;
+            // 🔄 Phase transition handling
+            if (phase !== lastPhase) {
+                lastPhase = phase;
+                waitingForPhaseReset = true;
 
-				elapsed.set(0);
-				duration.set(0);
-				progress.set(0);
-				return;
-			}
+                elapsed.set(0);
+                duration.set(0);
+                progress.set(0);
 
-			// 🧼 Keep UI calm during loading
-			if (phase === 'loading') {
-				elapsed.set(0);
-				duration.set(0);
-				progress.set(0);
-				return;
-			}
+                // 🔍 Log transitions only
+                console.debug(`▶ Phase → ${phase}`);
+                return;
+            }
 
-			// 🔹 Time values (ms → seconds)
-			const elapsedMs = Number(data.elapsed_ms ?? data.elapsedMs ?? 0);
-			const durationMs = Number(data.duration_ms ?? data.durationMs ?? 0);
+            if (phase === 'loading') return;
 
-			// ⏳ Wait until backend timing has actually reset
-			if (waitingForPhaseReset) {
-				if (elapsedMs > 0) {
-					waitingForPhaseReset = false;
-				} else {
-					elapsed.set(0);
-					duration.set(0);
-					progress.set(0);
-					return;
-				}
-			}
+            const elapsedMs = Number(data.elapsedMs ?? 0);
+            const durationMs = Number(data.durationMs ?? 0);
 
-			const elapsedSec = elapsedMs / 1000;
-			const durationSec = durationMs > 0 ? durationMs / 1000 : 0;
 
-			elapsed.set(elapsedSec);
-			duration.set(durationSec);
+            if (waitingForPhaseReset) {
+                if (elapsedMs > 0) {
+                    waitingForPhaseReset = false;
+                } else {
+                    return;
+                }
+            }
 
-			// 🔹 Progress computed locally (0 → 100)
-			const pct =
-				durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
+            const elapsedSec = elapsedMs / 1000;
+            const durationSec = durationMs / 1000;
 
-			progress.set(Math.min(100, Math.max(0, pct)));
+            elapsed.set(elapsedSec);
+            duration.set(durationSec);
 
-			// 🔹 Stop polling when backend declares stop
-			if (data.stopped || phase === 'done') {
-				stopPlaybackPolling();
-			}
+            const pct =
+                durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
 
-			// 🧪 Optional debug
-			console.log(
-				`POLL ${phase} ${elapsedSec.toFixed(1)}s / ${durationSec.toFixed(1)}s → ${Math.round(pct)}%`
-			);
+            progress.set(Math.min(100, Math.max(0, pct)));
 
-		} catch (err) {
-			console.error('Playback polling failed:', err);
-		}
-	}, 500);
+            if (data.stopped || phase === 'done') {
+                console.debug('⏹ Playback complete');
+                stopPlaybackPolling();
+            }
+        } catch {
+            // Silent by design
+        }
+    }, POLL_INTERVAL_MS);
 }
 
 export function stopPlaybackPolling() {
-	if (pollTimer) {
-		clearInterval(pollTimer);
-		pollTimer = null;
-		lastPhase = null;
-		waitingForPhaseReset = false;
-	}
+    if (!pollTimer) return;
+
+    clearInterval(pollTimer);
+    pollTimer = null;
+
+    lastPhase = null;
+    waitingForPhaseReset = false;
 }
