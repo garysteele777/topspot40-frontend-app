@@ -299,6 +299,13 @@
 	$: canLaunchCollection = activeGroup === 'collection' && collections.length > 0;
 </script>
 
+{#if import.meta.env.DEV}
+  <div style="position:fixed;top:4px;right:6px;font-size:11px;opacity:.5">
+    ROUTE: /options-v2
+  </div>
+{/if}
+
+
 <div class="page-shell">
 	<HeroHeader />
 

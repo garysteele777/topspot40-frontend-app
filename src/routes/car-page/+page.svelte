@@ -139,6 +139,10 @@
         console.log('🚗 CarMode onMount START');
         console.log('API BASE:', import.meta.env.VITE_API_BASE_URL);
 
+
+        startPlaybackPolling();   // 🔥 THIS WAS MISSING
+        console.log('⏱ Playback polling started from onMount');
+
         const url = new URL(window.location.href);
         const sel = buildSelectionFromUrl(url);
         currentSelection.set(sel);
@@ -292,7 +296,7 @@
 			return;
 		}
 
-		startPlaybackPolling();
+		// startPlaybackPolling();
 	}}
                             onNext={nextTrack}
                             hideMeta={true}

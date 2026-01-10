@@ -61,7 +61,7 @@
     <div class="purdue-progress-bg">
         <div
                 class="purdue-progress-fill"
-                style={`width: ${progress * 100}%`}
+                style={`width: ${progress}%`}
 
         />
     </div>
