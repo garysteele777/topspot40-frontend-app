@@ -47,9 +47,9 @@
 
 	<div class="nav-links">
 		<a href="#" on:click|preventDefault={toggleContactUsModal}>Contact Us</a>
-		<a href="/app/about">About</a>
-		<a href="/app/signin">Sign In</a>
-		<a class="signup" href="/app/signup-official">Sign Up</a>
+		<a href="/about">About</a>
+		<a href="/signin">Sign In</a>
+		<a class="signup" href="/signup-official">Sign Up</a>
 	</div>
 </nav>
 
