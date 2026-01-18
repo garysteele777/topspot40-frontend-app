@@ -32,7 +32,8 @@
     } from '$lib/carmode/CarMode.store';
 
     import {loadForSelection} from '$lib/carmode/CarMode.loader';
-    import {nextTrack, prevTrack, clearAllPlayback} from '$lib/carmode/CarMode.player';
+
+
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
     import {saveResumeState} from '$lib/utils/smartResume';
     import {fetchGroupedCatalog} from '$lib/api/catalog';
@@ -45,6 +46,36 @@
 
     const API_BASE: string = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
     console.log('🌍 Car page API_BASE =', API_BASE);
+
+    // Backend owns playback now. Frontend only signals stop.
+    async function clearAllPlayback() {
+        try {
+            await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
+        } catch {
+            console.warn("Backend stop failed (probably already stopped)");
+        }
+    }
+
+
+    async function nextTrack() {
+        try {
+            const res = await fetch(`${API_BASE}/playback/next`, {method: 'POST'});
+            const data = await res.json().catch(() => ({}));
+            console.log('⏭ next response:', data);
+        } catch (e) {
+            console.error('⏭ next failed:', e);
+        }
+    }
+
+    async function prevTrack() {
+        try {
+            const res = await fetch(`${API_BASE}/playback/prev`, {method: 'POST'});
+            const data = await res.json().catch(() => ({}));
+            console.log('⏮ prev response:', data);
+        } catch (e) {
+            console.error('⏮ prev failed:', e);
+        }
+    }
 
 
     let showPhaseBanner = false;
@@ -293,12 +324,12 @@
 
 		if (!res.ok || result?.ok !== true) {
 			console.error('❌ play-track failed:', result);
-			return;
 		}
 
 		// startPlaybackPolling();
 	}}
                             onNext={nextTrack}
+
                             hideMeta={true}
                     />
 

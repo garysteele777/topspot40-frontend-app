@@ -73,11 +73,12 @@ export function startPlaybackPolling() {
                         console.log('🎤 Narration finished');
 
                         if (mode === 'before') {
-                            console.log('▶️ Resuming Spotify after narration');
-                            await fetch(`${API_BASE}/playback/resume`, {method: 'POST'}).catch(() => {
+                            console.log('▶️ Signaling backend narration finished');
+                            await fetch(`${API_BASE}/playback/narration-finished`, {method: 'POST'}).catch(() => {
                             });
                         }
                     };
+
 
                     narrationAudio.onerror = (e) => {
                         console.error('❌ Narration audio error', e);
