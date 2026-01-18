@@ -8,13 +8,17 @@ import {
     progress
 } from '$lib/carmode/CarMode.store';
 
-import type { PlaybackPhase } from '$lib/helpers/car/types';
+import type {PlaybackPhase} from '$lib/helpers/car/types';
 
 const API_BASE =
     import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
+
+let narrationAudio: HTMLAudioElement | null = null;
+let lastNarrationUrl: string | null = null;
+
 
 const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
@@ -32,7 +36,59 @@ export function startPlaybackPolling() {
 
             const data = await res.json();
 
-            console.log('⏱ Poll data:', data);
+            console.log('⏱ Poll data full:', JSON.stringify(data, null, 2));
+
+
+// 🎤 Handle remote narration playback (intro / detail / artist)
+            if (
+                (data.phase === 'intro' || data.phase === 'detail' || data.phase === 'artist') &&
+                data.context?.audio_url
+            ) {
+                const url = data.context.audio_url as string;
+                const mode = data.context.voice_style ?? 'before';   // 🔑
+
+                // Prevent restarting the same narration every poll
+                if (url !== lastNarrationUrl) {
+                    console.log(`🎤 Playing narration (${mode} mode):`, url);
+                    lastNarrationUrl = url;
+
+                    if (!narrationAudio) {
+                        narrationAudio = new Audio();
+                    }
+
+                    narrationAudio.pause();
+                    narrationAudio.currentTime = 0;
+                    narrationAudio.src = url;
+
+                    if (mode === 'before') {
+                        // 🛑 Stop Spotify completely before narration
+                        console.log('⛔ Stopping Spotify until narration ends');
+                        fetch(`${API_BASE}/playback/stop`, {method: 'POST'}).catch(() => {
+                        });
+                    } else {
+                        console.log('🎧 Narration will play OVER track');
+                    }
+
+                    narrationAudio.onended = async () => {
+                        console.log('🎤 Narration finished');
+
+                        if (mode === 'before') {
+                            console.log('▶️ Resuming Spotify after narration');
+                            await fetch(`${API_BASE}/playback/resume`, {method: 'POST'}).catch(() => {
+                            });
+                        }
+                    };
+
+                    narrationAudio.onerror = (e) => {
+                        console.error('❌ Narration audio error', e);
+                    };
+
+                    narrationAudio.play().catch(err =>
+                        console.error('❌ Audio play failed:', err)
+                    );
+                }
+            }
+
 
             const phase = data.phase as PlaybackPhase;
             playbackPhase.set(phase);
@@ -41,9 +97,9 @@ export function startPlaybackPolling() {
                 typeof data.isPlaying === 'boolean'
                     ? data.isPlaying
                     : phase === 'intro' ||
-                      phase === 'detail' ||
-                      phase === 'artist' ||
-                      phase === 'track';
+                    phase === 'detail' ||
+                    phase === 'artist' ||
+                    phase === 'track';
 
             isPlaying.set(playing);
 
@@ -84,4 +140,11 @@ export function stopPlaybackPolling() {
     clearInterval(pollTimer);
     pollTimer = null;
     lastPhase = null;
+
+    lastNarrationUrl = null;
+    if (narrationAudio) {
+        narrationAudio.pause();
+        narrationAudio = null;
+    }
 }
+

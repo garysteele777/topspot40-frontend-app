@@ -18,6 +18,9 @@ import {getDurationSeconds} from '$lib/helpers/car/trackUtils';
 
 const API_BASE: string = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
+console.log('✅ CarMode.player.ts LOADED');
+
+
 let playbackToken = 0;
 let statusPoll: number | null = null;
 let launchLock = false;
@@ -56,6 +59,8 @@ function clearLocalPlaybackState(): void {
 // Status polling (backend is authoritative)
 // ─────────────────────────────────────────────
 function startStatusPolling(): void {
+    return;
+
     if (statusPoll !== null) return;
 
     statusPoll = window.setInterval(async () => {
