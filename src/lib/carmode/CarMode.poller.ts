@@ -15,6 +15,8 @@ const API_BASE =
 
 let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
+let userStartedPlayback = false;
+
 
 let narrationAudio: HTMLAudioElement | null = null;
 let lastNarrationUrl: string | null = null;
@@ -23,6 +25,11 @@ let lastNarrationUrl: string | null = null;
 const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
 );
+
+export function markUserStartedPlayback() {
+    userStartedPlayback = true;
+}
+
 
 export function startPlaybackPolling() {
     if (pollTimer) return;
@@ -61,13 +68,12 @@ export function startPlaybackPolling() {
                     narrationAudio.src = url;
 
                     if (mode === 'before') {
-                        // 🛑 Stop Spotify completely before narration
-                        console.log('⛔ Stopping Spotify until narration ends');
-                        fetch(`${API_BASE}/playback/stop`, {method: 'POST'}).catch(() => {
-                        });
+                        // ✅ Backend-owned playback: do NOT stop/cancel anything from the frontend.
+                        console.log('🎧 BEFORE mode: backend owns Spotify sequencing (no /playback/stop)');
                     } else {
-                        console.log('🎧 Narration will play OVER track');
+                        console.log('🎧 OVER mode: narration will play over the track');
                     }
+
 
                     narrationAudio.onended = async () => {
                         console.log('🎤 Narration finished');
@@ -141,6 +147,9 @@ export function stopPlaybackPolling() {
     clearInterval(pollTimer);
     pollTimer = null;
     lastPhase = null;
+    lastNarrationUrl = null;
+
+    userStartedPlayback = false;   // 🔁 reset latch
 
     lastNarrationUrl = null;
     if (narrationAudio) {

@@ -2,8 +2,6 @@
     import {onMount, onDestroy} from 'svelte';
     import {fade} from 'svelte/transition';
 
-    // ✅ Playback trigger
-    // import { startPlayback } from '$lib/carmode/startPlayback';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import CarModeTrackMeta from '$lib/components/car/CarModeTrackMeta.svelte';
@@ -13,7 +11,8 @@
 
     import {
         startPlaybackPolling,
-        stopPlaybackPolling
+        stopPlaybackPolling,
+        markUserStartedPlayback
     } from '$lib/carmode/CarMode.poller';
 
 
@@ -47,6 +46,60 @@
     const API_BASE: string = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
     console.log('🌍 Car page API_BASE =', API_BASE);
 
+    function stopNarrationAudio() {
+        // Kill any browser-side narration audio still playing
+        const audios = document.querySelectorAll('audio');
+        audios.forEach(a => {
+            a.pause();
+            a.currentTime = 0;
+        });
+    }
+
+
+    async function playTrackByRank(rank: number) {
+        const sel = $currentSelection;
+        if (!sel) {
+            console.warn("No current selection, cannot play track");
+            return;
+        }
+
+
+        const payload = {
+            track: {
+                rank
+            },
+            selection: {
+                language: sel.language,
+                voices: sel.voices,
+                voicePlayMode: sel.voicePlayMode,
+                pauseMode: sel.pauseMode
+            },
+            context:
+                sel.mode === 'decade_genre'
+                    ? {
+                        type: 'decade_genre',
+                        decade: sel.context?.decade,
+                        genre: sel.context?.genre
+                    }
+                    : {
+                        type: 'collection',
+                        collection_slug: sel.context?.collection_slug
+                    }
+        };
+
+        console.log('▶️ Starting track by rank:', payload);
+
+        const res = await fetch(`${API_BASE}/playback/play-track`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        const result = await res.json().catch(() => null);
+        console.log('🎬 play-track response:', result);
+    }
+
+
     // Backend owns playback now. Frontend only signals stop.
     async function clearAllPlayback() {
         try {
@@ -58,23 +111,55 @@
 
 
     async function nextTrack() {
-        try {
-            const res = await fetch(`${API_BASE}/playback/next`, {method: 'POST'});
-            const data = await res.json().catch(() => ({}));
-            console.log('⏭ next response:', data);
-        } catch (e) {
-            console.error('⏭ next failed:', e);
+        if (!$currentTrack || !$tracks || !$currentSelection) return;
+
+        stopNarrationAudio();
+
+        // 1. Stop backend playback
+        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'}).catch(() => {
+        });
+
+        // 2. Compute next rank locally
+        const list = $tracks;
+        const idx = list.findIndex(t => t.rank === $currentTrack.rank);
+        const next = list[idx + 1];
+        if (!next) {
+            console.log('⏭ Already at last track');
+            return;
         }
+
+        currentRank.set(next.rank);
+
+        console.log(`⏭ Moving from #${$currentTrack.rank} → #${next.rank}`);
+
+        // 3. Start that track on backend
+        await playTrackByRank(next.rank);
     }
 
     async function prevTrack() {
-        try {
-            const res = await fetch(`${API_BASE}/playback/prev`, {method: 'POST'});
-            const data = await res.json().catch(() => ({}));
-            console.log('⏮ prev response:', data);
-        } catch (e) {
-            console.error('⏮ prev failed:', e);
+        if (!$currentTrack || !$tracks || !$currentSelection) return;
+
+        stopNarrationAudio();
+
+        // 1. Stop backend playback
+        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'}).catch(() => {
+        });
+
+        // 2. Compute previous rank locally
+        const list = $tracks;
+        const idx = list.findIndex(t => t.rank === $currentTrack.rank);
+        const prev = list[idx - 1];
+        if (!prev) {
+            console.log('⏮ Already at first track');
+            return;
         }
+
+        currentRank.set(prev.rank);
+
+        console.log(`⏮ Moving from #${$currentTrack.rank} → #${prev.rank}`);
+
+        // 3. Start that track on backend
+        await playTrackByRank(prev.rank);
     }
 
 
@@ -259,6 +344,9 @@
                             isPlaying={$isPlaying}
                             onPrev={prevTrack}
                             onPlayPause={async () => {
+
+    // 🔑 THIS IS THE IGNITION KEY
+    markUserStartedPlayback();
 
     // 👇 ADD THIS LINE (FIRST LINE)
     console.log('🔥 PLAY BUTTON CLICKED');
