@@ -58,15 +58,22 @@
 
     async function playTrackByRank(rank: number) {
         const sel = $currentSelection;
-        if (!sel) {
-            console.warn("No current selection, cannot play track");
+        if (!sel) return;
+
+        const trackObj = $tracks.find(t => t.rank === rank);
+        if (!trackObj) {
+            console.error("No track found for rank:", rank);
             return;
         }
 
 
         const payload = {
             track: {
-                rank
+                track_id: trackObj.id,
+                spotify_track_id: trackObj.spotifyTrackId,
+                rank: trackObj.rank,
+                track_name: trackObj.trackName,
+                artist_name: trackObj.artistName
             },
             selection: {
                 language: sel.language,
@@ -88,6 +95,12 @@
         };
 
         console.log('▶️ Starting track by rank:', payload);
+
+        if (!payload.track.track_id) {
+            console.error("🚨 Missing track_id, refusing to call backend", payload);
+            return;
+        }
+
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -115,9 +128,8 @@
 
         stopNarrationAudio();
 
-        // 1. Stop backend playback
-        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'}).catch(() => {
-        });
+        // 1. Stop backend playback and WAIT
+        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
 
         // 2. Compute next rank locally
         const list = $tracks;
@@ -128,22 +140,27 @@
             return;
         }
 
+        // 3. Update UI immediately
         currentRank.set(next.rank);
+        currentTrack.set(next);
 
-        console.log(`⏭ Moving from #${$currentTrack.rank} → #${next.rank}`);
+        console.log(`⏭ Switching to #${next.rank}: ${next.trackName}`);
 
-        // 3. Start that track on backend
+        // 4. Give backend 50ms to clear old sequence (important)
+        await new Promise(r => setTimeout(r, 50));
+
+        // 5. Start new backend playback
         await playTrackByRank(next.rank);
     }
+
 
     async function prevTrack() {
         if (!$currentTrack || !$tracks || !$currentSelection) return;
 
         stopNarrationAudio();
 
-        // 1. Stop backend playback
-        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'}).catch(() => {
-        });
+        // 1. Stop backend playback and WAIT
+        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
 
         // 2. Compute previous rank locally
         const list = $tracks;
@@ -154,11 +171,16 @@
             return;
         }
 
+        // 3. Update UI immediately
         currentRank.set(prev.rank);
+        currentTrack.set(prev);
 
-        console.log(`⏮ Moving from #${$currentTrack.rank} → #${prev.rank}`);
+        console.log(`⏮ Switching to #${prev.rank}: ${prev.trackName}`);
 
-        // 3. Start that track on backend
+        // 4. Give backend time to clear old sequence
+        await new Promise(r => setTimeout(r, 50));
+
+        // 5. Start new backend playback
         await playTrackByRank(prev.rank);
     }
 
