@@ -60,12 +60,50 @@
         const sel = $currentSelection;
         if (!sel) return;
 
+        // 🟢 COLLECTION MODE: start a SEQUENCE, not a single track
+        if (sel.mode === 'collection') {
+            const slug = sel.context?.collection_slug;
+            if (!slug) {
+                console.error('Missing collection_slug context:', sel.context);
+                return;
+            }
+
+            const params = new URLSearchParams({
+                collection_slug: slug,
+                start_rank: String(rank),
+                end_rank: String(sel.endRank),
+                mode:
+                    sel.playbackOrder === 'up'
+                        ? 'count_up'
+                        : sel.playbackOrder === 'down'
+                            ? 'count_down'
+                            : 'random',
+                tts_language: sel.language,
+                play_intro: sel.voices.includes('intro') ? 'true' : 'false',
+                play_detail: sel.voices.includes('detail') ? 'true' : 'false',
+                play_artist_description: sel.voices.includes('artist') ? 'true' : 'false',
+                play_track: 'true',
+                voice_style: sel.voicePlayMode
+            });
+
+            console.log('🚀 COLLECTION SEQUENCE:', params.toString());
+
+            const res = await fetch(
+                `${API_BASE}/supabase/collections/play-collection-sequence?${params.toString()}`,
+                {method: 'GET'}
+            );
+
+            const result = await res.json().catch(() => null);
+            console.log('📦 collection-sequence response:', result);
+            return;
+        }
+
+        // 🟢 DECADE / SINGLE TRACK MODE
         const trackObj = $tracks.find(t => t.rank === rank);
         if (!trackObj) {
             console.error("No track found for rank:", rank);
             return;
         }
-
 
         const payload = {
             track: {
@@ -88,19 +126,10 @@
                         decade: sel.context?.decade,
                         genre: sel.context?.genre
                     }
-                    : {
-                        type: 'collection',
-                        collection_slug: sel.context?.collection_slug
-                    }
+                    : {}
         };
 
-        console.log('▶️ Starting track by rank:', payload);
-
-        if (!payload.track.track_id) {
-            console.error("🚨 Missing track_id, refusing to call backend", payload);
-            return;
-        }
-
+        console.log('▶️ SINGLE TRACK payload:', payload);
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -365,79 +394,21 @@
                             artistName={artistCased}
                             isPlaying={$isPlaying}
                             onPrev={prevTrack}
+
                             onPlayPause={async () => {
-
-    // 🔑 THIS IS THE IGNITION KEY
     markUserStartedPlayback();
-
-    // 👇 ADD THIS LINE (FIRST LINE)
     console.log('🔥 PLAY BUTTON CLICKED');
 
-		if (!playbackReady) {
-			console.warn('Play blocked: Spotify not ready');
-			return;
-		}
+    if (!playbackReady) return;
+    if ($isPlaying) return;
+    if (!$currentTrack || !$currentSelection) return;
 
-		if ($isPlaying) return;
-		if (!$currentTrack || !$currentSelection) return;
+    console.log('🔥 MODE =', $currentSelection.mode);
 
-		const context =
-			$currentSelection.mode === 'decade_genre'
-				? {
-						type: 'decade_genre',
-						decade: $currentSelection.context?.decade,
-						genre: $currentSelection.context?.genre
-					}
-				: {
-						type: 'collection',
-						collection_slug: $currentSelection.context?.collection_slug
-					};
-
-		if (context.type === 'decade_genre' && (!context.decade || !context.genre)) {
-			console.error('Missing decade/genre context:', context);
-			return;
-		}
-
-		if (context.type === 'collection' && !context.collection_slug) {
-			console.error('Missing collection_slug context:', context);
-			return;
-		}
-
-		const payload = {
-			track: {
-				track_id: $currentTrack.id,
-				spotify_track_id: $currentTrack.spotifyTrackId,
-				rank: $currentTrack.rank,
-				track_name: $currentTrack.trackName,
-				artist_name: $currentTrack.artistName
-			},
-			selection: {
-				language: $currentSelection.language,
-				voices: $currentSelection.voices,
-				voicePlayMode: $currentSelection.voicePlayMode,
-				pauseMode: $currentSelection.pauseMode
-			},
-			context
-		};
-
-		console.log('▶️ PLAY clicked, payload:', payload);
-
-        const res = await fetch(`${API_BASE}/playback/play-track`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    await playTrackByRank($currentTrack.rank);
+}}
 
 
-		const result = await res.json();
-		console.log('🎬 play-track response:', result);
-
-		if (!res.ok || result?.ok !== true) {
-			console.error('❌ play-track failed:', result);
-		}
-
-		// startPlaybackPolling();
-	}}
                             onNext={nextTrack}
 
                             hideMeta={true}

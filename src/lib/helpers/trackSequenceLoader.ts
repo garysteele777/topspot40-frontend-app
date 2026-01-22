@@ -5,11 +5,11 @@ import { normalizeTrack, type LoadedTrack } from '$lib/utils/normalizeTrack';
 
 import {
 	loadCollectionFromSupabase,
+	loadDecadeGenreFromSupabase,
 	type CollectionResponse,
+	type DecadeGenreResponse,
 	type SequenceItem
 } from '$lib/api/supabaseLoader';
-
-import { loadDecadeGenrePauseMode } from '$lib/api/playbackPauseLoader';
 
 // Svelte 5 reactive Map (silences ESLint warnings)
 import { SvelteMap } from 'svelte/reactivity';
@@ -112,15 +112,10 @@ export async function loadTrackSequence(
 	}
 
 	const { startRank, endRank } = sel;
-	const tts_language = (sel.language ?? 'en') as
-		| 'en'
-		| 'es'
-		| 'ptbr'
-		| 'pt-BR';
 
 	try {
 		// --------------------------------------------------------
-		// COLLECTION MODE (unchanged)
+		// COLLECTION MODE
 		// --------------------------------------------------------
 		if (sel.mode === 'collection') {
 			const slug =
@@ -135,10 +130,7 @@ export async function loadTrackSequence(
 			}
 
 			const data: CollectionResponse =
-				await loadCollectionFromSupabase({
-					slug,
-					tts_language
-				});
+				await loadCollectionFromSupabase({ slug });
 
 			const rows: SequenceItemExtended[] =
 				data.tracks ??
@@ -154,26 +146,33 @@ export async function loadTrackSequence(
 		}
 
 		// --------------------------------------------------------
-		// DECADE / GENRE MODE (Pause Mode via FastAPI)
+		// DECADE / GENRE MODE
 		// --------------------------------------------------------
 		const decade = ctx.decade ?? '';
 		const genre = ctx.genre ?? '';
 
 		if (!decade || !genre) return [];
 
-		const data = await loadDecadeGenrePauseMode({
-			decade,
-			genre
-		});
+		const data: DecadeGenreResponse =
+			await loadDecadeGenreFromSupabase({
+				decade,
+				genre,
+				startRank,
+				endRank
+			});
 
-		// backend guarantees `tracks`
-		const rows: SequenceItemExtended[] = data.tracks ?? [];
+		const rows: SequenceItemExtended[] =
+			data.tracks ??
+			data.rankings ??
+			(data.rows as SequenceItemExtended[]) ??
+			[];
 
 		if (!rows.length) return [];
 
 		const mapped = mapItemsToTracks(rows, startRank, endRank);
 		loaderCache.set(key, mapped);
 		return mapped;
+
 	} catch (err) {
 		console.error('❌ loadTrackSequence failed:', err);
 		return [];

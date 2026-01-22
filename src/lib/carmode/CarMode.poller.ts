@@ -17,9 +17,9 @@ let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
 let userStartedPlayback = false;
 
-
 let narrationAudio: HTMLAudioElement | null = null;
 let lastNarrationUrl: string | null = null;
+let lastSpotifyId: string | null = null;   // ✅ add this
 
 
 const POLL_INTERVAL_MS = Number(
@@ -94,6 +94,31 @@ export function startPlaybackPolling() {
                         console.error('❌ Audio play failed:', err)
                     );
                 }
+            }
+
+
+            // 🎵 Handle TRACK phase (Spotify playback) — same pattern as narration
+            if (
+                data.phase === 'track' &&
+                data.context?.spotify_track_id
+            ) {
+                const spotifyId = data.context.spotify_track_id as string;
+
+                // Prevent retriggering every poll
+                if (spotifyId !== lastSpotifyId) {
+                    console.log('🎵 TRACK phase detected. Starting Spotify track:', spotifyId);
+
+                    lastSpotifyId = spotifyId;
+
+                    await fetch(`${API_BASE}/playback/play-spotify`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({spotify_track_id: spotifyId})
+                    }).catch(err => {
+                        console.error('❌ Spotify start failed', err);
+                    });
+                }
+
             }
 
 

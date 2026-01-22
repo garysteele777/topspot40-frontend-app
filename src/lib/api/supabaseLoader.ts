@@ -50,29 +50,30 @@ async function getJson<T>(url: string): Promise<T> {
 export async function loadDecadeGenreFromSupabase(payload: {
 	decade: string;
 	genre: string;
-	tts_language?: 'en' | 'es' | 'ptbr' | 'pt-BR';
+	startRank: number;
+	endRank: number;
 }): Promise<DecadeGenreResponse> {
-	const { decade, genre, tts_language = 'en' } = payload;
+	const { decade, genre, startRank, endRank } = payload;
 
-	const url = new URL('/supabase/load-decade-genre-data', API_BASE);
+	const url = new URL('/supabase/decade-genre/get-sequence', API_BASE);
 	url.searchParams.set('decade', decade);
 	url.searchParams.set('genre', genre);
-	url.searchParams.set('tts_language', tts_language);
+	url.searchParams.set('start_rank', String(startRank));
+	url.searchParams.set('end_rank', String(endRank));
 
 	return getJson<DecadeGenreResponse>(url.toString());
 }
 
 // ------------------------------------------------------------
-// COLLECTION LOADER (REAL BACKEND ROUTE)
+// COLLECTION LOADER  (REAL BACKEND ROUTE)
 // ------------------------------------------------------------
 export async function loadCollectionFromSupabase(payload: {
 	slug: string;
-	tts_language?: 'en' | 'es' | 'ptbr' | 'pt-BR';
 }): Promise<CollectionResponse> {
-	const { slug, tts_language = 'en' } = payload;
+	const { slug } = payload;
 
-	const url = new URL(`/supabase/load-collection-data/${slug}`, API_BASE);
-	url.searchParams.set('tts_language', tts_language);
+	const url = new URL('/supabase/collections/get-sequence', API_BASE);
+	url.searchParams.set('collection_slug', slug);
 
 	return getJson<CollectionResponse>(url.toString());
 }
