@@ -20,13 +20,13 @@ const POLL_INTERVAL_MS = Number(
 let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
 
-// Prevent replaying same narration or track
-let lastNarrationUrl: string | null = null;
 let lastSpotifyId: string | null = null;
 
 // Narration queue + lock
 let narrationLock = false;
 let narrationQueue: string[] = [];
+
+let lastNarrationPhase: PlaybackPhase | null = null;
 
 /* ─────────────────────────────────────────────
    Low-level narration player
@@ -88,23 +88,16 @@ export function startPlaybackPolling() {
             const phase = data.phase as PlaybackPhase;
             playbackPhase.set(phase);
 
-// ─────────────────────────────
-// Phase transition reset (must happen BEFORE narration logic)
-// ─────────────────────────────
+            // ─────────────────────────────
+            // Phase transition reset (must happen BEFORE narration logic)
+            // ─────────────────────────────
             if (phase !== lastPhase) {
+                console.log(`🔁 Phase transition: ${lastPhase} → ${phase}`);
                 lastPhase = phase;
-
-                // allow narration to run once for new phase
-                lastNarrationUrl = null;
-
-                // (optional but helpful) clear any stale queued items
-                narrationQueue = [];
-                narrationLock = false;
 
                 elapsed.set(0);
                 duration.set(0);
                 progress.set(0);
-                // ✅ DO NOT return — we still want to process narration/track for the new phase immediately
             }
 
             const playing =
@@ -124,17 +117,28 @@ export function startPlaybackPolling() {
                 (phase === 'intro' || phase === 'detail' || phase === 'artist') &&
                 data.context?.audio_url
             ) {
-                const url = data.context.audio_url as string;
-                const mode = data.context.voice_style ?? 'before';
+                // Fire narration only on phase transition
+                if (phase !== lastNarrationPhase) {
+                    console.log(`🎤 Narration phase entered: ${phase}`);
+                    lastNarrationPhase = phase;
 
-                // Only queue when URL changes
-                if (url !== lastNarrationUrl) {
+                    const url = data.context.audio_url as string;
+                    const mode = data.context.voice_style ?? 'before';
+
                     console.log(`🎤 Queueing narration (${mode} mode):`, url);
-                    lastNarrationUrl = url;
+
                     narrationQueue.push(url);
                     playNarrationQueue();
                 }
+            } else if (
+                phase !== 'intro' &&
+                phase !== 'detail' &&
+                phase !== 'artist'
+            ) {
+                // Only reset when we truly leave narration territory
+                lastNarrationPhase = null;
             }
+
 
             /* ─────────────────────────────
                🎵 Track handling (Spotify)
@@ -159,20 +163,33 @@ export function startPlaybackPolling() {
                 }
             }
 
-
             /* ─────────────────────────────
                Timing + progress
-               Backend returns ms
+               Backend returns ms (but narration uses seconds in context)
                ───────────────────────────── */
-            const elapsedSec = (data.elapsedMs ?? 0) / 1000;
-            const durationSec = (data.durationMs ?? 0) / 1000;
+
+            // Prefer top-level ms, fall back to context seconds (intro/detail/artist)
+            const elapsedMs =
+                typeof data.elapsedMs === 'number'
+                    ? data.elapsedMs
+                    : typeof data.context?.elapsed_seconds === 'number'
+                        ? Math.round(data.context.elapsed_seconds * 1000)
+                        : 0;
+
+            const durationMs =
+                typeof data.durationMs === 'number'
+                    ? data.durationMs
+                    : typeof data.context?.duration_seconds === 'number'
+                        ? Math.round(data.context.duration_seconds * 1000)
+                        : 0;
+
+            const elapsedSec = elapsedMs / 1000;
+            const durationSec = durationMs / 1000;
 
             elapsed.set(elapsedSec);
             duration.set(durationSec);
 
-            const pct =
-                durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
-
+            const pct = durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
             progress.set(Math.min(100, Math.max(0, pct)));
 
         } catch (err) {
@@ -190,14 +207,14 @@ export function stopPlaybackPolling() {
     pollTimer = null;
 
     lastPhase = null;
-    lastNarrationUrl = null;
     lastSpotifyId = null;
 
     narrationQueue = [];
     narrationLock = false;
+    lastNarrationPhase = null;
 }
 
 // Compatibility export – older code still imports this
 export function markUserStartedPlayback() {
-    console.log("▶️ markUserStartedPlayback called (noop)");
+    console.log('▶️ markUserStartedPlayback called (noop)');
 }

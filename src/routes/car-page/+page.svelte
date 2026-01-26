@@ -244,12 +244,13 @@
             ? $currentSelection.mode
             : 'decade_genre';
 
-    $: if (phaseLabel($playbackPhase)) {
+    let lastBannerPhase: string | null = null;
+
+    $: if ($playbackPhase !== lastBannerPhase && phaseLabel($playbackPhase)) {
+        lastBannerPhase = $playbackPhase;
         showPhaseBanner = true;
 
-        if (bannerTimer) {
-            clearTimeout(bannerTimer);
-        }
+        if (bannerTimer) clearTimeout(bannerTimer);
 
         bannerTimer = window.setTimeout(() => {
             showPhaseBanner = false;
