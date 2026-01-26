@@ -9,6 +9,7 @@ import {
 } from '$lib/carmode/CarMode.store';
 
 import type {PlaybackPhase} from '$lib/helpers/car/types';
+import {get} from 'svelte/store';
 
 const API_BASE =
     import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
@@ -27,6 +28,26 @@ let narrationLock = false;
 let narrationQueue: string[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
+let trackFinalized = false;
+
+
+/* ─────────────────────────────────────────────
+   Finalize UI when a track ends
+   ───────────────────────────────────────────── */
+
+function finalizeTrackUI(): void {
+    console.log('🏁 Track finished → finalizing UI');
+
+    isPlaying.set(false);
+
+    const d = Number(get(duration) ?? 0);
+    if (d > 0) {
+        elapsed.set(d);
+        progress.set(100);
+    } else {
+        progress.set(0);
+    }
+}
 
 /* ─────────────────────────────────────────────
    Low-level narration player
@@ -88,17 +109,7 @@ export function startPlaybackPolling() {
             const phase = data.phase as PlaybackPhase;
             playbackPhase.set(phase);
 
-            // ─────────────────────────────
-            // Phase transition reset (must happen BEFORE narration logic)
-            // ─────────────────────────────
-            if (phase !== lastPhase) {
-                console.log(`🔁 Phase transition: ${lastPhase} → ${phase}`);
-                lastPhase = phase;
-
-                elapsed.set(0);
-                duration.set(0);
-                progress.set(0);
-            }
+            const prevPhase = lastPhase;
 
             const playing =
                 typeof data.isPlaying === 'boolean'
@@ -110,6 +121,16 @@ export function startPlaybackPolling() {
 
             isPlaying.set(playing);
 
+            // ─────────────────────────────
+            // Phase transition reset
+            // ─────────────────────────────
+            if (phase !== prevPhase) {
+                console.log(`🔁 Phase transition: ${prevPhase} → ${phase}`);
+                elapsed.set(0);
+                duration.set(0);
+                progress.set(0);
+            }
+
             /* ─────────────────────────────
                🎤 Narration handling
                ───────────────────────────── */
@@ -117,7 +138,6 @@ export function startPlaybackPolling() {
                 (phase === 'intro' || phase === 'detail' || phase === 'artist') &&
                 data.context?.audio_url
             ) {
-                // Fire narration only on phase transition
                 if (phase !== lastNarrationPhase) {
                     console.log(`🎤 Narration phase entered: ${phase}`);
                     lastNarrationPhase = phase;
@@ -135,10 +155,8 @@ export function startPlaybackPolling() {
                 phase !== 'detail' &&
                 phase !== 'artist'
             ) {
-                // Only reset when we truly leave narration territory
                 lastNarrationPhase = null;
             }
-
 
             /* ─────────────────────────────
                🎵 Track handling (Spotify)
@@ -147,11 +165,10 @@ export function startPlaybackPolling() {
                 const spotifyId = data.context.spotify_track_id as string;
 
                 if (spotifyId !== lastSpotifyId) {
-                    console.log(
-                        '🎵 TRACK phase detected. Starting Spotify track:',
-                        spotifyId
-                    );
+                    console.log('🎵 TRACK phase detected. Starting Spotify track:', spotifyId);
+
                     lastSpotifyId = spotifyId;
+                    trackFinalized = false;   // 👈 reset for new track
 
                     await fetch(`${API_BASE}/playback/play-spotify`, {
                         method: 'POST',
@@ -163,12 +180,11 @@ export function startPlaybackPolling() {
                 }
             }
 
+
             /* ─────────────────────────────
-               Timing + progress
-               Backend returns ms (but narration uses seconds in context)
+               Timing + progress (clamped + finalize)
                ───────────────────────────── */
 
-            // Prefer top-level ms, fall back to context seconds (intro/detail/artist)
             const elapsedMs =
                 typeof data.elapsedMs === 'number'
                     ? data.elapsedMs
@@ -183,14 +199,39 @@ export function startPlaybackPolling() {
                         ? Math.round(data.context.duration_seconds * 1000)
                         : 0;
 
-            const elapsedSec = elapsedMs / 1000;
+// Convert ms → seconds
+            const elapsedSecRaw = elapsedMs / 1000;
             const durationSec = durationMs / 1000;
 
+// Clamp elapsed so it never runs past duration
+            const elapsedSec =
+                durationSec > 0 ? Math.min(elapsedSecRaw, durationSec) : elapsedSecRaw;
+
+// Update stores
             elapsed.set(elapsedSec);
             duration.set(durationSec);
 
-            const pct = durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
+// Progress 0–100%
+            const pct =
+                durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
             progress.set(Math.min(100, Math.max(0, pct)));
+
+// 🏁 Detect natural track end and finalize UI
+            if (
+                phase === 'track' &&
+                !trackFinalized &&
+                durationSec > 0 &&
+                elapsedSecRaw >= durationSec
+            ) {
+                trackFinalized = true;
+
+                console.log('🏁 Track reached end (single fire), finalizing UI');
+
+                finalizeTrackUI();
+            }
+
+
+            lastPhase = phase;
 
         } catch (err) {
             console.warn('⚠️ Playback poll error', err);
@@ -208,13 +249,15 @@ export function stopPlaybackPolling() {
 
     lastPhase = null;
     lastSpotifyId = null;
+    trackFinalized = false;
 
     narrationQueue = [];
     narrationLock = false;
     lastNarrationPhase = null;
 }
 
-// Compatibility export – older code still imports this
+
+// Compatibility export
 export function markUserStartedPlayback() {
     console.log('▶️ markUserStartedPlayback called (noop)');
 }
