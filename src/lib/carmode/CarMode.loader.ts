@@ -5,6 +5,11 @@ import type {SelectionState} from '$lib/stores/selection';
 import type {LoadedTrack} from '$lib/utils/normalizeTrack';
 import {loadTrackSequence, loadFirstTrack} from '$lib/helpers/trackSequenceLoader';
 
+const API_BASE =
+    import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
+    ?? 'http://127.0.0.1:8000';
+
+
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
 export async function loadForSelection(
@@ -15,7 +20,6 @@ export async function loadForSelection(
     tracks.set([]);
     currentTrack.set(null);
 
-    const isPauseMode = sel.pauseMode === 'pause';
 
     try {
         const key = cacheKey(sel);
@@ -77,47 +81,7 @@ export async function loadForSelection(
         return;
     }
 
-// ─────────────────────────────────────────────
-// 3️⃣ AUTO-START BACKEND SEQUENCE (continuous mode)
-// ─────────────────────────────────────────────
-    if (!isPauseMode) {
-        console.log("🚀 Auto-starting backend sequence for mode:", sel.mode);
-
-        if (sel.mode === "decade_genre") {
-            await fetch(`/api/playback/start-decade-genre`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    decade: sel.context?.decade,
-                    genre: sel.context?.genre,
-                    startRank: sel.startRank,
-                    endRank: sel.endRank,
-                    order: sel.playbackOrder,
-                    language: sel.language,
-                    voices: sel.voices,
-                    voicePlayMode: sel.voicePlayMode,
-                    pauseMode: sel.pauseMode
-                })
-            });
-        }
-
-        if (sel.mode === "collection") {
-            await fetch(`/api/playback/start-collection`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    collection_slug: sel.context?.collection_slug,
-                    startRank: sel.startRank,
-                    endRank: sel.endRank,
-                    order: sel.playbackOrder,
-                    language: sel.language,
-                    voices: sel.voices,
-                    voicePlayMode: sel.voicePlayMode,
-                    pauseMode: sel.pauseMode
-                })
-            });
-        }
-    }
+    console.log("🧊 Loader finished. No playback started. Waiting for Play button.");
 
 
 }
