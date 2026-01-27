@@ -307,9 +307,19 @@
         console.log('🚗 CarMode onMount START');
         console.log('API BASE:', import.meta.env.VITE_API_BASE_URL);
 
+        // 🧹 Step 0: Reset backend transport safely
+        try {
+            const res = await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
+            const data = await res.json();
+            console.log('🧹 Backend playback reset:', data);
+        } catch (err) {
+            console.warn('⚠️ Backend reset failed (continuing anyway):', err);
+        }
 
-        startPlaybackPolling();   // 🔥 THIS WAS MISSING
+        // ⏱ Step 1: Start polling AFTER reset
+        startPlaybackPolling();
         console.log('⏱ Playback polling started from onMount');
+
 
         const url = new URL(window.location.href);
         const sel = buildSelectionFromUrl(url);
