@@ -5,8 +5,12 @@ import {
     playbackPhase,
     elapsed,
     duration,
-    progress
+    progress,
+    currentRank,
+    currentTrack,
+    tracks
 } from '$lib/carmode/CarMode.store';
+
 
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {get} from 'svelte/store';
@@ -29,6 +33,7 @@ let narrationQueue: string[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
+let lastRank: number | null = null;
 
 
 /* ─────────────────────────────────────────────
@@ -105,6 +110,33 @@ export function startPlaybackPolling() {
 
             const data = await res.json();
             console.log('⏱ Poll data full:', JSON.stringify(data, null, 2));
+
+// ─────────────────────────────
+// Rank change → update UI track card
+// ─────────────────────────────
+            if (typeof data.currentRank === 'number' && data.currentRank !== lastRank) {
+                const list = get(tracks);
+                const next = list.find(t => t.rank === data.currentRank);
+
+                console.log(`🎯 Rank changed: ${lastRank} → ${data.currentRank}`, next?.trackName);
+
+                currentRank.set(data.currentRank);
+
+                if (next) {
+                    currentTrack.set(next);
+                }
+
+                // Reset progress/UI for new track
+                elapsed.set(0);
+                duration.set(0);
+                progress.set(0);
+
+                // Allow finalize to happen again for the new track
+                trackFinalized = false;
+
+                lastRank = data.currentRank;
+            }
+
 
             const phase = data.phase as PlaybackPhase;
             playbackPhase.set(phase);

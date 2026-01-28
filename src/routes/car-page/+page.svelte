@@ -117,8 +117,10 @@
                 language: sel.language,
                 voices: sel.voices,
                 voicePlayMode: sel.voicePlayMode,
-                pauseMode: sel.pauseMode
-            },
+                pauseMode: sel.pauseMode,
+                continuous: sel.pauseMode === 'continuous'
+            }
+            ,
             context:
                 sel.mode === 'decade_genre'
                     ? {
