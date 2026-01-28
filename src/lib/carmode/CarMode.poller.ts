@@ -226,8 +226,17 @@ export function startPlaybackPolling() {
                 trackFinalized = true;
 
                 console.log('🏁 Track reached end (single fire), finalizing UI');
-
                 finalizeTrackUI();
+
+                // 🔥 Tell backend the track is finished (this advances radio mode)
+                try {
+                    console.log('📡 Signaling backend: /playback/track-finished');
+                    await fetch(`${API_BASE}/playback/track-finished`, {
+                        method: 'POST'
+                    });
+                } catch (err) {
+                    console.error('❌ Failed to signal track-finished', err);
+                }
             }
 
 
