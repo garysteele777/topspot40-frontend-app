@@ -78,6 +78,7 @@
                         : sel.playbackOrder === 'down'
                             ? 'count_down'
                             : 'random',
+                continuous: sel.pauseMode === 'continuous' ? 'true' : 'false',   // 🔥 THIS IS THE SWITCH
                 tts_language: sel.language,
                 play_intro: sel.voices.includes('intro') ? 'true' : 'false',
                 play_detail: sel.voices.includes('detail') ? 'true' : 'false',
@@ -85,6 +86,7 @@
                 play_track: 'true',
                 voice_style: sel.voicePlayMode
             });
+
 
             console.log('🚀 COLLECTION SEQUENCE:', params.toString());
 
