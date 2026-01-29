@@ -34,6 +34,7 @@ let narrationQueue: string[] = [];
 let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
 let lastRank: number | null = null;
+let narrationSignaled = false;
 
 
 /* ─────────────────────────────────────────────
@@ -68,11 +69,16 @@ function playOneAudio(url: string): Promise<void> {
 }
 
 async function signalNarrationFinished() {
+    if (narrationSignaled) return;
+    narrationSignaled = true;
+
+    console.log('📡 Signaling backend: /playback/narration-finished');
+
     await fetch(`${API_BASE}/playback/narration-finished`, {
         method: 'POST'
-    }).catch(() => {
-    });
+    }).catch(() => {});
 }
+
 
 async function playNarrationQueue() {
     if (narrationLock) return;
@@ -172,7 +178,9 @@ export function startPlaybackPolling() {
             ) {
                 if (phase !== lastNarrationPhase) {
                     console.log(`🎤 Narration phase entered: ${phase}`);
+                    narrationSignaled = false;   // ✅ reset per phase
                     lastNarrationPhase = phase;
+
 
                     const url = data.context.audio_url as string;
                     const mode = data.context.voice_style ?? 'before';
