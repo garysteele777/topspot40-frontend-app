@@ -313,3 +313,11 @@ console.warn("⚠️ CarMode.player.ts is currently disabled. Backend owns playb
 //
 //     updateTrack(track, {launchBackend: true});
 // }
+
+import type { LoadedTrack } from '$lib/utils/normalizeTrack';
+
+export function updateTrack(_track: LoadedTrack): void {
+    console.warn(
+        '⚠️ updateTrack() called, but CarMode.player.ts is disabled. Backend owns playback.'
+    );
+}

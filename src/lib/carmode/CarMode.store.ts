@@ -18,3 +18,5 @@ export const progress = writable<number>(0);
 export const isPlaying = writable<boolean>(false);
 
 export const showNarrationModal = writable<boolean>(false);
+export const timingSource = writable<'spotify' | 'narration'>('spotify');
+

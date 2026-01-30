@@ -6,11 +6,14 @@ import type { SelectionState } from '$lib/stores/selection';
  * These are the ONLY phases that drive timing & progress.
  */
 export type PlaybackPhase =
-	| 'bed'
-	| 'intro'
-	| 'detail'
-	| 'artist'
-	| 'track';
+    | 'idle'
+    | 'intro'
+    | 'detail'
+    | 'artist'
+    | 'track'
+    | 'paused'
+    | 'stopped';
+
 
 /**
  * 🚦 Backend / transport states

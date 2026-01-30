@@ -1,6 +1,10 @@
 // src/lib/carmode/CarMode.poller.ts
 
+import {get} from 'svelte/store';
+import type {PlaybackPhase} from '$lib/helpers/car/types';
+
 import {
+    timingSource,
     isPlaying,
     playbackPhase,
     elapsed,
@@ -10,10 +14,6 @@ import {
     currentTrack,
     tracks
 } from '$lib/carmode/CarMode.store';
-
-
-import type {PlaybackPhase} from '$lib/helpers/car/types';
-import {get} from 'svelte/store';
 
 const API_BASE =
     import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
@@ -29,7 +29,13 @@ let lastSpotifyId: string | null = null;
 
 // Narration queue + lock
 let narrationLock = false;
-let narrationQueue: string[] = [];
+type NarrationItem = {
+    url: string;
+    phase: 'intro' | 'detail' | 'artist';
+};
+
+let narrationQueue: NarrationItem[] = [];
+
 
 let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
@@ -59,12 +65,57 @@ function finalizeTrackUI(): void {
    Low-level narration player
    ───────────────────────────────────────────── */
 
-function playOneAudio(url: string): Promise<void> {
+
+function playOneAudio(
+    url: string,
+    phase: 'intro' | 'detail' | 'artist'
+): Promise<void> {
     return new Promise((resolve, reject) => {
         const audio = new Audio(url);
-        audio.onended = () => resolve();
-        audio.onerror = (e) => reject(e);
-        audio.play().catch(reject);
+
+        // 🧠 narration owns the clock
+        timingSource.set('narration');
+        playbackPhase.set(phase);
+
+        audio.onloadedmetadata = () => {
+            duration.set(audio.duration);
+            elapsed.set(0);
+            progress.set(0);
+        };
+
+        const timer = window.setInterval(() => {
+            elapsed.set(audio.currentTime);
+
+            if (audio.duration > 0) {
+                progress.set((audio.currentTime / audio.duration) * 100);
+
+            } else {
+                progress.set(0);
+            }
+        }, 100);
+
+        audio.onended = () => {
+            clearInterval(timer);
+
+            elapsed.set(0);
+            duration.set(0);
+            progress.set(0);
+
+            timingSource.set('spotify');
+            resolve();
+        };
+
+        audio.onerror = (e) => {
+            clearInterval(timer);
+            timingSource.set('spotify');
+            reject(e);
+        };
+
+        audio.play().catch((err) => {
+            clearInterval(timer);
+            timingSource.set('spotify');
+            reject(err);
+        });
     });
 }
 
@@ -76,7 +127,8 @@ async function signalNarrationFinished() {
 
     await fetch(`${API_BASE}/playback/narration-finished`, {
         method: 'POST'
-    }).catch(() => {});
+    }).catch(() => {
+    });
 }
 
 
@@ -86,9 +138,10 @@ async function playNarrationQueue() {
 
     try {
         while (narrationQueue.length > 0) {
-            const url = narrationQueue.shift()!;
-            console.log('🎤 Playing narration:', url);
-            await playOneAudio(url);
+            const item = narrationQueue.shift()!;
+            console.log('🎤 Playing narration:', item.phase, item.url);
+            await playOneAudio(item.url, item.phase);
+
         }
 
         console.log('🔔 Narration queue finished, signaling backend');
@@ -159,6 +212,16 @@ export function startPlaybackPolling() {
 
             isPlaying.set(playing);
 
+            // 🛑 FRONTEND owns timing during narration — do NOT overwrite UI clock
+            if (
+                get(timingSource) === 'narration' &&
+                (phase === 'intro' || phase === 'detail' || phase === 'artist')
+            ) {
+                lastPhase = phase;
+                return;
+            }
+
+
             // ─────────────────────────────
             // Phase transition reset
             // ─────────────────────────────
@@ -187,8 +250,9 @@ export function startPlaybackPolling() {
 
                     console.log(`🎤 Queueing narration (${mode} mode):`, url);
 
-                    narrationQueue.push(url);
-                    playNarrationQueue();
+                    narrationQueue.push({url, phase});
+                    void playNarrationQueue();
+
                 }
             } else if (
                 phase !== 'intro' &&
