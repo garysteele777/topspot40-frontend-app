@@ -9,6 +9,10 @@
     import CarModeNarrationModal from '$lib/components/car/CarModeNarrationModal.svelte';
     import MiniPlayer from '$lib/components/MiniPlayer.svelte';
 
+    import type {PlaybackPhase} from '$lib/helpers/car/types';
+    import CarModeTicker from '$lib/components/car/CarModeTicker.svelte';
+
+
     import {
         startPlaybackPolling,
         stopPlaybackPolling,
@@ -218,10 +222,6 @@
     }
 
 
-    let showPhaseBanner = false;
-    let bannerTimer: number | null = null;
-
-
     // ─────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────
@@ -248,19 +248,6 @@
             ? $currentSelection.mode
             : 'decade_genre';
 
-    let lastBannerPhase: string | null = null;
-
-    $: if ($playbackPhase !== lastBannerPhase && phaseLabel($playbackPhase)) {
-        lastBannerPhase = $playbackPhase;
-        showPhaseBanner = true;
-
-        if (bannerTimer) clearTimeout(bannerTimer);
-
-        bannerTimer = window.setTimeout(() => {
-            showPhaseBanner = false;
-        }, 2500);
-    }
-
 
     function backToOptions() {
         if ($currentSelection && $currentTrack) {
@@ -286,18 +273,29 @@
         }
     }
 
-    function phaseLabel(phase: string): string {
+    function phaseLabel(phase: PlaybackPhase | null | undefined): string {
         switch (phase) {
-            case 'loading':
-                return 'Preparing playback…';
+            case 'idle':
+                return '';
+
             case 'intro':
                 return 'Now playing intro';
+
             case 'detail':
                 return 'Now playing track details';
+
             case 'artist':
                 return 'Now playing artist info';
+
             case 'track':
                 return 'Now playing track';
+
+            case 'paused':
+                return 'Playback paused';
+
+            case 'stopped':
+                return '';
+
             default:
                 return '';
         }
@@ -454,17 +452,7 @@
 
                 <!--                </div>-->
 
-                {#if showPhaseBanner}
-
-                    {#key $playbackPhase}
-                        <div class="now-playing-banner">
-                            <div class="now-playing-pill">
-                                {phaseLabel($playbackPhase)}
-                            </div>
-                        </div>
-
-                    {/key}
-                {/if}
+                <CarModeTicker text={phaseLabel($playbackPhase)}/>
 
 
                 <!-- Narration + Buttons -->

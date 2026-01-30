@@ -1,5 +1,6 @@
 <script lang="ts">
     import type {LoadedTrack} from '$lib/utils/normalizeTrack';
+    import type {PlaybackPhase} from '$lib/helpers/car/types';
 
     export let currentTrack: LoadedTrack | null = null;
     export let tracks: LoadedTrack[] = [];
@@ -7,7 +8,8 @@
     export let elapsed = 0;
     export let duration = 1;
     export let progress = 0;
-    export let phase: 'idle' | 'bed' | 'intro' | 'detail' | 'artist' | 'track' = 'idle';
+    export let phase: PlaybackPhase | null | undefined = 'idle';
+
 
     function toTitleCase(str?: string | null) {
         return str
@@ -29,8 +31,8 @@
         phase === 'intro' ? 'Now playing intro…' :
             phase === 'detail' ? 'Now playing story…' :
                 phase === 'artist' ? 'Now playing artist bio…' :
-                    phase === 'bed' ? 'Starting sequence…' :
-                        phase === 'track' ? 'Now playing track…' :
+                    phase === 'track' ? 'Now playing track…' :
+                        phase === 'paused' ? 'Playback paused' :
                             '';
 
     let expand = false;
@@ -62,17 +64,24 @@
         <div
                 class="purdue-progress-fill"
                 style={`width: ${progress}%`}
+        ></div>
 
-        />
     </div>
 
     {#if phaseLabel}
-        <button
-                type="button"
+        <div
                 class="phase-wrapper"
+                role="button"
+                tabindex="0"
                 on:click={() => (expand = !expand)}
+                on:keydown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      expand = !expand;
+    }
+  }}
         >
-            <div class="phase-eq">
+            <div class="phase-eq" aria-hidden="true">
                 <div class="bar b1"></div>
                 <div class="bar b2"></div>
                 <div class="bar b3"></div>
@@ -80,7 +89,6 @@
                 <div class="bar b5"></div>
             </div>
 
-            <!-- 🔴 THIS IS THE BANNER YOU LOST -->
             <div class="phase-banner">
                 <div class="phase-label-deluxe">
                     <div class="phase-marquee">
@@ -94,7 +102,8 @@
                     Extra narration info coming soon…
                 </div>
             {/if}
-        </button>
+        </div>
+
     {/if}
 </div>
 
@@ -238,4 +247,15 @@
         color: var(--purdue-gold-light);
         font-size: 0.9rem;
     }
+
+    .phase-wrapper {
+        user-select: none;
+    }
+
+    .phase-wrapper:focus {
+        outline: 2px solid rgba(207, 185, 145, 0.6); /* Purdue gold-ish */
+        outline-offset: 6px;
+        border-radius: 14px;
+    }
+
 </style>
