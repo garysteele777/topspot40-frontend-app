@@ -1,17 +1,9 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {fade} from 'svelte/transition';
-
+    import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
-    import CarModeTrackMeta from '$lib/components/car/CarModeTrackMeta.svelte';
-    import CarModeNarration from '$lib/components/car/CarModeNarration.svelte';
-    import CarModeNarrationModal from '$lib/components/car/CarModeNarrationModal.svelte';
-    import MiniPlayer from '$lib/components/MiniPlayer.svelte';
-
     import type {PlaybackPhase} from '$lib/helpers/car/types';
-    import CarModeTicker from '$lib/components/car/CarModeTicker.svelte';
-
 
     import {
         startPlaybackPolling,
@@ -44,10 +36,10 @@
 
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
-    let playbackReady = false;
-    let playbackError: string | null = null;
 
-    const API_BASE: string = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
+    const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
     console.log('🌍 Car page API_BASE =', API_BASE);
 
     function stopNarrationAudio() {
@@ -57,6 +49,10 @@
             a.pause();
             a.currentTime = 0;
         });
+    }
+
+    function setNarrationModalOpen(v: boolean): void {
+        showNarrationModal.set(v);
     }
 
 
@@ -228,9 +224,6 @@
     const toTitleCase = (text: string | null | undefined): string =>
         text ? text.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1)) : '';
 
-    $: titleCased = toTitleCase($currentTrack?.trackName ?? '');
-    $: artistCased = toTitleCase($currentTrack?.artistName ?? '');
-
     $: uiDecade =
         $currentSelection?.mode === 'decade_genre'
             ? toTitleCase($currentSelection.context?.decade ?? '')
@@ -351,9 +344,6 @@
         // ─────────────────────────────────────────────
 // Prepare Spotify playback (warmup)
 // ─────────────────────────────────────────────
-// TEMP: allow playback if backend is reachable
-        playbackReady = true;
-        playbackError = null;
 
 
         if (url.searchParams.get('debug') === '1') {
@@ -390,87 +380,27 @@
     {/if}
 
     {#if $currentTrack}
-        {#key $currentTrack?.spotifyTrackId ?? $currentTrack?.rank}
-            <div class="w-full flex flex-col items-center" in:fade={{ duration: 150 }} out:fade={{ duration: 100 }}>
-                <!-- MiniPlayer -->
-                <div class="w-full max-w-xl mx-auto">
-                    {#if playbackError}
-                        <p class="text-yellow-400 text-sm text-center mt-2">
-                            🎧 {playbackError}
-                        </p>
-                    {/if}
+
+        <CarModePlayerPanel
+                currentTrack={$currentTrack}
+                tracks={$tracks}
+                isPlaying={$isPlaying}
+                elapsed={$elapsed}
+                duration={$duration}
+                progress={$progress}
+                phase={phaseLabel($playbackPhase)}
+                showNarrationModal={$showNarrationModal}
+                setShowNarrationModal={setNarrationModalOpen}
+                onPrev={prevTrack}
+                onNext={nextTrack}
+                onPlayPause={async () => {
+        markUserStartedPlayback();
+        if ($currentTrack) await playTrackByRank($currentTrack.rank);
+    }}
+                onBackToOptions={backToOptions}
+        />
 
 
-                    <MiniPlayer
-                            coverUrl={$currentTrack.albumArtwork ?? '/default_album.png'}
-                            trackTitle={titleCased}
-                            artistName={artistCased}
-                            isPlaying={$isPlaying}
-                            onPrev={prevTrack}
-
-                            onPlayPause={async () => {
-    markUserStartedPlayback();
-    console.log('🔥 PLAY BUTTON CLICKED');
-
-    if (!playbackReady) return;
-    if ($isPlaying) return;
-    if (!$currentTrack || !$currentSelection) return;
-
-    console.log('🔥 MODE =', $currentSelection.mode);
-
-    await playTrackByRank($currentTrack.rank);
-}}
-
-
-                            onNext={nextTrack}
-
-                            hideMeta={true}
-                    />
-
-
-                </div>
-
-                <!-- Meta + Progress Bar -->
-                <div class="w-full flex justify-center px-4 mt-4">
-                    <div class="w-full max-w-xl">
-                        <CarModeTrackMeta
-                                currentTrack={$currentTrack}
-                                tracks={$tracks}
-                                elapsed={$elapsed}
-                                duration={$duration}
-                                progress={$progress}
-                                phase={$playbackPhase}
-                        />
-                    </div>
-                </div>
-
-                <!-- STEP 3.1 TEMP DEBUG (REMOVE LATER) -->
-                <!--                <div style="font-family: monospace; font-size: 12px; opacity: 0.8; margin-top: 6px;">-->
-                <!--                    phase={$playbackPhase}-->
-                <!--                    elapsedSec={$elapsed}-->
-                <!--                    durationSec={$duration}-->
-
-                <!--                </div>-->
-
-                <CarModeTicker text={phaseLabel($playbackPhase)}/>
-
-
-                <!-- Narration + Buttons -->
-                <div class="w-full flex justify-center px-4 mt-4">
-                    <CarModeNarration
-                            track={$currentTrack}
-                            onOpenModal={() => showNarrationModal.set(true)}
-                            onBackToOptions={backToOptions}
-                    />
-                </div>
-
-                <CarModeNarrationModal
-                        track={$currentTrack}
-                        open={$showNarrationModal}
-                        onClose={() => showNarrationModal.set(false)}
-                />
-            </div>
-        {/key}
     {:else}
         <p class="text-gray-400 italic text-center mt-10">{$status}</p>
     {/if}
@@ -482,57 +412,33 @@
         </div>
     {/if}
 
-    <style>
-        .debug-panel {
-            background: rgba(0, 0, 0, 0.45);
-            padding: 1rem;
-            border-radius: 10px;
-            margin: 1rem auto;
-            max-width: 900px;
-            font-size: 0.85rem;
-            color: #ccc;
-        }
-
-        .car-mode-root {
-            min-height: 100vh;
-            width: 100%;
-            background: radial-gradient(
-                    circle at top,
-                    #1a1a1f 0%,
-                    #0e0e11 45%,
-                    #08080a 100%
-            );
-            color: #fff;
-        }
-
-
-        .now-playing-banner {
-            position: fixed;
-            bottom: 88px; /* safely above controls */
-            left: 50%;
-            transform: translateX(-50%);
-
-            pointer-events: none;
-            z-index: 50;
-        }
-
-        .now-playing-pill {
-            padding: 0.45rem 1.1rem;
-            font-size: 0.72rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-
-            color: #9ca3af;
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(6px);
-
-            border-radius: 9999px;
-            white-space: nowrap;
-        }
-
-
-    </style>
-
-
 </div>
+
+<style>
+    .debug-panel {
+        background: rgba(0, 0, 0, 0.45);
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem auto;
+        max-width: 900px;
+        font-size: 0.85rem;
+        color: #ccc;
+    }
+
+    .car-mode-root {
+        min-height: 100vh;
+        width: 100%;
+        background: radial-gradient(
+                circle at top,
+                #1a1a1f 0%,
+                #0e0e11 45%,
+                #08080a 100%
+        );
+        color: #fff;
+    }
+
+</style>
+
+
+
 
