@@ -388,7 +388,7 @@
                 elapsed={$elapsed}
                 duration={$duration}
                 progress={$progress}
-                phase={phaseLabel($playbackPhase)}
+                phase={$playbackPhase}
                 showNarrationModal={$showNarrationModal}
                 setShowNarrationModal={setNarrationModalOpen}
                 onPrev={prevTrack}

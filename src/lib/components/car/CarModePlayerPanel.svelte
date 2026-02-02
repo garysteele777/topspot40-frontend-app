@@ -5,62 +5,136 @@
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
     import CarModeTicker from './CarModeTicker.svelte';
 
-    export let currentTrack;
-    export let tracks;
-    export let isPlaying;
-    export let elapsed;
-    export let duration;
-    export let progress;
-    export let phase;
+    import type {LoadedTrack} from '$lib/utils/normalizeTrack';
+    import type {PlaybackPhase} from '$lib/helpers/car/types';
 
-    export let onPrev;
-    export let onNext;
-    export let onPlayPause;
-    export let onBackToOptions;
-    export let showNarrationModal;
-    export let setShowNarrationModal;
+
+    /* ─────────────────────────────────────────────
+       Props
+    ───────────────────────────────────────────── */
+    export let currentTrack: LoadedTrack | null = null;
+    export let tracks: LoadedTrack[] = [];
+    export let phase: PlaybackPhase | null = null;
+
+
+    export let isPlaying: boolean;
+    export let elapsed: number;
+    export let duration: number;
+    export let progress: number;
+
+    export let onPrev: () => void;
+    export let onNext: () => void;
+    export let onPlayPause: () => void;
+    export let onBackToOptions: () => void;
+
+    export let showNarrationModal: boolean;
+    export let setShowNarrationModal: (v: boolean) => void;
+
+    /* ─────────────────────────────────────────────
+       Derived values (Next + Progress)
+    ───────────────────────────────────────────── */
+    $: total = tracks.length;
+
+    $: currentIndex =
+        currentTrack
+            ? tracks.findIndex(t => t.rank === currentTrack.rank)
+            : -1;
+
+    $: nextTrack =
+        currentIndex >= 0 && currentIndex < total - 1
+            ? tracks[currentIndex + 1]
+            : null;
+
+    $: completed = currentIndex >= 0 ? currentIndex : 0;
+    $: remaining = total - completed;
 </script>
 
 <div class="w-full flex flex-col items-center">
+
+    <!-- Player -->
     <div class="w-full max-w-xl mx-auto">
         <MiniPlayer
-            coverUrl={currentTrack?.albumArtwork ?? '/default_album.png'}
-            trackTitle={currentTrack?.trackName}
-            artistName={currentTrack?.artistName}
-            {isPlaying}
-            onPrev={onPrev}
-            onNext={onNext}
-            onPlayPause={onPlayPause}
-            hideMeta={true}
+                coverUrl={currentTrack?.albumArtwork ?? '/default_album.png'}
+                trackTitle={currentTrack?.trackName}
+                artistName={currentTrack?.artistName}
+                {isPlaying}
+                onPrev={onPrev}
+                onNext={onNext}
+                onPlayPause={onPlayPause}
+                hideMeta={true}
         />
     </div>
 
+    <!-- Track Meta -->
     <div class="w-full flex justify-center px-4 mt-4">
         <div class="w-full max-w-xl">
             <CarModeTrackMeta
-                {currentTrack}
-                {tracks}
-                {elapsed}
-                {duration}
-                {progress}
-                {phase}
+                    {currentTrack}
+                    {tracks}
+                    {elapsed}
+                    {duration}
+                    {progress}
+                    {phase}
             />
         </div>
     </div>
 
-    <CarModeTicker text={phase} />
+    <!-- Phase ticker -->
+    <CarModeTicker text={phase ?? ''}/>
 
+
+    <!-- ⭐ NEW: Next + Progress info -->
+    {#if total > 0}
+        <div class="car-extra-info">
+            {#if nextTrack}
+                <div class="next-line">
+                    Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
+                </div>
+            {/if}
+
+            <div class="progress-line">
+                Completed {completed} of {total}
+                <span class="dot">•</span>
+                Remaining {remaining}
+            </div>
+        </div>
+    {/if}
+
+    <!-- Narration -->
     <div class="w-full flex justify-center px-4 mt-4">
         <CarModeNarration
-            track={currentTrack}
-            onBackToOptions={onBackToOptions}
-            onOpenModal={() => setShowNarrationModal(true)}
+                track={currentTrack}
+                onBackToOptions={onBackToOptions}
+                onOpenModal={() => setShowNarrationModal(true)}
         />
     </div>
 
     <CarModeNarrationModal
-        track={currentTrack}
-        open={showNarrationModal}
-        onClose={() => setShowNarrationModal(false)}
+            track={currentTrack}
+            open={showNarrationModal}
+            onClose={() => setShowNarrationModal(false)}
     />
+
 </div>
+
+<style>
+    .car-extra-info {
+        margin-top: 0.75rem;
+        text-align: center;
+        opacity: 0.75;
+        font-size: 0.8rem;
+    }
+
+    .next-line {
+        font-weight: 500;
+    }
+
+    .progress-line {
+        font-size: 0.75rem;
+        color: #9ca3af;
+    }
+
+    .dot {
+        padding: 0 6px;
+    }
+</style>
