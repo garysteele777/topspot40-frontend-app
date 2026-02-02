@@ -12,8 +12,10 @@ import {
     progress,
     currentRank,
     currentTrack,
-    tracks
+    tracks,
+    playedTrackIds   // ✅ add this
 } from '$lib/carmode/CarMode.store';
+
 
 const API_BASE =
     import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
@@ -41,6 +43,15 @@ let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
 let lastRank: number | null = null;
 let narrationSignaled = false;
+
+
+function markPlayed(spotifyId: string | null) {
+    if (!spotifyId) return;
+    const set = new Set(get(playedTrackIds));
+    set.add(spotifyId);
+    playedTrackIds.set(set);
+    console.log('✅ Marked played:', spotifyId, '→ size', set.size);
+}
 
 
 /* ─────────────────────────────────────────────
@@ -332,6 +343,9 @@ export function startPlaybackPolling() {
                 console.log('🏁 Track reached end (single fire), finalizing UI');
                 finalizeTrackUI();
 
+                markPlayed(lastSpotifyId);
+
+
                 // 🔥 Tell backend the track is finished (this advances radio mode)
                 try {
                     console.log('📡 Signaling backend: /playback/track-finished');
@@ -351,6 +365,31 @@ export function startPlaybackPolling() {
         }
     }, POLL_INTERVAL_MS);
 }
+
+/* ─────────────────────────────────────────────
+   ⏭ Manual Skip → count as played + advance
+   ───────────────────────────────────────────── */
+
+export async function skipToNextTrack(): Promise<void> {
+    console.log('⏭ Manual skip requested');
+
+    // 1) Count current track as played
+    markPlayed(lastSpotifyId);
+
+    // 2) Stop any narration immediately
+    narrationQueue = [];
+    narrationLock = false;
+
+    // 3) Snap UI to finished
+    finalizeTrackUI();
+
+    // 4) Tell backend to advance (same signal as natural end)
+    await fetch(`${API_BASE}/playback/track-finished`, {
+        method: 'POST'
+    }).catch(() => {
+    });
+}
+
 
 export function stopPlaybackPolling() {
     if (!pollTimer) return;

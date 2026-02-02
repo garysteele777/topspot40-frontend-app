@@ -7,6 +7,8 @@
 
     import type {LoadedTrack} from '$lib/utils/normalizeTrack';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
+    import {skipToNextTrack} from '$lib/carmode/CarMode.poller';
+    import {playedCount} from '$lib/carmode/CarMode.store';
 
 
     /* ─────────────────────────────────────────────
@@ -45,7 +47,8 @@
             ? tracks[currentIndex + 1]
             : null;
 
-    $: completed = currentIndex >= 0 ? currentIndex : 0;
+    $: completed = $playedCount;
+
     $: remaining = total - completed;
 </script>
 
@@ -88,8 +91,15 @@
         <div class="car-extra-info">
             {#if nextTrack}
                 <div class="next-line">
-                    Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
+    <span>
+        Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
+    </span>
+
+                    <button class="next-btn" on:click={skipToNextTrack}>
+                        ⏭ Next
+                    </button>
                 </div>
+
             {/if}
 
             <div class="progress-line">
@@ -137,4 +147,27 @@
     .dot {
         padding: 0 6px;
     }
+
+
+    .next-line {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .next-btn {
+        background: #222;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-size: 0.7rem;
+        cursor: pointer;
+    }
+
+    .next-btn:hover {
+        background: #333;
+    }
+
 </style>
