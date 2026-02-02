@@ -50,6 +50,12 @@
     $: completed = $playedCount;
 
     $: remaining = total - completed;
+    $: percent =
+        total > 0
+            ? (completed / total) * 100
+            : 0;
+
+
 </script>
 
 <div class="w-full flex flex-col items-center">
@@ -107,6 +113,14 @@
                 <span class="dot">•</span>
                 Remaining {remaining}
             </div>
+
+            <div class="overall-progress">
+                <div
+                        class="overall-bar"
+                        style="width: {percent}%">
+                </div>
+            </div>
+
         </div>
     {/if}
 
@@ -169,5 +183,23 @@
     .next-btn:hover {
         background: #333;
     }
+
+    .overall-progress {
+        margin-top: 6px;
+        height: 6px;
+        width: 180px;
+        background: #222;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .overall-bar {
+        height: 100%;
+        background: gold;
+        transition: width 250ms ease;
+    }
+
 
 </style>

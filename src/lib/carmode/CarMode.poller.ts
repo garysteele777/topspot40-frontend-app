@@ -2,6 +2,8 @@
 
 import {get} from 'svelte/store';
 import type {PlaybackPhase} from '$lib/helpers/car/types';
+import {browser} from '$app/environment';
+
 
 import {
     timingSource,
@@ -19,6 +21,15 @@ import {
 
 const API_BASE =
     import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
+const DEBUG =
+    browser && localStorage.getItem('ts-debug') === '1';
+
+
+const dlog = (...args: unknown[]) => {
+    if (DEBUG) console.log(...args);
+};
+
 
 const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
@@ -81,6 +92,10 @@ function playOneAudio(
     url: string,
     phase: 'intro' | 'detail' | 'artist'
 ): Promise<void> {
+    // ✅ SSR safety: Audio + window don't exist on the server
+    if (!browser) return Promise.resolve();
+
+
     return new Promise((resolve, reject) => {
         const audio = new Audio(url);
 
@@ -134,7 +149,7 @@ async function signalNarrationFinished() {
     if (narrationSignaled) return;
     narrationSignaled = true;
 
-    console.log('📡 Signaling backend: /playback/narration-finished');
+    dlog('📡 track-finished');
 
     await fetch(`${API_BASE}/playback/narration-finished`, {
         method: 'POST'
@@ -150,12 +165,13 @@ async function playNarrationQueue() {
     try {
         while (narrationQueue.length > 0) {
             const item = narrationQueue.shift()!;
-            console.log('🎤 Playing narration:', item.phase, item.url);
+            dlog('🎤 Playing:', item.phase);
             await playOneAudio(item.url, item.phase);
 
         }
 
-        console.log('🔔 Narration queue finished, signaling backend');
+        dlog('🔔 Narration finished');
+
         await signalNarrationFinished();
     } catch (err) {
         console.error('❌ Narration playback failed:', err);
@@ -169,9 +185,12 @@ async function playNarrationQueue() {
    ───────────────────────────────────────────── */
 
 export function startPlaybackPolling() {
+    if (!browser) return;   // 👈 ADD THIS GUARD
     if (pollTimer) return;
 
-    console.log('▶️ Playback polling started');
+
+    dlog('▶️ Playback polling started');
+
 
     pollTimer = window.setInterval(async () => {
         try {
@@ -179,7 +198,8 @@ export function startPlaybackPolling() {
             if (!res.ok) return;
 
             const data = await res.json();
-            console.log('⏱ Poll data full:', JSON.stringify(data, null, 2));
+            dlog('⏱ Poll data:', data);
+
 
 // ─────────────────────────────
 // Rank change → update UI track card
@@ -188,7 +208,8 @@ export function startPlaybackPolling() {
                 const list = get(tracks);
                 const next = list.find(t => t.rank === data.currentRank);
 
-                console.log(`🎯 Rank changed: ${lastRank} → ${data.currentRank}`, next?.trackName);
+                dlog(`🎯 Rank: ${lastRank} → ${data.currentRank}`, next?.trackName);
+
 
                 currentRank.set(data.currentRank);
 
@@ -237,7 +258,8 @@ export function startPlaybackPolling() {
             // Phase transition reset
             // ─────────────────────────────
             if (phase !== prevPhase) {
-                console.log(`🔁 Phase transition: ${prevPhase} → ${phase}`);
+                dlog(`🔁 Phase transition: ${prevPhase} → ${phase}`);
+
                 elapsed.set(0);
                 duration.set(0);
                 progress.set(0);
@@ -251,15 +273,14 @@ export function startPlaybackPolling() {
                 data.context?.audio_url
             ) {
                 if (phase !== lastNarrationPhase) {
-                    console.log(`🎤 Narration phase entered: ${phase}`);
+                    dlog(`🎤 Narration phase: ${phase}`);
                     narrationSignaled = false;   // ✅ reset per phase
                     lastNarrationPhase = phase;
 
 
                     const url = data.context.audio_url as string;
-                    const mode = data.context.voice_style ?? 'before';
 
-                    console.log(`🎤 Queueing narration (${mode} mode):`, url);
+                    dlog('🎤 Queue:', url);
 
                     narrationQueue.push({url, phase});
                     void playNarrationQueue();
@@ -280,7 +301,8 @@ export function startPlaybackPolling() {
                 const spotifyId = data.context.spotify_track_id as string;
 
                 if (spotifyId !== lastSpotifyId) {
-                    console.log('🎵 TRACK phase detected. Starting Spotify track:', spotifyId);
+                    dlog('🎵 TRACK start:', spotifyId);
+
 
                     lastSpotifyId = spotifyId;
                     trackFinalized = false;   // 👈 reset for new track
@@ -348,7 +370,7 @@ export function startPlaybackPolling() {
 
                 // 🔥 Tell backend the track is finished (this advances radio mode)
                 try {
-                    console.log('📡 Signaling backend: /playback/track-finished');
+                    dlog('📡 narration-finished');
                     await fetch(`${API_BASE}/playback/track-finished`, {
                         method: 'POST'
                     });
