@@ -56,12 +56,56 @@ let lastRank: number | null = null;
 let narrationSignaled = false;
 
 
+import {programHistory, currentSelection} from '$lib/carmode/CarMode.store';
+
+
 function markPlayed(spotifyId: string | null) {
     if (!spotifyId) return;
+
+    // ─────────────────────────────
+    // Global session tracking (existing)
+    // ─────────────────────────────
     const set = new Set(get(playedTrackIds));
     set.add(spotifyId);
     playedTrackIds.set(set);
-    console.log('✅ Marked played:', spotifyId, '→ size', set.size);
+
+    // ─────────────────────────────
+    // Per-program tracking (NEW)
+    // ─────────────────────────────
+    const sel = get(currentSelection);
+    if (!sel || !sel.context) return;
+
+    let key: string | null = null;
+
+    if (sel.mode === 'decade_genre') {
+        const decade = sel.context.decade;
+        const genre = sel.context.genre;
+
+        if (decade && genre) {
+            key = `DG|${decade}|${genre}`;
+        }
+
+    } else if (sel.mode === 'collection') {
+        const slug = sel.context.collection_slug;
+
+        if (slug) {
+            key = `COL|${slug}`;
+        }
+    }
+
+    if (!key) return;
+
+    programHistory.update((hist) => {
+        const next = { ...hist };
+
+        const bucket = new Set(next[key] ?? []);
+        bucket.add(spotifyId);
+
+        next[key] = bucket;
+        return next;
+    });
+
+    console.log('📚 Program history updated:', key);
 }
 
 
