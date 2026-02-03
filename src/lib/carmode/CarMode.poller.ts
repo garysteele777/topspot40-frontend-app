@@ -205,6 +205,10 @@ export function startPlaybackPolling() {
 // Rank change → update UI track card
 // ─────────────────────────────
             if (typeof data.currentRank === 'number' && data.currentRank !== lastRank) {
+
+                // ✅ ADD THIS LINE (counts the previous track as played)
+                markPlayed(lastSpotifyId);
+
                 const list = get(tracks);
                 const next = list.find(t => t.rank === data.currentRank);
 
@@ -245,12 +249,12 @@ export function startPlaybackPolling() {
             isPlaying.set(playing);
 
             // 🛑 FRONTEND owns timing during narration — do NOT overwrite UI clock
-            if (
-                get(timingSource) === 'narration' &&
-                (phase === 'intro' || phase === 'detail' || phase === 'artist')
-            ) {
+            const isNarrationPhase =
+                phase === 'intro' || phase === 'detail' || phase === 'artist';
+
+            if (get(timingSource) === 'narration' && isNarrationPhase) {
                 lastPhase = phase;
-                return;
+                // 🔥 DO NOT return — just skip clock updates
             }
 
 
@@ -344,14 +348,17 @@ export function startPlaybackPolling() {
             const elapsedSec =
                 durationSec > 0 ? Math.min(elapsedSecRaw, durationSec) : elapsedSecRaw;
 
-// Update stores
-            elapsed.set(elapsedSec);
-            duration.set(durationSec);
+// 🔥 ONLY update timing when Spotify owns the clock
+            if (get(timingSource) === 'spotify') {
+                elapsed.set(elapsedSec);
+                duration.set(durationSec);
 
-// Progress 0–100%
-            const pct =
-                durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
-            progress.set(Math.min(100, Math.max(0, pct)));
+                const pct =
+                    durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
+
+                progress.set(Math.min(100, Math.max(0, pct)));
+            }
+
 
 // 🏁 Detect natural track end and finalize UI
             if (
