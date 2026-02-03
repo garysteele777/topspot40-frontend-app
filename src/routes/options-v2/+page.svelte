@@ -2,6 +2,10 @@
     /* eslint-disable svelte/no-navigation-without-resolve */
 
     import {onMount} from 'svelte';
+    import {currentSelection} from '$lib/carmode/CarMode.store';
+    import type {SelectionState} from '$lib/stores/selection';
+    import {resetSelection} from '$lib/stores/selection';
+
 
     // UI Components
     import HeroHeader from '$lib/components/options/HeroHeader.svelte';
@@ -105,7 +109,38 @@
                 (v): v is VoicePart => v === 'intro' || v === 'detail' || v === 'artist'
             );
             pauseMode = resumed.autoAdvance ? 'continuous' : 'pause';
+
+            // ⭐⭐ THIS IS THE MISSING PIECE ⭐⭐
+            const selection: SelectionState = {
+                mode: resumed.mode,
+                context: resumed.context ?? null,
+
+                playIntro: resumed.voices.includes('intro'),
+                playDetail: resumed.voices.includes('detail'),
+                playArtistDescription: resumed.voices.includes('artist'),
+
+                textIntro: resumed.voices.includes('intro'),
+                textDetail: resumed.voices.includes('detail'),
+                textArtistDescription: resumed.voices.includes('artist'),
+
+                voices: resumed.voices,
+                language: resumed.language,
+                playbackOrder: resumed.playbackOrder,
+
+                startRank: resumed.startRank,
+                endRank: resumed.endRank,
+                currentRank: resumed.currentRank ?? resumed.startRank,
+
+                pauseMode: resumed.autoAdvance ? 'continuous' : 'pause',
+                voicePlayMode: 'before',       // or resume this if you add it later
+                categoryMode: 'single'         // or resume this if needed
+            };
+
+
+            currentSelection.set(selection);
+
         }
+
 
         try {
             const data: GroupedCatalog = await fetchGroupedCatalog();
@@ -189,18 +224,26 @@
     }
 
     function resetOptions() {
+        // ⭐⭐ reset global store FIRST
+        resetSelection();
+
+        // ⭐⭐ then reset local UI state
         activeGroup = 'decade_genre';
         categoryMode = 'single';
         language = 'en';
         selectedVoices = ['intro'];
+
         startRank = 1;
         endRank = 40;
+
         playbackOrder = 'up';
         voicePlayMode = 'before';
         pauseMode = 'pause';
+
         decades = [];
         genres = [];
         collections = [];
+
         collectionGroups = collectionGroups.map((g) => ({...g, open: false}));
     }
 

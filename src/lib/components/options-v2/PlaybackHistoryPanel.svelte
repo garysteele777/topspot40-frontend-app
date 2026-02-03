@@ -2,40 +2,37 @@
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistory} from '$lib/carmode/programHistory';
 
-    import {derived} from 'svelte/store';
+    let playedCount = 0;
 
-    const currentKey = derived(currentSelection, ($sel) => {
-        if (!$sel?.context) return null;
+    $: {
+        const sel = $currentSelection;
 
-        if ($sel.mode === 'decade_genre') {
-            return `DG|${$sel.context.decade}|${$sel.context.genre}`;
+        let key: string | null = null;
+
+        if (sel?.mode === 'decade_genre') {
+            const d = sel.context?.decade;
+            const g = sel.context?.genre;
+            if (d && g) key = `DG|${d}|${g}`;
+        } else if (sel?.mode === 'collection') {
+            const c = sel.context?.collection_slug;
+            if (c) key = `COL|${c}`;
         }
 
-        if ($sel.mode === 'collection') {
-            return `COL|${$sel.context.collection_slug}`;
-        }
-
-        return null;
-    });
-
-    const playedCount = derived(
-        [programHistory, currentKey],
-        ([$hist, $key]) => {
-            if (!$key) return 0;
-            return $hist[$key]?.length ?? 0;
-        }
-    );
-
+        const hist = $programHistory;
+        playedCount = key ? (hist[key]?.length ?? 0) : 0;
+    }
 </script>
+
 
 <div class="history-panel">
     <h3>Playback History</h3>
 
     <p>
         Tracks played this session:
-        <strong>{$playedCount}</strong>
+        <strong>{playedCount}</strong>
     </p>
 </div>
+
 
 <style>
     .history-panel {
