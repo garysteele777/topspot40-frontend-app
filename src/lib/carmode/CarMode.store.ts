@@ -33,3 +33,15 @@ export const isPlaying = writable<boolean>(false);
 export const showNarrationModal = writable<boolean>(false);
 export const timingSource = writable<'spotify' | 'narration'>('spotify');
 
+/* ─────────────────────────────────────────────
+   Program history (per show progress)
+   Key format:
+     DG|1960s|Rock
+     COL|Stage_and_Screen|Disney
+───────────────────────────────────────────── */
+
+export type ProgramKey = string;
+
+export const programHistory = writable<
+    Record<ProgramKey, Set<string>>
+>({});
