@@ -14,8 +14,7 @@ import {
     progress,
     currentRank,
     currentTrack,
-    tracks,
-    playedTrackIds   // ✅ add this
+    tracks
 } from '$lib/carmode/CarMode.store';
 
 
@@ -61,13 +60,6 @@ import {programHistory, currentSelection} from '$lib/carmode/CarMode.store';
 
 function markPlayed(spotifyId: string | null) {
     if (!spotifyId) return;
-
-    // ─────────────────────────────
-    // Global session tracking (existing)
-    // ─────────────────────────────
-    const set = new Set(get(playedTrackIds));
-    set.add(spotifyId);
-    playedTrackIds.set(set);
 
     // ─────────────────────────────
     // Per-program tracking (NEW)
@@ -473,7 +465,10 @@ export function stopPlaybackPolling() {
     pollTimer = null;
 
     lastPhase = null;
-    lastSpotifyId = null;
+
+    // 🚫 DO NOT reset lastSpotifyId
+    // lastSpotifyId = null;
+
     trackFinalized = false;
 
     narrationQueue = [];

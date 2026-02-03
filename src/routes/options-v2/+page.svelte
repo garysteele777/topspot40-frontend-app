@@ -13,6 +13,8 @@
 	import PlaybackOrderSelector from '$lib/components/options-v2/PlaybackOrderSelector.svelte';
 	import VoicePlaybackSelector from '$lib/components/options-v2/VoicePlaybackSelector.svelte';
 	import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
+	import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
+
 
 	import ListPicker from '$lib/components/options/ListPicker.svelte';
 	import type { PickerGroup } from '$lib/types/pickers';
@@ -487,6 +489,10 @@
 				</section>
 			</div>
 		</div>
+
+		<PlaybackHistoryPanel />
+
+
 		<!-- LAUNCH BUTTONS -->
 		<div class="launch-modes">
 			<button class="launch-btn launch-btn--reset" type="button" on:click={resetOptions}>

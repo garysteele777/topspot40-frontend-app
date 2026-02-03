@@ -9,14 +9,6 @@ import type { PlaybackPhase } from '$lib/helpers/car/types';
    Played tracks (session only)
    ───────────────────────────────────────────── */
 
-export const playedTrackIds = writable<Set<string>>(new Set());
-
-export const playedCount = derived(
-    playedTrackIds,
-    ($set) => $set.size
-);
-
-
 export const currentSelection = writable<SelectionState | null>(null);
 export const tracks = writable<LoadedTrack[]>([]);
 export const currentTrack = writable<LoadedTrack | null>(null);

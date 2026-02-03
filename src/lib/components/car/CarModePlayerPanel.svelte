@@ -8,8 +8,6 @@
     import type {LoadedTrack} from '$lib/utils/normalizeTrack';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
     import {skipToNextTrack} from '$lib/carmode/CarMode.poller';
-    import {playedCount} from '$lib/carmode/CarMode.store';
-
 
     /* ─────────────────────────────────────────────
        Props
@@ -47,7 +45,8 @@
             ? tracks[currentIndex + 1]
             : null;
 
-    $: completed = $playedCount;
+    $: completed = 0;
+
 
     $: remaining = total - completed;
     $: percent =
