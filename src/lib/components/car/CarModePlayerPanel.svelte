@@ -9,6 +9,10 @@
     import type {PlaybackPhase} from '$lib/helpers/car/types';
     import {skipToNextTrack} from '$lib/carmode/CarMode.poller';
 
+    import {currentSelection} from '$lib/carmode/CarMode.store';
+    import {programHistory} from '$lib/carmode/programHistory';
+
+
     /* ─────────────────────────────────────────────
        Props
     ───────────────────────────────────────────── */
@@ -35,6 +39,9 @@
     ───────────────────────────────────────────── */
     $: total = tracks.length;
 
+
+    let completed = 0;   // ⭐ ADD THIS LINE
+
     $: currentIndex =
         currentTrack
             ? tracks.findIndex(t => t.rank === currentTrack.rank)
@@ -45,7 +52,23 @@
             ? tracks[currentIndex + 1]
             : null;
 
-    $: completed = 0;
+    $: {
+        const sel = $currentSelection;
+
+        let key: string | null = null;
+
+        if (sel?.mode === 'decade_genre') {
+            const d = sel.context?.decade;
+            const g = sel.context?.genre;
+            if (d && g) key = `DG|${d}|${g}`;
+        } else if (sel?.mode === 'collection') {
+            const c = sel.context?.collection_slug;
+            if (c) key = `COL|${c}`;
+        }
+
+        completed = key ? ($programHistory[key]?.length ?? 0) : 0;
+
+    }
 
 
     $: remaining = total - completed;

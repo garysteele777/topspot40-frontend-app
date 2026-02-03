@@ -55,50 +55,29 @@ let lastRank: number | null = null;
 let narrationSignaled = false;
 
 
-import {programHistory, currentSelection} from '$lib/carmode/CarMode.store';
+import {currentSelection} from '$lib/carmode/CarMode.store';
+import {programHistory} from '$lib/carmode/programHistory';
 
 
 function markPlayed(spotifyId: string | null) {
     if (!spotifyId) return;
 
-    // ─────────────────────────────
-    // Per-program tracking (NEW)
-    // ─────────────────────────────
     const sel = get(currentSelection);
     if (!sel || !sel.context) return;
 
     let key: string | null = null;
 
     if (sel.mode === 'decade_genre') {
-        const decade = sel.context.decade;
-        const genre = sel.context.genre;
-
-        if (decade && genre) {
-            key = `DG|${decade}|${genre}`;
-        }
-
+        key = `DG|${sel.context.decade}|${sel.context.genre}`;
     } else if (sel.mode === 'collection') {
-        const slug = sel.context.collection_slug;
-
-        if (slug) {
-            key = `COL|${slug}`;
-        }
+        key = `COL|${sel.context.collection_slug}`;
     }
 
     if (!key) return;
 
-    programHistory.update((hist) => {
-        const next = { ...hist };
-
-        const bucket = new Set(next[key] ?? []);
-        bucket.add(spotifyId);
-
-        next[key] = bucket;
-        return next;
-    });
-
-    console.log('📚 Program history updated:', key);
+    programHistory.markPlayed(key, spotifyId);
 }
+
 
 
 /* ─────────────────────────────────────────────
@@ -262,7 +241,7 @@ export function startPlaybackPolling() {
                 duration.set(0);
                 progress.set(0);
 
-                // Allow finalize to happen again for the new track
+
                 trackFinalized = false;
 
                 lastRank = data.currentRank;

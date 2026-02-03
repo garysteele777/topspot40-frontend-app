@@ -1,5 +1,5 @@
 // src/lib/carmode/CarMode.store.ts
-import { writable, derived } from 'svelte/store';
+import { writable} from 'svelte/store';
 import type { SelectionState } from '$lib/stores/selection';
 import type { LoadedTrack } from '$lib/utils/normalizeTrack';
 import type { PlaybackPhase } from '$lib/helpers/car/types';
@@ -31,9 +31,3 @@ export const timingSource = writable<'spotify' | 'narration'>('spotify');
      DG|1960s|Rock
      COL|Stage_and_Screen|Disney
 ───────────────────────────────────────────── */
-
-export type ProgramKey = string;
-
-export const programHistory = writable<
-    Record<ProgramKey, Set<string>>
->({});
