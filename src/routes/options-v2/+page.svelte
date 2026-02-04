@@ -1,8 +1,11 @@
 <script lang="ts">
     /* eslint-disable svelte/no-navigation-without-resolve */
 
+
     import {onMount} from 'svelte';
+    import {get} from 'svelte/store';
     import {currentSelection} from '$lib/carmode/CarMode.store';
+
     import type {SelectionState} from '$lib/stores/selection';
     import {resetSelection} from '$lib/stores/selection';
     import {upsertProgram} from '$lib/carmode/programHistory';
@@ -42,7 +45,8 @@
     type VoicePlayMode = 'before' | 'over';
     type PauseMode = 'pause' | 'continuous';
     type CategoryMode = 'single' | 'multiple';
-    type ModeType = 'decade_genre' | 'collection';
+    import type {ModeType} from '$lib/types/playback';
+
 
     // ---------------------------
     // Local State
@@ -89,6 +93,28 @@
     // Load Catalog + Resume
     // ---------------------------
     onMount(async () => {
+
+        // ⭐ FIRST: try currentSelection (global store)
+        const sel = get(currentSelection);
+
+        if (sel) {
+            activeGroup = sel.mode;
+
+            if (sel.mode === 'decade_genre') {
+                decades = sel.context?.decade ? [sel.context.decade] : [];
+                genres = sel.context?.genre ? [sel.context.genre] : [];
+            } else {
+                collections = sel.context?.collection_slug
+                    ? [sel.context.collection_slug]
+                    : [];
+            }
+
+            language = sel.language;
+            startRank = sel.startRank;
+            endRank = sel.endRank;
+        }
+
+
         const resumed = loadResumeState();
 
         if (resumed) {
@@ -192,10 +218,47 @@
 
     function handleChange(e: CustomEvent<{ group: PickerGroup; selected: string[] }>) {
         const {group, selected} = e.detail;
+
         if (group === 'decade') decades = selected;
         if (group === 'genre') genres = selected;
         if (group === 'collection') collections = selected;
+
+        // ⭐⭐⭐ ADD THIS ⭐⭐⭐
+        const context: Record<string, string> = {};
+
+        if (activeGroup === 'decade_genre') {
+            if (decades[0]) context.decade = decades[0];
+            if (genres[0]) context.genre = genres[0];
+        } else {
+            if (collections[0]) context.collection_slug = collections[0];
+        }
+
+        currentSelection.set({
+            mode: activeGroup,
+            context,
+
+            playIntro: selectedVoices.includes('intro'),
+            playDetail: selectedVoices.includes('detail'),
+            playArtistDescription: selectedVoices.includes('artist'),
+
+            textIntro: selectedVoices.includes('intro'),
+            textDetail: selectedVoices.includes('detail'),
+            textArtistDescription: selectedVoices.includes('artist'),
+
+            voices: selectedVoices,
+            language,
+            playbackOrder,
+
+            startRank,
+            endRank,
+            currentRank: startRank,
+
+            pauseMode,
+            voicePlayMode,
+            categoryMode
+        });
     }
+
 
     // ---------------------------
     // Collections helpers

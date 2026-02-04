@@ -1,15 +1,23 @@
 import { writable } from 'svelte/store';
 
-export type Mode = 'decade_genre' | 'collection' | null;
+/* -----------------------
+ * Domain Types
+ * --------------------- */
+export type Mode = 'decade_genre' | 'collection';
+export type Language = 'en' | 'es' | 'ptbr';
+export type VoicePart = 'intro' | 'detail' | 'artist';
 
 export type PlaybackOrder = 'up' | 'down' | 'shuffle';
 export type VoicePlayMode = 'before' | 'over';
 export type PauseMode = 'pause' | 'continuous';
 export type CategoryMode = 'single' | 'multiple';
 
+/* -----------------------
+ * Selection State
+ * --------------------- */
 export interface SelectionState {
   mode: Mode;
-  language: string;
+  language: Language;
   context: Record<string, string> | null;
 
   startRank: number;
@@ -24,15 +32,18 @@ export interface SelectionState {
   textDetail: boolean;
   textArtistDescription: boolean;
 
-  voices: string[];
+  voices: VoicePart[];
   playbackOrder: PlaybackOrder;
   voicePlayMode: VoicePlayMode;
   pauseMode: PauseMode;
   categoryMode: CategoryMode;
 }
 
+/* -----------------------
+ * Defaults
+ * --------------------- */
 const defaultSelection: SelectionState = {
-  mode: null,
+  mode: 'decade_genre',
   language: 'en',
   context: null,
 
@@ -55,13 +66,25 @@ const defaultSelection: SelectionState = {
   categoryMode: 'single'
 };
 
+/* -----------------------
+ * Persistence
+ * --------------------- */
 function loadInitial(): SelectionState {
   try {
     const raw = localStorage.getItem('ts_selection');
     if (raw) {
-      return { ...defaultSelection, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+
+      // Merge but never allow invalid mode
+      if (parsed.mode !== 'decade_genre' && parsed.mode !== 'collection') {
+        parsed.mode = defaultSelection.mode;
+      }
+
+      return { ...defaultSelection, ...parsed };
     }
-  } catch {}
+  } catch {
+    // ignore
+  }
   return { ...defaultSelection };
 }
 
@@ -70,7 +93,9 @@ export const selection = writable<SelectionState>(loadInitial());
 selection.subscribe((v) => {
   try {
     localStorage.setItem('ts_selection', JSON.stringify(v));
-  } catch {}
+  } catch {
+    // ignore
+  }
 });
 
 export function resetSelection() {
