@@ -1,4 +1,5 @@
 <script lang="ts">
+    console.log('🚗 MODULE LOADED');
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
 

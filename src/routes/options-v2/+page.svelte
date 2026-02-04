@@ -5,7 +5,9 @@
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import type {SelectionState} from '$lib/stores/selection';
     import {resetSelection} from '$lib/stores/selection';
-
+    import {upsertProgram} from '$lib/carmode/programHistory';
+    import type {ProgramKey} from '$lib/carmode/programHistory';
+    import {browser} from '$app/environment';
 
     // UI Components
     import HeroHeader from '$lib/components/options/HeroHeader.svelte';
@@ -159,6 +161,26 @@
             status = '❌ Error loading catalog.';
         }
     });
+
+    function buildProgramKey(): ProgramKey {
+        if (activeGroup === 'decade_genre') {
+            return `DG|${decades[0] ?? ''}|${genres[0] ?? ''}` as ProgramKey;
+        }
+        return `COL|${collections[0] ?? ''}` as ProgramKey;
+    }
+
+
+    function buildProgramLabel(): string {
+        if (activeGroup === 'decade_genre') {
+            return `${decades[0] ?? '—'} • ${genres[0] ?? '—'}`;
+        }
+        return `${collections[0] ?? '—'}`;
+    }
+
+    function getTotalTracks(): number {
+        return Math.max(0, endRank - startRank + 1);
+    }
+
 
     // ---------------------------
     // Picker handlers
@@ -560,38 +582,22 @@
 				});
 
 				if (!url) return;
-await goto(url);
+
+                const key = buildProgramKey();
+                const label = buildProgramLabel();
+
+
+                if (browser) {
+                  upsertProgram(key, label, getTotalTracks());
+                }
+
+                await goto(url);
 
 			}}
                 >
                     🚗 Load in Car Mode
                 </button>
 
-                <!-- ✅ FIXED: Decade–Genre List Mode -->
-                <button
-                        class="launch-btn launch-btn--secondary"
-                        type="button"
-                        on:click={async () => {
-				const url = await launchWithPlayback({
-					layoutMode: 'list',
-					decade: decades[0],
-					genre: genres[0],
-					language,
-					voices: selectedVoices,
-					startRank,
-					endRank,
-					playbackOrder,
-					voicePlayMode,
-					pauseMode
-				});
-
-				if (!url) return;
-await goto(url);
-
-			}}
-                >
-                    📋 Load in List Mode
-                </button>
             {/if}
 
             {#if canLaunchCollection}
@@ -620,30 +626,6 @@ await goto(url);
                     🚗 Load in Car Mode
                 </button>
 
-                <!-- ✅ Collection List Mode (already correct, unchanged logic) -->
-                <button
-                        class="launch-btn launch-btn--secondary"
-                        type="button"
-                        on:click={async () => {
-				const url = await launchWithPlayback({
-					layoutMode: 'list',
-					collection: collections[0],
-					language,
-					voices: selectedVoices,
-					startRank,
-					endRank,
-					playbackOrder,
-					voicePlayMode,
-					pauseMode
-				});
-
-				if (!url) return;
-await goto(url);
-
-			}}
-                >
-                    📋 Load in List Mode
-                </button>
             {/if}
         </div>
     </div>
@@ -932,12 +914,6 @@ await goto(url);
         transform: translateY(-1px);
         box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
         filter: brightness(1.05);
-    }
-
-    .launch-btn--secondary {
-        background: transparent;
-        color: #f5f5f5;
-        border-color: rgba(207, 184, 124, 0.75);
     }
 
     .launch-btn--reset {

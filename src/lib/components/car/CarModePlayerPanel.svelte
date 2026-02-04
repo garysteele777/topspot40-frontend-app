@@ -10,7 +10,7 @@
     import {skipToNextTrack} from '$lib/carmode/CarMode.poller';
 
     import {currentSelection} from '$lib/carmode/CarMode.store';
-    import {programHistory} from '$lib/carmode/programHistory';
+    import {programHistoryStore} from '$lib/carmode/programHistory';
 
 
     /* ─────────────────────────────────────────────
@@ -52,23 +52,28 @@
             ? tracks[currentIndex + 1]
             : null;
 
-    $: {
-        const sel = $currentSelection;
+$: {
+    const sel = $currentSelection;
 
-        let key: string | null = null;
+    let key: string | null = null;
 
-        if (sel?.mode === 'decade_genre') {
-            const d = sel.context?.decade;
-            const g = sel.context?.genre;
-            if (d && g) key = `DG|${d}|${g}`;
-        } else if (sel?.mode === 'collection') {
-            const c = sel.context?.collection_slug;
-            if (c) key = `COL|${c}`;
-        }
-
-        completed = key ? ($programHistory[key]?.length ?? 0) : 0;
-
+    if (sel?.mode === 'decade_genre') {
+        const d = sel.context?.decade;
+        const g = sel.context?.genre;
+        if (d && g) key = `DG|${d}|${g}`;
+    } else if (sel?.mode === 'collection') {
+        const c = sel.context?.collection_slug;
+        if (c) key = `COL|${c}`;
     }
+
+    if (!key) {
+        completed = 0;
+    } else {
+        const program = $programHistoryStore.find(p => p.key === key);
+        completed = program?.playedRanks.length ?? 0;
+    }
+}
+
 
 
     $: remaining = total - completed;

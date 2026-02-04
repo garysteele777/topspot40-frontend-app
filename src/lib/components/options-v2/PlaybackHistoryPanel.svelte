@@ -1,6 +1,7 @@
 <script lang="ts">
     import {currentSelection} from '$lib/carmode/CarMode.store';
-    import {programHistory} from '$lib/carmode/programHistory';
+    import {programHistoryStore as programHistory} from '$lib/carmode/programHistory';
+
 
     let playedCount = 0;
 
@@ -19,7 +20,9 @@
         }
 
         const hist = $programHistory;
-        playedCount = key ? (hist[key]?.length ?? 0) : 0;
+        const entry = key ? hist.find(p => p.key === key) : null;
+        playedCount = entry ? entry.playedRanks.length : 0;
+
     }
 </script>
 

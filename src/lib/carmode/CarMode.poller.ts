@@ -3,6 +3,7 @@
 import {get} from 'svelte/store';
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {browser} from '$app/environment';
+import type {ProgramKey} from '$lib/carmode/programHistory';
 
 
 import {
@@ -34,6 +35,7 @@ const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
 );
 
+
 let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
 
@@ -56,16 +58,14 @@ let narrationSignaled = false;
 
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
-import {programHistory} from '$lib/carmode/programHistory';
+import {markRankPlayed} from '$lib/carmode/programHistory';
 
 
-function markPlayed(spotifyId: string | null) {
-    if (!spotifyId) return;
-
+function markPlayed(): void {
     const sel = get(currentSelection);
-    if (!sel || !sel.context) return;
+    if (!sel || !sel.context || lastRank == null) return;
 
-    let key: string | null = null;
+    let key: ProgramKey | null = null;
 
     if (sel.mode === 'decade_genre') {
         key = `DG|${sel.context.decade}|${sel.context.genre}`;
@@ -75,9 +75,8 @@ function markPlayed(spotifyId: string | null) {
 
     if (!key) return;
 
-    programHistory.markPlayed(key, spotifyId);
+    markRankPlayed(key, lastRank);
 }
-
 
 
 /* ─────────────────────────────────────────────
@@ -222,7 +221,7 @@ export function startPlaybackPolling() {
             if (typeof data.currentRank === 'number' && data.currentRank !== lastRank) {
 
                 // ✅ ADD THIS LINE (counts the previous track as played)
-                markPlayed(lastSpotifyId);
+                markPlayed();
 
                 const list = get(tracks);
                 const next = list.find(t => t.rank === data.currentRank);
@@ -387,7 +386,7 @@ export function startPlaybackPolling() {
                 console.log('🏁 Track reached end (single fire), finalizing UI');
                 finalizeTrackUI();
 
-                markPlayed(lastSpotifyId);
+                markPlayed();
 
 
                 // 🔥 Tell backend the track is finished (this advances radio mode)
@@ -418,7 +417,7 @@ export async function skipToNextTrack(): Promise<void> {
     console.log('⏭ Manual skip requested');
 
     // 1) Count current track as played
-    markPlayed(lastSpotifyId);
+    markPlayed();
 
     // 2) Stop any narration immediately
     narrationQueue = [];
