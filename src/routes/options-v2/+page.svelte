@@ -3,7 +3,6 @@
 
 
     import {onMount} from 'svelte';
-    import {get} from 'svelte/store';
     import {currentSelection} from '$lib/carmode/CarMode.store';
 
     import type {SelectionState} from '$lib/stores/selection';
@@ -93,27 +92,6 @@
     // Load Catalog + Resume
     // ---------------------------
     onMount(async () => {
-
-        // ⭐ FIRST: try currentSelection (global store)
-        const sel = get(currentSelection);
-
-        if (sel) {
-            activeGroup = sel.mode;
-
-            if (sel.mode === 'decade_genre') {
-                decades = sel.context?.decade ? [sel.context.decade] : [];
-                genres = sel.context?.genre ? [sel.context.genre] : [];
-            } else {
-                collections = sel.context?.collection_slug
-                    ? [sel.context.collection_slug]
-                    : [];
-            }
-
-            language = sel.language;
-            startRank = sel.startRank;
-            endRank = sel.endRank;
-        }
-
 
         const resumed = loadResumeState();
 
@@ -366,6 +344,31 @@
 
         saveResumeState(state);
     }
+
+    // --------------------------------------------
+    // TRUE reactive sync from store
+    // --------------------------------------------
+    $: if ($currentSelection) {
+        const sel = $currentSelection;
+
+        activeGroup = sel.mode;
+        language = sel.language;
+        startRank = sel.startRank;
+        endRank = sel.endRank;
+
+        selectedVoices = sel.voices;
+
+        if (sel.mode === 'decade_genre') {
+            decades = sel.context?.decade ? [sel.context.decade] : [];
+            genres = sel.context?.genre ? [sel.context.genre] : [];
+            collections = [];
+        } else {
+            collections = sel.context?.collection_slug ? [sel.context.collection_slug] : [];
+            decades = [];
+            genres = [];
+        }
+    }
+
 
     // ---------------------------
     // Summaries
