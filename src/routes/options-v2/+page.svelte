@@ -5,16 +5,15 @@
     import {browser} from '$app/environment';
     import {goto} from '$app/navigation';
 
-    // ---------------------------
+    // ─────────────────────────────────────────────
     // Stores
-    // ---------------------------
-    import {currentSelection} from '$lib/carmode/CarMode.store';
+    // ─────────────────────────────────────────────
     import {resetSelection} from '$lib/stores/selection';
     import {upsertProgram} from '$lib/carmode/programHistory';
 
-    // ---------------------------
-    // Modular helpers (your new files)
-    // ---------------------------
+    // ─────────────────────────────────────────────
+    // Modular helpers
+    // ─────────────────────────────────────────────
     import {
         buildProgramKey,
         buildProgramLabel,
@@ -29,9 +28,9 @@
     import {loadResumeState} from '$lib/utils/smartResume';
     import {launchWithPlayback} from '$lib/utils/buildLaunchUrl';
 
-    // ---------------------------
-    // UI Components (imports stay here for the file, even if gray)
-    // ---------------------------
+    // ─────────────────────────────────────────────
+    // UI Components
+    // ─────────────────────────────────────────────
     import HeroHeader from '$lib/components/options/HeroHeader.svelte';
     import ModeToggle from '$lib/components/options-v2/ModeToggle.svelte';
     import CategoryModeSelector from '$lib/components/options-v2/CategoryModeSelector.svelte';
@@ -44,19 +43,31 @@
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
     import ListPicker from '$lib/components/options/ListPicker.svelte';
 
-    // ---------------------------
-    // Core Types (from your playback.ts)
-    // ---------------------------
-    import type {ModeType, VoicePart, PlaybackOrder, Language, VoicePlayMode, CategoryMode} from '$lib/types/playback';
+    // ─────────────────────────────────────────────
+    // Types
+    // ─────────────────────────────────────────────
+    import type {
+        ModeType,
+        VoicePart,
+        PlaybackOrder,
+        Language,
+        VoicePlayMode,
+        CategoryMode
+    } from '$lib/types/playback';
 
-    // ---------------------------
-    // ListPicker option shape (THIS is what your ListPicker expects)
-    // ---------------------------
     type OptionItem = { id: string; label: string; mp3?: string };
 
-    // ---------------------------
-    // Local UI State
-    // ---------------------------
+    type CollectionItem = { slug: string; name: string };
+    type CollectionGroup = {
+        slug: string;
+        name: string;
+        items: CollectionItem[];
+        open?: boolean;
+    };
+
+    // ─────────────────────────────────────────────
+    // Core UI State
+    // ─────────────────────────────────────────────
     let activeGroup: ModeType = 'decade_genre';
     let language: Language = 'en';
     let selectedVoices: VoicePart[] = ['intro'];
@@ -70,34 +81,32 @@
     let categoryMode: CategoryMode = 'single';
     let voicePlayMode: VoicePlayMode = 'before';
 
-    // Selected values (ListPicker binds these)
+    // Selections
     let decades: string[] = [];
     let genres: string[] = [];
     let collections: string[] = [];
 
-    // Options passed to ListPicker
+    // Options
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
-
-    // Collections UI (your existing shape)
-    type CollectionItem = { slug: string; name: string };
-    type CollectionGroup = { slug: string; name: string; items: CollectionItem[]; open?: boolean };
     let collectionGroups: CollectionGroup[] = [];
 
     let status: 'Loading…' | 'Ready' | '❌ Error loading catalog.' = 'Loading…';
 
-    // ---------------------------
-    // Small helpers: normalize catalog items safely
-    // ---------------------------
+    // Resume lifecycle guard
+    let hydrated = false;
+    let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
+
+    // ─────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────
     function getStringProp(obj: unknown, key: string): string | null {
         if (!obj || typeof obj !== 'object') return null;
-        const rec = obj as Record<string, unknown>;
-        const v = rec[key];
+        const v = (obj as Record<string, unknown>)[key];
         return typeof v === 'string' ? v : null;
     }
 
     function toOptionItem(x: unknown): OptionItem | null {
-        // Prefer slug → id → name/label fallback
         const id =
             getStringProp(x, 'slug') ??
             getStringProp(x, 'id') ??
@@ -110,110 +119,177 @@
             id;
 
         if (!id || !label) return null;
-
-        const mp3 = getStringProp(x, 'mp3') ?? undefined;
-
-        return {id, label, mp3};
+        return {id, label, mp3: getStringProp(x, 'mp3') ?? undefined};
     }
 
     function mapOptions(list: unknown): OptionItem[] {
         if (!Array.isArray(list)) return [];
-        const out: OptionItem[] = [];
-        for (const item of list) {
-            const opt = toOptionItem(item);
-            if (opt) out.push(opt);
-        }
-        return out;
+        return list.map(toOptionItem).filter(Boolean) as OptionItem[];
     }
 
-    // ---------------------------
-    // Derived UI values
-    // ---------------------------
+    function resolveOptionId(saved: string | undefined, options: OptionItem[]): string[] {
+        if (!saved) return [];
+        const match = options.find(
+            o =>
+                o.id === saved ||
+                o.id.toLowerCase() === saved.toLowerCase() ||
+                o.label.toLowerCase() === saved.toLowerCase()
+        );
+        return match ? [match.id] : [];
+    }
+
+    function applySelection(selection: any) {
+        activeGroup = selection.mode;
+        language = selection.language;
+        selectedVoices = selection.voices ?? ['intro'];
+        startRank = selection.startRank ?? 1;
+        endRank = selection.endRank ?? 40;
+        playbackOrder = selection.playbackOrder ?? 'up';
+        pauseMode = selection.pauseMode === 'continuous' ? 'continuous' : 'pause';
+
+        if (selection.mode === 'decade_genre') {
+            decades = resolveOptionId(selection.context?.decade, decadeOptions);
+            genres = resolveOptionId(selection.context?.genre, genreOptions);
+            collections = [];
+        } else {
+            collections = selection.context?.collection_slug
+                ? [selection.context.collection_slug]
+                : [];
+            decades = [];
+            genres = [];
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // Derived UI
+    // ─────────────────────────────────────────────
     $: modeLabel = activeGroup === 'decade_genre' ? 'Decade–Genre' : 'Collection Group';
     $: rankLabel = `${startRank}–${endRank}`;
 
     $: voicesSummary = summarizeVoices(selectedVoices);
     $: selectionSummary = summarizeSelection(activeGroup, decades, genres, collections);
 
-    $: canLaunchDecadeGenre = activeGroup === 'decade_genre' && decades.length > 0 && genres.length > 0;
-    $: canLaunchCollection = activeGroup === 'collection' && collections.length > 0;
+    $: canLaunchDecadeGenre =
+        activeGroup === 'decade_genre' && decades.length && genres.length;
 
-    // ---------------------------
-    // Load resume + catalog
-    // ---------------------------
+    $: canLaunchCollection =
+        activeGroup === 'collection' && collections.length;
+
+    // ─────────────────────────────────────────────
+    // Mount: load resume → catalog → apply
+    // ─────────────────────────────────────────────
     onMount(async () => {
+        pendingSelection = buildSelectionFromResume(loadResumeState());
+
         try {
-            // 1️⃣ Load catalog FIRST
             const normalized = await loadCatalog();
 
             decadeOptions = mapOptions(normalized.decades);
             genreOptions = mapOptions(normalized.genres);
-
-            collectionGroups = (normalized.collectionGroups ?? []).map((g: CollectionGroup) => ({
+            collectionGroups = (normalized.collectionGroups ?? []).map((g: any) => ({
                 ...g,
                 open: false
             }));
 
-            // 2️⃣ Restore resume AFTER options exist
-            const resumed = loadResumeState();
-            const selection = buildSelectionFromResume(resumed);
+            status = 'Ready';
 
-            if (selection) {
-                currentSelection.set(selection);
-
-                activeGroup = selection.mode;
-                language = selection.language;
-                selectedVoices = selection.voices ?? ['intro'];
-                startRank = selection.startRank ?? 1;
-                endRank = selection.endRank ?? 40;
-                playbackOrder = selection.playbackOrder ?? 'up';
-                pauseMode =
-                    selection.pauseMode === 'continuous' ? 'continuous' : 'pause';
-
-                if (selection.mode === 'decade_genre') {
-                    decades = selection.context?.decade
-                        ? [selection.context.decade]
-                        : [];
-                    genres = selection.context?.genre
-                        ? [selection.context.genre]
-                        : [];
-                    collections = [];
-                } else {
-                    collections = selection.context?.collection_slug
-                        ? [selection.context.collection_slug]
-                        : [];
-                    decades = [];
-                    genres = [];
-                }
+            if (pendingSelection) {
+                applySelection(pendingSelection);
+                pendingSelection = null;
             }
 
-            status = 'Ready';
+            hydrated = true;
         } catch {
             status = '❌ Error loading catalog.';
         }
     });
 
+    // ─────────────────────────────────────────────
+    // Auto-save (guarded)
+    // ─────────────────────────────────────────────
+    $: if (browser && hydrated) {
+        saveResumeFromLocal({
+            activeGroup,
+            context:
+                activeGroup === 'decade_genre'
+                    ? {
+                        ...(decades[0] ? {decade: decades[0]} : {}),
+                        ...(genres[0] ? {genre: genres[0]} : {})
+                    }
+                    : {
+                        ...(collections[0]
+                            ? {collection_slug: collections[0]}
+                            : {})
+                    },
+            language,
+            startRank,
+            endRank,
+            playbackOrder,
+            pauseMode,
+            voices: selectedVoices
+        });
+    }
 
-    // ---------------------------
-    // Auto-save resume
-    // ---------------------------
-    $: saveResumeFromLocal({
-        activeGroup,
-        context:
-            activeGroup === 'decade_genre'
-                ? {decade: decades[0], genre: genres[0]}
-                : {collection_slug: collections[0]},
-        language,
-        startRank,
-        endRank,
-        playbackOrder,
-        pauseMode,
-        voices: selectedVoices
-    });
+    // ─────────────────────────────────────────────
+    // UI actions / missing handlers
+    // ─────────────────────────────────────────────
+    function selectAllDecadeGenre() {
+        decades = decadeOptions.map(o => o.id);
+        genres = genreOptions.map(o => o.id);
+    }
 
-    // ---------------------------
+    function clearDecadeGenre() {
+        decades = [];
+        genres = [];
+    }
+
+    function handleActivate(event: CustomEvent) {
+
+        const {group, id} = event.detail ?? {};
+        if (!group || !id) return;
+
+        if (group === 'decade') decades = [id];
+        if (group === 'genre') genres = [id];
+    }
+
+    function handleChange(event: CustomEvent) {
+
+        const {group, selected} = event.detail ?? {};
+        if (!group || !Array.isArray(selected)) return;
+
+        if (group === 'decade') decades = selected;
+        if (group === 'genre') genres = selected;
+    }
+
+    function isCollectionSelected(slug: string): boolean {
+        return collections.includes(slug);
+    }
+
+    function toggleCollection(slug: string) {
+        collections = collections.includes(slug)
+            ? collections.filter(s => s !== slug)
+            : [...collections, slug];
+    }
+
+    function selectAllCollections() {
+        collections = collectionGroups.flatMap(g => g.items.map(i => i.slug));
+    }
+
+    function clearCollections() {
+        collections = [];
+    }
+
+    function expandAll() {
+        collectionGroups = collectionGroups.map(g => ({...g, open: true}));
+    }
+
+    function collapseAll() {
+        collectionGroups = collectionGroups.map(g => ({...g, open: false}));
+    }
+
+    // ─────────────────────────────────────────────
     // Actions
-    // ---------------------------
+    // ─────────────────────────────────────────────
     async function launchCarMode() {
         const base = {
             layoutMode: 'car' as const,
@@ -226,21 +302,11 @@
             voicePlayMode
         };
 
-        // 🔵 build the payload in the shape your helper expects
         const payload =
             activeGroup === 'decade_genre'
-                ? {
-                    ...base,
-                    decade: decades[0],
-                    genre: genres[0]
-                }
-                : {
-                    ...base,
-                    collection: collections[0]
-                };
+                ? {...base, decade: decades[0], genre: genres[0]}
+                : {...base, collection: collections[0]};
 
-
-        // 🔵 TS-safe call (no `any`)
         const url = await launchWithPlayback(
             payload as Parameters<typeof launchWithPlayback>[0]
         );
@@ -250,16 +316,15 @@
         if (browser) {
             const key = buildProgramKey(activeGroup, decades, genres, collections);
             const label = buildProgramLabel(activeGroup, decades, genres, collections);
-
             upsertProgram(key, label, getTotalTracks(startRank, endRank));
         }
 
         await goto(url);
     }
 
-
     function resetOptions() {
         resetSelection();
+        activeGroup = 'decade_genre';
         decades = [];
         genres = [];
         collections = [];
@@ -270,68 +335,9 @@
         playbackOrder = 'up';
         pauseMode = 'pause';
         selectedVoices = ['intro'];
-        activeGroup = 'decade_genre';
-    }
-
-    // ---------------------------
-    // Decade/Genre helpers
-    // ---------------------------
-    function selectAllDecadeGenre() {
-        if (categoryMode !== 'multiple') return;
-        decades = decadeOptions.map((d) => d.id);
-        genres = genreOptions.map((g) => g.id);
-    }
-
-    function clearDecadeGenre() {
-        decades = [];
-        genres = [];
-    }
-
-    function handleActivate() {
-        // optional hook
-    }
-
-    function handleChange() {
-        // optional hook
-    }
-
-    // ---------------------------
-    // Collection helpers
-    // ---------------------------
-    function isCollectionSelected(slug: string) {
-        return collections.includes(slug);
-    }
-
-    function toggleCollection(slug: string) {
-        if (categoryMode === 'single') {
-            collections = [slug];
-            return;
-        }
-        collections = collections.includes(slug)
-            ? collections.filter((c) => c !== slug)
-            : [...collections, slug];
-    }
-
-    function expandAll() {
-        collectionGroups = collectionGroups.map((g) => ({...g, open: true}));
-    }
-
-    function collapseAll() {
-        collectionGroups = collectionGroups.map((g) => ({...g, open: false}));
-    }
-
-    function selectAllCollections() {
-        if (categoryMode !== 'multiple') return;
-        collections = collectionGroups.flatMap((g) =>
-            g.items.map((i) => i.slug)
-        );
-
-    }
-
-    function clearCollections() {
-        collections = [];
     }
 </script>
+
 
 {#if import.meta.env.DEV}
     <div style="position:fixed;top:4px;right:6px;font-size:11px;opacity:.5">
