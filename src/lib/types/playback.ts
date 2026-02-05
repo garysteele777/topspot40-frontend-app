@@ -14,7 +14,8 @@ export type PlaybackOrder = 'up' | 'down' | 'shuffle';
 
 export type PauseMode = 'pause' | 'continuous';
 
-export type VoicePlayMode = 'before' | 'over';
+export type VoicePlayMode = 'before' | 'during';
+
 
 export type CategoryMode = 'single' | 'multiple';
 
