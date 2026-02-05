@@ -1,17 +1,37 @@
 <script lang="ts">
     /* eslint-disable svelte/no-navigation-without-resolve */
 
-
     import {onMount} from 'svelte';
-    import {currentSelection} from '$lib/carmode/CarMode.store';
+    import {browser} from '$app/environment';
+    import {goto} from '$app/navigation';
 
-    import type {SelectionState} from '$lib/stores/selection';
+    // ---------------------------
+    // Stores
+    // ---------------------------
+    import {currentSelection} from '$lib/carmode/CarMode.store';
     import {resetSelection} from '$lib/stores/selection';
     import {upsertProgram} from '$lib/carmode/programHistory';
-    import type {ProgramKey} from '$lib/carmode/programHistory';
-    import {browser} from '$app/environment';
 
-    // UI Components
+    // ---------------------------
+    // Modular helpers (your new files)
+    // ---------------------------
+    import {
+        buildProgramKey,
+        buildProgramLabel,
+        getTotalTracks
+    } from '$lib/options/programHelpers';
+
+    import {loadCatalog} from '$lib/options/loadCatalog';
+    import {buildSelectionFromResume} from '$lib/options/applyResume';
+    import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
+    import {summarizeVoices, summarizeSelection} from '$lib/options/summaries';
+
+    import {loadResumeState} from '$lib/utils/smartResume';
+    import {launchWithPlayback} from '$lib/utils/buildLaunchUrl';
+
+    // ---------------------------
+    // UI Components (imports stay here for the file, even if gray)
+    // ---------------------------
     import HeroHeader from '$lib/components/options/HeroHeader.svelte';
     import ModeToggle from '$lib/components/options-v2/ModeToggle.svelte';
     import CategoryModeSelector from '$lib/components/options-v2/CategoryModeSelector.svelte';
@@ -22,36 +42,22 @@
     import VoicePlaybackSelector from '$lib/components/options-v2/VoicePlaybackSelector.svelte';
     import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
-
-    import {goto} from '$app/navigation';
-
     import ListPicker from '$lib/components/options/ListPicker.svelte';
-    import type {PickerGroup} from '$lib/types/pickers';
-
-    import {loadResumeState, type ResumeState, saveResumeState} from '$lib/utils/smartResume';
-    import {launchWithPlayback} from '$lib/utils/buildLaunchUrl';
-
-
-    // Data
-    import type {GroupedCatalog} from '$lib/api/catalog';
-    import {fetchGroupedCatalog} from '$lib/api/catalog';
-    import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
-
-    // Types
-    type Language = 'en' | 'es' | 'ptbr';
-    type VoicePart = 'intro' | 'detail' | 'artist';
-    type PlaybackOrder = 'up' | 'down' | 'shuffle';
-    type VoicePlayMode = 'before' | 'over';
-    type PauseMode = 'pause' | 'continuous';
-    type CategoryMode = 'single' | 'multiple';
-    import type {ModeType} from '$lib/types/playback';
-
 
     // ---------------------------
-    // Local State
+    // Core Types (from your playback.ts)
+    // ---------------------------
+    import type {ModeType, VoicePart, PlaybackOrder, Language, VoicePlayMode, CategoryMode} from '$lib/types/playback';
+
+    // ---------------------------
+    // ListPicker option shape (THIS is what your ListPicker expects)
+    // ---------------------------
+    type OptionItem = { id: string; label: string; mp3?: string };
+
+    // ---------------------------
+    // Local UI State
     // ---------------------------
     let activeGroup: ModeType = 'decade_genre';
-    let categoryMode: CategoryMode = 'single';
     let language: Language = 'en';
     let selectedVoices: VoicePart[] = ['intro'];
 
@@ -59,216 +65,216 @@
     let endRank = 40;
 
     let playbackOrder: PlaybackOrder = 'up';
-    let voicePlayMode: VoicePlayMode = 'before';
-    let pauseMode: PauseMode = 'pause';
+    let pauseMode: 'pause' | 'continuous' = 'pause';
 
+    let categoryMode: CategoryMode = 'single';
+    let voicePlayMode: VoicePlayMode = 'before';
+
+    // Selected values (ListPicker binds these)
     let decades: string[] = [];
     let genres: string[] = [];
     let collections: string[] = [];
 
+    // Options passed to ListPicker
+    let decadeOptions: OptionItem[] = [];
+    let genreOptions: OptionItem[] = [];
+
+    // Collections UI (your existing shape)
+    type CollectionItem = { slug: string; name: string };
+    type CollectionGroup = { slug: string; name: string; items: CollectionItem[]; open?: boolean };
+    let collectionGroups: CollectionGroup[] = [];
+
     let status: 'Loading…' | 'Ready' | '❌ Error loading catalog.' = 'Loading…';
-    let decadeOptions: { id: string; label: string }[] = [];
-    let genreOptions: { id: string; label: string }[] = [];
-    let collectionGroups: {
-        open: boolean;
-        name: string;
-        slug: string;
-        items: { id: number | string; name: string; slug: string }[];
-    }[] = [];
-
-    // Derived State
-    let globalMode: CategoryMode = 'single';
-    let modeLabel = '';
-    let rankLabel = '';
-    let voicesSummary = '';
-    let selectionSummary = '';
-    let canLaunchDecadeGenre = false;
-    let canLaunchCollection = false;
-
-    // keep globalMode in sync with categoryMode
-    $: globalMode = categoryMode;
 
     // ---------------------------
-    // Load Catalog + Resume
+    // Small helpers: normalize catalog items safely
+    // ---------------------------
+    function getStringProp(obj: unknown, key: string): string | null {
+        if (!obj || typeof obj !== 'object') return null;
+        const rec = obj as Record<string, unknown>;
+        const v = rec[key];
+        return typeof v === 'string' ? v : null;
+    }
+
+    function toOptionItem(x: unknown): OptionItem | null {
+        // Prefer slug → id → name/label fallback
+        const id =
+            getStringProp(x, 'slug') ??
+            getStringProp(x, 'id') ??
+            getStringProp(x, 'value') ??
+            getStringProp(x, 'key');
+
+        const label =
+            getStringProp(x, 'label') ??
+            getStringProp(x, 'name') ??
+            id;
+
+        if (!id || !label) return null;
+
+        const mp3 = getStringProp(x, 'mp3') ?? undefined;
+
+        return {id, label, mp3};
+    }
+
+    function mapOptions(list: unknown): OptionItem[] {
+        if (!Array.isArray(list)) return [];
+        const out: OptionItem[] = [];
+        for (const item of list) {
+            const opt = toOptionItem(item);
+            if (opt) out.push(opt);
+        }
+        return out;
+    }
+
+    // ---------------------------
+    // Derived UI values
+    // ---------------------------
+    $: modeLabel = activeGroup === 'decade_genre' ? 'Decade–Genre' : 'Collection Group';
+    $: rankLabel = `${startRank}–${endRank}`;
+
+    $: voicesSummary = summarizeVoices(selectedVoices);
+    $: selectionSummary = summarizeSelection(activeGroup, decades, genres, collections);
+
+    $: canLaunchDecadeGenre = activeGroup === 'decade_genre' && decades.length > 0 && genres.length > 0;
+    $: canLaunchCollection = activeGroup === 'collection' && collections.length > 0;
+
+    // ---------------------------
+    // Load resume + catalog
     // ---------------------------
     onMount(async () => {
-
         const resumed = loadResumeState();
+        const selection = buildSelectionFromResume(resumed);
 
-        if (resumed) {
-            activeGroup = resumed.mode === 'collection' ? 'collection' : 'decade_genre';
-
-            if (resumed.mode === 'decade_genre') {
-                decades = resumed.context?.decade ? [resumed.context.decade] : [];
-                genres = resumed.context?.genre ? [resumed.context.genre] : [];
-            } else {
-                collections = resumed.context?.collection_slug
-                    ? [resumed.context.collection_slug]
-                    : [];
-            }
-
-            language = resumed.language as Language;
-            startRank = resumed.startRank;
-            endRank = resumed.endRank;
-            playbackOrder = resumed.playbackOrder as PlaybackOrder;
-            selectedVoices = resumed.voices.filter(
-                (v): v is VoicePart => v === 'intro' || v === 'detail' || v === 'artist'
-            );
-            pauseMode = resumed.autoAdvance ? 'continuous' : 'pause';
-
-            // ⭐⭐ THIS IS THE MISSING PIECE ⭐⭐
-            const selection: SelectionState = {
-                mode: resumed.mode,
-                context: resumed.context ?? null,
-
-                playIntro: resumed.voices.includes('intro'),
-                playDetail: resumed.voices.includes('detail'),
-                playArtistDescription: resumed.voices.includes('artist'),
-
-                textIntro: resumed.voices.includes('intro'),
-                textDetail: resumed.voices.includes('detail'),
-                textArtistDescription: resumed.voices.includes('artist'),
-
-                voices: resumed.voices,
-                language: resumed.language,
-                playbackOrder: resumed.playbackOrder,
-
-                startRank: resumed.startRank,
-                endRank: resumed.endRank,
-                currentRank: resumed.currentRank ?? resumed.startRank,
-
-                pauseMode: resumed.autoAdvance ? 'continuous' : 'pause',
-                voicePlayMode: 'before',       // or resume this if you add it later
-                categoryMode: 'single'         // or resume this if needed
-            };
-
-
+        if (selection) {
             currentSelection.set(selection);
 
+            activeGroup = selection.mode;
+            language = selection.language;
+            selectedVoices = selection.voices ?? ['intro'];
+            startRank = selection.startRank ?? 1;
+            endRank = selection.endRank ?? 40;
+            playbackOrder = selection.playbackOrder ?? 'up';
+            pauseMode = selection.pauseMode === 'continuous' ? 'continuous' : 'pause';
+
+            if (selection.mode === 'decade_genre') {
+                decades = selection.context?.decade ? [selection.context.decade] : [];
+                genres = selection.context?.genre ? [selection.context.genre] : [];
+                collections = [];
+            } else {
+                collections = selection.context?.collection_slug ? [selection.context.collection_slug] : [];
+                decades = [];
+                genres = [];
+            }
         }
 
-
         try {
-            const data: GroupedCatalog = await fetchGroupedCatalog();
-            const normalized = normalizeCatalog(data);
+            const normalized = await loadCatalog();
 
-            decadeOptions = normalized.decades;
-            genreOptions = normalized.genres;
-            collectionGroups = normalized.collectionGroups.map((g) => ({
+            // IMPORTANT: normalize into ListPicker’s expected {id,label,mp3?}
+            decadeOptions = mapOptions(normalized.decades);
+            genreOptions = mapOptions(normalized.genres);
+
+            // Collection groups: keep your existing shape
+            collectionGroups = (normalized.collectionGroups ?? []).map((g: CollectionGroup) => ({
                 ...g,
                 open: false
             }));
 
             status = 'Ready';
-        } catch (err) {
-            console.error(err);
+        } catch {
             status = '❌ Error loading catalog.';
         }
     });
 
-    function buildProgramKey(): ProgramKey {
-        if (activeGroup === 'decade_genre') {
-            return `DG|${decades[0] ?? ''}|${genres[0] ?? ''}` as ProgramKey;
-        }
-        return `COL|${collections[0] ?? ''}` as ProgramKey;
-    }
-
-
-    function buildProgramLabel(): string {
-        if (activeGroup === 'decade_genre') {
-            return `${decades[0] ?? '—'} • ${genres[0] ?? '—'}`;
-        }
-        return `${collections[0] ?? '—'}`;
-    }
-
-    function getTotalTracks(): number {
-        return Math.max(0, endRank - startRank + 1);
-    }
-
+    // ---------------------------
+    // Auto-save resume
+    // ---------------------------
+    $: saveResumeFromLocal({
+        activeGroup,
+        context:
+            activeGroup === 'decade_genre'
+                ? {decade: decades[0], genre: genres[0]}
+                : {collection_slug: collections[0]},
+        language,
+        startRank,
+        endRank,
+        playbackOrder,
+        pauseMode,
+        voices: selectedVoices
+    });
 
     // ---------------------------
-    // Picker handlers
+    // Actions
     // ---------------------------
-    function handleActivate(e: CustomEvent<{ group: PickerGroup }>) {
-        const g = e.detail.group;
-        activeGroup = g === 'decade' || g === 'genre' ? 'decade_genre' : 'collection';
-    }
-
-    function handleChange(e: CustomEvent<{ group: PickerGroup; selected: string[] }>) {
-        const {group, selected} = e.detail;
-
-        if (group === 'decade') decades = selected;
-        if (group === 'genre') genres = selected;
-        if (group === 'collection') collections = selected;
-
-        // ⭐⭐⭐ ADD THIS ⭐⭐⭐
-        const context: Record<string, string> = {};
-
-        if (activeGroup === 'decade_genre') {
-            if (decades[0]) context.decade = decades[0];
-            if (genres[0]) context.genre = genres[0];
-        } else {
-            if (collections[0]) context.collection_slug = collections[0];
-        }
-
-        currentSelection.set({
-            mode: activeGroup,
-            context,
-
-            playIntro: selectedVoices.includes('intro'),
-            playDetail: selectedVoices.includes('detail'),
-            playArtistDescription: selectedVoices.includes('artist'),
-
-            textIntro: selectedVoices.includes('intro'),
-            textDetail: selectedVoices.includes('detail'),
-            textArtistDescription: selectedVoices.includes('artist'),
-
-            voices: selectedVoices,
+    async function launchCarMode() {
+        const base = {
+            layoutMode: 'car' as const,
             language,
-            playbackOrder,
-
+            voices: selectedVoices,
             startRank,
             endRank,
-            currentRank: startRank,
-
+            playbackOrder,
             pauseMode,
-            voicePlayMode,
-            categoryMode
-        });
-    }
+            voicePlayMode
+        };
 
+        // 🔵 build the payload in the shape your helper expects
+        const payload =
+            activeGroup === 'decade_genre'
+                ? {
+                    ...base,
+                    mode: 'decade_genre' as const,
+                    context: {
+                        decade: decades[0],
+                        genre: genres[0]
+                    }
+                }
+                : {
+                    ...base,
+                    mode: 'collection' as const,
+                    context: {
+                        collection_slug: collections[0]
+                    }
+                };
 
-    // ---------------------------
-    // Collections helpers
-    // ---------------------------
-    function isCollectionSelected(slug: string) {
-        return collections.includes(slug);
-    }
+        // 🔵 TS-safe call (no `any`)
+        const url = await launchWithPlayback(
+            payload as Parameters<typeof launchWithPlayback>[0]
+        );
 
-    function toggleCollection(slug: string) {
-        // ✅ Ensure Collections area is the active group when a collection is clicked
-        activeGroup = 'collection';
+        if (!url) return;
 
-        if (categoryMode === 'single') {
-            collections = collections.includes(slug) ? [] : [slug];
-            return;
+        if (browser) {
+            const key = buildProgramKey(activeGroup, decades, genres, collections);
+            const label = buildProgramLabel(activeGroup, decades, genres, collections);
+
+            upsertProgram(key, label, getTotalTracks(startRank, endRank));
         }
 
-        collections = isCollectionSelected(slug)
-            ? collections.filter((s) => s !== slug)
-            : [...collections, slug];
+        await goto(url);
     }
 
 
-    function expandAll() {
-        collectionGroups = collectionGroups.map((g) => ({...g, open: true}));
+    function resetOptions() {
+        resetSelection();
+        decades = [];
+        genres = [];
+        collections = [];
+        categoryMode = 'single';
+        voicePlayMode = 'before';
+        startRank = 1;
+        endRank = 40;
+        playbackOrder = 'up';
+        pauseMode = 'pause';
+        selectedVoices = ['intro'];
+        activeGroup = 'decade_genre';
     }
 
-    function collapseAll() {
-        collectionGroups = collectionGroups.map((g) => ({...g, open: false}));
-    }
-
+    // ---------------------------
+    // Decade/Genre helpers
+    // ---------------------------
     function selectAllDecadeGenre() {
+        if (categoryMode !== 'multiple') return;
         decades = decadeOptions.map((d) => d.id);
         genres = genreOptions.map((g) => g.id);
     }
@@ -278,156 +284,50 @@
         genres = [];
     }
 
+    function handleActivate() {
+        // optional hook
+    }
+
+    function handleChange() {
+        // optional hook
+    }
+
+    // ---------------------------
+    // Collection helpers
+    // ---------------------------
+    function isCollectionSelected(slug: string) {
+        return collections.includes(slug);
+    }
+
+    function toggleCollection(slug: string) {
+        if (categoryMode === 'single') {
+            collections = [slug];
+            return;
+        }
+        collections = collections.includes(slug)
+            ? collections.filter((c) => c !== slug)
+            : [...collections, slug];
+    }
+
+    function expandAll() {
+        collectionGroups = collectionGroups.map((g) => ({...g, open: true}));
+    }
+
+    function collapseAll() {
+        collectionGroups = collectionGroups.map((g) => ({...g, open: false}));
+    }
+
     function selectAllCollections() {
-        collections = collectionGroups.flatMap((g) => g.items.map((i) => i.slug));
+        if (categoryMode !== 'multiple') return;
+        collections = collectionGroups.flatMap((g) =>
+            g.items.map((i) => i.slug)
+        );
+
     }
 
     function clearCollections() {
         collections = [];
     }
-
-    function resetOptions() {
-        // ⭐⭐ reset global store FIRST
-        resetSelection();
-
-        // ⭐⭐ then reset local UI state
-        activeGroup = 'decade_genre';
-        categoryMode = 'single';
-        language = 'en';
-        selectedVoices = ['intro'];
-
-        startRank = 1;
-        endRank = 40;
-
-        playbackOrder = 'up';
-        voicePlayMode = 'before';
-        pauseMode = 'pause';
-
-        decades = [];
-        genres = [];
-        collections = [];
-
-        collectionGroups = collectionGroups.map((g) => ({...g, open: false}));
-    }
-
-
-    // ✅ Enforce single-selection when switching from multiple → single
-    $: if (categoryMode === 'single' && collections.length > 1) {
-        collections = collections.slice(0, 1);
-    }
-
-
-    // --------------------------------------------
-    // AUTO-SAVE resume state whenever settings change
-    // --------------------------------------------
-    $: {
-        const context: Record<string, string> = {};
-
-        if (activeGroup === 'decade_genre') {
-            if (decades[0]) context.decade = decades[0];
-            if (genres[0]) context.genre = genres[0];
-        } else if (activeGroup === 'collection') {
-            if (collections[0]) context.collection_slug = collections[0];
-        }
-
-        const state: ResumeState = {
-            mode: activeGroup,
-            context,
-            language,
-            startRank,
-            endRank,
-            playbackOrder,
-            currentRank: startRank,
-            autoAdvance: pauseMode === 'continuous',
-            voices: selectedVoices
-        };
-
-        saveResumeState(state);
-    }
-
-    // --------------------------------------------
-    // TRUE reactive sync from store
-    // --------------------------------------------
-    $: if ($currentSelection) {
-        const sel = $currentSelection;
-
-        activeGroup = sel.mode;
-        language = sel.language;
-        startRank = sel.startRank;
-        endRank = sel.endRank;
-
-        selectedVoices = sel.voices;
-
-        if (sel.mode === 'decade_genre') {
-            decades = sel.context?.decade ? [sel.context.decade] : [];
-            genres = sel.context?.genre ? [sel.context.genre] : [];
-            collections = [];
-        } else {
-            collections = sel.context?.collection_slug ? [sel.context.collection_slug] : [];
-            decades = [];
-            genres = [];
-        }
-    }
-
-
-    // ---------------------------
-    // Summaries
-    // ---------------------------
-    function summarizeVoices(parts: VoicePart[]) {
-        const sorted = [...parts].sort();
-        if (sorted.length === 0) return 'No narration';
-        if (sorted.length === 3) return 'Intro + Detail + Artist';
-        if (sorted.length === 2) {
-            if (!sorted.includes('artist')) return 'Intro + Detail';
-            if (!sorted.includes('detail')) return 'Intro + Artist';
-            return 'Detail + Artist';
-        }
-        return sorted[0] === 'intro'
-            ? 'Intro only'
-            : sorted[0] === 'detail'
-                ? 'Detail only'
-                : 'Artist notes only';
-    }
-
-    function summarizeSelection(
-        group: ModeType,
-        decadesSel: string[],
-        genresSel: string[],
-        collectionsSel: string[]
-    ) {
-        if (group === 'decade_genre') {
-            if (!decadesSel.length && !genresSel.length) return 'No decade/genre selected';
-            const decadePart =
-                decadesSel.length === 0
-                    ? 'No decade'
-                    : decadesSel.length === 1
-                        ? decadesSel[0]
-                        : `${decadesSel.length} decades`;
-            const genrePart =
-                genresSel.length === 0
-                    ? 'No genre'
-                    : genresSel.length === 1
-                        ? genresSel[0]
-                        : `${genresSel.length} genres`;
-            return `${decadePart} • ${genrePart}`;
-        }
-
-        if (!collectionsSel.length) return 'No collection selected';
-        return collectionsSel.length === 1
-            ? collectionsSel[0]
-            : `${collectionsSel.length} collections`;
-    }
-
-    // Derived crumbs + launch guards
-    $: modeLabel = activeGroup === 'decade_genre' ? 'Decade–Genre' : 'Collections';
-    $: rankLabel = `Rank ${startRank}–${endRank}`;
-    $: voicesSummary = summarizeVoices(selectedVoices);
-    $: selectionSummary = summarizeSelection(activeGroup, decades, genres, collections);
-
-    $: canLaunchDecadeGenre =
-        activeGroup === 'decade_genre' && decades.length > 0 && genres.length > 0;
-
-    $: canLaunchCollection = activeGroup === 'collection' && collections.length > 0;
 </script>
 
 {#if import.meta.env.DEV}
@@ -435,7 +335,6 @@
         ROUTE: /options-v2
     </div>
 {/if}
-
 
 <div class="page-shell">
     <HeroHeader/>
@@ -455,13 +354,12 @@
             <span class="crumb">{voicesSummary}</span>
         </div>
 
-        <!-- TOP CONFIG GRID (Purdue layout: 4 + 4) -->
+        <!-- TOP CONFIG GRID (4 + 4) -->
         <section class="options-grid">
-            <!-- Row 1: Mode, Category Mode, Language, Voice Content -->
             <div class="opt-cell opt-cell--row1">
                 <ModeToggle
                         modeType={activeGroup}
-                        setMode={(mode) => {
+                        setMode={(mode: ModeType) => {
             activeGroup = mode;
             if (mode === 'decade_genre') {
               collections = [];
@@ -485,13 +383,13 @@
                 <VoiceContentSelector bind:selectedVoices/>
             </div>
 
-            <!-- Row 2: Track Range, Playback Order, Voice Playback, Pause Mode -->
             <div class="opt-cell opt-cell--row2">
                 <TrackRangeSelector bind:startRank bind:endRank/>
             </div>
 
             <div class="opt-cell opt-cell--row2">
-                <PlaybackOrderSelector bind:playbackOrder {globalMode}/>
+                <PlaybackOrderSelector bind:playbackOrder/>
+
             </div>
 
             <div class="opt-cell opt-cell--row2">
@@ -516,11 +414,8 @@
                                 <button type="button" class="toolbar-btn" on:click={selectAllDecadeGenre}>
                                     Select All
                                 </button>
-                                <button
-                                        type="button"
-                                        class="toolbar-btn toolbar-btn--ghost"
-                                        on:click={clearDecadeGenre}
-                                >
+                                <button type="button" class="toolbar-btn toolbar-btn--ghost"
+                                        on:click={clearDecadeGenre}>
                                     Unselect All
                                 </button>
                             </div>
@@ -571,11 +466,8 @@
                                 <button type="button" class="toolbar-btn" on:click={selectAllCollections}>
                                     Select All
                                 </button>
-                                <button
-                                        type="button"
-                                        class="toolbar-btn toolbar-btn--ghost"
-                                        on:click={clearCollections}
-                                >
+                                <button type="button" class="toolbar-btn toolbar-btn--ghost"
+                                        on:click={clearCollections}>
                                     Unselect All
                                 </button>
                             {/if}
@@ -593,9 +485,8 @@
                                         <span class="group-name">{group.name}</span>
                                     </summary>
 
-
                                     <ul>
-                                        {#each group.items as col (col.slug + ':' + collections.join(','))}
+                                        {#each group.items as col (col.slug)}
                                             <li>
                                                 <button
                                                         type="button"
@@ -612,7 +503,6 @@
                                     </ul>
                                 </details>
                             {/each}
-
                         {/if}
                     </div>
                 </section>
@@ -621,77 +511,16 @@
 
         <PlaybackHistoryPanel/>
 
-
         <!-- LAUNCH BUTTONS -->
         <div class="launch-modes">
             <button class="launch-btn launch-btn--reset" type="button" on:click={resetOptions}>
                 ⏮ Reset
             </button>
 
-            {#if canLaunchDecadeGenre}
-                <!-- ✅ FIXED: Decade–Genre Car Mode -->
-                <button
-                        class="launch-btn"
-                        type="button"
-                        on:click={async () => {
-				const url = await launchWithPlayback({
-					layoutMode: 'car',
-					decade: decades[0],
-					genre: genres[0],
-					language,
-					voices: selectedVoices,
-					startRank,
-					endRank,
-					playbackOrder,
-					voicePlayMode,
-					pauseMode
-				});
-
-				if (!url) return;
-
-                const key = buildProgramKey();
-                const label = buildProgramLabel();
-
-
-                if (browser) {
-                  upsertProgram(key, label, getTotalTracks());
-                }
-
-                await goto(url);
-
-			}}
-                >
+            {#if canLaunchDecadeGenre || canLaunchCollection}
+                <button class="launch-btn" type="button" on:click={launchCarMode}>
                     🚗 Load in Car Mode
                 </button>
-
-            {/if}
-
-            {#if canLaunchCollection}
-                <!-- ✅ FIXED: Collection Car Mode (WAS BROKEN BEFORE) -->
-                <button
-                        class="launch-btn"
-                        type="button"
-                        on:click={async () => {
-				const url = await launchWithPlayback({
-					layoutMode: 'car',
-					collection: collections[0],   // ✅ CRITICAL FIX
-					language,
-					voices: selectedVoices,
-					startRank,
-					endRank,
-					playbackOrder,
-					voicePlayMode,
-					pauseMode
-				});
-
-				if (!url) return;
-await goto(url);
-
-			}}
-                >
-                    🚗 Load in Car Mode
-                </button>
-
             {/if}
         </div>
     </div>
@@ -722,12 +551,7 @@ await goto(url);
         margin-bottom: 1.5rem;
         padding: 0.75rem 1rem;
         border-radius: 999px;
-        background: linear-gradient(
-                90deg,
-                rgba(10, 10, 10, 0.96),
-                rgba(18, 18, 18, 0.96),
-                rgba(32, 32, 32, 0.96)
-        );
+        background: linear-gradient(90deg, rgba(10, 10, 10, 0.96), rgba(18, 18, 18, 0.96), rgba(32, 32, 32, 0.96));
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
         border: 1px solid rgba(207, 184, 124, 0.35);
         backdrop-filter: blur(14px);
@@ -750,7 +574,6 @@ await goto(url);
         opacity: 0.5;
     }
 
-    /* TOP GRID: 4 + 4 layout, responsive */
     .options-grid {
         display: grid;
         gap: 1.2rem;
@@ -764,10 +587,7 @@ await goto(url);
         padding: 0.9rem 1rem;
         border: 1px solid rgba(207, 184, 124, 0.35);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-        transition: transform 0.18s ease-out,
-        box-shadow 0.18s ease-out,
-        border-color 0.18s ease-out,
-        background-color 0.18s ease-out;
+        transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out;
     }
 
     .opt-cell:hover {
@@ -789,7 +609,6 @@ await goto(url);
         }
     }
 
-    /* MAIN GRID: decades/genres vs collections */
     .grid {
         display: grid;
         grid-template-columns: 1.1fr 0.9fr;
@@ -819,12 +638,7 @@ await goto(url);
         position: sticky;
         top: 3.75rem;
         padding-bottom: 0.35rem;
-        background: linear-gradient(
-                to bottom,
-                rgba(14, 14, 14, 0.98),
-                rgba(14, 14, 14, 0.9),
-                transparent
-        );
+        background: linear-gradient(to bottom, rgba(14, 14, 14, 0.98), rgba(14, 14, 14, 0.9), transparent);
         z-index: 10;
     }
 
@@ -849,10 +663,7 @@ await goto(url);
         background: rgba(207, 184, 124, 0.08);
         color: #f9f5e8;
         cursor: pointer;
-        transition: background-color 0.16s ease-out,
-        color 0.16s ease-out,
-        border-color 0.16s ease-out,
-        transform 0.12s ease-out;
+        transition: background-color 0.16s ease-out, color 0.16s ease-out, border-color 0.16s ease-out, transform 0.12s ease-out;
     }
 
     .toolbar-btn:hover {
@@ -870,7 +681,6 @@ await goto(url);
         margin-top: 0.5rem;
     }
 
-    /* Decade + Genre side-by-side */
     .picker-group__body--decade-genre {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -903,8 +713,7 @@ await goto(url);
         list-style: none;
         padding: 0.4rem 0.5rem;
         border-radius: 8px;
-        transition: background-color 0.16s ease-out,
-        color 0.16s ease-out;
+        transition: background-color 0.16s ease-out, color 0.16s ease-out;
     }
 
     .group-expander {
@@ -916,7 +725,6 @@ await goto(url);
         opacity: 0.85;
     }
 
-    /* Rotate the arrow when the group is open */
     .collection-group[open] .group-expander {
         transform: rotate(90deg) translateY(-1px);
     }
@@ -925,12 +733,6 @@ await goto(url);
         background: rgba(207, 184, 124, 0.22);
         color: #fdfaf3;
     }
-
-    .collection-group summary:hover .group-expander {
-        opacity: 1;
-        transform: scale(1.1) translateY(-1px);
-    }
-
 
     .collection-row {
         width: 100%;
@@ -941,8 +743,7 @@ await goto(url);
         background: transparent;
         color: inherit;
         cursor: pointer;
-        transition: background-color 0.16s ease-out,
-        transform 0.12s ease-out;
+        transition: background-color 0.16s ease-out, transform 0.12s ease-out;
     }
 
     .collection-row:hover {
@@ -971,9 +772,7 @@ await goto(url);
         font-weight: 600;
         border: 1px solid #f2e6b7;
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-        transition: transform 0.16s ease-out,
-        box-shadow 0.16s ease-out,
-        filter 0.16s ease-out;
+        transition: transform 0.16s ease-out, box-shadow 0.16s ease-out, filter 0.16s ease-out;
     }
 
     .launch-btn:hover {
@@ -993,7 +792,6 @@ await goto(url);
         background: #333;
     }
 
-    /* Grey-out + disable inactive picker group */
     .picker-group[data-active='false'] {
         opacity: 0.35;
         filter: grayscale(80%);
@@ -1011,11 +809,8 @@ await goto(url);
         transition: background-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    /* ✅ IMPORTANT: must be :global or Svelte will block it */
     :global(.collection-row[data-selected='true'] .collection-dot) {
         background: #cfb87c;
         box-shadow: 0 0 6px rgba(207, 184, 124, 0.9);
     }
-
-
 </style>
