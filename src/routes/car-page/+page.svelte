@@ -5,6 +5,7 @@
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
+    import type {ResumeState} from '$lib/utils/smartResume';
 
     import {
         startPlaybackPolling,
@@ -243,29 +244,31 @@
             : 'decade_genre';
 
 
+
     function backToOptions() {
         if ($currentSelection && $currentTrack) {
-            saveResumeState({
-                mode:
-                    $currentSelection?.mode === 'collection'
-                        ? 'collection'
-                        : 'decade_genre',
+
+            const resume: ResumeState = {
+                mode: $currentSelection.mode,
                 context: $currentSelection.context ?? {},
+
                 language: $currentSelection.language,
                 startRank: $currentSelection.startRank,
                 endRank: $currentSelection.endRank,
                 playbackOrder: $currentSelection.playbackOrder,
-                currentRank: $currentRank,
-                autoAdvance: $currentSelection.pauseMode === 'continuous',
+                pauseMode: $currentSelection.pauseMode,
 
-                voices: $currentSelection.voices
-            });
+                voices: $currentSelection.voices,
+                currentRank: $currentRank
+            };
+
+            // ⭐ THIS LINE WAS MISSING
+            saveResumeState(resume);
         }
 
-        if (typeof window !== 'undefined') {
-            window.location.href = '/options-v2';
-        }
+        window.location.href = '/options-v2';
     }
+
 
     function phaseLabel(phase: PlaybackPhase | null | undefined): string {
         switch (phase) {
@@ -302,6 +305,7 @@
     onMount(async () => {
         console.log('🚗 CarMode onMount START');
         console.log('API BASE:', import.meta.env.VITE_API_BASE_URL);
+        console.log('🔥 FULL URL:', window.location.href);
 
         // 🧹 Step 0: Reset backend transport safely
         try {
@@ -319,6 +323,8 @@
 
         const url = new URL(window.location.href);
         const sel = buildSelectionFromUrl(url);
+        console.log('🔥 BUILT SELECTION:', sel);
+
         currentSelection.set(sel);
 
         const cr = url.searchParams.get('currentRank');

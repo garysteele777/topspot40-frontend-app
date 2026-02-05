@@ -142,49 +142,57 @@
     // Load resume + catalog
     // ---------------------------
     onMount(async () => {
-        const resumed = loadResumeState();
-        const selection = buildSelectionFromResume(resumed);
-
-        if (selection) {
-            currentSelection.set(selection);
-
-            activeGroup = selection.mode;
-            language = selection.language;
-            selectedVoices = selection.voices ?? ['intro'];
-            startRank = selection.startRank ?? 1;
-            endRank = selection.endRank ?? 40;
-            playbackOrder = selection.playbackOrder ?? 'up';
-            pauseMode = selection.pauseMode === 'continuous' ? 'continuous' : 'pause';
-
-            if (selection.mode === 'decade_genre') {
-                decades = selection.context?.decade ? [selection.context.decade] : [];
-                genres = selection.context?.genre ? [selection.context.genre] : [];
-                collections = [];
-            } else {
-                collections = selection.context?.collection_slug ? [selection.context.collection_slug] : [];
-                decades = [];
-                genres = [];
-            }
-        }
-
         try {
+            // 1️⃣ Load catalog FIRST
             const normalized = await loadCatalog();
 
-            // IMPORTANT: normalize into ListPicker’s expected {id,label,mp3?}
             decadeOptions = mapOptions(normalized.decades);
             genreOptions = mapOptions(normalized.genres);
 
-            // Collection groups: keep your existing shape
             collectionGroups = (normalized.collectionGroups ?? []).map((g: CollectionGroup) => ({
                 ...g,
                 open: false
             }));
+
+            // 2️⃣ Restore resume AFTER options exist
+            const resumed = loadResumeState();
+            const selection = buildSelectionFromResume(resumed);
+
+            if (selection) {
+                currentSelection.set(selection);
+
+                activeGroup = selection.mode;
+                language = selection.language;
+                selectedVoices = selection.voices ?? ['intro'];
+                startRank = selection.startRank ?? 1;
+                endRank = selection.endRank ?? 40;
+                playbackOrder = selection.playbackOrder ?? 'up';
+                pauseMode =
+                    selection.pauseMode === 'continuous' ? 'continuous' : 'pause';
+
+                if (selection.mode === 'decade_genre') {
+                    decades = selection.context?.decade
+                        ? [selection.context.decade]
+                        : [];
+                    genres = selection.context?.genre
+                        ? [selection.context.genre]
+                        : [];
+                    collections = [];
+                } else {
+                    collections = selection.context?.collection_slug
+                        ? [selection.context.collection_slug]
+                        : [];
+                    decades = [];
+                    genres = [];
+                }
+            }
 
             status = 'Ready';
         } catch {
             status = '❌ Error loading catalog.';
         }
     });
+
 
     // ---------------------------
     // Auto-save resume
@@ -223,19 +231,14 @@
             activeGroup === 'decade_genre'
                 ? {
                     ...base,
-                    mode: 'decade_genre' as const,
-                    context: {
-                        decade: decades[0],
-                        genre: genres[0]
-                    }
+                    decade: decades[0],
+                    genre: genres[0]
                 }
                 : {
                     ...base,
-                    mode: 'collection' as const,
-                    context: {
-                        collection_slug: collections[0]
-                    }
+                    collection: collections[0]
                 };
+
 
         // 🔵 TS-safe call (no `any`)
         const url = await launchWithPlayback(

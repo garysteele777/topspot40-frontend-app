@@ -1,21 +1,25 @@
-// src/lib/utils/smartResume.ts
 import type {
     ModeType,
     Language,
     VoicePart,
-    PlaybackOrder
+    PlaybackOrder,
+    PauseMode
 } from '$lib/types/playback';
 
 
 export type ResumeState = {
     mode: ModeType;
     context: Record<string, string>;
+
     language: Language;
     startRank: number;
     endRank: number;
+
     playbackOrder: PlaybackOrder;
     currentRank: number;
-    autoAdvance: boolean;
+
+    pauseMode: PauseMode;   // now required & typed
+
     voices: VoicePart[];
 };
 
@@ -27,9 +31,10 @@ function hasLocalStorage(): boolean {
     return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 }
 
-// Save the current state
+// Save
 export function saveResumeState(state: ResumeState) {
     if (!hasLocalStorage()) return;
+
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
@@ -37,9 +42,10 @@ export function saveResumeState(state: ResumeState) {
     }
 }
 
-// Load last saved state
+// Load
 export function loadResumeState(): ResumeState | null {
     if (!hasLocalStorage()) return null;
+
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return null;
