@@ -1,5 +1,6 @@
 // Reusable, ESLint-safe defaults for Options page + selection store.
-import { selection, type Mode, type SelectionState } from '$lib/stores/selection';
+import {selection, type Mode, type SelectionState} from '$lib/stores/selection';
+import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
 
 /** Canonical rank bounds */
 export const DEFAULT_START_RANK = 1;
@@ -7,34 +8,43 @@ export const DEFAULT_END_RANK = 10;
 
 /** Canonical toggles */
 export const DEFAULT_TOGGLES = {
-  playIntro: true,
-  playDetail: true,
-  playArtistDescription: true,
-  textIntro: true,
-  textDetail: true,
-  textArtistDescription: true
+    playIntro: true,
+    playDetail: true,
+    playArtistDescription: true,
+    textIntro: true,
+    textDetail: true,
+    textArtistDescription: true
 } as const;
 
 export type ToggleKeys = keyof typeof DEFAULT_TOGGLES;
 
 /** Build a default SelectionState (store) object */
 export function buildDefaultSelection(language: string = 'en'): SelectionState {
-  return {
-    mode: 'decade_genre' as Mode,
-    language,
-    context: null,
-    startRank: DEFAULT_START_RANK,
-    endRank: DEFAULT_END_RANK,
-    tracks: [],
-    ...DEFAULT_TOGGLES
-  };
+    return {
+        mode: 'decade_genre' as Mode,
+        language: normalizeLanguage(language),
+        context: null,
+
+        startRank: DEFAULT_START_RANK,
+        endRank: DEFAULT_END_RANK,
+        currentRank: DEFAULT_START_RANK,
+
+        voices: ['intro'],
+        playbackOrder: 'up',
+        voicePlayMode: 'before',
+        pauseMode: 'pause',
+        categoryMode: 'single',
+
+        ...DEFAULT_TOGGLES
+    };
 }
+
 
 /** Apply defaults to the store and return the object that was set */
 export function applyDefaultSelection(language: string = 'en'): SelectionState {
-  const next = buildDefaultSelection(language);
-  selection.set(next);
-  return next;
+    const next = buildDefaultSelection(language);
+    selection.set(next);
+    return next;
 }
 
 /**
@@ -42,21 +52,21 @@ export function applyDefaultSelection(language: string = 'en'): SelectionState {
  * Keeps your UI reset consistent with store defaults without hard-coding "All".
  */
 export function buildDefaultUI(params: {
-  decades: string[];
-  genres: string[];
-  collections: string[];
+    decades: string[];
+    genres: string[];
+    collections: string[];
 }) {
-  const { decades, genres, collections } = params;
+    const {decades, genres, collections} = params;
 
-  return {
-    modeType: 'decade_genre' as Mode,
-    selectedDecade: decades[0] ?? 'All',
-    selectedGenre: genres[0] ?? 'All',
-    selectedCollection: collections[0] ?? 'All',
-    startRank: DEFAULT_START_RANK,
-    endRank: DEFAULT_END_RANK,
-    ...DEFAULT_TOGGLES
-  };
+    return {
+        modeType: 'decade_genre' as Mode,
+        selectedDecade: decades[0] ?? 'All',
+        selectedGenre: genres[0] ?? 'All',
+        selectedCollection: collections[0] ?? 'All',
+        startRank: DEFAULT_START_RANK,
+        endRank: DEFAULT_END_RANK,
+        ...DEFAULT_TOGGLES
+    };
 }
 
 /**
@@ -65,12 +75,12 @@ export function buildDefaultUI(params: {
  * - returns the UI defaults for you to assign to local variables
  */
 export function resetToDefaultsUI(params: {
-  decades: string[];
-  genres: string[];
-  collections: string[];
-  language?: string;
+    decades: string[];
+    genres: string[];
+    collections: string[];
+    language?: string;
 }) {
-  const { decades, genres, collections, language = 'en' } = params;
-  applyDefaultSelection(language);
-  return buildDefaultUI({ decades, genres, collections });
+    const {decades, genres, collections, language = 'en'} = params;
+    applyDefaultSelection(language);
+    return buildDefaultUI({decades, genres, collections});
 }

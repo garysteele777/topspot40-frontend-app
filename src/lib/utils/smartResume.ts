@@ -7,21 +7,17 @@ import type {
 } from '$lib/types/playback';
 
 
-export type ResumeState = {
+export interface ResumeState {
     mode: ModeType;
     context: Record<string, string>;
-
     language: Language;
     startRank: number;
     endRank: number;
-
-    playbackOrder: PlaybackOrder;
     currentRank: number;
-
-    pauseMode: PauseMode;   // now required & typed
-
+    playbackOrder: PlaybackOrder;
+    pauseMode: PauseMode;   // ✅ new
     voices: VoicePart[];
-};
+}
 
 
 const STORAGE_KEY = 'topspot_last_selection';

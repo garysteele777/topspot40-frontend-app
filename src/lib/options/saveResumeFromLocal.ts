@@ -22,9 +22,9 @@ export function saveResumeFromLocal(params: {
     language: params.language,
     startRank: params.startRank,
     endRank: params.endRank,
-    playbackOrder: params.playbackOrder,
     currentRank: params.startRank,
-    autoAdvance: params.pauseMode === 'continuous',
+    playbackOrder: params.playbackOrder,
+    pauseMode: params.pauseMode,   // ✅ direct, explicit
     voices: params.voices
   };
 
