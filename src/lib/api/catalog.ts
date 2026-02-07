@@ -4,6 +4,15 @@ export interface DecadeItem { id: number; name: string; slug: string }
 export interface GenreItem  { id: number; name: string; slug: string }
 export interface CollectionLeaf { id: number; name: string; slug: string }
 
+export function toSlug(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+
 export interface CollectionGroup {
   category: string;
   slug: string;
@@ -72,4 +81,27 @@ export async function fetchGroupedCatalog(): Promise<GroupedCatalog> {
   }
 
   return await readJsonSafe<GroupedCatalog>(res, url);
+}
+
+export async function loadCatalogSummary() {
+  const url = `${API_BASE}/api/catalog/summary`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    mode: 'cors',
+    credentials: 'omit',
+    headers: { Accept: 'application/json' }
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    const snippet = body ? ` | body: ${body.slice(0, 300)}` : '';
+    throw new CatalogError(
+      `Failed to load catalog summary: ${res.status} ${res.statusText}${snippet}`,
+      res.status,
+      url
+    );
+  }
+
+  return await readJsonSafe(res, url);
 }

@@ -4,7 +4,7 @@ import {
 } from '$lib/api';
 import { pickFirstNarrationLine, pickName, toTitleCase } from '$lib/utils/textHelpers';
 
-// What a single preview row can look like (union-friendly, minimal fields we use)
+// What a single preview row can look like (union-friendly, minimal fieldsF we use)
 export interface PreviewRow {
   rank: number;
   trackName?: string;

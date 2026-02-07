@@ -16,7 +16,6 @@ export type PauseMode = 'pause' | 'continuous';
 
 export type VoicePlayMode = 'before' | 'during';
 
-
 export type CategoryMode = 'single' | 'multiple';
 
 export type LayoutMode = 'car' | 'list';
