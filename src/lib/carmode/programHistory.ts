@@ -10,7 +10,12 @@ export type ProgramHistory = {
     total: number;
     playedRanks: number[];
     updatedAt: number;
+
+    // ⭐ NEW (collections only)
+    collectionGroup?: string; // e.g. "Stage & Screen"
+    collectionGroupSlug?: string; // e.g. "stage_and_screen"
 };
+
 
 const STORAGE_KEY = 'ts_program_history_v1';
 
@@ -43,7 +48,12 @@ function canonicalTotalForKey(key: ProgramKey): number {
 }
 
 
-export function upsertProgram(key: ProgramKey, label: string, total: number) {
+export function upsertProgram(
+    key: ProgramKey,
+    label: string,
+    total: number,
+    extra?: Partial<ProgramHistory>
+) {
     const all = loadAll();
     const idx = all.findIndex(p => p.key === key);
 
@@ -53,9 +63,10 @@ export function upsertProgram(key: ProgramKey, label: string, total: number) {
     const next: ProgramHistory = {
         key,
         label,
-        total: canonicalTotal,   // ✅ FIXED
+        total: canonicalTotal,
         playedRanks: idx >= 0 ? all[idx].playedRanks : [],
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        ...extra   // ⭐ THIS IS THE CRITICAL LINE
     };
 
     if (idx >= 0) all[idx] = next;

@@ -6,6 +6,46 @@
         type ProgramHistory
     } from '$lib/carmode/programHistory';
 
+    import {onMount} from 'svelte';
+    import {fetchGroupedCatalog} from '$lib/api/catalog';
+    import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
+
+
+    let collectionGroupNameMap: Record<string, string> = {};
+    let collectionNameMap: Record<string, string> = {};
+    let collectionSlugToGroupSlug: Record<string, string> = {};
+
+    onMount(async () => {
+        try {
+            const data = await fetchGroupedCatalog();
+            const normalized = normalizeCatalog(data);
+
+            const groupMap: Record<string, string> = {};
+            const nameMap: Record<string, string> = {};
+            const slugToGroup: Record<string, string> = {};
+
+            for (const group of normalized.collectionGroups) {
+                groupMap[group.slug] = group.name;
+
+                for (const item of group.items) {
+                    nameMap[item.slug] = item.name;
+                    slugToGroup[item.slug] = group.slug;
+                }
+            }
+
+            collectionGroupNameMap = groupMap;
+            collectionNameMap = nameMap;
+            collectionSlugToGroupSlug = slugToGroup;
+
+            console.log('📦 Collection name maps loaded', {
+                collectionGroupNameMap,
+                collectionNameMap
+            });
+        } catch (err) {
+            console.error('Failed to load collection catalog:', err);
+        }
+    });
+
 
     // ─────────────────────────────────────────────
     // Derived groupings
@@ -34,6 +74,27 @@
     $: collectionPrograms = $programHistory.filter(
         (p): p is ProgramHistory => p.key.startsWith('COL|')
     );
+
+    $: collectionGroupMap = (() => {
+        const map = new Map<string, ProgramHistory[]>();
+
+        for (const p of collectionPrograms) {
+            const collectionSlug = p.key.split('|')[1];
+            if (!collectionSlug) continue;
+
+            const groupSlug = collectionSlugToGroupSlug[collectionSlug];
+            if (!groupSlug) continue;
+
+            if (!map.has(groupSlug)) map.set(groupSlug, []);
+            map.get(groupSlug)!.push(p);
+        }
+
+        return [...map.entries()].map(([groupSlug, programs]) => ({
+            groupSlug,
+            groupName: collectionGroupNameMap[groupSlug] ?? groupSlug,
+            programs
+        }));
+    })();
 
 
     function playedCount(p: ProgramHistory): number {
@@ -82,9 +143,11 @@
 
                         <ul class="history-list">
                             {#each block.programs as p}
+                                {@const collectionSlug = p.key.split('|')[1] ?? ''}
+
                                 <li class="history-row">
                                     <span class="history-row__label">
-                                        {p.label}
+                                        {collectionNameMap[collectionSlug] ?? p.label}
                                     </span>
 
                                     <span class="history-row__progress">
@@ -127,34 +190,46 @@
                 <p class="history-empty">No collections played yet.</p>
             {:else}
                 <ul class="history-list">
-                    {#each collectionPrograms as p}
-                        <li class="history-row">
-                            <span class="history-row__label">
-                                {p.label}
-                            </span>
+                    {#each collectionGroupMap as group}
+                        <details class="history-subsection">
+                            <summary class="history-subsection__summary">
+                                {group.groupName}
+                            </summary>
 
-                            <span class="history-row__progress">
-                              {isCompleted(p)
-                                  ? 'Completed'
-                                  : `${playedCount(p)} / ${p.total}`}
-                            </span>
+                            <ul class="history-list">
+                                {#each group.programs as p}
+                                    {@const collectionSlug = p.key.split('|')[1] ?? ''}
 
+                                    <li class="history-row">
+                    <span class="history-row__label">
+                        {collectionNameMap[collectionSlug] ?? p.label}
+                    </span>
 
-                            <div class="history-row__actions">
-                                <button class="btn btn--primary">
-                                    ▶ {isCompleted(p) ? 'Restart' : 'Resume'}
-                                </button>
-                                <button
-                                        class="btn btn--ghost"
-                                        on:click={() => clearOne(p)}
-                                        aria-label="Clear playback history"
-                                >
-                                    🧹
-                                </button>
+                                        <span class="history-row__progress">
+                        {isCompleted(p)
+                            ? 'Completed'
+                            : `${playedCount(p)} / ${p.total}`}
+                    </span>
 
-                            </div>
-                        </li>
+                                        <div class="history-row__actions">
+                                            <button class="btn btn--primary">
+                                                ▶ {isCompleted(p) ? 'Restart' : 'Resume'}
+                                            </button>
+
+                                            <button
+                                                    class="btn btn--ghost"
+                                                    on:click={() => clearOne(p)}
+                                                    aria-label="Clear playback history"
+                                            >
+                                                🧹
+                                            </button>
+                                        </div>
+                                    </li>
+                                {/each}
+                            </ul>
+                        </details>
                     {/each}
+
                 </ul>
             {/if}
         </div>

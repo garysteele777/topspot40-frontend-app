@@ -4,7 +4,6 @@
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
-    import type {PlaybackPhase} from '$lib/helpers/car/types';
     import type {ResumeState} from '$lib/utils/smartResume';
 
     import {
@@ -244,7 +243,6 @@
             : 'decade_genre';
 
 
-
     function backToOptions() {
         if ($currentSelection && $currentTrack) {
 
@@ -270,39 +268,11 @@
     }
 
 
-    function phaseLabel(phase: PlaybackPhase | null | undefined): string {
-        switch (phase) {
-            case 'idle':
-                return '';
-
-            case 'intro':
-                return 'Now playing intro';
-
-            case 'detail':
-                return 'Now playing track details';
-
-            case 'artist':
-                return 'Now playing artist info';
-
-            case 'track':
-                return 'Now playing track';
-
-            case 'paused':
-                return 'Playback paused';
-
-            case 'stopped':
-                return '';
-
-            default:
-                return '';
-        }
-    }
-
-
     // ─────────────────────────────────────────────
     // Lifecycle
     // ─────────────────────────────────────────────
     onMount(async () => {
+
         console.log('🚗 CarMode onMount START');
         console.log('API BASE:', import.meta.env.VITE_API_BASE_URL);
         console.log('🔥 FULL URL:', window.location.href);
@@ -348,7 +318,7 @@
 
         await loadForSelection(sel, initialRank);
 
-        // ─────────────────────────────────────────────
+/// ─────────────────────────────────────────────
 // Prepare Spotify playback (warmup)
 // ─────────────────────────────────────────────
 

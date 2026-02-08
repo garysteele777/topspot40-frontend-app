@@ -287,6 +287,21 @@
         collectionGroups = collectionGroups.map(g => ({...g, open: false}));
     }
 
+
+    function findCollectionMeta(slug: string) {
+        for (const group of collectionGroups) {
+            const match = group.items.find(i => i.slug === slug);
+            if (match) {
+                return {
+                    collectionGroup: group.name,
+                    collectionGroupSlug: group.slug
+                };
+            }
+        }
+        return {};
+    }
+
+
     // ─────────────────────────────────────────────
     // Actions
     // ─────────────────────────────────────────────
@@ -316,8 +331,23 @@
         if (browser) {
             const key = buildProgramKey(activeGroup, decades, genres, collections);
             const label = buildProgramLabel(activeGroup, decades, genres, collections);
-            upsertProgram(key, label, getTotalTracks(startRank, endRank));
+
+            if (activeGroup === 'collection' && collections[0]) {
+                upsertProgram(
+                    key,
+                    label,
+                    getTotalTracks(startRank, endRank),
+                    findCollectionMeta(collections[0])   // ⭐ THIS IS IT
+                );
+            } else {
+                upsertProgram(
+                    key,
+                    label,
+                    getTotalTracks(startRank, endRank)
+                );
+            }
         }
+
 
         await goto(url);
     }

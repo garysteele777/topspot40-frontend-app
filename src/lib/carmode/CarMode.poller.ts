@@ -145,17 +145,32 @@ function playOneAudio(
             resolve();
         };
 
-        audio.onerror = (e) => {
+        audio.onerror = () => {
+            console.warn('🔇 Narration missing or failed, skipping:', url);
+
             clearInterval(timer);
+
+            elapsed.set(0);
+            duration.set(0);
+            progress.set(0);
+
             timingSource.set('spotify');
-            reject(e);
+            resolve(); // ✅ skip narration, continue sequence
         };
 
-        audio.play().catch((err) => {
+        audio.play().catch(() => {
+            console.warn('🔇 Narration could not play, skipping:', url);
+
             clearInterval(timer);
+
+            elapsed.set(0);
+            duration.set(0);
+            progress.set(0);
+
             timingSource.set('spotify');
-            reject(err);
+            resolve(); // ✅ skip narration, continue sequence
         });
+
     });
 }
 
