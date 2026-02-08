@@ -37,10 +37,15 @@
     /* ─────────────────────────────────────────────
        Derived values (Next + Progress)
     ───────────────────────────────────────────── */
-    $: total = tracks.length;
+    // NOTE: sessionTotal controls playback sequencing ONLY.
+    // Program progress always comes from programHistory.total.
+
+    $: sessionTotal = tracks.length;
 
 
-    let completed = 0;   // ⭐ ADD THIS LINE
+    let completed = 0;
+    let programTotal = 0;
+
 
     $: currentIndex =
         currentTrack
@@ -48,38 +53,41 @@
             : -1;
 
     $: nextTrack =
-        currentIndex >= 0 && currentIndex < total - 1
+        currentIndex >= 0 && currentIndex < sessionTotal - 1
             ? tracks[currentIndex + 1]
             : null;
 
-$: {
-    const sel = $currentSelection;
+    $: {
+        const sel = $currentSelection;
 
-    let key: string | null = null;
+        let key: string | null = null;
 
-    if (sel?.mode === 'decade_genre') {
-        const d = sel.context?.decade;
-        const g = sel.context?.genre;
-        if (d && g) key = `DG|${d}|${g}`;
-    } else if (sel?.mode === 'collection') {
-        const c = sel.context?.collection_slug;
-        if (c) key = `COL|${c}`;
+        if (sel?.mode === 'decade_genre') {
+            const d = sel.context?.decade;
+            const g = sel.context?.genre;
+            if (d && g) key = `DG|${d}|${g}`;
+        } else if (sel?.mode === 'collection') {
+            const c = sel.context?.collection_slug;
+            if (c) key = `COL|${c}`;
+        }
+
+        if (!key) {
+            completed = 0;
+            programTotal = 0;
+        } else {
+            const program = $programHistoryStore.find(p => p.key === key);
+            completed = program?.playedRanks.length ?? 0;
+            programTotal = program?.total ?? 0;
+        }
     }
 
-    if (!key) {
-        completed = 0;
-    } else {
-        const program = $programHistoryStore.find(p => p.key === key);
-        completed = program?.playedRanks.length ?? 0;
-    }
-}
+
+    $: remaining = Math.max(0, programTotal - completed);
 
 
-
-    $: remaining = total - completed;
     $: percent =
-        total > 0
-            ? (completed / total) * 100
+        programTotal > 0
+            ? (completed / programTotal) * 100
             : 0;
 
 
@@ -120,7 +128,8 @@ $: {
 
 
     <!-- ⭐ NEW: Next + Progress info -->
-    {#if total > 0}
+    {#if programTotal > 0}
+
         <div class="car-extra-info">
             {#if nextTrack}
                 <div class="next-line">
@@ -136,9 +145,10 @@ $: {
             {/if}
 
             <div class="progress-line">
-                Completed {completed} of {total}
+                Completed {completed} of {programTotal}
                 <span class="dot">•</span>
                 Remaining {remaining}
+
             </div>
 
             <div class="overall-progress">

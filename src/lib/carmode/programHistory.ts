@@ -36,15 +36,24 @@ export const programHistoryStore = writable<ProgramHistory[]>(
     browser ? loadAll() : []
 );
 
+function canonicalTotalForKey(key: ProgramKey): number {
+    if (key.startsWith('DG|')) return 40;
+    // collections can stay dynamic for now
+    return 0;
+}
+
 
 export function upsertProgram(key: ProgramKey, label: string, total: number) {
     const all = loadAll();
     const idx = all.findIndex(p => p.key === key);
 
+    const canonicalTotal =
+        key.startsWith('DG|') ? canonicalTotalForKey(key) : total;
+
     const next: ProgramHistory = {
         key,
         label,
-        total,
+        total: canonicalTotal,   // ✅ FIXED
         playedRanks: idx >= 0 ? all[idx].playedRanks : [],
         updatedAt: Date.now()
     };
@@ -55,6 +64,7 @@ export function upsertProgram(key: ProgramKey, label: string, total: number) {
     saveAll(all);
     programHistoryStore.set(all);
 }
+
 
 export function markRankPlayed(key: ProgramKey, rank: number) {
     const all = loadAll();
