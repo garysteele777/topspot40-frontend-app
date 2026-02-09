@@ -3,6 +3,8 @@ import {tracks, currentTrack, status} from '$lib/carmode/CarMode.store';
 import {cacheKey, applyPlaybackOrder, pickInitialTrack} from '$lib/helpers/car/trackUtils';
 import type {SelectionState} from '$lib/stores/selection';
 import type {LoadedTrack} from '$lib/utils/normalizeTrack';
+import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+
 import {loadTrackSequence, loadFirstTrack} from '$lib/helpers/trackSequenceLoader';
 
 const API_BASE =
@@ -39,8 +41,9 @@ export async function loadForSelection(
 
         // ✅ Pause mode: do NOT auto-play
         if (first) {
-            currentTrack.set(first);
+            currentTrack.set(toCarModeTrack(first));
         }
+
 
         status.set('Tracks loaded. Press Play.');
 
@@ -57,21 +60,25 @@ export async function loadForSelection(
                 sequenceCache.set(key, loaded);
 
                 const ordered = applyPlaybackOrder(loaded, sel.playbackOrder);
-                tracks.set(ordered);
+                tracks.set(ordered.map(toCarModeTrack));
+
 
                 if (initialRank != null) {
                     const candidate = ordered.find((t) => t.rank === initialRank);
-                    if (candidate) currentTrack.set(candidate);
+                    if (candidate) currentTrack.set(toCarModeTrack(candidate));
+
                 } else {
                     const first = pickInitialTrack(ordered, sel.playbackOrder, sel.startRank, sel.endRank);
-                    if (first) currentTrack.set(first);
+                    if (first) currentTrack.set(toCarModeTrack(first));
+
                 }
 
                 status.set(`Loaded ${ordered.length} tracks.`);
             });
         } else {
             const ordered = applyPlaybackOrder(cached, sel.playbackOrder);
-            tracks.set(ordered);
+            tracks.set(ordered.map(toCarModeTrack));
+
             status.set(`Loaded ${ordered.length} tracks.`);
         }
 
@@ -84,4 +91,12 @@ export async function loadForSelection(
     console.log("🧊 Loader finished. No playback started. Waiting for Play button.");
 
 
+}
+
+function toCarModeTrack(t: LoadedTrack): CarModeTrack {
+    return {
+        ...t,
+        rankingId: null
+
+    };
 }

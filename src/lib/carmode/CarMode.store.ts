@@ -40,7 +40,7 @@ if (browser) {
    Playback stores
 ───────────────────────────────────────────── */
 
-export const tracks = writable<LoadedTrack[]>([]);
+export const tracks = writable<CarModeTrack[]>([]);
 export const currentTrack = writable<CarModeTrack | null>(null);
 export const currentRank = writable<number>(1);
 

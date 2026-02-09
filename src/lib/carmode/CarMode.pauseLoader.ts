@@ -1,4 +1,5 @@
 import { tracks, currentTrack, currentRank, status } from '$lib/carmode/CarMode.store';
+import type { CarModeTrack } from '$lib/carmode/CarMode.store';
 import { loadDecadeGenrePauseMode } from '$lib/api/playbackPauseLoader';
 import { normalizeTrack, type LoadedTrack } from '$lib/utils/normalizeTrack';
 import type { SelectionState } from '$lib/stores/selection';
@@ -26,11 +27,20 @@ export async function loadPauseModeTracks(sel: SelectionState) {
 		})
 	);
 
-	tracks.set(loaded);
+	const converted: CarModeTrack[] = loaded.map(toCarModeTrack);
 
-	const first = loaded[0] ?? null;
+	tracks.set(converted);
+
+	const first = converted[0] ?? null;
 	currentTrack.set(first);
 	currentRank.set(first?.rank ?? 1);
 
-	status.set(`Loaded ${loaded.length} tracks. Press Play.`);
+	status.set(`Loaded ${converted.length} tracks. Press Play.`);
+}
+
+function toCarModeTrack(t: LoadedTrack): CarModeTrack {
+    return {
+        ...t,
+        rankingId: null
+    };
 }
