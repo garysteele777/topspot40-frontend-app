@@ -30,13 +30,18 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const finalStartRank = startRank;
     const finalEndRank = startRank === endRank ? startRank : endRank;
     const currentRank = finalStartRank;
+    const collectionCategory = sp.get('collectionCategory') ?? '';
 
 
     if (collection) {
         return {
             mode: 'collection',
             language,
-            context: {collection_slug: collection},
+            context: {
+                collection_slug: collection,
+                collection_group_slug: collectionCategory
+            },
+
             startRank: finalStartRank,
             endRank: finalEndRank,
             currentRank,
