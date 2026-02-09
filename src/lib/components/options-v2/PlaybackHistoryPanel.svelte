@@ -16,14 +16,14 @@
     let collectionSlugToGroupSlug: Record<string, string> = {};
 
     function toTitleCaseFromSlug(s: string): string {
-    return s
-        .replaceAll('_', ' ')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-}
+        return s
+            .replaceAll('_', ' ')
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+    }
 
 
     onMount(async () => {
@@ -159,11 +159,14 @@
                                 {@const genreSlug = parts[2] ?? ''}
 
                                 <li class="history-row">
-        <span class="history-row__label">
-            {genreSlug === 'favorites'
-                ? `${decade} Favorites`
-                : `${decade} ${genreSlug.replaceAll('_', ' ')}`}
-        </span>
+            <span class="history-row__label">
+                {#if genreSlug === 'favorites'}
+                    ⭐ {decade} Favorites
+                {:else}
+                    🎵 {decade} {toTitleCaseFromSlug(genreSlug)}
+                {/if}
+            </span>
+
 
                                     <span class="history-row__progress">
             {isCompleted(p)
@@ -306,6 +309,17 @@
         border-radius: 8px;
     }
 
+    .history-row:hover {
+        background: rgba(207, 184, 124, 0.08);
+    }
+
+    .history-row__label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+
     .history-row__progress {
         opacity: 0.8;
         white-space: nowrap;
@@ -325,4 +339,17 @@
         margin-top: 14px;
         text-align: center;
     }
+
+    .history-subsection {
+        margin-top: 6px;
+        padding-left: 14px;
+        border-left: 2px solid rgba(207, 184, 124, 0.25);
+    }
+
+    .history-subsection__summary {
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
+
+
 </style>
