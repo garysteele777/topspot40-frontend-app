@@ -320,7 +320,12 @@
         const payload =
             activeGroup === 'decade_genre'
                 ? {...base, decade: decades[0], genre: genres[0]}
-                : {...base, collection: collections[0]};
+                : {
+                    ...base,
+                    collection: collections[0],
+                    collectionCategory: findCollectionMeta(collections[0]).collectionGroupSlug
+                };
+
 
         const url = await launchWithPlayback(
             payload as Parameters<typeof launchWithPlayback>[0]
