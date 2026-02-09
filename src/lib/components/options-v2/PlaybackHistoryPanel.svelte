@@ -15,6 +15,17 @@
     let collectionNameMap: Record<string, string> = {};
     let collectionSlugToGroupSlug: Record<string, string> = {};
 
+    function toTitleCaseFromSlug(s: string): string {
+    return s
+        .replaceAll('_', ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+}
+
+
     onMount(async () => {
         try {
             const data = await fetchGroupedCatalog();
