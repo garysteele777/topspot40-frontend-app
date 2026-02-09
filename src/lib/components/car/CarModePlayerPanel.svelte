@@ -5,21 +5,25 @@
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
     import CarModeTicker from './CarModeTicker.svelte';
 
-    import type {LoadedTrack} from '$lib/utils/normalizeTrack';
-    import type {PlaybackPhase} from '$lib/helpers/car/types';
-    import {skipToNextTrack} from '$lib/carmode/CarMode.poller';
+    import type { CarModeTrack } from '$lib/carmode/CarMode.store';
+    import type { PlaybackPhase } from '$lib/helpers/car/types';
+    import { skipToNextTrack } from '$lib/carmode/CarMode.poller';
 
-    import {currentSelection} from '$lib/carmode/CarMode.store';
-    import {programHistoryStore} from '$lib/carmode/programHistory';
+    import { currentSelection } from '$lib/carmode/CarMode.store';
+    import { programHistoryStore } from '$lib/carmode/programHistory';
 
+    import {
+        isFavorite,
+        toggleFavorite,
+        type ProgramType
+    } from '$lib/favorites/favorites';
 
     /* ─────────────────────────────────────────────
        Props
     ───────────────────────────────────────────── */
-    export let currentTrack: LoadedTrack | null = null;
-    export let tracks: LoadedTrack[] = [];
+    export let currentTrack: CarModeTrack | null = null;
+    export let tracks: CarModeTrack[] = [];
     export let phase: PlaybackPhase | null = null;
-
 
     export let isPlaying: boolean;
     export let elapsed: number;
@@ -37,15 +41,11 @@
     /* ─────────────────────────────────────────────
        Derived values (Next + Progress)
     ───────────────────────────────────────────── */
-    // NOTE: sessionTotal controls playback sequencing ONLY.
-    // Program progress always comes from programHistory.total.
 
     $: sessionTotal = tracks.length;
 
-
     let completed = 0;
     let programTotal = 0;
-
 
     $: currentIndex =
         currentTrack
@@ -81,16 +81,61 @@
         }
     }
 
-
     $: remaining = Math.max(0, programTotal - completed);
-
 
     $: percent =
         programTotal > 0
             ? (completed / programTotal) * 100
             : 0;
 
+    /* ─────────────────────────────────────────────
+       Favorites logic (FIXED)
+    ───────────────────────────────────────────── */
 
+    $: programType =
+        $currentSelection?.mode === 'decade_genre'
+            ? 'DG'
+            : $currentSelection?.mode === 'collection'
+                ? 'COL'
+                : null as ProgramType | null;
+
+    $: programGroup =
+        programType === 'DG'
+            ? $currentSelection?.context?.decade ?? null
+            : programType === 'COL'
+                ? $currentSelection?.context?.collection_slug ?? null
+                : null;
+
+    $: isFav =
+        !!(
+            programType &&
+            programGroup &&
+            currentTrack?.rankingId != null &&
+            isFavorite(programType, programGroup, currentTrack.rankingId)
+        );
+
+    function onToggleFavorite() {
+        if (
+            !programType ||
+            !programGroup ||
+            currentTrack?.rankingId == null
+        ) {
+            return;
+        }
+
+        const { added } = toggleFavorite(
+            programType,
+            programGroup,
+            currentTrack.rankingId
+        );
+
+        // TEMP feedback (toast later)
+        console.log(
+            added
+                ? `⭐ Saved to ${programGroup} favorites`
+                : `❌ Removed from ${programGroup} favorites`
+        );
+    }
 </script>
 
 <div class="w-full flex flex-col items-center">
@@ -98,84 +143,91 @@
     <!-- Player -->
     <div class="w-full max-w-xl mx-auto">
         <MiniPlayer
-                coverUrl={currentTrack?.albumArtwork ?? '/default_album.png'}
-                trackTitle={currentTrack?.trackName}
-                artistName={currentTrack?.artistName}
-                {isPlaying}
-                onPrev={onPrev}
-                onNext={onNext}
-                onPlayPause={onPlayPause}
-                hideMeta={true}
+            coverUrl={currentTrack?.albumArtwork ?? '/default_album.png'}
+            trackTitle={currentTrack?.trackName}
+            artistName={currentTrack?.artistName}
+            {isPlaying}
+            onPrev={onPrev}
+            onNext={onNext}
+            onPlayPause={onPlayPause}
+            hideMeta={true}
         />
     </div>
+
+    {#if currentTrack?.rankingId != null}
+        <button
+            class="fav-btn"
+            on:click={onToggleFavorite}
+            aria-pressed={isFav}
+        >
+            {#if isFav}
+                ⭐ Saved to Favorites
+            {:else}
+                ☆ Save to Favorites
+            {/if}
+        </button>
+    {/if}
 
     <!-- Track Meta -->
     <div class="w-full flex justify-center px-4 mt-4">
         <div class="w-full max-w-xl">
             <CarModeTrackMeta
-                    {currentTrack}
-                    {tracks}
-                    {elapsed}
-                    {duration}
-                    {progress}
-                    {phase}
+                {currentTrack}
+                {tracks}
+                {elapsed}
+                {duration}
+                {progress}
+                {phase}
             />
         </div>
     </div>
 
     <!-- Phase ticker -->
-    <CarModeTicker text={phase ?? ''}/>
+    <CarModeTicker text={phase ?? ''} />
 
-
-    <!-- ⭐ NEW: Next + Progress info -->
     {#if programTotal > 0}
-
         <div class="car-extra-info">
             {#if nextTrack}
                 <div class="next-line">
-    <span>
-        Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
-    </span>
+                    <span>
+                        Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
+                    </span>
 
                     <button class="next-btn" on:click={skipToNextTrack}>
                         ⏭ Next
                     </button>
                 </div>
-
             {/if}
 
             <div class="progress-line">
                 Completed {completed} of {programTotal}
                 <span class="dot">•</span>
                 Remaining {remaining}
-
             </div>
 
             <div class="overall-progress">
                 <div
-                        class="overall-bar"
-                        style="width: {percent}%">
+                    class="overall-bar"
+                    style="width: {percent}%">
                 </div>
             </div>
-
         </div>
     {/if}
 
     <!-- Narration -->
     <div class="w-full flex justify-center px-4 mt-4">
         <CarModeNarration
-                track={currentTrack}
-                onBackToOptions={onBackToOptions}
-                onOpenModal={() => setShowNarrationModal(true)}
+            track={currentTrack}
+            onBackToOptions={onBackToOptions}
+            onOpenModal={() => setShowNarrationModal(true)}
         />
     </div>
 
     <CarModeNarrationModal
-            track={currentTrack}
-            open={showNarrationModal}
-            onClose={() => setShowNarrationModal(false)}
+        track={currentTrack}
+        open={showNarrationModal}
+        onClose={() => setShowNarrationModal(false)}
     />
-
 </div>
 
 <style>
@@ -187,6 +239,10 @@
     }
 
     .next-line {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
         font-weight: 500;
     }
 
@@ -197,14 +253,6 @@
 
     .dot {
         padding: 0 6px;
-    }
-
-
-    .next-line {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
     }
 
     .next-btn {
@@ -238,5 +286,20 @@
         transition: width 250ms ease;
     }
 
+    .fav-btn {
+        margin-top: 8px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: transparent;
+        color: #fff;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
 
+    .fav-btn[aria-pressed='true'] {
+        background: #cfb87c;
+        color: #111;
+        border-color: #cfb87c;
+    }
 </style>
