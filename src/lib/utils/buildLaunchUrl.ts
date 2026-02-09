@@ -6,94 +6,98 @@ export type PauseMode = 'pause' | 'continuous';
 export type LayoutMode = 'car' | 'list';
 
 export type BuildParams = {
-	layoutMode: LayoutMode;
+    layoutMode: LayoutMode;
 
-	// browsing
-	decade?: string;
-	genre?: string;
-	collection?: string;
+    // browsing
+    decade?: string;
+    genre?: string;
+    collection?: string;
+    collectionCategory?: string;
 
-	// playback
-	language: string;
-	voices: string[];
-	startRank: number;
-	endRank: number;
-	playbackOrder: PlaybackOrder;
-	voicePlayMode: VoicePlayMode;
-	pauseMode: PauseMode;
 
-	// ✅ optional future flags (safe to add now)
-	randomAllCategories?: boolean;
-	overdub?: {
-		enabled: boolean;
-		intro: boolean;
-		detail: boolean;
-		artist: boolean;
-	};
+    // playback
+    language: string;
+    voices: string[];
+    startRank: number;
+    endRank: number;
+    playbackOrder: PlaybackOrder;
+    voicePlayMode: VoicePlayMode;
+    pauseMode: PauseMode;
 
-	// ✅ if you later add text-vs-tts toggles
-	textIntro?: boolean;
-	textDetail?: boolean;
-	textArtistDescription?: boolean;
+    // ✅ optional future flags (safe to add now)
+    randomAllCategories?: boolean;
+    overdub?: {
+        enabled: boolean;
+        intro: boolean;
+        detail: boolean;
+        artist: boolean;
+    };
+
+    // ✅ if you later add text-vs-tts toggles
+    textIntro?: boolean;
+    textDetail?: boolean;
+    textArtistDescription?: boolean;
 };
 
 // Ensures undefined values are not added to URL
 function addParam(
-	params: URLSearchParams,
-	key: string,
-	value: string | number | boolean | undefined | null
+    params: URLSearchParams,
+    key: string,
+    value: string | number | boolean | undefined | null
 ) {
-	if (value !== undefined && value !== null) {
-		params.set(key, String(value));
-	}
+    if (value !== undefined && value !== null) {
+        params.set(key, String(value));
+    }
 }
 
 export function buildLaunchUrl(p: BuildParams): string {
-	const base = p.layoutMode === 'car' ? '/car-page' : '/list-page';
-	const qs = new URLSearchParams();
+    const base = p.layoutMode === 'car' ? '/car-page' : '/list-page';
+    const qs = new URLSearchParams();
 
-	// mode resolver
-	if (p.collection) {
-		qs.set('mode', 'collection');
-		addParam(qs, 'collection', p.collection);
-	} else {
-		qs.set('mode', 'decade_genre');
-		addParam(qs, 'decade', p.decade);
-		addParam(qs, 'genre', p.genre);
-	}
+    // mode resolver
+    if (p.collection) {
+        qs.set('mode', 'collection');
+        addParam(qs, 'collection', p.collection);
+        addParam(qs, 'collectionCategory', p.collectionCategory);
+    } else {
 
-	// main params (same keys you already use)
-	addParam(qs, 'language', p.language);
-	addParam(qs, 'voices', p.voices.join(','));
-	addParam(qs, 'startRank', p.startRank);
-	addParam(qs, 'endRank', p.endRank);
-	addParam(qs, 'playbackOrder', p.playbackOrder);
-	addParam(qs, 'voicePlayMode', p.voicePlayMode);
-	addParam(qs, 'pauseMode', p.pauseMode);
+        qs.set('mode', 'decade_genre');
+        addParam(qs, 'decade', p.decade);
+        addParam(qs, 'genre', p.genre);
+    }
 
-	// optional flags (only included if truthy / enabled)
-	if (p.randomAllCategories) {
-		qs.set('randomAllCategories', 'true');
-	}
+    // main params (same keys you already use)
+    addParam(qs, 'language', p.language);
+    addParam(qs, 'voices', p.voices.join(','));
+    addParam(qs, 'startRank', p.startRank);
+    addParam(qs, 'endRank', p.endRank);
+    addParam(qs, 'playbackOrder', p.playbackOrder);
+    addParam(qs, 'voicePlayMode', p.voicePlayMode);
+    addParam(qs, 'pauseMode', p.pauseMode);
 
-	if (p.overdub?.enabled) {
-		qs.set('overdub', 'true');
-		addParam(qs, 'overdubIntro', p.overdub.intro);
-		addParam(qs, 'overdubDetail', p.overdub.detail);
-		addParam(qs, 'overdubArtist', p.overdub.artist);
-	}
+    // optional flags (only included if truthy / enabled)
+    if (p.randomAllCategories) {
+        qs.set('randomAllCategories', 'true');
+    }
 
-	addParam(qs, 'textIntro', p.textIntro);
-	addParam(qs, 'textDetail', p.textDetail);
-	addParam(qs, 'textArtistDescription', p.textArtistDescription);
+    if (p.overdub?.enabled) {
+        qs.set('overdub', 'true');
+        addParam(qs, 'overdubIntro', p.overdub.intro);
+        addParam(qs, 'overdubDetail', p.overdub.detail);
+        addParam(qs, 'overdubArtist', p.overdub.artist);
+    }
 
-	return `${base}?${qs.toString()}`;
+    addParam(qs, 'textIntro', p.textIntro);
+    addParam(qs, 'textDetail', p.textDetail);
+    addParam(qs, 'textArtistDescription', p.textArtistDescription);
+
+    return `${base}?${qs.toString()}`;
 }
 
 export async function launchWithPlayback(p: BuildParams): Promise<string> {
-	// 🚫 NO BACKEND CALLS
-	// 🚫 NO PLAYBACK
-	// ✅ ONLY NAVIGATION URL
+    // 🚫 NO BACKEND CALLS
+    // 🚫 NO PLAYBACK
+    // ✅ ONLY NAVIGATION URL
 
-	return buildLaunchUrl(p);
+    return buildLaunchUrl(p);
 }
