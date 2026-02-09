@@ -1,12 +1,17 @@
-import { writable } from 'svelte/store';
-import type { SelectionState } from '$lib/stores/selection';
-import type { LoadedTrack } from '$lib/utils/normalizeTrack';
-import type { PlaybackPhase } from '$lib/helpers/car/types';
-import { browser } from '$app/environment';
+import {writable} from 'svelte/store';
+import type {SelectionState} from '$lib/stores/selection';
+import type {LoadedTrack} from '$lib/utils/normalizeTrack';
+import type {PlaybackPhase} from '$lib/helpers/car/types';
+import {browser} from '$app/environment';
 
 /* ─────────────────────────────────────────────
    Selection persistence
 ───────────────────────────────────────────── */
+
+export type CarModeTrack = LoadedTrack & {
+    rankingId: number | null;
+};
+
 
 const SELECTION_KEY = 'ts_last_selection';
 
@@ -36,7 +41,7 @@ if (browser) {
 ───────────────────────────────────────────── */
 
 export const tracks = writable<LoadedTrack[]>([]);
-export const currentTrack = writable<LoadedTrack | null>(null);
+export const currentTrack = writable<CarModeTrack | null>(null);
 export const currentRank = writable<number>(1);
 
 export const status = writable<string>('Loading…');

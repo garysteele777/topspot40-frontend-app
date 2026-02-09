@@ -110,7 +110,8 @@ function playOneAudio(
     if (!browser) return Promise.resolve();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve) => {
+
         const audio = new Audio(url);
 
         // 🧠 narration owns the clock
@@ -247,8 +248,21 @@ export function startPlaybackPolling() {
                 currentRank.set(data.currentRank);
 
                 if (next) {
-                    currentTrack.set(next);
+                    const rankingId =
+                        typeof data.context?.ranking_id === 'number'
+                            ? data.context.ranking_id
+                            : typeof data.context?.track_ranking_id === 'number'
+                                ? data.context.track_ranking_id
+                                : typeof data.context?.collection_ranking_id === 'number'
+                                    ? data.context.collection_ranking_id
+                                    : null;
+
+                    currentTrack.set({
+                        ...next,
+                        rankingId
+                    });
                 }
+
 
                 // Reset progress/UI for new track
                 elapsed.set(0);
