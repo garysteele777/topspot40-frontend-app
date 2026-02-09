@@ -1,3 +1,6 @@
+import { browser } from '$app/environment';
+
+
 export type ProgramType = 'DG' | 'COL';
 
 type FavoritesStore = {
@@ -19,15 +22,16 @@ function safeParse(json: string): FavoritesStore | null {
 }
 
 function load(): FavoritesStore {
-    if (typeof localStorage === 'undefined') return {DG: {}, COL: {}};
+    if (!browser) return { DG: {}, COL: {} };
 
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {DG: {}, COL: {}};
+    if (!raw) return { DG: {}, COL: {} };
 
-    return safeParse(raw) ?? {DG: {}, COL: {}};
+    return safeParse(raw) ?? { DG: {}, COL: {} };
 }
 
 function save(data: FavoritesStore): void {
+    if (!browser) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
