@@ -5,6 +5,8 @@ export type AudioKey = { bucket: string; key: string };
 export type LoadedTrack = {
     id?: number | string | null;
 
+    rankingId?: number | null;   // ⭐ NEW
+
     rank: number;
 
     trackName: string;
@@ -56,6 +58,7 @@ const asAudioKey = (v: unknown): AudioKey | null => {
     return bucket && key ? {bucket, key} : null;
 };
 
+
 function firstDefined(raw: RawTrack, keys: string[]): unknown {
     for (const k of keys) {
         const v = raw[k];
@@ -70,7 +73,14 @@ function firstDefined(raw: RawTrack, keys: string[]): unknown {
 // ─────────────────────────────────────────────
 export function normalizeTrack(raw: RawTrack): LoadedTrack {
     const idVal = firstDefined(raw, ['id', 'trackId', 'track_id']);
+    const rankingIdVal = firstDefined(raw, [
+        'rankingId',
+        'ranking_id',
+        'track_ranking_id'
+    ]);
+
     const rankVal = firstDefined(raw, ['rank', 'ranking']);
+
 
     const trackNameVal = firstDefined(raw, ['trackName', 'track_name', 'title']);
     const artistNameVal = firstDefined(raw, ['artistName', 'artist_name', 'artist_display_name', 'artist', 'track_artist']);
@@ -95,6 +105,7 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
 
     return {
         id: typeof idVal === 'string' || typeof idVal === 'number' ? idVal : null,
+        rankingId: asNumber(rankingIdVal, null),
 
         rank: asNumber(rankVal, 0) ?? 0,
 
