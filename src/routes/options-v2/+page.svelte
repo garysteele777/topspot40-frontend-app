@@ -265,11 +265,11 @@
         return collections.includes(slug);
     }
 
-    function toggleCollection(slug: string) {
-        collections = collections.includes(slug)
-            ? collections.filter(s => s !== slug)
-            : [...collections, slug];
+    function toggleCollection(slug: string): void {
+        activeGroup = 'collection';
+        collections = collections[0] === slug ? [] : [slug];
     }
+
 
     function selectAllCollections() {
         collections = collectionGroups.flatMap(g => g.items.map(i => i.slug));
@@ -517,7 +517,8 @@
                         {#if status !== 'Ready'}
                             <p>{status}</p>
                         {:else}
-                            {#each collectionGroups as group (group.slug)}
+                            {#each collectionGroups as group (group.slug + '|' + collections[0])}
+
                                 <details bind:open={group.open} class="collection-group">
                                     <summary>
                                         <span class="group-expander" aria-hidden="true">▸</span>
