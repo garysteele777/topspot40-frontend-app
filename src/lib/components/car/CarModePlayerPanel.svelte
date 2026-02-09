@@ -5,12 +5,12 @@
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
     import CarModeTicker from './CarModeTicker.svelte';
 
-    import type { CarModeTrack } from '$lib/carmode/CarMode.store';
-    import type { PlaybackPhase } from '$lib/helpers/car/types';
-    import { skipToNextTrack } from '$lib/carmode/CarMode.poller';
+    import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import type {PlaybackPhase} from '$lib/helpers/car/types';
+    import {skipToNextTrack} from '$lib/carmode/CarMode.poller';
 
-    import { currentSelection } from '$lib/carmode/CarMode.store';
-    import { programHistoryStore } from '$lib/carmode/programHistory';
+    import {currentSelection} from '$lib/carmode/CarMode.store';
+    import {programHistoryStore} from '$lib/carmode/programHistory';
 
     import {
         isFavorite,
@@ -59,7 +59,7 @@
 
     $: {
         const sel = $currentSelection;
-
+        // console.log('Selection context:', sel?.context);
         let key: string | null = null;
 
         if (sel?.mode === 'decade_genre') {
@@ -103,8 +103,9 @@
         programType === 'DG'
             ? $currentSelection?.context?.decade ?? null
             : programType === 'COL'
-                ? $currentSelection?.context?.collection_slug ?? null
+                ? $currentSelection?.context?.collection_group_slug ?? null
                 : null;
+
 
     $: isFav =
         !!(
@@ -123,7 +124,7 @@
             return;
         }
 
-        const { added } = toggleFavorite(
+        const {added} = toggleFavorite(
             programType,
             programGroup,
             currentTrack.rankingId
@@ -143,22 +144,22 @@
     <!-- Player -->
     <div class="w-full max-w-xl mx-auto">
         <MiniPlayer
-            coverUrl={currentTrack?.albumArtwork ?? '/default_album.png'}
-            trackTitle={currentTrack?.trackName}
-            artistName={currentTrack?.artistName}
-            {isPlaying}
-            onPrev={onPrev}
-            onNext={onNext}
-            onPlayPause={onPlayPause}
-            hideMeta={true}
+                coverUrl={currentTrack?.albumArtwork ?? '/default_album.png'}
+                trackTitle={currentTrack?.trackName}
+                artistName={currentTrack?.artistName}
+                {isPlaying}
+                onPrev={onPrev}
+                onNext={onNext}
+                onPlayPause={onPlayPause}
+                hideMeta={true}
         />
     </div>
 
     {#if currentTrack?.rankingId != null}
         <button
-            class="fav-btn"
-            on:click={onToggleFavorite}
-            aria-pressed={isFav}
+                class="fav-btn"
+                on:click={onToggleFavorite}
+                aria-pressed={isFav}
         >
             {#if isFav}
                 ⭐ Saved to Favorites
@@ -172,18 +173,18 @@
     <div class="w-full flex justify-center px-4 mt-4">
         <div class="w-full max-w-xl">
             <CarModeTrackMeta
-                {currentTrack}
-                {tracks}
-                {elapsed}
-                {duration}
-                {progress}
-                {phase}
+                    {currentTrack}
+                    {tracks}
+                    {elapsed}
+                    {duration}
+                    {progress}
+                    {phase}
             />
         </div>
     </div>
 
     <!-- Phase ticker -->
-    <CarModeTicker text={phase ?? ''} />
+    <CarModeTicker text={phase ?? ''}/>
 
     {#if programTotal > 0}
         <div class="car-extra-info">
@@ -207,8 +208,8 @@
 
             <div class="overall-progress">
                 <div
-                    class="overall-bar"
-                    style="width: {percent}%">
+                        class="overall-bar"
+                        style="width: {percent}%">
                 </div>
             </div>
         </div>
@@ -217,16 +218,16 @@
     <!-- Narration -->
     <div class="w-full flex justify-center px-4 mt-4">
         <CarModeNarration
-            track={currentTrack}
-            onBackToOptions={onBackToOptions}
-            onOpenModal={() => setShowNarrationModal(true)}
+                track={currentTrack}
+                onBackToOptions={onBackToOptions}
+                onOpenModal={() => setShowNarrationModal(true)}
         />
     </div>
 
     <CarModeNarrationModal
-        track={currentTrack}
-        open={showNarrationModal}
-        onClose={() => setShowNarrationModal(false)}
+            track={currentTrack}
+            open={showNarrationModal}
+            onClose={() => setShowNarrationModal(false)}
     />
 </div>
 
