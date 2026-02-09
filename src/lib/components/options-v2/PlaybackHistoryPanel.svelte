@@ -143,24 +143,28 @@
 
                         <ul class="history-list">
                             {#each block.programs as p}
-                                {@const collectionSlug = p.key.split('|')[1] ?? ''}
+                                {@const parts = p.key.split('|')}
+                                {@const decade = parts[1] ?? ''}
+                                {@const genreSlug = parts[2] ?? ''}
 
                                 <li class="history-row">
-                                    <span class="history-row__label">
-                                        {collectionNameMap[collectionSlug] ?? p.label}
-                                    </span>
+        <span class="history-row__label">
+            {genreSlug === 'favorites'
+                ? `${decade} Favorites`
+                : `${decade} ${genreSlug.replaceAll('_', ' ')}`}
+        </span>
 
                                     <span class="history-row__progress">
-                                      {isCompleted(p)
-                                          ? `Completed (${p.total} / ${p.total})`
-                                          : `${playedCount(p)} / ${p.total}`}
-                                    </span>
-
+            {isCompleted(p)
+                ? `Completed (${p.total} / ${p.total})`
+                : `${playedCount(p)} / ${p.total}`}
+        </span>
 
                                     <div class="history-row__actions">
                                         <button class="btn btn--primary">
                                             ▶ {isCompleted(p) ? 'Restart' : 'Resume'}
                                         </button>
+
                                         <button
                                                 class="btn btn--ghost"
                                                 on:click={() => clearOne(p)}
@@ -168,10 +172,10 @@
                                         >
                                             🧹
                                         </button>
-
                                     </div>
                                 </li>
                             {/each}
+
                         </ul>
                     </details>
                 {/each}
