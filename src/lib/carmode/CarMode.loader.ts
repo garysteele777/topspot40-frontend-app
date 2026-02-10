@@ -6,10 +6,7 @@ import type {LoadedTrack} from '$lib/utils/normalizeTrack';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 
 import {loadTrackSequence, loadFirstTrack} from '$lib/helpers/trackSequenceLoader';
-
-const API_BASE =
-    import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
-    ?? 'http://127.0.0.1:8000';
+import {getFavorites} from '$lib/favorites/favorites';
 
 
 const sequenceCache = new Map<string, LoadedTrack[]>();
@@ -59,27 +56,102 @@ export async function loadForSelection(
 
                 sequenceCache.set(key, loaded);
 
-                const ordered = applyPlaybackOrder(loaded, sel.playbackOrder);
+                let filtered = loaded;
+
+                const isFavorites =
+                    sel.mode === 'decade_genre' &&
+                    sel.context?.genre === 'favorites';
+
+                if (isFavorites) {
+                    const decade = sel.context?.decade;
+
+                    if (decade) {
+                        const favoriteIds = getFavorites('DG', decade);
+
+                        if (favoriteIds.length === 0) {
+                            status.set(`⭐ No favorites yet for ${decade}.`);
+                            tracks.set([]);
+                            currentTrack.set(null);
+                            return;
+                        }
+
+                        filtered = loaded.filter(
+                            (t): t is LoadedTrack & { rankingId: number } =>
+                                typeof t.rankingId === 'number' &&
+                                favoriteIds.includes(t.rankingId)
+                        );
+                    }
+                }
+
+                const order = isFavorites ? 'shuffle' : sel.playbackOrder;
+
+                const ordered = applyPlaybackOrder(filtered, order);
                 tracks.set(ordered.map(toCarModeTrack));
 
+                const firstTrack = isFavorites
+                    ? ordered[0] ?? null
+                    : pickInitialTrack(
+                        ordered,
+                        sel.playbackOrder,
+                        sel.startRank,
+                        sel.endRank
+                    );
 
-                if (initialRank != null) {
-                    const candidate = ordered.find((t) => t.rank === initialRank);
-                    if (candidate) currentTrack.set(toCarModeTrack(candidate));
-
-                } else {
-                    const first = pickInitialTrack(ordered, sel.playbackOrder, sel.startRank, sel.endRank);
-                    if (first) currentTrack.set(toCarModeTrack(first));
-
+                if (firstTrack) {
+                    currentTrack.set(toCarModeTrack(firstTrack));
                 }
 
                 status.set(`Loaded ${ordered.length} tracks.`);
             });
+
         } else {
-            const ordered = applyPlaybackOrder(cached, sel.playbackOrder);
+            let filtered = cached;
+
+            const isFavorites =
+                sel.mode === 'decade_genre' &&
+                sel.context?.genre === 'favorites';
+
+            if (isFavorites) {
+                const decade = sel.context?.decade;
+
+                if (decade) {
+                    const favoriteIds = getFavorites('DG', decade);
+
+                    if (favoriteIds.length === 0) {
+                        status.set(`⭐ No favorites yet for ${decade}.`);
+                        tracks.set([]);
+                        currentTrack.set(null);
+                        return;
+                    }
+
+                    filtered = cached.filter(
+                        (t): t is LoadedTrack & { rankingId: number } =>
+                            typeof t.rankingId === 'number' &&
+                            favoriteIds.includes(t.rankingId)
+                    );
+                }
+            }
+
+            const order = isFavorites ? 'shuffle' : sel.playbackOrder;
+
+            const ordered = applyPlaybackOrder(filtered, order);
             tracks.set(ordered.map(toCarModeTrack));
 
+            const firstTrack = isFavorites
+                ? ordered[0] ?? null
+                : pickInitialTrack(
+                    ordered,
+                    sel.playbackOrder,
+                    sel.startRank,
+                    sel.endRank
+                );
+
+            if (firstTrack) {
+                currentTrack.set(toCarModeTrack(firstTrack));
+            }
+
             status.set(`Loaded ${ordered.length} tracks.`);
+
         }
 
     } catch (err) {
@@ -96,7 +168,8 @@ export async function loadForSelection(
 function toCarModeTrack(t: LoadedTrack): CarModeTrack {
     return {
         ...t,
-        rankingId: null
+        rankingId: t.rankingId ?? null
+
 
     };
 }

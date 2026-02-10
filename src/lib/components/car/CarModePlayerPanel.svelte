@@ -59,16 +59,12 @@
 
     $: {
         const sel = $currentSelection;
-        // console.log('Selection context:', sel?.context);
         let key: string | null = null;
 
         if (sel?.mode === 'decade_genre') {
             const d = sel.context?.decade;
             const g = sel.context?.genre;
             if (d && g) key = `DG|${d}|${g}`;
-        } else if (sel?.mode === 'collection') {
-            const c = sel.context?.collection_slug;
-            if (c) key = `COL|${c}`;
         }
 
         if (!key) {
@@ -89,23 +85,21 @@
             : 0;
 
     /* ─────────────────────────────────────────────
-       Favorites logic (FIXED)
+       Favorites logic (Decade only)
     ───────────────────────────────────────────── */
+
+    let programType: ProgramType | null = null;
 
     $: programType =
         $currentSelection?.mode === 'decade_genre'
             ? 'DG'
-            : $currentSelection?.mode === 'collection'
-                ? 'COL'
-                : null as ProgramType | null;
+            : null;
+
 
     $: programGroup =
         programType === 'DG'
             ? $currentSelection?.context?.decade ?? null
-            : programType === 'COL'
-                ? $currentSelection?.context?.collection_group_slug ?? null
-                : null;
-
+            : null;
 
     $: isFav =
         !!(
@@ -114,6 +108,9 @@
             currentTrack?.rankingId != null &&
             isFavorite(programType, programGroup, currentTrack.rankingId)
         );
+
+    $: console.log('Current track:', currentTrack);
+
 
     function onToggleFavorite() {
         if (
@@ -130,7 +127,6 @@
             currentTrack.rankingId
         );
 
-        // TEMP feedback (toast later)
         console.log(
             added
                 ? `⭐ Saved to ${programGroup} favorites`
@@ -168,6 +164,7 @@
             {/if}
         </button>
     {/if}
+
 
     <!-- Track Meta -->
     <div class="w-full flex justify-center px-4 mt-4">
@@ -230,12 +227,15 @@
             onClose={() => setShowNarrationModal(false)}
     />
 </div>
-
 <style>
+    /* ─────────────────────────────────────────────
+       Progress + Next Section
+    ───────────────────────────────────────────── */
+
     .car-extra-info {
         margin-top: 0.75rem;
         text-align: center;
-        opacity: 0.75;
+        opacity: 0.8;
         font-size: 0.8rem;
     }
 
@@ -250,6 +250,7 @@
     .progress-line {
         font-size: 0.75rem;
         color: #9ca3af;
+        margin-top: 2px;
     }
 
     .dot {
@@ -261,13 +262,15 @@
         color: #fff;
         border: 1px solid #444;
         border-radius: 6px;
-        padding: 3px 8px;
+        padding: 4px 10px;
         font-size: 0.7rem;
         cursor: pointer;
+        transition: background 150ms ease, border-color 150ms ease;
     }
 
     .next-btn:hover {
         background: #333;
+        border-color: #666;
     }
 
     .overall-progress {
@@ -287,20 +290,35 @@
         transition: width 250ms ease;
     }
 
+    /* ─────────────────────────────────────────────
+       Favorites Button
+    ───────────────────────────────────────────── */
+
     .fav-btn {
-        margin-top: 8px;
-        padding: 6px 14px;
+        margin-top: 10px;
+        padding: 6px 16px;
         border-radius: 999px;
         border: 1px solid rgba(255, 255, 255, 0.35);
         background: transparent;
         color: #fff;
         font-size: 0.85rem;
         cursor: pointer;
+        transition: all 150ms ease;
+    }
+
+    .fav-btn:hover {
+        border-color: gold;
+        color: gold;
     }
 
     .fav-btn[aria-pressed='true'] {
         background: #cfb87c;
         color: #111;
         border-color: #cfb87c;
+    }
+
+    .fav-btn[aria-pressed='true']:hover {
+        background: #e3cf98;
+        border-color: #e3cf98;
     }
 </style>
