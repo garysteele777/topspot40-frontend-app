@@ -156,6 +156,7 @@
                 <p class="history-empty">No decade–genre programs played yet.</p>
             {:else}
                 {#each decadeGenreMap as block}
+                    {@const favCount = countFavorites('DG', block.decade)}  <!-- ✅ -->
                     <details class="history-subsection">
                         <summary class="history-subsection__summary">
                             {block.decade}
@@ -163,46 +164,51 @@
 
                         <ul class="history-list">
 
-                            {#if countFavorites('DG', block.decade) > 0}
-                                <li class="history-row history-row--favorite">
-            <span class="history-row__label">
-                ⭐ {block.decade} Favorites
-            </span>
+                            <li
+                                    class="history-row history-row--favorite"
+                                    class:history-row--disabled={favCount === 0}
+                            >
+    <span class="history-row__label">
+        ⭐ {block.decade} Favorites (All Genres)
+    </span>
 
-                                    <span class="history-row__progress">
-                {#if countFavorites('DG', block.decade) === 1}
-                    1 Track
-                {:else}
-                    {countFavorites('DG', block.decade)} Tracks
-                {/if}
-            </span>
+                                <span class="history-row__progress">
+        {favCount === 0
+            ? '0 Tracks'
+            : favCount === 1
+                ? '1 Track'
+                : `${favCount} Tracks`}
+    </span>
 
-                <div class="history-row__actions">
-                    <button
-                            class="btn btn--primary"
-                            on:click={() => playShuffleFavorites(block.decade)}
-                    >
-                        ▶ Play Shuffle
-                    </button>
+                                <div class="history-row__actions">
+                                    <button
+                                            class="btn btn--primary"
+                                            disabled={favCount === 0}
+                                            on:click={() => playShuffleFavorites(block.decade)}
+                                    >
+                                        ▶ Play Shuffle
+                                    </button>
 
-                    <button
-                            class="btn btn--ghost"
-                            on:click={() => clearFavorites('DG', block.decade)}
-                    >
-                        🧹
-                    </button>
-                </div>
-            </li>
-        {/if}
-
-        {#each block.programs as p}
+                                    <button
+                                            class="btn btn--ghost"
+                                            disabled={favCount === 0}
+                                            on:click={() => clearFavorites('DG', block.decade)}
+                                    >
+                                        🧹
+                                    </button>
+                                </div>
+                            </li>
 
 
-            {@const parts = p.key.split('|')}
-            {@const decade = parts[1] ?? ''}
-            {@const genreSlug = parts[2] ?? ''}
+                            {#each block.programs as p}
 
-            <li class="history-row">
+
+                                {@const parts = p.key.split('|')}
+                                {@const decade = parts[1] ?? ''}
+                                {@const genreSlug = parts[2] ?? ''}
+
+                                <li class="history-row">
+
             <span class="history-row__label">
             🎵 {decade} {toTitleCaseFromSlug(genreSlug)}
             </span>
@@ -395,5 +401,10 @@
         background: rgba(207, 184, 124, 0.06);
         border: 1px solid rgba(207, 184, 124, 0.25);
     }
+
+    .history-row--disabled {
+        opacity: 0.45;
+    }
+
 
 </style>
