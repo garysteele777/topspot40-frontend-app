@@ -1,4 +1,10 @@
 <script lang="ts">
+
+    import {
+        countFavorites,
+        clearFavorites
+    } from '$lib/favorites/favorites';
+
     import {
         programHistoryStore as programHistory,
         resetProgram,
@@ -125,6 +131,9 @@
         resetAllPrograms();
     }
 
+    function playShuffleFavorites(decade: string) {
+        console.log('▶ Shuffle Favorites for', decade);
+    }
 
 </script>
 
@@ -153,18 +162,49 @@
                         </summary>
 
                         <ul class="history-list">
-                            {#each block.programs as p}
-                                {@const parts = p.key.split('|')}
-                                {@const decade = parts[1] ?? ''}
-                                {@const genreSlug = parts[2] ?? ''}
 
-                                <li class="history-row">
+                            {#if countFavorites('DG', block.decade) > 0}
+                                <li class="history-row history-row--favorite">
             <span class="history-row__label">
-                {#if genreSlug === 'favorites'}
-                    ⭐ {decade} Favorites
+                ⭐ {block.decade} Favorites
+            </span>
+
+                                    <span class="history-row__progress">
+                {#if countFavorites('DG', block.decade) === 1}
+                    1 Track
                 {:else}
-                    🎵 {decade} {toTitleCaseFromSlug(genreSlug)}
+                    {countFavorites('DG', block.decade)} Tracks
                 {/if}
+            </span>
+
+                <div class="history-row__actions">
+                    <button
+                            class="btn btn--primary"
+                            on:click={() => playShuffleFavorites(block.decade)}
+                    >
+                        ▶ Play Shuffle
+                    </button>
+
+                    <button
+                            class="btn btn--ghost"
+                            on:click={() => clearFavorites('DG', block.decade)}
+                    >
+                        🧹
+                    </button>
+                </div>
+            </li>
+        {/if}
+
+        {#each block.programs as p}
+
+
+            {@const parts = p.key.split('|')}
+            {@const decade = parts[1] ?? ''}
+            {@const genreSlug = parts[2] ?? ''}
+
+            <li class="history-row">
+            <span class="history-row__label">
+            🎵 {decade} {toTitleCaseFromSlug(genreSlug)}
             </span>
 
 
@@ -351,5 +391,9 @@
         letter-spacing: 0.5px;
     }
 
+    .history-row--favorite {
+        background: rgba(207, 184, 124, 0.06);
+        border: 1px solid rgba(207, 184, 124, 0.25);
+    }
 
 </style>
