@@ -12,6 +12,7 @@
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
 
+
     import {
         isFavorite,
         toggleFavorite,
@@ -37,6 +38,9 @@
 
     export let showNarrationModal: boolean;
     export let setShowNarrationModal: (v: boolean) => void;
+
+    let isFav = false;
+
 
     /* ─────────────────────────────────────────────
        Derived values (Next + Progress)
@@ -101,13 +105,24 @@
             ? $currentSelection?.context?.decade ?? null
             : null;
 
-    $: isFav =
-        !!(
-            programType &&
-            programGroup &&
-            currentTrack?.rankingId != null &&
-            isFavorite(programType, programGroup, currentTrack.rankingId)
-        );
+    import {favoritesStore} from '$lib/favorites/favorites';
+
+    $: {
+        const _ = $favoritesStore; // 👈 force reactive dependency
+
+        isFav =
+            !!(
+                programType &&
+                programGroup &&
+                currentTrack?.rankingId != null &&
+                isFavorite(
+                    programType,
+                    programGroup,
+                    currentTrack.rankingId
+                )
+            );
+    }
+
 
     $: console.log('Current track:', currentTrack);
 
@@ -152,17 +167,19 @@
     </div>
 
     {#if currentTrack?.rankingId != null}
-        <button
-                class="fav-btn"
-                on:click={onToggleFavorite}
-                aria-pressed={isFav}
-        >
-            {#if isFav}
-                ⭐ Saved to Favorites
-            {:else}
-                ☆ Save to Favorites
-            {/if}
-        </button>
+        <div class="fav-wrapper">
+            <button
+                    class="fav-btn"
+                    on:click={onToggleFavorite}
+                    aria-pressed={isFav}
+            >
+                {#if isFav}
+                    ⭐ Saved to {$currentSelection?.context?.decade} Favorites
+                {:else}
+                    ☆ Save to {$currentSelection?.context?.decade} Favorites
+                {/if}
+            </button>
+        </div>
     {/if}
 
 
@@ -321,4 +338,12 @@
         background: #e3cf98;
         border-color: #e3cf98;
     }
+
+    .fav-wrapper {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-top: 10px;
+    }
+
 </style>

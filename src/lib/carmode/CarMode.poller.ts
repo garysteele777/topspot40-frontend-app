@@ -230,6 +230,20 @@ export function startPlaybackPolling() {
             const data = await res.json();
             dlog('⏱ Poll data:', data);
 
+            // ─────────────────────────────
+            // Extract rankingId every poll
+            // ─────────────────────────────
+            const rankingId =
+                data.context?.ranking_id != null
+                    ? Number(data.context.ranking_id)
+                    : data.context?.track_ranking_id != null
+                        ? Number(data.context.track_ranking_id)
+                        : data.context?.collection_ranking_id != null
+                            ? Number(data.context.collection_ranking_id)
+                            : null;
+
+            dlog('🎯 rankingId:', rankingId);
+
 
 // ─────────────────────────────
 // Rank change → update UI track card
@@ -248,15 +262,6 @@ export function startPlaybackPolling() {
                 currentRank.set(data.currentRank);
 
                 if (next) {
-                    const rankingId =
-                        typeof data.context?.ranking_id === 'number'
-                            ? data.context.ranking_id
-                            : typeof data.context?.track_ranking_id === 'number'
-                                ? data.context.track_ranking_id
-                                : typeof data.context?.collection_ranking_id === 'number'
-                                    ? data.context.collection_ranking_id
-                                    : null;
-
                     currentTrack.set({
                         ...next,
                         rankingId
@@ -273,6 +278,20 @@ export function startPlaybackPolling() {
                 trackFinalized = false;
 
                 lastRank = data.currentRank;
+            }
+
+            // Keep rankingId synced even if rank did not change
+            const existing = get(currentTrack);
+
+            if (
+                existing &&
+                rankingId != null &&
+                existing.rankingId !== rankingId
+            ) {
+                currentTrack.set({
+                    ...existing,
+                    rankingId
+                });
             }
 
 

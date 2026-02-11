@@ -1,76 +1,122 @@
-import { browser } from '$app/environment';
-
+import {browser} from '$app/environment';
+import {writable, get} from 'svelte/store';
 
 export type ProgramType = 'DG' | 'COL';
 
-type FavoritesStore = {
-    DG: Record<string, number[]>;   // decade -> track_ranking.id[]
-    COL: Record<string, number[]>;  // collectionGroupSlug -> collection_ranking.id[]
+export type FavoritesStore = {
+    DG: Record<string, number[]>;
+    COL: Record<string, number[]>;
 };
 
 const STORAGE_KEY = 'ts-favorites-v1';
 
+const defaultData: FavoritesStore = {
+    DG: {},
+    COL: {}
+};
+
+/* ─────────────────────────────────────────────
+   Safe JSON parsing
+───────────────────────────────────────────── */
+
 function safeParse(json: string): FavoritesStore | null {
     try {
         const data = JSON.parse(json) as FavoritesStore;
+
         if (!data || typeof data !== 'object') return null;
         if (!data.DG || !data.COL) return null;
+
         return data;
     } catch {
         return null;
     }
 }
 
-function load(): FavoritesStore {
-    if (!browser) return { DG: {}, COL: {} };
+/* ─────────────────────────────────────────────
+   Load / Save
+───────────────────────────────────────────── */
+
+function loadInitial(): FavoritesStore {
+    if (!browser) return defaultData;
 
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { DG: {}, COL: {} };
+    if (!raw) return defaultData;
 
-    return safeParse(raw) ?? { DG: {}, COL: {} };
+    return safeParse(raw) ?? defaultData;
 }
 
-function save(data: FavoritesStore): void {
-    if (!browser) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+/* ─────────────────────────────────────────────
+   Reactive Store
+───────────────────────────────────────────── */
+
+export const favoritesStore = writable<FavoritesStore>(loadInitial());
+
+if (browser) {
+    favoritesStore.subscribe((data) => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    });
 }
+
+/* ─────────────────────────────────────────────
+   API
+───────────────────────────────────────────── */
 
 export function isFavorite(
     program: ProgramType,
     group: string,
     rankingId: number
 ): boolean {
-    const data = load();
-    const list = data[program][group] ?? [];
-    return list.includes(rankingId);
+
+    let isFav = false;
+
+    favoritesStore.subscribe((data) => {
+        const list = data[program][group] ?? [];
+        isFav = list.includes(rankingId);
+    })();
+
+    return isFav;
 }
+
 
 export function toggleFavorite(
     program: ProgramType,
     group: string,
     rankingId: number
 ): { added: boolean; count: number } {
-    const data = load();
-    const list = data[program][group] ?? [];
 
-    const exists = list.includes(rankingId);
+    let result = {added: false, count: 0};
 
-    const next = exists
-        ? list.filter((id) => id !== rankingId)
-        : Array.from(new Set([...list, rankingId]));
+    favoritesStore.update((data) => {
 
+        const existing = data[program][group] ?? [];
+        const exists = existing.includes(rankingId);
 
-    data[program][group] = next;
-    save(data);
+        const next = exists
+            ? existing.filter((id) => id !== rankingId)
+            : [...existing, rankingId];
 
-    return {added: !exists, count: next.length};
+        result = {
+            added: !exists,
+            count: next.length
+        };
+
+        return {
+            ...data,
+            [program]: {
+                ...data[program],
+                [group]: next
+            }
+        };
+    });
+
+    return result;
 }
 
 export function countFavorites(
     program: ProgramType,
     group: string
 ): number {
-    const data = load();
+    const data = get(favoritesStore);
     return (data[program][group] ?? []).length;
 }
 
@@ -78,15 +124,17 @@ export function clearFavorites(
     program: ProgramType,
     group: string
 ): void {
-    const data = load();
-    delete data[program][group];
-    save(data);
+    favoritesStore.update((data) => {
+        const copy = {...data};
+        delete copy[program][group];
+        return copy;
+    });
 }
 
 export function getFavorites(
     program: ProgramType,
     group: string
 ): number[] {
-    const data = load();
+    const data = get(favoritesStore);
     return data[program][group] ?? [];
 }
