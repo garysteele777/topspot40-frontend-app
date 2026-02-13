@@ -15,6 +15,7 @@
     import {onMount} from 'svelte';
     import {fetchGroupedCatalog} from '$lib/api/catalog';
     import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
+    import {goto} from '$app/navigation';
 
 
     let collectionGroupNameMap: Record<string, string> = {};
@@ -29,6 +30,10 @@
             .filter(Boolean)
             .map(w => w.charAt(0).toUpperCase() + w.slice(1))
             .join(' ');
+    }
+
+    function playShuffleFavorites(decade: string) {
+        console.log('▶ Shuffle Favorites for', decade);
     }
 
 
@@ -131,9 +136,27 @@
         resetAllPrograms();
     }
 
-    function playShuffleFavorites(decade: string) {
-        console.log('▶ Shuffle Favorites for', decade);
+    function resumeProgram(p: ProgramHistory) {
+        if (!p) return;
+
+        const nextRank = p.playedRanks.length + 1;
+        const startRank =
+            nextRank > p.total
+                ? 1
+                : nextRank;
+
+        console.log('▶ Resume program', p.key, 'starting at rank', startRank);
+
+        const params = new URLSearchParams({
+            programKey: p.key,
+            startRank: String(startRank),
+            endRank: String(p.total),
+            currentRank: String(startRank)
+        });
+
+        goto(`/car-page?${params.toString()}`);
     }
+
 
 </script>
 
@@ -221,9 +244,13 @@
         </span>
 
                                     <div class="history-row__actions">
-                                        <button class="btn btn--primary">
+                                        <button
+                                                class="btn btn--primary"
+                                                on:click={() => resumeProgram(p)}
+                                        >
                                             ▶ {isCompleted(p) ? 'Restart' : 'Resume'}
                                         </button>
+
 
                                         <button
                                                 class="btn btn--ghost"
@@ -276,9 +303,13 @@
                     </span>
 
                                         <div class="history-row__actions">
-                                            <button class="btn btn--primary">
+                                            <button
+                                                    class="btn btn--primary"
+                                                    on:click={() => resumeProgram(p)}
+                                            >
                                                 ▶ {isCompleted(p) ? 'Restart' : 'Resume'}
                                             </button>
+
 
                                             <button
                                                     class="btn btn--ghost"

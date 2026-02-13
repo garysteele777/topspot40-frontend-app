@@ -5,6 +5,7 @@
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
+    import {page} from '$app/stores';
 
     import {
         startPlaybackPolling,
@@ -37,6 +38,14 @@
 
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
+
+
+    let resumeIndex = 0;
+
+    $: {
+        const param = $page.url.searchParams.get('resumeIndex');
+        resumeIndex = param ? Number(param) : 0;
+    }
 
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';

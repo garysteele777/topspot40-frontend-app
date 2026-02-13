@@ -32,6 +32,62 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const currentRank = finalStartRank;
     const collectionCategory = sp.get('collectionCategory') ?? '';
 
+    const programKey = sp.get('programKey');
+
+    if (programKey) {
+        const parts = programKey.split('|');
+
+        if (parts[0] === 'DG') {
+            return {
+                mode: 'decade_genre',
+                language,
+                context: {
+                    decade: parts[1] ?? '',
+                    genre: parts[2] ?? ''
+                },
+                startRank: finalStartRank,
+                endRank: finalEndRank,
+                currentRank,
+                playIntro: voices.includes('intro'),
+                playDetail: voices.includes('detail'),
+                playArtistDescription: voices.includes('artist'),
+                textIntro: false,
+                textDetail: false,
+                textArtistDescription: false,
+                voices,
+                playbackOrder,
+                voicePlayMode,
+                pauseMode,
+                categoryMode: 'single'
+            };
+        }
+
+        if (parts[0] === 'COL') {
+            return {
+                mode: 'collection',
+                language,
+                context: {
+                    collection_slug: parts[1] ?? '',
+                    collection_group_slug: collectionCategory
+                },
+                startRank: finalStartRank,
+                endRank: finalEndRank,
+                currentRank,
+                playIntro: voices.includes('intro'),
+                playDetail: voices.includes('detail'),
+                playArtistDescription: voices.includes('artist'),
+                textIntro: false,
+                textDetail: false,
+                textArtistDescription: false,
+                voices,
+                playbackOrder,
+                voicePlayMode,
+                pauseMode,
+                categoryMode: 'single'
+            };
+        }
+    }
+
 
     if (collection) {
         return {
