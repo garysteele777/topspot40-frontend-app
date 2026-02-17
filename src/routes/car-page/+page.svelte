@@ -5,7 +5,7 @@
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
-    import {page} from '$app/stores';
+    import {get} from 'svelte/store';
 
     import {
         startPlaybackPolling,
@@ -39,15 +39,6 @@
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
 
-
-    let resumeIndex = 0;
-
-    $: {
-        const param = $page.url.searchParams.get('resumeIndex');
-        resumeIndex = param ? Number(param) : 0;
-    }
-
-
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
     console.log('🌍 Car page API_BASE =', API_BASE);
@@ -69,6 +60,57 @@
     async function playTrackByRank(rank: number) {
         const sel = $currentSelection;
         if (!sel) return;
+
+        // ⭐ FAVORITES MODE (FAV_DG / FAV_COL) → single-track backend
+        if (sel.programType === 'FAV_DG' || sel.programType === 'FAV_COL') {
+            const trackObj = $tracks.find(t => t.rank === rank);
+            if (!trackObj) {
+                console.error("No track found for rank:", rank);
+                return;
+            }
+
+            if (trackObj.rankingId == null) {
+                console.error("Favorites playback requires trackObj.rankingId (TrackRanking.id) but it is null");
+                return;
+            }
+
+            const favPayload = {
+                track: {
+                    track_id: trackObj.id,
+                    spotify_track_id: trackObj.spotifyTrackId,
+                    ranking_id: trackObj.rankingId, // ✅ favorites key
+                    rank: trackObj.rank,
+                    track_name: trackObj.trackName,
+                    artist_name: trackObj.artistName
+                },
+                selection: {
+                    language: sel.language,
+                    voices: sel.voices,
+                    voicePlayMode: sel.voicePlayMode,
+                    pauseMode: sel.pauseMode,
+                    continuous: false
+                },
+                context: {
+                    type: 'favorites',
+                    program: sel.programType,          // 'FAV_DG' | 'FAV_COL'
+                    decade: sel.context?.decade ?? null,
+                    collection_slug: sel.context?.collection_slug ?? null
+                }
+            };
+
+            console.log('⭐ FAVORITES play-track payload:', favPayload);
+
+            const res = await fetch(`${API_BASE}/playback/play-track`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(favPayload)
+            });
+
+            const result = await res.json().catch(() => null);
+            console.log('🎬 favorites play-track response:', result);
+            return;
+        }
+
 
         // 🟢 COLLECTION MODE: start a SEQUENCE, not a single track
         if (sel.mode === 'collection') {
@@ -301,13 +343,25 @@
 
 
         const url = new URL(window.location.href);
-        const sel = buildSelectionFromUrl(url);
-        console.log('🔥 BUILT SELECTION:', sel);
+        const hasParams = url.searchParams.toString().length > 0;
 
-        currentSelection.set(sel);
+        let sel;
+        let initialRank: number | null = null;
 
-        const cr = url.searchParams.get('currentRank');
-        const initialRank = cr ? Number(cr) : null;
+        if (hasParams) {
+            sel = buildSelectionFromUrl(url);
+            console.log('🔥 BUILT SELECTION FROM URL:', sel);
+
+            currentSelection.set(sel);
+
+            const cr = url.searchParams.get('currentRank');
+            initialRank = cr ? Number(cr) : null;
+        } else {
+            // 🚀 FAVORITES / INTERNAL NAV CASE
+            sel = get(currentSelection);
+            console.log('🔥 USING EXISTING SELECTION:', sel);
+        }
+
 
         try {
             const data = await fetchGroupedCatalog();
@@ -325,7 +379,13 @@
             console.error('Failed to load collection names:', err);
         }
 
+        if (!sel) {
+            console.error('No selection available for loadForSelection');
+            return;
+        }
+
         await loadForSelection(sel, initialRank);
+
 
 /// ─────────────────────────────────────────────
 // Prepare Spotify playback (warmup)

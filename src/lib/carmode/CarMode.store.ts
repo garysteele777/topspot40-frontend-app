@@ -1,8 +1,9 @@
-import {writable} from 'svelte/store';
-import type {SelectionState} from '$lib/stores/selection';
-import type {LoadedTrack} from '$lib/utils/normalizeTrack';
-import type {PlaybackPhase} from '$lib/helpers/car/types';
-import {browser} from '$app/environment';
+import { writable, get } from 'svelte/store';
+import type { SelectionState } from '$lib/stores/selection';
+import type { LoadedTrack } from '$lib/utils/normalizeTrack';
+import type { PlaybackPhase } from '$lib/helpers/car/types';
+import { browser } from '$app/environment';
+import { selection as baseSelection } from '$lib/stores/selection';
 
 /* ─────────────────────────────────────────────
    Selection persistence
@@ -12,27 +13,36 @@ export type CarModeTrack = LoadedTrack & {
     rankingId: number | null;
 };
 
-
 const SELECTION_KEY = 'ts_last_selection';
 
-function loadSelection(): SelectionState | null {
-    if (!browser) return null;
+function loadSelection(): SelectionState {
+    if (!browser) {
+        return get(baseSelection);
+    }
 
     try {
         const raw = localStorage.getItem(SELECTION_KEY);
-        return raw ? JSON.parse(raw) : null;
+        if (raw) {
+            return JSON.parse(raw);
+        }
     } catch {
-        return null;
+        // ignore parse errors
     }
+
+    // fallback to canonical default selection
+    return get(baseSelection);
 }
 
 export const currentSelection =
-    writable<SelectionState | null>(loadSelection());
+    writable<SelectionState>(loadSelection());
 
 if (browser) {
     currentSelection.subscribe((v) => {
-        if (v) localStorage.setItem(SELECTION_KEY, JSON.stringify(v));
-        else localStorage.removeItem(SELECTION_KEY);
+        try {
+            localStorage.setItem(SELECTION_KEY, JSON.stringify(v));
+        } catch {
+            // ignore
+        }
     });
 }
 

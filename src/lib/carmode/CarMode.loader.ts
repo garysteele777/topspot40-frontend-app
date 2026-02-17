@@ -16,8 +16,68 @@ export async function loadForSelection(
     initialRank?: number | null
 ): Promise<void> {
     status.set('Loading tracks…');
+    console.log('🚀 LOADER selection.programType =', sel.programType);
+
     tracks.set([]);
     currentTrack.set(null);
+
+
+    // ─────────────────────────────────────────────
+    // FAVORITES: DECADE
+    // ─────────────────────────────────────────────
+    if (sel.programType === 'FAV_DG') {
+
+        const decade = sel.context?.decade;
+
+        if (!decade) {
+            status.set('Missing decade for favorites.');
+            return;
+        }
+
+        const favoriteIds = getFavorites('DG', decade);
+
+        if (!favoriteIds.length) {
+            status.set(`⭐ No favorites yet for ${decade}.`);
+            return;
+        }
+
+        const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/supabase/decade-genre/get-favorites`,
+            {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ranking_ids: favoriteIds})
+            }
+        );
+
+        if (!response.ok) {
+            status.set('Failed to load favorites.');
+            return;
+        }
+
+        const data = await response.json();
+
+        const normalized: LoadedTrack[] = data.tracks.map((t: any) => ({
+            ...t,
+            id: t.trackId,               // ✅ required for /playback/play-track
+            spotifyTrackId: t.spotifyTrackId,
+            rankingId: t.rankingId
+        }));
+
+        const ordered = applyPlaybackOrder(normalized, 'shuffle');
+
+
+        if (!data?.tracks?.length) {
+            status.set('No favorite tracks found.');
+            return;
+        }
+
+        tracks.set(ordered.map(toCarModeTrack));
+        currentTrack.set(toCarModeTrack(ordered[0]));
+
+        status.set(`Loaded ${ordered.length} favorite tracks.`);
+        return;
+    }
 
 
     try {

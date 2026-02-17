@@ -16,6 +16,7 @@
     import {fetchGroupedCatalog} from '$lib/api/catalog';
     import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
     import {goto} from '$app/navigation';
+    import {currentSelection} from '$lib/carmode/CarMode.store';
 
 
     let collectionGroupNameMap: Record<string, string> = {};
@@ -34,6 +35,19 @@
 
     function playShuffleFavorites(decade: string) {
         console.log('▶ Shuffle Favorites for', decade);
+
+        currentSelection.update((s) => ({
+            ...s,
+            mode: 'decade_genre',
+            programType: 'FAV_DG',
+            context: {decade},
+            playbackOrder: 'shuffle',
+            startRank: 1,
+            endRank: 999, // not used for favorites
+            currentRank: 1
+        }));
+
+        goto('/car-page');
     }
 
 
