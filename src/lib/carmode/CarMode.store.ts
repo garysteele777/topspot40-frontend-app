@@ -11,7 +11,17 @@ import { selection as baseSelection } from '$lib/stores/selection';
 
 export type CarModeTrack = LoadedTrack & {
     rankingId: number | null;
+
+    // ⭐ Favorites metadata
+    sourceRank?: number;
+
+    genreSlug?: string;
+    genreName?: string;
+
+    decadeSlug?: string;
+    decadeName?: string;
 };
+
 
 const SELECTION_KEY = 'ts_last_selection';
 

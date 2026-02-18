@@ -47,12 +47,13 @@
 <!-- META -->
 <div class="meta-under-cover">
 <span class="text-gray-400 text-sm">
-    {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
-        {@const idx = currentTrack ? tracks.findIndex(t => t.rankingId === currentTrack?.rankingId) : -1}
-        Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
-    {:else}
-        Rank {currentTrack?.rank ?? '?'} of {tracks.length}
-    {/if}
+  {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
+    {@const rid = currentTrack?.rankingId}
+      {@const idx = rid != null ? tracks.findIndex(t => t.rankingId === rid) : -1}
+      Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
+  {:else}
+    Rank {currentTrack?.rank ?? '?'} of {tracks.length}
+  {/if}
 </span>
 
 

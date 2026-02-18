@@ -1,7 +1,6 @@
 // src/lib/utils/normalizeTrack.ts
 
 export type AudioKey = { bucket: string; key: string };
-
 export type LoadedTrack = {
     id?: number | string | null;
 
@@ -14,7 +13,7 @@ export type LoadedTrack = {
 
     albumName?: string | null;
     albumArtwork?: string | null;
-    artistArtwork?: string | null;   // ✅ add this
+    artistArtwork?: string | null;
 
     yearReleased?: number | null;
 
@@ -32,6 +31,17 @@ export type LoadedTrack = {
     introKey?: AudioKey | null;
     detailKey?: AudioKey | null;
     artistKey?: AudioKey | null;
+
+    // ─────────────────────────────
+    // ⭐ Favorites support (new)
+    // ─────────────────────────────
+    sourceRank?: number | null;
+
+    decadeSlug?: string | null;
+    decadeName?: string | null;
+
+    genreSlug?: string | null;
+    genreName?: string | null;
 };
 
 

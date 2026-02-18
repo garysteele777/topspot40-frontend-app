@@ -39,5 +39,18 @@ export type DurationLike = LoadedTrack & {
 	duration?: number;
 };
 
+/**
+ * 🚗 Track shape used inside Car Mode
+ * Extends normalized track with DG/Favorites metadata
+ */
+export type CarModeTrack = DurationLike & {
+    rankingId?: number;
+    sourceRank?: number;
+
+    decade?: string;
+    genre?: string;
+};
+
+
 // Re-export for convenience
 export type { SelectionState };

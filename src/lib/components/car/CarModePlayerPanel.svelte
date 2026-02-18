@@ -52,9 +52,10 @@
     let programTotal = 0;
 
     $: currentIndex =
-        currentTrack
-            ? tracks.findIndex(t => t.rank === currentTrack.rank)
+        currentTrack?.rankingId != null
+            ? tracks.findIndex(t => t.rankingId === currentTrack.rankingId)
             : -1;
+
 
     $: nextTrack =
         currentIndex >= 0 && currentIndex < sessionTotal - 1
@@ -108,7 +109,8 @@
     import {favoritesStore} from '$lib/favorites/favorites';
 
     $: {
-        const _ = $favoritesStore; // 👈 force reactive dependency
+        void $favoritesStore; // 👈 force reactive dependency (no unused var)
+
 
         isFav =
             !!(
@@ -125,6 +127,18 @@
 
 
     $: console.log('Current track:', currentTrack);
+
+    $: isFavoritesProgram =
+        $currentSelection?.programType === 'FAV_DG' ||
+        $currentSelection?.programType === 'FAV_COL';
+
+
+    $: favoriteTickerText =
+        isFavoritesProgram && currentTrack
+            ? `From Rank #${currentTrack.sourceRank ?? currentTrack.rank}
+           • Decade: ${currentTrack.decadeName ?? currentTrack.decadeSlug ?? ''}
+           • Genre: ${currentTrack.genreName ?? currentTrack.genreSlug ?? ''}`
+            : null;
 
 
     function onToggleFavorite() {
@@ -198,15 +212,27 @@
     </div>
 
     <!-- Phase ticker -->
-    <CarModeTicker text={phase ?? ''}/>
+    <CarModeTicker
+            text={
+        favoriteTickerText ??
+        phase ??
+        ''
+    }
+    />
+
 
     {#if programTotal > 0}
         <div class="car-extra-info">
             {#if nextTrack}
                 <div class="next-line">
                     <span>
-                        Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
+                        {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
+                            Next: Favorite #{currentIndex + 2} – {nextTrack.trackName} – {nextTrack.artistName}
+                        {:else}
+                            Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
+                        {/if}
                     </span>
+
 
                     <button class="next-btn" on:click={skipToNextTrack}>
                         ⏭ Next

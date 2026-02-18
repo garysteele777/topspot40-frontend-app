@@ -228,8 +228,15 @@ export async function loadForSelection(
 function toCarModeTrack(t: LoadedTrack): CarModeTrack {
     return {
         ...t,
-        rankingId: t.rankingId ?? null
+        rankingId: t.rankingId ?? null,
 
+        // ⭐ Favorites metadata (new)
+        sourceRank: (t as any).sourceRank,
 
+        genreSlug: (t as any).genreSlug,
+        genreName: (t as any).genreName,
+
+        decadeSlug: (t as any).decadeSlug,
+        decadeName: (t as any).decadeName
     };
 }
