@@ -17,10 +17,6 @@
 
 {#if track}
   <div class="narration-inline">
-    {#if shortIntro}
-      <p class="intro-text">{shortIntro}</p>
-    {/if}
-
     <div class="button-row">
       <button class="more-btn" on:click={onOpenModal}>
         More Info →

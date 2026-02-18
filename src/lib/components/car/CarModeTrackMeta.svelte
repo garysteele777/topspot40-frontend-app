@@ -1,6 +1,7 @@
 <script lang="ts">
     import type {LoadedTrack} from '$lib/utils/normalizeTrack';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
+    import {currentSelection} from '$lib/carmode/CarMode.store';
 
     export let currentTrack: LoadedTrack | null = null;
     export let tracks: LoadedTrack[] = [];
@@ -45,9 +46,15 @@
 
 <!-- META -->
 <div class="meta-under-cover">
-	<span class="text-gray-400 text-sm">
-		Rank {currentTrack?.rank ?? '?'} of {tracks.length}
-	</span>
+<span class="text-gray-400 text-sm">
+    {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
+        {@const idx = currentTrack ? tracks.findIndex(t => t.rankingId === currentTrack?.rankingId) : -1}
+        Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
+    {:else}
+        Rank {currentTrack?.rank ?? '?'} of {tracks.length}
+    {/if}
+</span>
+
 
     <div class="track-title">— {titleCased}</div>
     <div class="text-gray-200">{artistCased}</div>

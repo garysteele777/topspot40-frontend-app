@@ -166,7 +166,7 @@
         />
     </div>
 
-    {#if currentTrack?.rankingId != null}
+    {#if currentTrack?.rankingId != null && $currentSelection?.programType !== 'FAV_DG' && $currentSelection?.programType !== 'FAV_COL'}
         <div class="fav-wrapper">
             <button
                     class="fav-btn"

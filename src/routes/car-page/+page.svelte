@@ -276,11 +276,18 @@
     const toTitleCase = (text: string | null | undefined): string =>
         text ? text.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1)) : '';
 
+    $: isFavorites =
+        $currentSelection?.programType === 'FAV_DG' ||
+        $currentSelection?.programType === 'FAV_COL';
+
     $: uiDecade =
-        $currentSelection?.mode === 'decade_genre'
-            ? toTitleCase($currentSelection.context?.decade ?? '')
-            : collectionNameMap[$currentSelection?.context?.collection_slug ?? ''] ??
-            toTitleCase($currentSelection?.context?.collection_slug ?? '');
+        isFavorites
+            ? `${toTitleCase($currentSelection?.context?.decade ?? '')} Favorites`
+            : $currentSelection?.mode === 'decade_genre'
+                ? toTitleCase($currentSelection.context?.decade ?? '')
+                : collectionNameMap[$currentSelection?.context?.collection_slug ?? ''] ??
+                toTitleCase($currentSelection?.context?.collection_slug ?? '');
+
 
     $: uiGenre =
         $currentSelection?.mode === 'decade_genre'
