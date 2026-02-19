@@ -1,10 +1,10 @@
 import {writable} from 'svelte/store';
 import type {PlaybackProgramType} from '$lib/types/program';
+import type {ModeType} from '$lib/types/playback';
 
 /* -----------------------
  * Domain Types
  * --------------------- */
-export type Mode = 'decade_genre' | 'collection';
 export type Language = 'en' | 'es' | 'ptbr';
 export type VoicePart = 'intro' | 'detail' | 'artist';
 
@@ -17,7 +17,7 @@ export type CategoryMode = 'single' | 'multiple';
  * Selection State
  * --------------------- */
 export interface SelectionState {
-    mode: Mode;
+    mode: ModeType;
     programType: PlaybackProgramType;
     language: Language;
     context: Record<string, string> | null;
@@ -78,7 +78,11 @@ function loadInitial(): SelectionState {
         if (raw) {
             const parsed = JSON.parse(raw);
 
-            if (parsed.mode !== 'decade_genre' && parsed.mode !== 'collection') {
+            if (
+                parsed.mode !== 'decade_genre' &&
+                parsed.mode !== 'collection' &&
+                parsed.mode !== 'favorites'
+            ) {
                 parsed.mode = defaultSelection.mode;
             }
 
@@ -91,12 +95,12 @@ function loadInitial(): SelectionState {
                 parsed.programType = defaultSelection.programType;
             }
 
-            return { ...defaultSelection, ...parsed };
+            return {...defaultSelection, ...parsed};
         }
     } catch {
         // ignore
     }
-    return { ...defaultSelection };
+    return {...defaultSelection};
 }
 
 

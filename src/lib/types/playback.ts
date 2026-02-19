@@ -4,7 +4,11 @@
 // Core playback types (single source of truth)
 // ─────────────────────────────────────────────
 
-export type ModeType = 'decade_genre' | 'collection';
+export type ModeType =
+  | 'decade_genre'
+  | 'collection'
+  | 'favorites';
+
 
 export type Language = 'en' | 'es' | 'ptbr';
 

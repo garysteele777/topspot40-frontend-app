@@ -64,6 +64,7 @@ export async function loadForSelection(
             rankingId: t.rankingId
         }));
 
+        // ✅ Respect shuffle (forced), and choose initial from the shuffled list
         const ordered = applyPlaybackOrder(normalized, 'shuffle');
 
 
@@ -72,8 +73,11 @@ export async function loadForSelection(
             return;
         }
 
+        // NOTE: favorites ignores sel.startRank/endRank; we always use the shuffled list
         tracks.set(ordered.map(toCarModeTrack));
-        currentTrack.set(toCarModeTrack(ordered[0]));
+
+        const first = ordered[0] ?? null;
+        currentTrack.set(first ? toCarModeTrack(first) : null);
 
         status.set(`Loaded ${ordered.length} favorite tracks.`);
         return;

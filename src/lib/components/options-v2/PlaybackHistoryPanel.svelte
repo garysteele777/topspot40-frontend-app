@@ -38,13 +38,19 @@
 
         currentSelection.update((s) => ({
             ...s,
-            mode: 'decade_genre',
+
+            mode: 'favorites',
             programType: 'FAV_DG',
-            context: {decade},
-            playbackOrder: 'shuffle',
-            startRank: 1,
-            endRank: 999, // not used for favorites
-            currentRank: 1
+
+            context: {
+                ...(s.context ?? {}),
+                favoritesType: 'DG',
+                favoritesGroup: decade,
+                decade
+            },
+
+
+            playbackOrder: 'shuffle'
         }));
 
         goto('/car-page');
