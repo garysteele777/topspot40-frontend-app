@@ -27,19 +27,40 @@ export async function loadForSelection(
     // ─────────────────────────────────────────────
     if (sel.programType === 'FAV_DG') {
 
-        const decade = sel.context?.decade;
+        const group = sel.context?.favoritesGroup;
 
-        if (!decade) {
-            status.set('Missing decade for favorites.');
+        if (!group) {
+            status.set('Missing favorites group.');
             return;
         }
 
-        const favoriteIds = getFavorites('DG', decade);
+        let favoriteIds: number[] = [];
 
-        if (!favoriteIds.length) {
-            status.set(`⭐ No favorites yet for ${decade}.`);
-            return;
+        if (group === 'ALL') {
+            // 🔥 Build combined favorites from all decades
+            const decades = new Set<string>();
+
+            for (const key of Object.keys(localStorage)) {
+                if (!key.startsWith('ts-favorites')) continue;
+            }
+
+            // Pull from favorites store directly
+            const raw = localStorage.getItem('ts-favorites-v1');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                const dg = parsed?.DG ?? {};
+
+                for (const decade of Object.keys(dg)) {
+                    favoriteIds.push(...dg[decade]);
+                }
+            }
+
+            // Remove duplicates
+            favoriteIds = [...new Set(favoriteIds)];
+        } else {
+            favoriteIds = getFavorites('DG', group);
         }
+
 
         const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/supabase/decade-genre/get-favorites`,

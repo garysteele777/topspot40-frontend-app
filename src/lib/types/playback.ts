@@ -6,8 +6,7 @@
 
 export type ModeType =
   | 'decade_genre'
-  | 'collection'
-  | 'favorites';
+  | 'collection';
 
 
 export type Language = 'en' | 'es' | 'ptbr';

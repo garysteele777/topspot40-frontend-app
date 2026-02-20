@@ -2,8 +2,10 @@
 
     import {
         countFavorites,
-        clearFavorites
+        clearFavorites,
+        getFavorites   // ✅ add this
     } from '$lib/favorites/favorites';
+
 
     import {
         programHistoryStore as programHistory,
@@ -33,6 +35,32 @@
             .join(' ');
     }
 
+    function decadeSortKey(decade: string): number {
+        const m = decade.match(/\d{4}/);
+        return m ? Number(m[0]) : Number.POSITIVE_INFINITY;
+    }
+
+    function getAllDecadeFavorites(): number[] {
+        const decades = new Set<string>();
+
+        for (const p of $programHistory) {
+            if (!p.key.startsWith('DG|')) continue;
+
+            const [, decade] = p.key.split('|');
+            if (decade) decades.add(decade);
+        }
+
+        const all: number[] = [];
+
+        for (const decade of decades) {
+            const ids = getFavorites('DG', decade);
+            all.push(...ids);
+        }
+
+        return [...new Set(all)];
+    }
+
+
     function playShuffleFavorites(decade: string) {
         console.log('▶ Shuffle Favorites for', decade);
 
@@ -49,6 +77,29 @@
                 decade
             },
 
+
+            playbackOrder: 'shuffle'
+        }));
+
+        goto('/car-page');
+    }
+
+    function playShuffleAllDecadeFavorites() {
+        console.log('▶ Shuffle ALL Decade Favorites');
+
+        currentSelection.update((s) => ({
+            ...s,
+
+            mode: 'decade_genre',       // keep consistent with header
+            programType: 'FAV_DG',
+
+            decade: 'ALL',              // 🔥 THIS is the key
+            genre: 'favorites',         // 🔥 force favorites label
+
+            context: {
+                favoritesType: 'DG',
+                favoritesGroup: 'ALL'
+            },
 
             playbackOrder: 'shuffle'
         }));
@@ -106,10 +157,13 @@
             map.get(decade)!.push(p);
         }
 
-        return [...map.entries()].map(([decade, programs]) => ({
-            decade,
-            programs
-        }));
+        return [...map.entries()]
+            .sort(([a], [b]) => decadeSortKey(a) - decadeSortKey(b))
+            .map(([decade, programs]) => ({
+                decade,
+                programs
+            }));
+
     })();
 
 
@@ -198,6 +252,35 @@
             {#if decadeGenreMap.length === 0}
                 <p class="history-empty">No decade–genre programs played yet.</p>
             {:else}
+
+                {@const allFavCount = getAllDecadeFavorites().length}
+
+                <li
+                        class="history-row history-row--favorite"
+                        class:history-row--disabled={allFavCount === 0}
+                >
+    <span class="history-row__label">
+        ⭐ All Decades Favorites
+    </span>
+
+                    <span class="history-row__progress">
+        {allFavCount === 0
+            ? '0 Tracks'
+            : `${allFavCount} Tracks`}
+    </span>
+
+                    <div class="history-row__actions">
+                        <button
+                                class="btn btn--primary"
+                                disabled={allFavCount === 0}
+                                on:click={playShuffleAllDecadeFavorites}
+                        >
+                            ▶ Play Shuffle
+                        </button>
+                    </div>
+                </li>
+
+
                 {#each decadeGenreMap as block}
                     {@const favCount = countFavorites('DG', block.decade)}  <!-- ✅ -->
                     <details class="history-subsection">

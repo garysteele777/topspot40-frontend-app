@@ -1,87 +1,104 @@
 <script context="module" lang="ts">
-	// Types live ONLY in module script → no runtime, no conflicts
-	export type BrowseMode = 'decade_genre' | 'collection';
-	export type PlaybackOrder = 'up' | 'down' | 'shuffle';
-	export type VoicePlayMode = 'before' | 'over';
-	export type PauseMode = 'pause' | 'continuous';
-	export type CategoryMode = 'single' | 'multiple';
+    // Types live ONLY in module script → no runtime, no conflicts
+    export type BrowseMode = 'decade_genre' | 'collection';
+    export type PlaybackOrder = 'up' | 'down' | 'shuffle';
+    export type VoicePlayMode = 'before' | 'over';
+    export type PauseMode = 'pause' | 'continuous';
+    export type CategoryMode = 'single' | 'multiple';
 </script>
 
 <script lang="ts">
-	// Props (runtime)
-	export let decade: string | undefined;
-	export let genre: string | undefined;
-	export let collection: string | undefined; // ✅ ADD THIS
-	export let mode: import('./CarModeHeader.svelte').BrowseMode = 'decade_genre';
+    import type {PlaybackProgramType} from '$lib/types/program';
+
+    // Props (runtime)
+    export let decade: string | undefined;
+    export let genre: string | undefined;
+    export let collection: string | undefined; // ✅ ADD THIS
+    export let mode: import('./CarModeHeader.svelte').BrowseMode = 'decade_genre';
+    export let programType: PlaybackProgramType | undefined;
 
 
-	export let language = 'en';
-	export let voices: string[] = ['intro'];
+    export let language = 'en';
+    export let voices: string[] = ['intro'];
 
-	export let startRank = 1;
-	export let endRank = 40;
+    export let startRank = 1;
+    export let endRank = 40;
 
-	export let playbackOrder: import('./CarModeHeader.svelte').PlaybackOrder = 'up';
-	export let voicePlayMode: import('./CarModeHeader.svelte').VoicePlayMode = 'before';
-	export let pauseMode: import('./CarModeHeader.svelte').PauseMode = 'pause';
-	export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
+    export let playbackOrder: import('./CarModeHeader.svelte').PlaybackOrder = 'up';
+    export let voicePlayMode: import('./CarModeHeader.svelte').VoicePlayMode = 'before';
+    export let pauseMode: import('./CarModeHeader.svelte').PauseMode = 'pause';
+    export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
 
-	// Label helpers
-	const modeLabel = (m: import('./CarModeHeader.svelte').BrowseMode) =>
-		m === 'collection' ? 'Collection' : 'Decade–Genre';
+    // Label helpers
+    const modeLabel = (m: import('./CarModeHeader.svelte').BrowseMode) =>
+        m === 'collection' ? 'Collection' : 'Decade–Genre';
 
-	const categoryLabel = (m: import('./CarModeHeader.svelte').CategoryMode) =>
-		m === 'multiple' ? 'Multiple' : 'Single';
+    const categoryLabel = (m: import('./CarModeHeader.svelte').CategoryMode) =>
+        m === 'multiple' ? 'Multiple' : 'Single';
 
-	const orderLabel = (o: import('./CarModeHeader.svelte').PlaybackOrder) =>
-		o === 'down' ? 'Down' : o === 'shuffle' ? 'Shuffle' : 'Up';
+    const orderLabel = (o: import('./CarModeHeader.svelte').PlaybackOrder) =>
+        o === 'down' ? 'Down' : o === 'shuffle' ? 'Shuffle' : 'Up';
 
-	const voicePlayLabel = (v: import('./CarModeHeader.svelte').VoicePlayMode) =>
-		v === 'over' ? 'Over Track' : 'Before Track';
+    const voicePlayLabel = (v: import('./CarModeHeader.svelte').VoicePlayMode) =>
+        v === 'over' ? 'Over Track' : 'Before Track';
 
-	const pauseLabel = (p: import('./CarModeHeader.svelte').PauseMode) =>
-		p === 'continuous' ? 'Continuous' : 'Pause Between Tracks';
+    const pauseLabel = (p: import('./CarModeHeader.svelte').PauseMode) =>
+        p === 'continuous' ? 'Continuous' : 'Pause Between Tracks';
 
-	const voiceText = (vs: string[]) => (vs.length ? vs.join(', ') : 'None');
+    const voiceText = (vs: string[]) => (vs.length ? vs.join(', ') : 'None');
 </script>
 
 <div class="cm-panel">
-	<div class="cm-main">
-		<div class="cm-row cm-row--title">
-			<span class="cm-tag">🚗 Car Mode</span>
+    <div class="cm-main">
+        <div class="cm-row cm-row--title">
+            <span class="cm-tag">🚗 Car Mode</span>
 
-			{#if mode === 'decade_genre'}
+            {#if mode === 'decade_genre'}
   <span class="cm-main-text">
-    {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
+
+    {#if programType === 'FAV_DG'}
+      {#if (decade ?? '').toUpperCase() === 'ALL'}
+          ⭐ All Decades Favorites (All Genres)
+      {:else}
+          ⭐ {decade ?? '—'} Favorites (All Genres)
+      {/if}
+
+    {:else}
+      {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
+    {/if}
+
   </span>
-			{:else}
+            {:else}
+
+
+
   <span class="cm-main-text">
     {collection ?? '—'}
   </span>
-			{/if}
+            {/if}
 
-		</div>
+        </div>
 
-		<div class="cm-row cm-row--primary">
-			<span>{modeLabel(mode)}</span>
-			<span>•</span>
-			<span>Category: {categoryLabel(categoryMode)}</span>
-			<span>•</span>
-			<span>Lang: {language.toUpperCase()}</span>
-			<span>•</span>
-			<span>Range: {startRank}–{endRank}</span>
-		</div>
+        <div class="cm-row cm-row--primary">
+            <span>{modeLabel(mode)}</span>
+            <span>•</span>
+            <span>Category: {categoryLabel(categoryMode)}</span>
+            <span>•</span>
+            <span>Lang: {language.toUpperCase()}</span>
+            <span>•</span>
+            <span>Range: {startRank}–{endRank}</span>
+        </div>
 
-		<div class="cm-row cm-row--secondary">
-			<span>Voices: {voiceText(voices)}</span>
-			<span>•</span>
-			<span>Order: {orderLabel(playbackOrder)}</span>
-			<span>•</span>
-			<span>{voicePlayLabel(voicePlayMode)}</span>
-			<span>•</span>
-			<span>{pauseLabel(pauseMode)}</span>
-		</div>
-	</div>
+        <div class="cm-row cm-row--secondary">
+            <span>Voices: {voiceText(voices)}</span>
+            <span>•</span>
+            <span>Order: {orderLabel(playbackOrder)}</span>
+            <span>•</span>
+            <span>{voicePlayLabel(voicePlayMode)}</span>
+            <span>•</span>
+            <span>{pauseLabel(pauseMode)}</span>
+        </div>
+    </div>
 </div>
 
 <style>

@@ -2,7 +2,7 @@
 import {selection, type SelectionState} from '$lib/stores/selection';
 import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
 import {normalizeVoices} from '$lib/helpers/normalizeVoices';
-
+import type {PlaybackProgramType} from '$lib/types/program';
 
 export function applyCarModeParams(url: URL): void {
     const params = url.searchParams;
@@ -56,7 +56,11 @@ export function applyCarModeParams(url: URL): void {
     }
 
 
+    const programType: PlaybackProgramType =
+        mode === 'collection' ? 'COL' : 'DG';
+
     const nextSelection: SelectionState = {
+        programType,
         mode,
         language,
         context,

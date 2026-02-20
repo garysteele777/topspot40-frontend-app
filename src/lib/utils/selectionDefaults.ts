@@ -1,6 +1,8 @@
 // Reusable, ESLint-safe defaults for Options page + selection store.
-import {selection, type Mode, type SelectionState} from '$lib/stores/selection';
-import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
+
+import { selection, type SelectionState } from '$lib/stores/selection';
+import { normalizeLanguage } from '$lib/helpers/normalizeLanguage';
+import type { PlaybackProgramType } from '$lib/types/program';
 
 /** Canonical rank bounds */
 export const DEFAULT_START_RANK = 1;
@@ -19,9 +21,12 @@ export const DEFAULT_TOGGLES = {
 export type ToggleKeys = keyof typeof DEFAULT_TOGGLES;
 
 /** Build a default SelectionState (store) object */
-export function buildDefaultSelection(language: string = 'en'): SelectionState {
+export function buildDefaultSelection(
+    language: string = 'en'
+): SelectionState {
     return {
-        mode: 'decade_genre' as Mode,
+        mode: 'decade_genre',
+        programType: 'DG' satisfies PlaybackProgramType, // 🔥 required now
         language: normalizeLanguage(language),
         context: null,
 
@@ -39,9 +44,10 @@ export function buildDefaultSelection(language: string = 'en'): SelectionState {
     };
 }
 
-
 /** Apply defaults to the store and return the object that was set */
-export function applyDefaultSelection(language: string = 'en'): SelectionState {
+export function applyDefaultSelection(
+    language: string = 'en'
+): SelectionState {
     const next = buildDefaultSelection(language);
     selection.set(next);
     return next;
@@ -56,10 +62,10 @@ export function buildDefaultUI(params: {
     genres: string[];
     collections: string[];
 }) {
-    const {decades, genres, collections} = params;
+    const { decades, genres, collections } = params;
 
     return {
-        modeType: 'decade_genre' as Mode,
+        modeType: 'decade_genre',
         selectedDecade: decades[0] ?? 'All',
         selectedGenre: genres[0] ?? 'All',
         selectedCollection: collections[0] ?? 'All',
@@ -80,7 +86,7 @@ export function resetToDefaultsUI(params: {
     collections: string[];
     language?: string;
 }) {
-    const {decades, genres, collections, language = 'en'} = params;
+    const { decades, genres, collections, language = 'en' } = params;
     applyDefaultSelection(language);
-    return buildDefaultUI({decades, genres, collections});
+    return buildDefaultUI({ decades, genres, collections });
 }
