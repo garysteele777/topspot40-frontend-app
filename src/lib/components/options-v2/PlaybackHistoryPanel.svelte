@@ -67,7 +67,7 @@
         currentSelection.update((s) => ({
             ...s,
 
-            mode: 'favorites',
+            mode: 'decade_genre',
             programType: 'FAV_DG',
 
             context: {

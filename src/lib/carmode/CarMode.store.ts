@@ -1,9 +1,9 @@
-import { writable, get } from 'svelte/store';
-import type { SelectionState } from '$lib/stores/selection';
-import type { LoadedTrack } from '$lib/utils/normalizeTrack';
-import type { PlaybackPhase } from '$lib/helpers/car/types';
-import { browser } from '$app/environment';
-import { selection as baseSelection } from '$lib/stores/selection';
+import {writable, get} from 'svelte/store';
+import type {SelectionState} from '$lib/stores/selection';
+import type {LoadedTrack} from '$lib/utils/normalizeTrack';
+import type {PlaybackPhase} from '$lib/helpers/car/types';
+import {browser} from '$app/environment';
+import {selection as baseSelection} from '$lib/stores/selection';
 
 /* ─────────────────────────────────────────────
    Selection persistence
@@ -13,13 +13,13 @@ export type CarModeTrack = LoadedTrack & {
     rankingId: number | null;
 
     // ⭐ Favorites metadata
-    sourceRank?: number;
+    sourceRank?: number | null;
 
-    genreSlug?: string;
-    genreName?: string;
+    genreSlug?: string | null;
+    genreName?: string | null;
 
-    decadeSlug?: string;
-    decadeName?: string;
+    decadeSlug?: string | null;
+    decadeName?: string | null;
 };
 
 

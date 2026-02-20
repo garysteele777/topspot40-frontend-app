@@ -9,6 +9,11 @@ export function buildSelectionFromResume(
     const {voices} = resumed;
 
     return {
+        programType:
+            resumed.mode === 'collection'
+                ? 'COL'
+                : 'DG',
+
         mode: resumed.mode,
         context: resumed.context ?? null,
 

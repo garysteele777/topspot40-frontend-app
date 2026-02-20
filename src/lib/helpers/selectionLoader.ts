@@ -1,12 +1,13 @@
 // src/lib/helpers/selectionLoader.ts
 import {goto} from '$app/navigation';
 import {selection} from '$lib/stores/selection';
-import type {Mode, SelectionState} from '$lib/stores/selection';
+import type {SelectionState} from '$lib/stores/selection';
+import type {ModeType} from '$lib/types/playback';
 import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
 
 export async function loadSelection(
     opts: {
-        modeType: Mode;
+        modeType: ModeType;
         ttsLanguage: string;
 
         selectedDecade?: string;
@@ -83,6 +84,7 @@ export async function loadSelection(
 
         // ───────── Update global store (WITHOUT tracks) ─────────
         selection.set({
+            programType: modeType === 'collection' ? 'COL' : 'DG',
             mode: modeType,
             language: normalizeLanguage(ttsLanguage),
 

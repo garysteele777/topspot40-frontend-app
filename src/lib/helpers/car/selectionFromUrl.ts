@@ -39,6 +39,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
         if (parts[0] === 'DG') {
             return {
+                programType: 'DG',
                 mode: 'decade_genre',
                 language,
                 context: {
@@ -64,6 +65,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
         if (parts[0] === 'COL') {
             return {
+                programType: 'COL',
                 mode: 'collection',
                 language,
                 context: {
@@ -91,6 +93,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
     if (collection) {
         return {
+            programType: 'COL',
             mode: 'collection',
             language,
             context: {
@@ -116,6 +119,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     }
 
     return {
+        programType: 'DG',
         mode: 'decade_genre',
         language,
         context: {decade, genre},
