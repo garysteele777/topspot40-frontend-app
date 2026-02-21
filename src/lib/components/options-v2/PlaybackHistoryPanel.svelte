@@ -356,11 +356,10 @@
 
 
                                         <button
-                                                class="btn btn--ghost"
-                                                on:click={() => clearOne(p)}
-                                                aria-label="Clear playback history"
+                                                class="btn btn--secondary"
+                                                on:click={() => goto(`/program?programKey=${encodeURIComponent(p.key)}`)}
                                         >
-                                            🧹
+                                            📄 View
                                         </button>
                                     </div>
                                 </li>
@@ -413,15 +412,8 @@
                                                 ▶ {isCompleted(p) ? 'Restart' : 'Resume'}
                                             </button>
 
-
-                                            <button
-                                                    class="btn btn--ghost"
-                                                    on:click={() => clearOne(p)}
-                                                    aria-label="Clear playback history"
-                                            >
-                                                🧹
-                                            </button>
                                         </div>
+                                        npm
                                     </li>
                                 {/each}
                             </ul>
