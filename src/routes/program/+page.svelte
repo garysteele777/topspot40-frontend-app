@@ -32,10 +32,15 @@
             ? $favoritesStore.DG?.[groupKey] ?? []
             : [];
 
-    $: currentHistory =
-        programKey
-            ? $programHistoryStore.find(p => p.key === programKey)
-            : undefined;
+    let currentHistory: typeof $programHistoryStore[number] | undefined;
+
+    $: {
+        if (!programKey) {
+            currentHistory = undefined;
+        } else {
+            currentHistory = $programHistoryStore.find(p => p.key === programKey);
+        }
+    }
 
 
     // ✅ Match backend shape from /get-sequence
@@ -121,13 +126,17 @@
             genreSlug = null;
             groupKey = null;
         }
+    }
 
+    $: if (programType === 'DG' && decadeSlug && genreSlug) {
         loadProgramView();
     }
 
     function isPlayed(rank: number): boolean {
-        return currentHistory?.playedRanks.includes(rank) ?? false;
+        if (!currentHistory) return false;
+        return currentHistory.playedRanks.includes(rank);
     }
+
 </script>
 
 <section class="program-view">
