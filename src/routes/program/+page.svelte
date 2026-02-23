@@ -2,6 +2,7 @@
     import {page} from '$app/state';
     import {onMount} from 'svelte';
     import type {ProgramKey} from '$lib/carmode/programHistory';
+    import {goto} from '$app/navigation';
 
     import type {PlaybackProgramType} from '$lib/types/program';
     import {
@@ -26,8 +27,6 @@
         programKey = key as ProgramKey | null;
     }
 
-    $: if (programKey) loadProgramView();
-
     $: currentFavorites =
         programType === 'DG' && groupKey
             ? $favoritesStore.DG?.[groupKey] ?? []
@@ -50,11 +49,6 @@
     let tracks: TrackRow[] = [];
     let loading = false;
     let errorMsg: string | null = null;
-
-    $: groupKey =
-        programType === 'DG' && decadeSlug
-            ? decadeSlug
-            : null;
 
     function handleClearPlayed() {
         if (!programKey) return;
@@ -114,8 +108,6 @@
         }
     }
 
-    onMount(loadProgramView);
-
     $: if (programKey) {
         const parts = programKey.split('|');
         programType = parts[0] as PlaybackProgramType;
@@ -131,11 +123,6 @@
         }
 
         loadProgramView();
-    }
-
-    function getHistoryForKey(key: string | null) {
-        if (!key) return undefined;
-        return $programHistoryStore.find(p => p.key === key);
     }
 
     function isPlayed(rank: number): boolean {
@@ -162,6 +149,9 @@
         </h2>
 
         <div class="program-actions">
+            <button type="button" on:click={() => goto('/options-v2')}>
+                ← Back to Options
+            </button>
             <button type="button" on:click={handleClearPlayed}>
                 Clear Played
             </button>
@@ -206,7 +196,7 @@
                                     class="fav-btn"
                                     on:click={() => handleToggleFavorite(track.rankingId)}
                             >
-                                {#if groupKey && $favoritesStore.DG?.[groupKey]?.includes(track.rankingId)}
+                                {#if currentFavorites.includes(track.rankingId)}
                                     ⭐
                                 {:else}
                                     ☆
