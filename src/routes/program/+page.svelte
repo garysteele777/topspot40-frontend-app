@@ -1,16 +1,38 @@
 <script lang="ts">
-    import { page } from '$app/state';
-    import { onMount } from 'svelte';
+    import {page} from '$app/state';
+    import {onMount} from 'svelte';
 
-    import type { PlaybackProgramType } from '$lib/types/program';
-    import { programHistoryStore } from '$lib/carmode/programHistory';
-    import { getFavorites } from '$lib/favorites/favorites';
+    import type {PlaybackProgramType} from '$lib/types/program';
+    import {programHistoryStore} from '$lib/carmode/programHistory';
+    import {favoritesStore} from '$lib/favorites/favorites';
+
+    $: favorites = $favoritesStore;
+
+    // ✅ TEMP DEBUG (remove after)
+    $: if (programKey) {
+        console.log('programKey:', programKey);
+        console.log('favorites snapshot:', favorites);
+    }
 
     $: programKey = page.url.searchParams.get('programKey');
+
+    $: if (programKey) {
+        const parts = programKey.split('|');
+        programType = parts[0] as PlaybackProgramType;
+
+        if (programType === 'DG') {
+            decadeSlug = parts[1] ?? null;
+            genreSlug = parts[2] ?? null;
+        } else {
+            decadeSlug = null;
+            genreSlug = null;
+        }
+    }
 
     let programType: PlaybackProgramType | null = null;
     let decadeSlug: string | null = null;
     let genreSlug: string | null = null;
+    let groupKey: string | null = null;
 
     // ✅ Match backend shape from /get-sequence
     type TrackRow = {
@@ -24,18 +46,13 @@
     let loading = false;
     let errorMsg: string | null = null;
 
-    function parseProgramKey(key: string) {
-        const parts = key.split('|');
-        programType = parts[0] as PlaybackProgramType;
+    $: groupKey =
+        programType === 'DG' && decadeSlug
+            ? decadeSlug
+            : null;
 
-        if (programType === 'DG') {
-            decadeSlug = parts[1] ?? null;
-            genreSlug = parts[2] ?? null;
-        } else {
-            decadeSlug = null;
-            genreSlug = null;
-        }
-    }
+    $: console.log('groupKey:', groupKey);
+    $: console.log('favorites for group:', groupKey ? favorites?.DG?.[groupKey] : undefined);
 
     async function fetchDGTracks(decade: string, genre: string): Promise<TrackRow[]> {
         const base = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
@@ -64,19 +81,25 @@
 
         if (!programKey) return;
 
-        parseProgramKey(programKey);
-
         if (programType !== 'DG' || !decadeSlug || !genreSlug) return;
 
         loading = true;
         try {
             tracks = await fetchDGTracks(decadeSlug, genreSlug);
+            console.log('tracks loaded:', tracks);
         } catch (err) {
             errorMsg = err instanceof Error ? err.message : 'Failed to load tracks';
         } finally {
             loading = false;
         }
     }
+
+    function isFavorite(rankingId: number): boolean {
+        if (programType !== 'DG' || !groupKey) return false;
+
+        return favorites?.DG?.[groupKey]?.includes(rankingId) ?? false;
+    }
+
 
     onMount(loadProgramView);
     $: if (programKey) loadProgramView();
@@ -142,8 +165,10 @@
                         </td>
 
                         <td>
-                            {#if programKey && programType && getFavorites(programType, programKey).includes(track.rankingId)}
+                            {#if isFavorite(track.rankingId)}
                                 ⭐
+                            {:else}
+                                 . .
                             {/if}
                         </td>
 
