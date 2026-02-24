@@ -41,7 +41,7 @@ export interface SelectionState {
     categoryMode: CategoryMode;
 
     // ✅ NEW
-    skipPlayed: boolean;
+    skipPlayed?: boolean;
 }
 
 /* -----------------------
