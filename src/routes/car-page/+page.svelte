@@ -6,6 +6,8 @@
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
     import {get} from 'svelte/store';
+    import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import {programHistoryStore} from '$lib/carmode/programHistory';
 
     import {
         startPlaybackPolling,
@@ -42,6 +44,7 @@
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
     console.log('🌍 Car page API_BASE =', API_BASE);
+
 
     function stopNarrationAudio() {
         // Kill any browser-side narration audio still playing
@@ -217,16 +220,28 @@
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
 
         // 2. Compute next rank locally
-        const list = $tracks;
-        const idx = list.findIndex(t => t.rank === $currentTrack.rank);
-        const next = list[idx + 1];
-        if (!next) {
-            console.log('⏭ Already at last track');
+        const {nextRank, skipped} = resolveNextRank(
+            $tracks,
+            $currentTrack.rank,
+            $currentSelection.playbackOrder,
+            $currentSelection.skipPlayed ?? false,
+            playedRanks
+        );
+
+        if (nextRank == null) {
+            console.log('⏭ No valid next track (maybe all played)');
             return;
         }
 
+        const next = $tracks.find(t => t.rank === nextRank);
+        if (!next) return;
+
         // 3. Update UI immediately
         currentRank.set(next.rank);
+
+        if (skipped > 0) {
+            status.set(`🎵 Already heard that one… jumping ahead! (${skipped} skipped)`);
+        }
         currentTrack.set(next);
 
         console.log(`⏭ Switching to #${next.rank}: ${next.trackName}`);
@@ -275,6 +290,77 @@
     // ─────────────────────────────────────────────
     const toTitleCase = (text: string | null | undefined): string =>
         text ? text.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1)) : '';
+
+    function resolveNextRank(
+        list: CarModeTrack[],
+        currentRankValue: number,
+        order: 'up' | 'down' | 'shuffle',
+        skipPlayedEnabled: boolean,
+        playedRanks: number[]
+    ): { nextRank: number | null; skipped: number } {
+
+        if (!list.length) return {nextRank: null, skipped: 0};
+
+        const currentIndex = list.findIndex(t => t.rank === currentRankValue);
+        if (currentIndex === -1) return {nextRank: null, skipped: 0};
+
+        const isPlayed = (rank: number) =>
+            skipPlayedEnabled && playedRanks.includes(rank);
+
+        let skipped = 0;
+
+        if (order === 'up') {
+            for (let i = currentIndex + 1; i < list.length; i++) {
+                const r = list[i].rank;
+                if (!isPlayed(r)) return {nextRank: r, skipped};
+                skipped++;
+            }
+            return {nextRank: null, skipped};
+        }
+
+        if (order === 'down') {
+            for (let i = currentIndex - 1; i >= 0; i--) {
+                const r = list[i].rank;
+                if (!isPlayed(r)) return {nextRank: r, skipped};
+                skipped++;
+            }
+            return {nextRank: null, skipped};
+        }
+
+        // shuffle
+        const candidates = skipPlayedEnabled
+            ? list.filter(t => !playedRanks.includes(t.rank))
+            : list;
+
+        if (!candidates.length) return {nextRank: null, skipped: 0};
+
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+
+        return {
+            nextRank: pick.rank,
+            skipped: skipPlayedEnabled
+                ? list.length - candidates.length
+                : 0
+        };
+    }
+
+
+    let playedRanks: number[] = [];
+
+    $: {
+        const sel = $currentSelection;
+        if (!sel) {
+            playedRanks = [];
+        } else {
+            const key =
+                sel.mode === 'collection'
+                    ? `COL|${sel.context?.collection_slug}`
+                    : `DG|${sel.context?.decade}|${sel.context?.genre}`;
+
+            const history = $programHistoryStore.find(p => p.key === key);
+            playedRanks = history?.playedRanks ?? [];
+        }
+    }
 
     $: uiDecade =
         $currentSelection?.mode === 'decade_genre'
@@ -388,6 +474,32 @@
 
         await loadForSelection(sel, initialRank);
 
+        // 🧠 Adjust initial track if skipPlayed is enabled
+        if (sel.skipPlayed && $currentTrack) {
+            const alreadyPlayed = playedRanks.includes($currentTrack.rank);
+
+            if (alreadyPlayed) {
+                const {nextRank, skipped} = resolveNextRank(
+                    $tracks,
+                    $currentTrack.rank,
+                    sel.playbackOrder,
+                    true,
+                    playedRanks
+                );
+
+                if (nextRank != null) {
+                    const next = $tracks.find(t => t.rank === nextRank);
+                    if (next) {
+                        currentRank.set(next.rank);
+                        currentTrack.set(next);
+
+                        if (skipped > 0) {
+                            status.set(`🎵 Already heard that one… jumping ahead! (${skipped} skipped)`);
+                        }
+                    }
+                }
+            }
+        }
 
 /// ─────────────────────────────────────────────
 // Prepare Spotify playback (warmup)
