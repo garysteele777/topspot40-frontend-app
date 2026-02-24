@@ -27,6 +27,7 @@
     export let playbackOrder: import('./CarModeHeader.svelte').PlaybackOrder = 'up';
     export let voicePlayMode: import('./CarModeHeader.svelte').VoicePlayMode = 'before';
     export let pauseMode: import('./CarModeHeader.svelte').PauseMode = 'pause';
+    export let skipPlayed: boolean = false;
     export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
 
     // Label helpers
@@ -93,6 +94,12 @@
             <span>Voices: {voiceText(voices)}</span>
             <span>•</span>
             <span>Order: {orderLabel(playbackOrder)}</span>
+
+            {#if skipPlayed}
+                <span>•</span>
+                <span class="cm-accent">Skip Played</span>
+            {/if}
+
             <span>•</span>
             <span>{voicePlayLabel(voicePlayMode)}</span>
             <span>•</span>
@@ -154,5 +161,11 @@
     .cm-row--secondary {
         opacity: 0.75;
         font-size: 0.8rem;
+    }
+
+    .cm-accent {
+        color: #cfb87c;
+        font-weight: 600;
+        text-shadow: 0 0 4px rgba(207, 184, 124, 0.4);
     }
 </style>

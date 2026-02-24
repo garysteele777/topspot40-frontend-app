@@ -36,6 +36,7 @@ export function buildSelectionFromResume(
         pauseMode: resumed.pauseMode ?? 'pause',
 
         voicePlayMode: 'before',
-        categoryMode: 'single'
+        categoryMode: 'single',
+        skipPlayed: resumed.skipPlayed ?? false
     };
 }

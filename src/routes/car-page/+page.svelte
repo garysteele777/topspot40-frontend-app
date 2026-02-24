@@ -309,6 +309,7 @@
                 pauseMode: $currentSelection.pauseMode,
 
                 voices: $currentSelection.voices,
+                skipPlayed: $currentSelection.skipPlayed ?? false,
                 currentRank: $currentRank
             };
 
@@ -423,6 +424,7 @@
                 playbackOrder={$currentSelection.playbackOrder}
                 voicePlayMode={$currentSelection.voicePlayMode}
                 pauseMode={$currentSelection.pauseMode}
+                skipPlayed={$currentSelection.skipPlayed}
                 categoryMode="single"
         />
     {/if}

@@ -232,6 +232,19 @@
         });
     }
 
+    $: playbackOrderLabel =
+        playbackOrder === 'up'
+            ? 'Count Up'
+            : playbackOrder === 'down'
+                ? 'Count Down'
+                : 'Shuffle';
+
+    $: skipPlayedLabel = skipPlayed ? 'Skip Played' : null;
+
+    $: betweenTracksLabel =
+        pauseMode === 'pause' ? 'Pause Between' : 'Continuous';
+
+
     // ─────────────────────────────────────────────
     // UI actions / missing handlers
     // ─────────────────────────────────────────────
@@ -400,6 +413,16 @@
             <span class="crumb">{language.toUpperCase()}</span>
             <span class="crumb-sep">›</span>
             <span class="crumb">{voicesSummary}</span>
+            <span class="crumb-sep">›</span>
+            <span class="crumb">{playbackOrderLabel}</span>
+
+            {#if skipPlayedLabel}
+                <span class="crumb-sep">›</span>
+                <span class="crumb crumb--strong">{skipPlayedLabel}</span>
+            {/if}
+
+            <span class="crumb-sep">›</span>
+            <span class="crumb">{betweenTracksLabel}</span>
         </div>
 
         <!-- ✅ Playback History now at top -->
