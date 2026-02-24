@@ -15,8 +15,9 @@ export interface ResumeState {
     endRank: number;
     currentRank: number;
     playbackOrder: PlaybackOrder;
-    pauseMode: PauseMode;   // ✅ new
+    pauseMode: PauseMode;
     voices: VoicePart[];
+    skipPlayed: boolean;
 }
 
 

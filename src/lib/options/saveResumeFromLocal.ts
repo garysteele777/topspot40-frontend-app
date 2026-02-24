@@ -15,6 +15,7 @@ export function saveResumeFromLocal(params: {
   playbackOrder: PlaybackOrder;
   pauseMode: PauseMode;
   voices: VoicePart[];
+  skipPlayed: boolean;
 }): void {
   const state: ResumeState = {
     mode: params.activeGroup,
@@ -24,8 +25,9 @@ export function saveResumeFromLocal(params: {
     endRank: params.endRank,
     currentRank: params.startRank,
     playbackOrder: params.playbackOrder,
-    pauseMode: params.pauseMode,   // ✅ direct, explicit
-    voices: params.voices
+    pauseMode: params.pauseMode,
+    voices: params.voices,
+    skipPlayed: params.skipPlayed
   };
 
   saveResumeState(state);

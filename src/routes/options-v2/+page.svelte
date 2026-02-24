@@ -90,7 +90,7 @@
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
     let collectionGroups: CollectionGroup[] = [];
-
+    let skipPlayed = false;
     let status: 'Loading…' | 'Ready' | '❌ Error loading catalog.' = 'Loading…';
 
     // Resume lifecycle guard
@@ -146,6 +146,7 @@
         endRank = selection.endRank ?? 40;
         playbackOrder = selection.playbackOrder ?? 'up';
         pauseMode = selection.pauseMode === 'continuous' ? 'continuous' : 'pause';
+        skipPlayed = !!selection.skipPlayed;
 
         if (selection.mode === 'decade_genre') {
             decades = resolveOptionId(selection.context?.decade, decadeOptions);
@@ -226,7 +227,8 @@
             endRank,
             playbackOrder,
             pauseMode,
-            voices: selectedVoices
+            voices: selectedVoices,
+            skipPlayed
         });
     }
 
@@ -314,7 +316,8 @@
             endRank,
             playbackOrder,
             pauseMode,
-            voicePlayMode
+            voicePlayMode,
+            skipPlayed
         };
 
         const payload =
@@ -370,6 +373,7 @@
         playbackOrder = 'up';
         pauseMode = 'pause';
         selectedVoices = ['intro'];
+        skipPlayed = false;
     }
 </script>
 
@@ -397,6 +401,10 @@
             <span class="crumb-sep">›</span>
             <span class="crumb">{voicesSummary}</span>
         </div>
+
+        <!-- ✅ Playback History now at top -->
+        <PlaybackHistoryPanel/>
+
 
         <!-- TOP CONFIG GRID (4 + 4) -->
         <section class="options-grid">
@@ -553,8 +561,6 @@
                 </section>
             </div>
         </div>
-
-        <PlaybackHistoryPanel/>
 
         <!-- LAUNCH BUTTONS -->
         <div class="launch-modes">

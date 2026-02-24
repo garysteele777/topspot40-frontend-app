@@ -23,6 +23,7 @@ export type BuildParams = {
     playbackOrder: PlaybackOrder;
     voicePlayMode: VoicePlayMode;
     pauseMode: PauseMode;
+    skipPlayed?: boolean;
 
     // ✅ optional future flags (safe to add now)
     randomAllCategories?: boolean;
@@ -74,6 +75,7 @@ export function buildLaunchUrl(p: BuildParams): string {
     addParam(qs, 'playbackOrder', p.playbackOrder);
     addParam(qs, 'voicePlayMode', p.voicePlayMode);
     addParam(qs, 'pauseMode', p.pauseMode);
+    addParam(qs, 'skipPlayed', p.skipPlayed);
 
     // optional flags (only included if truthy / enabled)
     if (p.randomAllCategories) {

@@ -26,6 +26,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const playbackOrder = (sp.get('playbackOrder') ?? 'up') as PlaybackOrder;
     const voicePlayMode = sp.get('voicePlayMode') === 'over' ? 'over' : 'before';
     const pauseMode = sp.get('pauseMode') === 'continuous' ? 'continuous' : 'pause';
+    const skipPlayed = sp.get('skipPlayed') === 'true';
+
 
     const finalStartRank = startRank;
     const finalEndRank = startRank === endRank ? startRank : endRank;
@@ -59,7 +61,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 playbackOrder,
                 voicePlayMode,
                 pauseMode,
-                categoryMode: 'single'
+                categoryMode: 'single',
+                skipPlayed
             };
         }
 
@@ -85,7 +88,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 playbackOrder,
                 voicePlayMode,
                 pauseMode,
-                categoryMode: 'single'
+                categoryMode: 'single',
+                skipPlayed
             };
         }
     }
@@ -114,7 +118,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             playbackOrder,
             voicePlayMode,
             pauseMode,
-            categoryMode: 'single'
+            categoryMode: 'single',
+            skipPlayed
         };
     }
 
@@ -136,6 +141,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         playbackOrder,
         voicePlayMode,
         pauseMode,
-        categoryMode: 'single'
+        categoryMode: 'single',
+        skipPlayed
     };
 }

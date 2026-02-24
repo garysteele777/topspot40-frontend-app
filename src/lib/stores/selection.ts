@@ -39,6 +39,9 @@ export interface SelectionState {
     voicePlayMode: VoicePlayMode;
     pauseMode: PauseMode;
     categoryMode: CategoryMode;
+
+    // ✅ NEW
+    skipPlayed: boolean;
 }
 
 /* -----------------------
@@ -66,7 +69,9 @@ const defaultSelection: SelectionState = {
     playbackOrder: 'up',
     voicePlayMode: 'before',
     pauseMode: 'pause',
-    categoryMode: 'single'
+    categoryMode: 'single',
+
+    skipPlayed: false
 };
 
 /* -----------------------
