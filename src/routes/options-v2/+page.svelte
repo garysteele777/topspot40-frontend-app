@@ -441,7 +441,15 @@
 
             <div class="opt-cell opt-cell--row2">
                 <PlaybackOrderSelector bind:playbackOrder/>
-
+                <div class="opt-cell opt-cell--row2">
+                    <label class="checkbox-row">
+                        <input
+                                type="checkbox"
+                                bind:checked={skipPlayed}
+                        />
+                        <span>Skip Played Tracks</span>
+                    </label>
+                </div>
             </div>
 
             <div class="opt-cell opt-cell--row2">
@@ -451,6 +459,7 @@
             <div class="opt-cell opt-cell--row2">
                 <PauseModeSelector bind:pauseMode/>
             </div>
+
         </section>
 
         <!-- MAIN GRID -->
@@ -863,5 +872,18 @@
     :global(.collection-row[data-selected='true'] .collection-dot) {
         background: #cfb87c;
         box-shadow: 0 0 6px rgba(207, 184, 124, 0.9);
+    }
+
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+        accent-color: #cfb87c;
+        transform: scale(1.1);
     }
 </style>
