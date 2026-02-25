@@ -404,47 +404,45 @@
 
 
         <!-- TOP CONFIG GRID (4 + 4) -->
-        <section class="options-grid">
-            <div class="opt-cell opt-cell--row1">
+        <section class="options-grid options-grid--compact">
+            <div class="opt-cell">
                 <ModeToggle
                         modeType={activeGroup}
                         setMode={(mode: ModeType) => {
-            activeGroup = mode;
-            if (mode === 'decade_genre') {
-              collections = [];
-            } else {
-              decades = [];
-              genres = [];
-            }
-          }}
+        activeGroup = mode;
+        if (mode === 'decade_genre') {
+          collections = [];
+        } else {
+          decades = [];
+          genres = [];
+        }
+      }}
                 />
             </div>
 
-            <div class="opt-cell opt-cell--row1">
+            <div class="opt-cell">
                 <LanguageSelector bind:language/>
             </div>
 
-            <div class="opt-cell opt-cell--row1">
+            <div class="opt-cell">
                 <VoiceContentSelector bind:selectedVoices/>
             </div>
 
-            <div class="opt-cell opt-cell--row2">
+            <div class="opt-cell opt-cell--wide">
                 <PlaybackOrderSelector bind:playbackOrder/>
-                <div class="opt-cell opt-cell--row2">
-                    <label class="checkbox-row">
-                        <input
-                                type="checkbox"
-                                bind:checked={skipPlayed}
-                        />
-                        <span>Skip Played Tracks</span>
-                    </label>
-                </div>
+
+                <label
+                        class="checkbox-row checkbox-row--compact"
+                        title="Skip tracks you've already played for this program"
+                >
+                    <input type="checkbox" bind:checked={skipPlayed}/>
+                    <span>Skip Played</span>
+                </label>
             </div>
 
-            <div class="opt-cell opt-cell--row2">
+            <div class="opt-cell">
                 <PauseModeSelector bind:pauseMode/>
             </div>
-
         </section>
 
         <!-- MAIN GRID -->
@@ -604,6 +602,53 @@
         gap: 1.2rem;
         grid-template-columns: repeat(4, minmax(200px, 1fr));
         margin-bottom: 2rem;
+    }
+
+    /* Compact options grid */
+    .options-grid--compact {
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        grid-template-columns: repeat(4, minmax(180px, 1fr));
+    }
+
+    /* Make Order cell span 2 columns on desktop */
+    .opt-cell--wide {
+        grid-column: span 2;
+    }
+
+    @media (max-width: 1100px) {
+        .options-grid--compact {
+            grid-template-columns: repeat(2, minmax(240px, 1fr));
+        }
+
+        .opt-cell--wide {
+            grid-column: span 2;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .options-grid--compact {
+            grid-template-columns: 1fr;
+        }
+
+        .opt-cell--wide {
+            grid-column: auto;
+        }
+    }
+
+    /* Tighten card padding a bit (only in compact mode) */
+    .options-grid--compact .opt-cell {
+        padding: 0.75rem 0.9rem;
+    }
+
+    /* Compact checkbox */
+    .checkbox-row--compact {
+        font-size: 0.85rem;
+        opacity: 0.85;
+    }
+
+    .checkbox-row--compact input[type="checkbox"] {
+        transform: scale(1.05);
     }
 
     .opt-cell {
