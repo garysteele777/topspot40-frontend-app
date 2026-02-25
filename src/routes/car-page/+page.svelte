@@ -369,34 +369,41 @@
     function resolvePreviousRank(
         list: CarModeTrack[],
         currentRankValue: number,
-        order: 'up' | 'down' | 'shuffle'
-    ): { prevRank: number | null } {
+        order: 'up' | 'down' | 'shuffle',
+        skipPlayedEnabled: boolean,
+        playedRanks: number[]
+    ): { prevRank: number | null; skipped: number } {
 
-        if (!list.length) return {prevRank: null};
+        if (!list.length) return {prevRank: null, skipped: 0};
 
-        const sorted = [...list].sort((a, b) => a.rank - b.rank);
+        const currentIndex = list.findIndex(t => t.rank === currentRankValue);
+        if (currentIndex === -1) return {prevRank: null, skipped: 0};
 
-        const currentIndex = sorted.findIndex(t => t.rank === currentRankValue);
-        if (currentIndex === -1) return {prevRank: null};
+        const isPlayed = (rank: number) =>
+            skipPlayedEnabled && playedRanks.includes(rank);
+
+        let skipped = 0;
 
         if (order === 'up') {
-            // previous means lower rank
-            if (currentIndex - 1 >= 0) {
-                return {prevRank: sorted[currentIndex - 1].rank};
+            for (let i = currentIndex - 1; i >= 0; i--) {
+                const r = list[i].rank;
+                if (!isPlayed(r)) return {prevRank: r, skipped};
+                skipped++;
             }
-            return {prevRank: null};
+            return {prevRank: null, skipped};
         }
 
         if (order === 'down') {
-            // previous means higher rank (because direction is reversed)
-            if (currentIndex + 1 < sorted.length) {
-                return {prevRank: sorted[currentIndex + 1].rank};
+            for (let i = currentIndex + 1; i < list.length; i++) {
+                const r = list[i].rank;
+                if (!isPlayed(r)) return {prevRank: r, skipped};
+                skipped++;
             }
-            return {prevRank: null};
+            return {prevRank: null, skipped};
         }
 
-        // shuffle has no true previous
-        return {prevRank: null};
+        // shuffle has no true "previous"
+        return {prevRank: null, skipped: 0};
     }
 
     function resolveInitialRank(
