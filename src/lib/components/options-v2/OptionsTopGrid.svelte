@@ -3,12 +3,10 @@
     // Imports (bind-based components)
     // ─────────────────────────────────────────────
     import ModeToggle from '$lib/components/options-v2/ModeToggle.svelte';
-    import CategoryModeSelector from '$lib/components/options-v2/CategoryModeSelector.svelte';
     import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
 
     import PlaybackOrderSelector from '$lib/components/options-v2/PlaybackOrderSelector.svelte';
-    import VoicePlaybackSelector from '$lib/components/options-v2/VoicePlaybackSelector.svelte';
     import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
 
     import type { VoicePart, Language } from '$lib/types/playback';
@@ -23,10 +21,7 @@
     export let selectedVoices: VoicePart[];
 
     export let playbackOrder: 'up' | 'down' | 'shuffle';
-    export let voicePlayMode: 'before' | 'during';
     export let pauseMode: 'pause' | 'continuous';
-
-    export let categoryMode: 'single' | 'multiple';
 </script>
 
 
@@ -41,15 +36,11 @@
             setMode={(m) => (modeType = m)}
     />
 
-    <CategoryModeSelector bind:categoryMode/>
-
     <LanguageSelector bind:language/>
 
     <VoiceContentSelector bind:selectedVoices/>
 
     <PlaybackOrderSelector bind:playbackOrder/>
-
-    <VoicePlaybackSelector bind:voicePlayMode/>
 
     <PauseModeSelector bind:pauseMode/>
 </div>

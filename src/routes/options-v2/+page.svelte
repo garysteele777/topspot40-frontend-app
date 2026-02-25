@@ -33,11 +33,9 @@
     // ─────────────────────────────────────────────
     import HeroHeader from '$lib/components/options/HeroHeader.svelte';
     import ModeToggle from '$lib/components/options-v2/ModeToggle.svelte';
-    import CategoryModeSelector from '$lib/components/options-v2/CategoryModeSelector.svelte';
     import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
     import PlaybackOrderSelector from '$lib/components/options-v2/PlaybackOrderSelector.svelte';
-    import VoicePlaybackSelector from '$lib/components/options-v2/VoicePlaybackSelector.svelte';
     import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
     import ListPicker from '$lib/components/options/ListPicker.svelte';
@@ -49,9 +47,7 @@
         ModeType,
         VoicePart,
         PlaybackOrder,
-        Language,
-        VoicePlayMode,
-        CategoryMode
+        Language
     } from '$lib/types/playback';
 
     type OptionItem = { id: string; label: string; mp3?: string };
@@ -77,9 +73,8 @@
     let playbackOrder: PlaybackOrder = 'up';
     let pauseMode: 'pause' | 'continuous' = 'pause';
 
-    let categoryMode: CategoryMode = 'single';
-    let voicePlayMode: VoicePlayMode = 'before';
-
+    const categoryMode = 'single' as const;
+    const voicePlayMode = 'before' as const;
     // Selections
     let decades: string[] = [];
     let genres: string[] = [];
@@ -247,15 +242,6 @@
     // ─────────────────────────────────────────────
     // UI actions / missing handlers
     // ─────────────────────────────────────────────
-    function selectAllDecadeGenre() {
-        decades = decadeOptions.map(o => o.id);
-        genres = genreOptions.map(o => o.id);
-    }
-
-    function clearDecadeGenre() {
-        decades = [];
-        genres = [];
-    }
 
     function handleActivate(event: CustomEvent) {
 
@@ -282,15 +268,6 @@
     function toggleCollection(slug: string): void {
         activeGroup = 'collection';
         collections = collections[0] === slug ? [] : [slug];
-    }
-
-
-    function selectAllCollections() {
-        collections = collectionGroups.flatMap(g => g.items.map(i => i.slug));
-    }
-
-    function clearCollections() {
-        collections = [];
     }
 
     function expandAll() {
@@ -328,7 +305,7 @@
             endRank,
             playbackOrder,
             pauseMode,
-            voicePlayMode,
+            voicePlayMode: 'before',
             skipPlayed
         };
 
@@ -378,8 +355,6 @@
         decades = [];
         genres = [];
         collections = [];
-        categoryMode = 'single';
-        voicePlayMode = 'before';
         startRank = 1;
         endRank = 40;
         playbackOrder = 'up';
@@ -446,10 +421,6 @@
             </div>
 
             <div class="opt-cell opt-cell--row1">
-                <CategoryModeSelector bind:categoryMode/>
-            </div>
-
-            <div class="opt-cell opt-cell--row1">
                 <LanguageSelector bind:language/>
             </div>
 
@@ -471,10 +442,6 @@
             </div>
 
             <div class="opt-cell opt-cell--row2">
-                <VoicePlaybackSelector bind:voicePlayMode/>
-            </div>
-
-            <div class="opt-cell opt-cell--row2">
                 <PauseModeSelector bind:pauseMode/>
             </div>
 
@@ -488,24 +455,13 @@
                     <header class="picker-group__header">
                         <h3>Decade–Genre Selection</h3>
 
-                        {#if categoryMode === 'multiple' && activeGroup === 'decade_genre'}
-                            <div class="picker-controls">
-                                <button type="button" class="toolbar-btn" on:click={selectAllDecadeGenre}>
-                                    Select All
-                                </button>
-                                <button type="button" class="toolbar-btn toolbar-btn--ghost"
-                                        on:click={clearDecadeGenre}>
-                                    Unselect All
-                                </button>
-                            </div>
-                        {/if}
                     </header>
 
                     <div class="picker-group__body picker-group__body--decade-genre">
                         <ListPicker
                                 title="Decades"
                                 group="decade"
-                                mode={categoryMode}
+                                mode="single"
                                 activeGroup={activeGroup === 'decade_genre' ? 'decade' : null}
                                 options={decadeOptions}
                                 bind:selected={decades}
@@ -516,7 +472,7 @@
                         <ListPicker
                                 title="Genres"
                                 group="genre"
-                                mode={categoryMode}
+                                mode="single"
                                 activeGroup={activeGroup === 'decade_genre' ? 'genre' : null}
                                 options={genreOptions}
                                 bind:selected={genres}
@@ -541,15 +497,6 @@
                                 Collapse All
                             </button>
 
-                            {#if categoryMode === 'multiple' && activeGroup === 'collection'}
-                                <button type="button" class="toolbar-btn" on:click={selectAllCollections}>
-                                    Select All
-                                </button>
-                                <button type="button" class="toolbar-btn toolbar-btn--ghost"
-                                        on:click={clearCollections}>
-                                    Unselect All
-                                </button>
-                            {/if}
                         </div>
                     </header>
 
