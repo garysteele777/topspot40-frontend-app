@@ -7,7 +7,6 @@
     import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
 
-    import TrackRangeSelector from '$lib/components/options-v2/TrackRangeSelector.svelte';
     import PlaybackOrderSelector from '$lib/components/options-v2/PlaybackOrderSelector.svelte';
     import VoicePlaybackSelector from '$lib/components/options-v2/VoicePlaybackSelector.svelte';
     import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
@@ -26,9 +25,6 @@
     export let playbackOrder: 'up' | 'down' | 'shuffle';
     export let voicePlayMode: 'before' | 'during';
     export let pauseMode: 'pause' | 'continuous';
-
-    export let startRank: number;
-    export let endRank: number;
 
     export let categoryMode: 'single' | 'multiple';
 </script>
@@ -50,12 +46,6 @@
     <LanguageSelector bind:language/>
 
     <VoiceContentSelector bind:selectedVoices/>
-
-    <!-- Row 2 -->
-    <TrackRangeSelector
-            bind:startRank
-            bind:endRank
-    />
 
     <PlaybackOrderSelector bind:playbackOrder/>
 

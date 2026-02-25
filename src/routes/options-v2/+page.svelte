@@ -36,7 +36,6 @@
     import CategoryModeSelector from '$lib/components/options-v2/CategoryModeSelector.svelte';
     import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
-    import TrackRangeSelector from '$lib/components/options-v2/TrackRangeSelector.svelte';
     import PlaybackOrderSelector from '$lib/components/options-v2/PlaybackOrderSelector.svelte';
     import VoicePlaybackSelector from '$lib/components/options-v2/VoicePlaybackSelector.svelte';
     import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
@@ -456,10 +455,6 @@
 
             <div class="opt-cell opt-cell--row1">
                 <VoiceContentSelector bind:selectedVoices/>
-            </div>
-
-            <div class="opt-cell opt-cell--row2">
-                <TrackRangeSelector bind:startRank bind:endRank/>
             </div>
 
             <div class="opt-cell opt-cell--row2">
