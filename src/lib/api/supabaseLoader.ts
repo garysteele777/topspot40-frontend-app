@@ -4,76 +4,72 @@
 // ------------------------------------------------------------
 
 export type SequenceItem = {
-	rank: number;
-	trackName?: string;
-	track_name?: string;
-	artistName?: string;
-	artist_name?: string;
+    rank: number;
+    trackName?: string;
+    track_name?: string;
+    artistName?: string;
+    artist_name?: string;
 };
 
 export type DecadeGenreResponse = {
-	rankings?: SequenceItem[] | null;
-	tracks?: SequenceItem[] | null;
-	rows?: SequenceItem[] | null;
+    rankings?: SequenceItem[] | null;
+    tracks?: SequenceItem[] | null;
+    rows?: SequenceItem[] | null;
 };
 
 export type CollectionResponse = {
-	rankings?: SequenceItem[] | null;
-	tracks?: SequenceItem[] | null;
-	rows?: SequenceItem[] | null;
+    rankings?: SequenceItem[] | null;
+    tracks?: SequenceItem[] | null;
+    rows?: SequenceItem[] | null;
 };
 
 // ------------------------------------------------------------
 // API Base URL
 // ------------------------------------------------------------
 const API_BASE =
-	import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+    import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 // ------------------------------------------------------------
 // Shared GET helper
 // ------------------------------------------------------------
 async function getJson<T>(url: string): Promise<T> {
-	console.log('🔗 FETCH:', url);
+    console.log('🔗 FETCH:', url);
 
-	const res = await fetch(url);
-	if (!res.ok) {
-		const txt = await res.text();
-		console.error('❌ Supabase loader error:', res.status, txt);
-		throw new Error(`Supabase loader failed: ${res.status}`);
-	}
-	return res.json() as Promise<T>;
+    const res = await fetch(url);
+    if (!res.ok) {
+        const txt = await res.text();
+        console.error('❌ Supabase loader error:', res.status, txt);
+        throw new Error(`Supabase loader failed: ${res.status}`);
+    }
+    return res.json() as Promise<T>;
 }
 
 // ------------------------------------------------------------
 // DECADE + GENRE LOADER  (REAL BACKEND ROUTE)
 // ------------------------------------------------------------
 export async function loadDecadeGenreFromSupabase(payload: {
-	decade: string;
-	genre: string;
-	startRank: number;
-	endRank: number;
+    decade: string;
+    genre: string;
 }): Promise<DecadeGenreResponse> {
-	const { decade, genre, startRank, endRank } = payload;
+    const {decade, genre} = payload;
 
-	const url = new URL('/supabase/decade-genre/get-sequence', API_BASE);
-	url.searchParams.set('decade', decade);
-	url.searchParams.set('genre', genre);
-	url.searchParams.set('start_rank', String(startRank));
-	url.searchParams.set('end_rank', String(endRank));
+    const url = new URL('/supabase/decade-genre/get-sequence', API_BASE);
+    url.searchParams.set('decade', decade);
+    url.searchParams.set('genre', genre);
 
-	return getJson<DecadeGenreResponse>(url.toString());
+    return getJson<DecadeGenreResponse>(url.toString());
 }
 
 // ------------------------------------------------------------
 // COLLECTION LOADER  (REAL BACKEND ROUTE)
 // ------------------------------------------------------------
 export async function loadCollectionFromSupabase(payload: {
-	slug: string;
+    slug: string;
 }): Promise<CollectionResponse> {
-	const { slug } = payload;
+    const {slug} = payload;
 
-	const url = new URL('/supabase/collections/get-sequence', API_BASE);
-	url.searchParams.set('collection_slug', slug);
+    const url = new URL('/supabase/collections/get-sequence', API_BASE);
+    url.searchParams.set('collection_slug', slug);
 
-	return getJson<CollectionResponse>(url.toString());
+    return getJson<CollectionResponse>(url.toString());
 }

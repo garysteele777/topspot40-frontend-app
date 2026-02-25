@@ -18,8 +18,6 @@ export interface OptionsState {
   // playback
   language: string;               // 'en' | 'es' | 'pt'
   selectedVoices: string[];       // ['intro', 'detail', 'artist']
-  startRank: number;
-  endRank: number;
   playbackOrder: PlaybackOrder;   // 'up' | 'down' | 'shuffle'
   voicePlayMode: VoicePlayMode;   // 'before' | 'over'
   pauseMode: PauseMode;           // 'pause' | 'continuous'
@@ -63,8 +61,6 @@ export function toLaunchParams(state: OptionsState): BuildParams {
     // playback
     language: state.language,
     voices: state.selectedVoices,
-    startRank: state.startRank,
-    endRank: state.endRank,
     playbackOrder: state.playbackOrder,
     voicePlayMode: state.voicePlayMode,
     pauseMode: state.pauseMode,

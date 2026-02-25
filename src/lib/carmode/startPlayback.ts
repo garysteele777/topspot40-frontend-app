@@ -63,17 +63,6 @@ export async function startPlayback() {
     return;
   }
 
-  const isSingle = sel.startRank === sel.endRank;
-
-  // ──────────────────────────────────────────
-  // SINGLE TRACK MODE → Use frontend player
-  // ──────────────────────────────────────────
-  if (isSingle) {
-    console.log('🎯 SINGLE TRACK MODE → updateTrack()');
-    updateTrack(track);
-    return;
-  }
-
   // ──────────────────────────────────────────
   // CONTINUOUS MODE → Call sequence backend
   // ──────────────────────────────────────────
@@ -88,8 +77,6 @@ export async function startPlayback() {
         : 'count_up'
   );
 
-  params.set('start_rank', String(sel.startRank));
-  params.set('end_rank', String(sel.endRank));
   params.set('tts_language', sel.language);
   params.set('voice_style', sel.voicePlayMode);
 

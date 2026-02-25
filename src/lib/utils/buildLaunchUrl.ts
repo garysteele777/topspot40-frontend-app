@@ -18,8 +18,6 @@ export type BuildParams = {
     // playback
     language: string;
     voices: string[];
-    startRank: number;
-    endRank: number;
     playbackOrder: PlaybackOrder;
     voicePlayMode: VoicePlayMode;
     pauseMode: PauseMode;
@@ -70,8 +68,6 @@ export function buildLaunchUrl(p: BuildParams): string {
     // main params (same keys you already use)
     addParam(qs, 'language', p.language);
     addParam(qs, 'voices', p.voices.join(','));
-    addParam(qs, 'startRank', p.startRank);
-    addParam(qs, 'endRank', p.endRank);
     addParam(qs, 'playbackOrder', p.playbackOrder);
     addParam(qs, 'voicePlayMode', p.voicePlayMode);
     addParam(qs, 'pauseMode', p.pauseMode);

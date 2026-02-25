@@ -21,9 +21,6 @@
     export let language = 'en';
     export let voices: string[] = ['intro'];
 
-    export let startRank = 1;
-    export let endRank = 40;
-
     export let playbackOrder: import('./CarModeHeader.svelte').PlaybackOrder = 'up';
     export let voicePlayMode: import('./CarModeHeader.svelte').VoicePlayMode = 'before';
     export let pauseMode: import('./CarModeHeader.svelte').PauseMode = 'pause';
@@ -86,8 +83,6 @@
             <span>Category: {categoryLabel(categoryMode)}</span>
             <span>•</span>
             <span>Lang: {language.toUpperCase()}</span>
-            <span>•</span>
-            <span>Range: {startRank}–{endRank}</span>
         </div>
 
         <div class="cm-row cm-row--secondary">

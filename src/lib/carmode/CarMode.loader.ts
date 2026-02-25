@@ -116,7 +116,7 @@ export async function loadForSelection(
 
         if (cached?.length) {
             const orderedCached = applyPlaybackOrder(cached, sel.playbackOrder);
-            first = pickInitialTrack(orderedCached, sel.playbackOrder, sel.startRank, sel.endRank);
+            first = pickInitialTrack(orderedCached, sel.playbackOrder, 1, 40);
         } else {
             first = await loadFirstTrack(sel);
         }
@@ -178,8 +178,8 @@ export async function loadForSelection(
                     : pickInitialTrack(
                         ordered,
                         sel.playbackOrder,
-                        sel.startRank,
-                        sel.endRank
+                        1,
+                        40
                     );
 
                 if (firstTrack) {
@@ -227,10 +227,9 @@ export async function loadForSelection(
                 : pickInitialTrack(
                     ordered,
                     sel.playbackOrder,
-                    sel.startRank,
-                    sel.endRank
+                    1,
+                    40
                 );
-
             if (firstTrack) {
                 currentTrack.set(toCarModeTrack(firstTrack));
             }
