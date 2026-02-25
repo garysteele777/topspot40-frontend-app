@@ -133,7 +133,7 @@
                         : sel.playbackOrder === 'down'
                             ? 'count_down'
                             : 'random',
-                continuous: sel.pauseMode === 'continuous' ? 'true' : 'false',   // 🔥 THIS IS THE SWITCH
+                continuous: sel.pauseMode === 'continuous' ? 'true' : 'false',
                 tts_language: sel.language,
                 play_intro: sel.voices.includes('intro') ? 'true' : 'false',
                 play_detail: sel.voices.includes('detail') ? 'true' : 'false',
@@ -258,29 +258,32 @@
         if (!$currentTrack || !$tracks || !$currentSelection) return;
 
         stopNarrationAudio();
-
-        // 1. Stop backend playback and WAIT
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
 
-        // 2. Compute previous rank locally
-        const list = $tracks;
-        const idx = list.findIndex(t => t.rank === $currentTrack.rank);
-        const prev = list[idx - 1];
-        if (!prev) {
-            console.log('⏮ Already at first track');
+        const {prevRank, skipped} = resolvePreviousRank(
+            $tracks,
+            $currentTrack.rank,
+            $currentSelection.playbackOrder,
+            $currentSelection.skipPlayed ?? false,
+            playedRanks
+        );
+
+        if (prevRank == null) {
+            console.log('⏮ No valid previous track');
             return;
         }
 
-        // 3. Update UI immediately
+        const prev = $tracks.find(t => t.rank === prevRank);
+        if (!prev) return;
+
         currentRank.set(prev.rank);
         currentTrack.set(prev);
 
-        console.log(`⏮ Switching to #${prev.rank}: ${prev.trackName}`);
+        if (skipped > 0) {
+            status.set(`⏮ Skipped ${skipped} already-played track(s)`);
+        }
 
-        // 4. Give backend time to clear old sequence
         await new Promise(r => setTimeout(r, 50));
-
-        // 5. Start new backend playback
         await playTrackByRank(prev.rank);
     }
 
@@ -360,6 +363,94 @@
             const history = $programHistoryStore.find(p => p.key === key);
             playedRanks = history?.playedRanks ?? [];
         }
+    }
+
+
+    function resolvePreviousRank(
+        list: CarModeTrack[],
+        currentRankValue: number,
+        order: 'up' | 'down' | 'shuffle'
+    ): { prevRank: number | null } {
+
+        if (!list.length) return {prevRank: null};
+
+        const sorted = [...list].sort((a, b) => a.rank - b.rank);
+
+        const currentIndex = sorted.findIndex(t => t.rank === currentRankValue);
+        if (currentIndex === -1) return {prevRank: null};
+
+        if (order === 'up') {
+            // previous means lower rank
+            if (currentIndex - 1 >= 0) {
+                return {prevRank: sorted[currentIndex - 1].rank};
+            }
+            return {prevRank: null};
+        }
+
+        if (order === 'down') {
+            // previous means higher rank (because direction is reversed)
+            if (currentIndex + 1 < sorted.length) {
+                return {prevRank: sorted[currentIndex + 1].rank};
+            }
+            return {prevRank: null};
+        }
+
+        // shuffle has no true previous
+        return {prevRank: null};
+    }
+
+    function resolveInitialRank(
+        list: CarModeTrack[],
+        order: 'up' | 'down' | 'shuffle',
+        skipPlayedEnabled: boolean,
+        playedRanks: number[]
+    ): { nextRank: number | null; skipped: number } {
+
+        if (!list.length) return {nextRank: null, skipped: 0};
+
+        const sorted = [...list].sort((a, b) => a.rank - b.rank);
+
+        const isPlayed = (rank: number) =>
+            skipPlayedEnabled && playedRanks.includes(rank);
+
+        let skipped = 0;
+
+        if (order === 'up') {
+            for (const track of sorted) {
+                if (!isPlayed(track.rank)) {
+                    return {nextRank: track.rank, skipped};
+                }
+                skipped++;
+            }
+            return {nextRank: null, skipped};
+        }
+
+        if (order === 'down') {
+            for (let i = sorted.length - 1; i >= 0; i--) {
+                const r = sorted[i].rank;
+                if (!isPlayed(r)) {
+                    return {nextRank: r, skipped};
+                }
+                skipped++;
+            }
+            return {nextRank: null, skipped};
+        }
+
+        // shuffle
+        const candidates = skipPlayedEnabled
+            ? sorted.filter(t => !playedRanks.includes(t.rank))
+            : sorted;
+
+        if (!candidates.length) return {nextRank: null, skipped: 0};
+
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+
+        return {
+            nextRank: pick.rank,
+            skipped: skipPlayedEnabled
+                ? sorted.length - candidates.length
+                : 0
+        };
     }
 
     $: uiDecade =
@@ -475,27 +566,24 @@
         await loadForSelection(sel, initialRank);
 
         // 🧠 Adjust initial track if skipPlayed is enabled
-        if (sel.skipPlayed && $currentTrack) {
-            const alreadyPlayed = playedRanks.includes($currentTrack.rank);
+        if (sel.skipPlayed) {
+            const {nextRank, skipped} = resolveInitialRank(
+                $tracks,
+                sel.playbackOrder,
+                true,
+                playedRanks
+            );
 
-            if (alreadyPlayed) {
-                const {nextRank, skipped} = resolveNextRank(
-                    $tracks,
-                    $currentTrack.rank,
-                    sel.playbackOrder,
-                    true,
-                    playedRanks
-                );
+            if (nextRank != null) {
+                const next = $tracks.find(t => t.rank === nextRank);
+                if (next) {
+                    currentRank.set(next.rank);
+                    currentTrack.set(next);
 
-                if (nextRank != null) {
-                    const next = $tracks.find(t => t.rank === nextRank);
-                    if (next) {
-                        currentRank.set(next.rank);
-                        currentTrack.set(next);
-
-                        if (skipped > 0) {
-                            status.set(`🎵 Already heard that one… jumping ahead! (${skipped} skipped)`);
-                        }
+                    if (skipped > 0) {
+                        status.set(
+                            `🎵 Already heard that one… jumping ahead! (${skipped} skipped)`
+                        );
                     }
                 }
             }
