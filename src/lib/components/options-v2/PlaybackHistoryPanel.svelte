@@ -43,20 +43,13 @@
     }
 
     function getAllDecadeFavorites(): number[] {
-        const decades = new Set<string>();
-
-        for (const p of $programHistory) {
-            if (!p.key.startsWith('DG|')) continue;
-
-            const [, decade] = p.key.split('|');
-            if (decade) decades.add(decade);
-        }
-
         const all: number[] = [];
 
-        for (const decade of decades) {
-            const ids = getFavorites('DG', decade);
-            all.push(...ids);
+        for (const decade of catalogDecades) {
+            for (const genre of catalogGenres) {
+                const ids = getFavorites('DG', `${decade}|${genre}`);
+                all.push(...ids);
+            }
         }
 
         return [...new Set(all)];
@@ -155,7 +148,7 @@
     })();
 
 
-    $: decadeGenreMap = [...catalogDecades]
+    $: decadeGenreMap = catalogDecades
         .sort((a, b) => decadeSortKey(a) - decadeSortKey(b))
         .map(decade => ({
             decade,
@@ -163,12 +156,15 @@
                 const key = `DG|${decade}|${genre}`;
                 const p = historyByKey.get(key);
 
+                const favKey = `${decade}|${genre}`;
+
                 return {
                     decade,
                     genreSlug: genre,
                     key,
                     program: p ?? null,
                     played: p?.playedRanks.length ?? 0,
+                    favorites: countFavorites('DG', favKey),
                     total: p?.total ?? 40
                 };
             })
@@ -299,7 +295,9 @@
 
 
                 {#each decadeGenreMap as block}
-                    {@const favCount = countFavorites('DG', block.decade)}  <!-- ✅ -->
+                    {@const favCount = catalogGenres.reduce((total, genre) => {
+                        return total + countFavorites('DG', `${block.decade}|${genre}`);
+                    }, 0)}
                     <details class="history-subsection">
                         <summary class="history-subsection__summary">
                             {block.decade}
@@ -345,21 +343,22 @@
 
                             {#each block.genres as row}
                                 <li class="history-row">
-    <span class="history-row__label">
-      🎵 {block.decade} {toTitleCaseFromSlug(row.genreSlug)}
-    </span>
+                                    <span class="history-row__label">
+                                      🎵 {block.decade} {toTitleCaseFromSlug(row.genreSlug)}
+                                    </span>
 
                                     <span class="history-row__progress">
-      ✓ {row.played}
-    </span>
+                                      ✓ {row.played}
+                                        &nbsp;&nbsp;⭐ {row.favorites}
+                                    </span>
 
                                     <div class="history-row__actions">
                                         <button
                                                 class="btn btn--primary"
                                                 on:click={() => {
-          if (row.program) resumeProgram(row.program);
-          else resumeByKey(row.key, 1, row.total);
-        }}
+                                          if (row.program) resumeProgram(row.program);
+                                          else resumeByKey(row.key, 1, row.total);
+                                        }}
                                         >
                                             ▶ {row.played > 0 ? 'Resume' : 'Play'}
                                         </button>

@@ -120,7 +120,12 @@
         if (programType === 'DG') {
             decadeSlug = parts[1] ?? null;
             genreSlug = parts[2] ?? null;
-            groupKey = decadeSlug;
+
+            // 🔥 Favorites now stored per decade+genre
+            groupKey =
+                decadeSlug && genreSlug
+                    ? `${decadeSlug}|${genreSlug}`
+                    : null;
         } else {
             decadeSlug = null;
             genreSlug = null;
@@ -128,8 +133,19 @@
         }
     }
 
-    $: if (programType === 'DG' && decadeSlug && genreSlug) {
-        loadProgramView();
+    let lastLoadedKey: string | null = null;
+
+    $: {
+        if (
+            programType === 'DG' &&
+            decadeSlug &&
+            genreSlug &&
+            programKey &&
+            programKey !== lastLoadedKey
+        ) {
+            lastLoadedKey = programKey;
+            loadProgramView();
+        }
     }
 
     function isPlayed(rank: number): boolean {
