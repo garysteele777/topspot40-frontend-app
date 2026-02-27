@@ -55,6 +55,13 @@
         return [...new Set(all)];
     }
 
+    // ─────────────────────────────────────────────
+    // Launch helpers (avoid URL parsing crashes)
+    // ─────────────────────────────────────────────
+
+    type PlaybackOrder = 'up' | 'down' | 'shuffle';
+    type PauseMode = 'pause_between' | 'continuous';
+    type VoicePlayMode = 'before_track';
 
     function playShuffleFavorites(decade: string) {
         console.log('▶ Shuffle Favorites for', decade);
@@ -217,32 +224,38 @@
         if (!p) return;
 
         const nextRank = p.playedRanks.length + 1;
-        const startRank =
-            nextRank > p.total
-                ? 1
-                : nextRank;
+        const startRank = nextRank > p.total ? 1 : nextRank;
 
-        console.log('▶ Resume program', p.key, 'starting at rank', startRank);
-
-        const params = new URLSearchParams({
-            programKey: p.key,
-            startRank: String(startRank),
-            endRank: String(p.total),
-            currentRank: String(startRank)
-        });
-
-        goto(`/car-page?${params.toString()}`);
+        resumeByKey(p.key, startRank, p.total);
     }
 
     function resumeByKey(programKey: string, startRank = 1, total = 40) {
-        const params = new URLSearchParams({
-            programKey,
-            startRank: String(startRank),
-            endRank: String(total),
-            currentRank: String(startRank)
-        });
+        const parts = programKey.split('|');
+        const decade = parts[1] ?? null;
+        const genre = parts[2] ?? null;
 
-        goto(`/car-page?${params.toString()}`);
+        if (!decade || !genre) {
+            console.error('Invalid DG key:', programKey);
+            return;
+        }
+
+        currentSelection.update((prev) => ({
+            ...prev,
+
+            mode: 'decade_genre',
+            programType: 'DG',
+
+            context: {
+                ...(prev?.context ?? {}),
+                decade,
+                genre
+            },
+
+            startRank,
+            endRank: total
+        }));
+
+        goto('/car-page');
     }
 
 </script>
