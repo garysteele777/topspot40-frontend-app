@@ -155,9 +155,11 @@
     })();
 
 
-    $: decadeGenreMap = catalogDecades
-        .sort((a, b) => decadeSortKey(a) - decadeSortKey(b))
-        .map(decade => ({
+    $: decadeGenreMap = (() => {
+        const sortedDecades = [...catalogDecades]
+            .sort((a, b) => decadeSortKey(a) - decadeSortKey(b));
+
+        const buildBlock = (decade: string) => ({
             decade,
             genres: catalogGenres.map(genre => {
                 const key = `DG|${decade}|${genre}`;
@@ -175,8 +177,13 @@
                     total: p?.total ?? 40
                 };
             })
-        }));
+        });
 
+        return [
+            buildBlock('ALL'),        // 🔥 synthetic ALL block first
+            ...sortedDecades.map(buildBlock)
+        ];
+    })();
     $: collectionPrograms = $programHistory.filter(
         (p): p is ProgramHistory => p.key.startsWith('COL|')
     );
@@ -252,7 +259,12 @@
             },
 
             startRank,
-            endRank: total
+            endRank: total,
+
+            playbackOrder:
+                decade === 'ALL'
+                    ? 'shuffle'
+                    : prev?.playbackOrder ?? 'up'
         }));
 
         goto('/car-page');
@@ -279,34 +291,6 @@
                 <p class="history-empty">Loading decades and genres…</p>
             {:else}
 
-                {@const allFavCount = getAllDecadeFavorites().length}
-
-                <li
-                        class="history-row history-row--favorite"
-                        class:history-row--disabled={allFavCount === 0}
-                >
-    <span class="history-row__label">
-        ⭐ All Decades Favorites
-    </span>
-
-                    <span class="history-row__progress">
-        {allFavCount === 0
-            ? '0 Tracks'
-            : `${allFavCount} Tracks`}
-    </span>
-
-                    <div class="history-row__actions">
-                        <button
-                                class="btn btn--primary"
-                                disabled={allFavCount === 0}
-                                on:click={playShuffleAllDecadeFavorites}
-                        >
-                            ▶ Play Shuffle
-                        </button>
-                    </div>
-                </li>
-
-
                 {#each decadeGenreMap as block}
                     {@const favCount = catalogGenres.reduce((total, genre) => {
                         return total + countFavorites('DG', `${block.decade}|${genre}`);
@@ -322,17 +306,19 @@
                                     class="history-row history-row--favorite"
                                     class:history-row--disabled={favCount === 0}
                             >
-    <span class="history-row__label">
-        ⭐ {block.decade} Favorites (All Genres)
-    </span>
+                                <span class="history-row__label">
+                                    ⭐ {block.decade === 'ALL'
+                                    ? 'All Decades Favorites'
+                                    : `${block.decade} Favorites (All Genres)` }
+                                </span>
 
                                 <span class="history-row__progress">
-        {favCount === 0
-            ? '0 Tracks'
-            : favCount === 1
-                ? '1 Track'
-                : `${favCount} Tracks`}
-    </span>
+                                    {favCount === 0
+                                        ? '0 Tracks'
+                                        : favCount === 1
+                                            ? '1 Track'
+                                            : `${favCount} Tracks`}
+                                </span>
 
                                 <div class="history-row__actions">
                                     <button
