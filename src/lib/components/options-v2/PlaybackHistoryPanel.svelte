@@ -20,6 +20,8 @@
     import {goto} from '$app/navigation';
     import {currentSelection} from '$lib/carmode/CarMode.store';
 
+    let catalogDecades: string[] = [];
+    let catalogGenres: string[] = [];
 
     let collectionGroupNameMap: Record<string, string> = {};
     let collectionNameMap: Record<string, string> = {};
@@ -113,6 +115,9 @@
             const data = await fetchGroupedCatalog();
             const normalized = normalizeCatalog(data);
 
+            catalogDecades = normalized.decades.map(d => d.id);
+            catalogGenres = normalized.genres.map(g => g.id);
+
             const groupMap: Record<string, string> = {};
             const nameMap: Record<string, string> = {};
             const slugToGroup: Record<string, string> = {};
@@ -143,29 +148,31 @@
     // ─────────────────────────────────────────────
     // Derived groupings
     // ─────────────────────────────────────────────
-
-    $: decadeGenreMap = (() => {
-        const map = new Map<string, ProgramHistory[]>();
-
-        for (const p of $programHistory) {
-            if (!p.key.startsWith('DG|')) continue;
-
-            const [, decade] = p.key.split('|');
-            if (!decade) continue;
-
-            if (!map.has(decade)) map.set(decade, []);
-            map.get(decade)!.push(p);
-        }
-
-        return [...map.entries()]
-            .sort(([a], [b]) => decadeSortKey(a) - decadeSortKey(b))
-            .map(([decade, programs]) => ({
-                decade,
-                programs
-            }));
-
+    $: historyByKey = (() => {
+        const m = new Map<string, ProgramHistory>();
+        for (const p of $programHistory) m.set(p.key, p);
+        return m;
     })();
 
+
+    $: decadeGenreMap = [...catalogDecades]
+        .sort((a, b) => decadeSortKey(a) - decadeSortKey(b))
+        .map(decade => ({
+            decade,
+            genres: catalogGenres.map(genre => {
+                const key = `DG|${decade}|${genre}`;
+                const p = historyByKey.get(key);
+
+                return {
+                    decade,
+                    genreSlug: genre,
+                    key,
+                    program: p ?? null,
+                    played: p?.playedRanks.length ?? 0,
+                    total: p?.total ?? 40
+                };
+            })
+        }));
 
     $: collectionPrograms = $programHistory.filter(
         (p): p is ProgramHistory => p.key.startsWith('COL|')
@@ -231,6 +238,16 @@
         goto(`/car-page?${params.toString()}`);
     }
 
+    function resumeByKey(programKey: string, startRank = 1, total = 40) {
+        const params = new URLSearchParams({
+            programKey,
+            startRank: String(startRank),
+            endRank: String(total),
+            currentRank: String(startRank)
+        });
+
+        goto(`/car-page?${params.toString()}`);
+    }
 
 </script>
 
@@ -249,8 +266,8 @@
         </summary>
 
         <div class="history-section__body">
-            {#if decadeGenreMap.length === 0}
-                <p class="history-empty">No decade–genre programs played yet.</p>
+            {#if catalogDecades.length === 0 || catalogGenres.length === 0}
+                <p class="history-empty">Loading decades and genres…</p>
             {:else}
 
                 {@const allFavCount = getAllDecadeFavorites().length}
@@ -326,45 +343,36 @@
                             </li>
 
 
-                            {#each block.programs as p}
-
-
-                                {@const parts = p.key.split('|')}
-                                {@const decade = parts[1] ?? ''}
-                                {@const genreSlug = parts[2] ?? ''}
-
+                            {#each block.genres as row}
                                 <li class="history-row">
-
-            <span class="history-row__label">
-            🎵 {decade} {toTitleCaseFromSlug(genreSlug)}
-            </span>
-
+    <span class="history-row__label">
+      🎵 {block.decade} {toTitleCaseFromSlug(row.genreSlug)}
+    </span>
 
                                     <span class="history-row__progress">
-            {isCompleted(p)
-                ? `Completed (${p.total} / ${p.total})`
-                : `${playedCount(p)} / ${p.total}`}
-        </span>
+      ✓ {row.played}
+    </span>
 
                                     <div class="history-row__actions">
                                         <button
                                                 class="btn btn--primary"
-                                                on:click={() => resumeProgram(p)}
+                                                on:click={() => {
+          if (row.program) resumeProgram(row.program);
+          else resumeByKey(row.key, 1, row.total);
+        }}
                                         >
-                                            ▶ {isCompleted(p) ? 'Restart' : 'Resume'}
+                                            ▶ {row.played > 0 ? 'Resume' : 'Play'}
                                         </button>
-
 
                                         <button
                                                 class="btn btn--secondary"
-                                                on:click={() => goto(`/program?programKey=${encodeURIComponent(p.key)}`)}
+                                                on:click={() => goto(`/program?programKey=${encodeURIComponent(row.key)}`)}
                                         >
-                                            📄 View
+                                            👁 View
                                         </button>
                                     </div>
                                 </li>
                             {/each}
-
                         </ul>
                     </details>
                 {/each}
@@ -390,30 +398,29 @@
                             </summary>
 
                             <ul class="history-list">
-                                {#each group.programs as p}
-                                    {@const collectionSlug = p.key.split('|')[1] ?? ''}
+                                {#each group.programs as row}
+                                    {@const collectionSlug = row.key.split('|')[1] ?? ''}
 
                                     <li class="history-row">
-                    <span class="history-row__label">
-                        {collectionNameMap[collectionSlug] ?? p.label}
-                    </span>
+                                <span class="history-row__label">
+                                    {collectionNameMap[collectionSlug] ?? row.label}
+                                </span>
 
                                         <span class="history-row__progress">
-                        {isCompleted(p)
+                        {isCompleted(row)
                             ? 'Completed'
-                            : `${playedCount(p)} / ${p.total}`}
+                            : `${playedCount(row)} / ${row.total}`}
                     </span>
 
                                         <div class="history-row__actions">
                                             <button
                                                     class="btn btn--primary"
-                                                    on:click={() => resumeProgram(p)}
+                                                    on:click={() => resumeProgram(row)}
                                             >
-                                                ▶ {isCompleted(p) ? 'Restart' : 'Resume'}
+                                                ▶ {isCompleted(row) ? 'Restart' : 'Resume'}
                                             </button>
 
                                         </div>
-                                        npm
                                     </li>
                                 {/each}
                             </ul>

@@ -626,8 +626,6 @@
                 programType={$currentSelection.programType}
                 language={$currentSelection.language}
                 voices={$currentSelection.voices}
-                startRank={$currentSelection.startRank}
-                endRank={$currentSelection.endRank}
                 playbackOrder={$currentSelection.playbackOrder}
                 voicePlayMode={$currentSelection.voicePlayMode}
                 pauseMode={$currentSelection.pauseMode}
