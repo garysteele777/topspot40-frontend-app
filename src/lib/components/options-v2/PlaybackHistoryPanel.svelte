@@ -59,6 +59,38 @@
     // Launch helpers (avoid URL parsing crashes)
     // ─────────────────────────────────────────────
 
+    const TRACKS_PER_PROGRAM = 40;
+
+    function allDecadesAllGenresTotal(): number {
+        return catalogDecades.length * catalogGenres.length * TRACKS_PER_PROGRAM;
+    }
+
+    function allDecadesPerGenreTotal(): number {
+        return catalogDecades.length * TRACKS_PER_PROGRAM;
+    }
+
+    function allDecadesLabel(): string {
+        return 'All Decades';
+    }
+
+    function playShuffleAllDecadesAllGenres() {
+        console.log('▶ Shuffle ALL Decades, ALL Genres');
+
+        currentSelection.update((s) => ({
+            ...s,
+            mode: 'decade_genre',
+            programType: 'DG',
+            context: {
+                ...(s.context ?? {}),
+                decade: 'ALL',
+                genre: 'ALL'
+            },
+            playbackOrder: 'shuffle'
+        }));
+
+        goto('/car-page');
+    }
+
     type PlaybackOrder = 'up' | 'down' | 'shuffle';
     type PauseMode = 'pause_between' | 'continuous';
     type VoicePlayMode = 'before_track';
@@ -297,7 +329,7 @@
                     }, 0)}
                     <details class="history-subsection">
                         <summary class="history-subsection__summary">
-                            {block.decade}
+                            {block.decade === 'ALL' ? allDecadesLabel() : block.decade}
                         </summary>
 
                         <ul class="history-list">
@@ -339,11 +371,36 @@
                                 </div>
                             </li>
 
+                            {#if block.decade === 'ALL'}
+                                <li class="history-row">
+        <span class="history-row__label">
+            🎵 All Decades, All Genres ({allDecadesAllGenresTotal()} tracks)
+        </span>
+
+                                    <span class="history-row__progress">
+            0 Played
+        </span>
+
+                                    <div class="history-row__actions">
+                                        <button
+                                                class="btn btn--primary"
+                                                on:click={playShuffleAllDecadesAllGenres}
+                                        >
+                                            ▶ Play Shuffle
+                                        </button>
+                                    </div>
+                                </li>
+                            {/if}
+
 
                             {#each block.genres as row}
                                 <li class="history-row">
                                     <span class="history-row__label">
-                                      🎵 {block.decade} {toTitleCaseFromSlug(row.genreSlug)}
+                                      🎵
+                                        {block.decade === 'ALL'
+                                            ? `All ${toTitleCaseFromSlug(row.genreSlug)} (${allDecadesPerGenreTotal()} tracks)`
+                                            : `${block.decade} ${toTitleCaseFromSlug(row.genreSlug)}`
+                                        }
                                     </span>
 
                                     <span class="history-row__progress">
