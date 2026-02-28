@@ -141,6 +141,19 @@
         goto('/car-page');
     }
 
+    function totalPlayedAcrossAll(): number {
+        let total = 0;
+
+        for (const realDecade of catalogDecades) {
+            for (const genre of catalogGenres) {
+                const key = `DG|${realDecade}|${genre}`;
+                const p = historyByKey.get(key);
+                total += p?.playedRanks.length ?? 0;
+            }
+        }
+
+        return total;
+    }
 
     onMount(async () => {
         try {
@@ -191,25 +204,85 @@
         const sortedDecades = [...catalogDecades]
             .sort((a, b) => decadeSortKey(a) - decadeSortKey(b));
 
-        const buildBlock = (decade: string) => ({
-            decade,
-            genres: catalogGenres.map(genre => {
-                const key = `DG|${decade}|${genre}`;
-                const p = historyByKey.get(key);
+        const buildBlock = (decade: string) => {
 
-                const favKey = `${decade}|${genre}`;
+            // ───────────── ALL synthetic block ─────────────
+            if (decade === 'ALL') {
+
+                // TOTAL played across ALL decades + ALL genres
+                let totalPlayedAll = 0;
+
+                for (const realDecade of catalogDecades) {
+                    for (const genre of catalogGenres) {
+                        const key = `DG|${realDecade}|${genre}`;
+                        const p = historyByKey.get(key);
+                        totalPlayedAll += p?.playedRanks.length ?? 0;
+                    }
+                }
+
+                const allGenresRow = {
+                    decade: 'ALL',
+                    genreSlug: 'ALL_GENRES',
+                    key: 'DG|ALL|ALL',
+                    program: null,
+                    played: totalPlayedAll,
+                    favorites: catalogDecades.reduce((dTotal, realDecade) => {
+                        return dTotal + catalogGenres.reduce((gTotal, genre) => {
+                            return gTotal + countFavorites('DG', `${realDecade}|${genre}`);
+                        }, 0);
+                    }, 0),
+                    total: allDecadesAllGenresTotal()
+                };
+
+                const perGenreRows = catalogGenres.map(genre => {
+
+                    let totalPlayed = 0;
+
+                    for (const realDecade of catalogDecades) {
+                        const key = `DG|${realDecade}|${genre}`;
+                        const p = historyByKey.get(key);
+                        totalPlayed += p?.playedRanks.length ?? 0;
+                    }
+
+                    return {
+                        decade: 'ALL',
+                        genreSlug: genre,
+                        key: `DG|ALL|${genre}`,
+                        program: null,
+                        played: totalPlayed,
+                        favorites: catalogDecades.reduce((total, realDecade) => {
+                            return total + countFavorites('DG', `${realDecade}|${genre}`);
+                        }, 0),
+                        total: allDecadesPerGenreTotal()
+                    };
+                });
 
                 return {
-                    decade,
-                    genreSlug: genre,
-                    key,
-                    program: p ?? null,
-                    played: p?.playedRanks.length ?? 0,
-                    favorites: countFavorites('DG', favKey),
-                    total: p?.total ?? 40
+                    decade: 'ALL',
+                    genres: [allGenresRow, ...perGenreRows]
                 };
-            })
-        });
+            }
+
+            // ───────────── Normal decade block ─────────────
+
+            return {
+                decade,
+                genres: catalogGenres.map(genre => {
+                    const key = `DG|${decade}|${genre}`;
+                    const p = historyByKey.get(key);
+
+                    return {
+                        decade,
+                        genreSlug: genre,
+                        key,
+                        program: p ?? null,
+                        played: p?.playedRanks.length ?? 0,
+                        favorites: countFavorites('DG', `${decade}|${genre}`),
+                        total: p?.total ?? 40
+                    };
+                })
+            };
+        };
 
         return [
             buildBlock('ALL'),        // 🔥 synthetic ALL block first
@@ -324,9 +397,16 @@
             {:else}
 
                 {#each decadeGenreMap as block}
-                    {@const favCount = catalogGenres.reduce((total, genre) => {
-                        return total + countFavorites('DG', `${block.decade}|${genre}`);
-                    }, 0)}
+                    {@const favCount = block.decade === 'ALL'
+                        ? catalogDecades.reduce((decadeTotal, realDecade) => {
+                            return decadeTotal + catalogGenres.reduce((genreTotal, genre) => {
+                                return genreTotal + countFavorites('DG', `${realDecade}|${genre}`);
+                            }, 0);
+                        }, 0)
+                        : catalogGenres.reduce((total, genre) => {
+                            return total + countFavorites('DG', `${block.decade}|${genre}`);
+                        }, 0)
+                    }
                     <details class="history-subsection">
                         <summary class="history-subsection__summary">
                             {block.decade === 'ALL' ? allDecadesLabel() : block.decade}
