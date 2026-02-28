@@ -209,7 +209,6 @@
             // ───────────── ALL synthetic block ─────────────
             if (decade === 'ALL') {
 
-                // TOTAL played across ALL decades + ALL genres
                 let totalPlayedAll = 0;
 
                 for (const realDecade of catalogDecades) {
@@ -220,10 +219,10 @@
                     }
                 }
 
-                const allGenresRow = {
+                const superAllRow = {
                     decade: 'ALL',
-                    genreSlug: 'ALL_GENRES',
-                    key: 'DG|ALL|ALL',
+                    genreSlug: 'all_genres',
+                    key: 'DG|ALL|SUPER_ALL',
                     program: null,
                     played: totalPlayedAll,
                     favorites: catalogDecades.reduce((dTotal, realDecade) => {
@@ -259,7 +258,7 @@
 
                 return {
                     decade: 'ALL',
-                    genres: [allGenresRow, ...perGenreRows]
+                    genres: [superAllRow, ...perGenreRows]
                 };
             }
 
@@ -451,35 +450,15 @@
                                 </div>
                             </li>
 
-                            {#if block.decade === 'ALL'}
-                                <li class="history-row">
-        <span class="history-row__label">
-            🎵 All Decades, All Genres ({allDecadesAllGenresTotal()} tracks)
-        </span>
-
-                                    <span class="history-row__progress">
-            0 Played
-        </span>
-
-                                    <div class="history-row__actions">
-                                        <button
-                                                class="btn btn--primary"
-                                                on:click={playShuffleAllDecadesAllGenres}
-                                        >
-                                            ▶ Play Shuffle
-                                        </button>
-                                    </div>
-                                </li>
-                            {/if}
-
-
                             {#each block.genres as row}
                                 <li class="history-row">
                                     <span class="history-row__label">
                                       🎵
-                                        {block.decade === 'ALL'
-                                            ? `All ${toTitleCaseFromSlug(row.genreSlug)} (${allDecadesPerGenreTotal()} tracks)`
-                                            : `${block.decade} ${toTitleCaseFromSlug(row.genreSlug)}`
+                                        {block.decade === 'ALL' && row.genreSlug === 'all_genres'
+                                            ? `All Decades, All Genres (${allDecadesAllGenresTotal()} tracks)`
+                                            : block.decade === 'ALL'
+                                                ? `All ${toTitleCaseFromSlug(row.genreSlug)} (${allDecadesPerGenreTotal()} tracks)`
+                                                : `${block.decade} ${toTitleCaseFromSlug(row.genreSlug)}`
                                         }
                                     </span>
 
