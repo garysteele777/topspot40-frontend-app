@@ -513,7 +513,7 @@
                                           else resumeByKey(row.key, 1, row.total);
                                         }}
                                         >
-                                            ▶ {row.played > 0 ? 'Resume' : 'Play'}
+                                            ▶ Play
                                         </button>
 
                                         <button
@@ -569,7 +569,7 @@
                                                     class="btn btn--primary"
                                                     on:click={() => resumeProgram(row)}
                                             >
-                                                ▶ {isCompleted(row) ? 'Restart' : 'Resume'}
+                                                ▶ {isCompleted(row) ? 'Restart' : 'Play'}
                                             </button>
 
                                         </div>
