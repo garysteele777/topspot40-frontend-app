@@ -27,6 +27,34 @@
     let collectionNameMap: Record<string, string> = {};
     let collectionSlugToGroupSlug: Record<string, string> = {};
 
+    const genreIconMap: Record<string, string> = {
+        blues_jazz: '🎷',
+        country: '🤠',
+        folk_acoustic: '🪕',
+        latin_global: '💃',
+        pop: '🎤',
+        rnb_soul: '🎹',
+        rock: '🎸',
+        tv_themes: '📺'
+    };
+
+    function getGenreIcon(slug: string | undefined): string {
+        if (!slug) return '🎵';
+        return genreIconMap[slug] ?? '🎵';
+    }
+
+    function pct(played: number, total: number): number {
+        if (!total || total <= 0) return 0;
+        return Math.round((played / total) * 100);
+    }
+
+    function decadeTotals(block: { decade: string; genres: Array<{ played: number; total: number }> }) {
+        const totalTracks = block.genres.reduce((sum, r) => sum + (r.total ?? 0), 0);
+        const totalPlayed = block.genres.reduce((sum, r) => sum + (r.played ?? 0), 0);
+        const percent = pct(totalPlayed, totalTracks);
+        return {totalTracks, totalPlayed, percent};
+    }
+
     function toTitleCaseFromSlug(s: string): string {
         return s
             .replaceAll('_', ' ')
@@ -408,7 +436,12 @@
                     }
                     <details class="history-subsection">
                         <summary class="history-subsection__summary">
-                            {block.decade === 'ALL' ? allDecadesLabel() : block.decade}
+                            {#if block.decade === 'ALL'}
+                                {allDecadesLabel()}
+                            {:else}
+                                {@const t = decadeTotals(block)}
+                                {block.decade} • {t.totalTracks} Tracks • {t.percent}% Complete
+                            {/if}
                         </summary>
 
                         <ul class="history-list">
@@ -451,9 +484,13 @@
                             </li>
 
                             {#each block.genres as row}
-                                <li class="history-row">
+                                <li class="history-row history-row--genre">
                                     <span class="history-row__label">
-                                      🎵
+                                        {block.decade === 'ALL' && row.genreSlug === 'all_genres'
+                                            ? '🎶'
+                                            : getGenreIcon(row.genreSlug)
+                                        }
+
                                         {block.decade === 'ALL' && row.genreSlug === 'all_genres'
                                             ? `All Decades, All Genres (${allDecadesAllGenresTotal()} tracks)`
                                             : block.decade === 'ALL'
@@ -463,7 +500,8 @@
                                     </span>
 
                                     <span class="history-row__progress">
-                                      ✓ {row.played}
+                                        ✓ {row.played} / {row.total}
+                                        • {pct(row.played, row.total)}%
                                         &nbsp;&nbsp;⭐ {row.favorites}
                                     </span>
 
@@ -653,5 +691,13 @@
         opacity: 0.45;
     }
 
+    .history-row--genre {
+        padding-left: 14px;
+    }
 
+    .history-row__progress {
+        opacity: 0.8;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
 </style>
