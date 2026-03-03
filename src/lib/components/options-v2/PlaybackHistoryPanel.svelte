@@ -1,11 +1,15 @@
 <script lang="ts">
 
+    import {get} from 'svelte/store';
+    import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+
     import {
         countFavorites,
         clearFavorites,
         getFavorites   // ✅ add this
     } from '$lib/favorites/favorites';
 
+    import {buildLaunchUrl} from '$lib/utils/buildLaunchUrl';
 
     import {
         programHistoryStore as programHistory,
@@ -26,6 +30,29 @@
     let collectionGroupNameMap: Record<string, string> = {};
     let collectionNameMap: Record<string, string> = {};
     let collectionSlugToGroupSlug: Record<string, string> = {};
+
+    function parseProgramKey(key: string) {
+        const parts = key.split('|');
+
+        if (parts[0] === 'DG') {
+            return {
+                type: 'decade_genre' as const,
+                decade: parts[1],
+                genre: parts[2]
+            };
+        }
+
+        if (parts[0] === 'COL') {
+            return {
+                type: 'collection' as const,
+                collection: parts[1],
+                collectionCategory: parts[2]
+            };
+        }
+
+        return null;
+    }
+
 
     const genreIconMap: Record<string, string> = {
         blues_jazz: '🎷',
@@ -104,24 +131,26 @@
     function playShuffleAllDecadesAllGenres() {
         console.log('▶ Shuffle ALL Decades, ALL Genres');
 
-        currentSelection.update((s) => ({
-            ...s,
-            mode: 'decade_genre',
-            programType: 'DG',
-            context: {
-                ...(s.context ?? {}),
-                decade: 'ALL',
-                genre: 'ALL'
-            },
-            playbackOrder: 'shuffle'
-        }));
+        const selection = $currentSelection;
 
-        goto('/car-page');
+        const url = buildLaunchUrl({
+            layoutMode: 'car',
+            decade: 'ALL',
+            genre: 'ALL',
+            language: selection.language,
+            voices: selection.voices,
+            playbackOrder: 'shuffle', // this one we DO override
+            voicePlayMode: 'before',
+            pauseMode: selection.pauseMode,
+            skipPlayed: selection.skipPlayed
+        });
+
+        goto(url);
     }
 
     type PlaybackOrder = 'up' | 'down' | 'shuffle';
     type PauseMode = 'pause_between' | 'continuous';
-    type VoicePlayMode = 'before_track';
+    type VoicePlayMode = 'before' | 'over';
 
     function playShuffleFavorites(decade: string) {
         console.log('▶ Shuffle Favorites for', decade);
@@ -370,38 +399,67 @@
 
     function resumeByKey(programKey: string, startRank = 1, total = 40) {
         const parts = programKey.split('|');
-        const decade = parts[1] ?? null;
-        const genre = parts[2] ?? null;
+        const type = parts[0];
 
-        if (!decade || !genre) {
-            console.error('Invalid DG key:', programKey);
+        let url: string;
+
+        if (type === 'DG') {
+            const decade = parts[1];
+            const genre = parts[2];
+
+            if (!decade || !genre) {
+                console.error('Invalid DG key:', programKey);
+                return;
+            }
+
+            const selection = $currentSelection;
+            const settings = get(playbackSettingsStore);
+
+            url = buildLaunchUrl({
+                layoutMode: 'car',
+                decade,
+                genre,
+                language: selection.language,
+                voices: settings.voices,
+                playbackOrder: settings.playbackOrder,
+                voicePlayMode: settings.voicePlayMode,
+                pauseMode: settings.pauseMode,
+                skipPlayed: settings.skipPlayed
+            });
+
+        } else if (type === 'COL') {
+            const collection = parts[1];
+            const collectionCategory = parts[2];
+
+            if (!collection || !collectionCategory) {
+                console.error('Invalid COL key:', programKey);
+                return;
+            }
+            const selection = $currentSelection;
+            const settings = get(playbackSettingsStore);
+
+            url = buildLaunchUrl({
+                layoutMode: 'car',
+                collection,
+                collectionCategory,
+                language: selection.language,
+                voices: settings.voices,
+                playbackOrder: settings.playbackOrder,
+                voicePlayMode: settings.voicePlayMode,
+                pauseMode: settings.pauseMode,
+                skipPlayed: settings.skipPlayed
+            });
+
+        } else {
+            console.error('Unknown program type:', programKey);
             return;
         }
 
-        currentSelection.update((prev) => ({
-            ...prev,
+        // append resume rank
+        const finalUrl = `${url}&currentRank=${startRank}`;
 
-            mode: 'decade_genre',
-            programType: 'DG',
-
-            context: {
-                ...(prev?.context ?? {}),
-                decade,
-                genre
-            },
-
-            startRank,
-            endRank: total,
-
-            playbackOrder:
-                decade === 'ALL'
-                    ? 'shuffle'
-                    : prev?.playbackOrder ?? 'up'
-        }));
-
-        goto('/car-page');
+        goto(finalUrl);
     }
-
 </script>
 
 <section class="history-panel">

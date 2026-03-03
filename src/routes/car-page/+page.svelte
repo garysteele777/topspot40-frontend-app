@@ -5,10 +5,9 @@
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
-    import {get} from 'svelte/store';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
-
+import { goto } from '$app/navigation';
     import {
         startPlaybackPolling,
         stopPlaybackPolling,
@@ -543,9 +542,11 @@
             const cr = url.searchParams.get('currentRank');
             initialRank = cr ? Number(cr) : null;
         } else {
-            // 🚀 FAVORITES / INTERNAL NAV CASE
-            sel = get(currentSelection);
-            console.log('🔥 USING EXISTING SELECTION:', sel);
+            // If we got here without params, treat it as invalid navigation.
+            // This prevents stale store state from causing wrong modes.
+            console.warn('⚠️ Car page opened without params — redirecting to Options');
+            await goto('/options-v2');
+            return;
         }
 
 
@@ -569,7 +570,6 @@
             console.error('No selection available for loadForSelection');
             return;
         }
-
         await loadForSelection(sel, initialRank);
 
         // 🧠 Adjust initial track if skipPlayed is enabled

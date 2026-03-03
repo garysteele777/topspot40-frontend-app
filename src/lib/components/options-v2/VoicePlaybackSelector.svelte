@@ -19,8 +19,8 @@
 
         <button
             type="button"
-            class:selected={voicePlayMode === 'during'}
-            on:click={() => (voicePlayMode = 'during')}
+            class:selected={voicePlayMode === 'over'}
+            on:click={() => (voicePlayMode = 'over')}
         >
             During Track
         </button>

@@ -4,7 +4,8 @@
     import {onMount} from 'svelte';
     import {browser} from '$app/environment';
     import {goto} from '$app/navigation';
-
+    import {get} from 'svelte/store';
+    import {currentSelection} from '$lib/carmode/CarMode.store';
     // ─────────────────────────────────────────────
     // Stores
     // ─────────────────────────────────────────────
@@ -309,6 +310,11 @@
             skipPlayed
         };
 
+        console.log('🧠 CURRENT SELECTION STORE:', get(currentSelection));
+        console.log('SELECTED VOICES BEFORE BUILD:', selectedVoices);
+        console.log('PLAYBACK ORDER BEFORE BUILD:', playbackOrder);
+        console.log('SKIP PLAYED BEFORE BUILD:', skipPlayed);
+
         const payload =
             activeGroup === 'decade_genre'
                 ? {...base, decade: decades[0], genre: genres[0]}
@@ -318,6 +324,7 @@
                     collectionCategory: findCollectionMeta(collections[0]).collectionGroupSlug
                 };
 
+        console.log('🚀 Launch payload:', payload);
 
         const url = await launchWithPlayback(
             payload as Parameters<typeof launchWithPlayback>[0]
