@@ -41,6 +41,7 @@
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
     import ListPicker from '$lib/components/options/ListPicker.svelte';
 
+    import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     // ─────────────────────────────────────────────
     // Types
     // ─────────────────────────────────────────────
@@ -66,13 +67,9 @@
     // ─────────────────────────────────────────────
     let activeGroup: ModeType = 'decade_genre';
     let language: Language = 'en';
-    let selectedVoices: VoicePart[] = ['intro'];
 
     let startRank = 1;
     let endRank = 40;
-
-    let playbackOrder: PlaybackOrder = 'up';
-    let pauseMode: 'pause' | 'continuous' = 'pause';
 
     const categoryMode = 'single' as const;
     const voicePlayMode = 'before' as const;
@@ -81,11 +78,17 @@
     let genres: string[] = [];
     let collections: string[] = [];
 
+    const playbackSettings = playbackSettingsStore;
+
+    $: selectedVoices = $playbackSettings.voices as VoicePart[];
+    $: playbackOrder = $playbackSettings.playbackOrder as PlaybackOrder;
+    $: pauseMode = $playbackSettings.pauseMode as 'pause' | 'continuous';
+    $: skipPlayed = !!$playbackSettings.skipPlayed;
+
     // Options
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
     let collectionGroups: CollectionGroup[] = [];
-    let skipPlayed = false;
     let status: 'Loading…' | 'Ready' | '❌ Error loading catalog.' = 'Loading…';
 
     // Resume lifecycle guard
@@ -226,6 +229,20 @@
             skipPlayed
         });
     }
+
+    // ─────────────────────────────────────────────
+    // Sync playback settings into store
+    // ─────────────────────────────────────────────
+    $: if (browser && hydrated) {
+        playbackSettingsStore.set({
+            voices: selectedVoices,
+            playbackOrder,
+            pauseMode,
+            voicePlayMode: 'before',
+            skipPlayed
+        });
+    }
+
 
     $: playbackOrderLabel =
         playbackOrder === 'up'
@@ -450,6 +467,8 @@
             <div class="opt-cell">
                 <PauseModeSelector bind:pauseMode/>
             </div>
+
+
         </section>
 
         <!-- MAIN GRID -->

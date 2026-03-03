@@ -3,11 +3,14 @@
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
 
+    import {get} from 'svelte/store';
+    import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
-import { goto } from '$app/navigation';
+    import {goto} from '$app/navigation';
     import {
         startPlaybackPolling,
         stopPlaybackPolling,
@@ -44,6 +47,7 @@ import { goto } from '$app/navigation';
 
     console.log('🌍 Car page API_BASE =', API_BASE);
 
+    $: settings = $playbackSettingsStore;
 
     function stopNarrationAudio() {
         // Kill any browser-side narration audio still playing
@@ -62,6 +66,8 @@ import { goto } from '$app/navigation';
     async function playTrackByRank(rank: number) {
         const sel = $currentSelection;
         if (!sel) return;
+
+        const settings = get(playbackSettingsStore);
 
         // ⭐ FAVORITES MODE (FAV_DG / FAV_COL) → single-track backend
         if (sel.programType === 'FAV_DG' || sel.programType === 'FAV_COL') {
@@ -86,11 +92,11 @@ import { goto } from '$app/navigation';
                     artist_name: trackObj.artistName
                 },
                 selection: {
-                    language: sel.language,
-                    voices: sel.voices,
-                    voicePlayMode: sel.voicePlayMode,
-                    pauseMode: sel.pauseMode,
-                    continuous: false
+                    language: sel.language, // program-level for now
+                    voices: settings.voices,
+                    voicePlayMode: settings.voicePlayMode,
+                    pauseMode: settings.pauseMode,
+                    continuous: settings.pauseMode === 'continuous'
                 },
                 context: {
                     type: 'favorites',
@@ -127,18 +133,16 @@ import { goto } from '$app/navigation';
                 start_rank: String(rank),
                 end_rank: String(sel.endRank),
                 mode:
-                    sel.playbackOrder === 'up'
+                    settings.playbackOrder === 'up'
                         ? 'count_up'
-                        : sel.playbackOrder === 'down'
+                        : settings.playbackOrder === 'down'
                             ? 'count_down'
                             : 'random',
-                continuous: sel.pauseMode === 'continuous' ? 'true' : 'false',
-                tts_language: sel.language,
-                play_intro: sel.voices.includes('intro') ? 'true' : 'false',
-                play_detail: sel.voices.includes('detail') ? 'true' : 'false',
-                play_artist_description: sel.voices.includes('artist') ? 'true' : 'false',
-                play_track: 'true',
-                voice_style: sel.voicePlayMode
+                continuous: settings.pauseMode === 'continuous' ? 'true' : 'false',
+                play_intro: settings.voices.includes('intro') ? 'true' : 'false',
+                play_detail: settings.voices.includes('detail') ? 'true' : 'false',
+                play_artist_description: settings.voices.includes('artist') ? 'true' : 'false',
+                voice_style: settings.voicePlayMode
             });
 
 
@@ -171,10 +175,10 @@ import { goto } from '$app/navigation';
             },
             selection: {
                 language: sel.language,
-                voices: sel.voices,
-                voicePlayMode: sel.voicePlayMode,
-                pauseMode: sel.pauseMode,
-                continuous: sel.pauseMode === 'continuous'
+                voices: settings.voices,
+                voicePlayMode: settings.voicePlayMode,
+                pauseMode: settings.pauseMode,
+                continuous: settings.pauseMode === 'continuous'
             }
             ,
             context:
@@ -211,7 +215,9 @@ import { goto } from '$app/navigation';
 
 
     async function nextTrack() {
-        if (!$currentTrack || !$tracks || !$currentSelection) return;
+        if (!$currentTrack || !$tracks) return;
+
+        const settings = get(playbackSettingsStore);
 
         stopNarrationAudio();
 
@@ -222,8 +228,8 @@ import { goto } from '$app/navigation';
         const {nextRank, skipped} = resolveNextRank(
             $tracks,
             $currentTrack.rank,
-            $currentSelection.playbackOrder,
-            $currentSelection.skipPlayed ?? false,
+            settings.playbackOrder,
+            settings.skipPlayed,
             playedRanks
         );
 
@@ -235,26 +241,23 @@ import { goto } from '$app/navigation';
         const next = $tracks.find(t => t.rank === nextRank);
         if (!next) return;
 
-        // 3. Update UI immediately
         currentRank.set(next.rank);
 
         if (skipped > 0) {
             status.set(`🎵 Already heard that one… jumping ahead! (${skipped} skipped)`);
         }
+
         currentTrack.set(next);
 
-        console.log(`⏭ Switching to #${next.rank}: ${next.trackName}`);
-
-        // 4. Give backend 50ms to clear old sequence (important)
         await new Promise(r => setTimeout(r, 50));
 
-        // 5. Start new backend playback
         await playTrackByRank(next.rank);
     }
 
-
     async function prevTrack() {
-        if (!$currentTrack || !$tracks || !$currentSelection) return;
+        if (!$currentTrack || !$tracks) return;
+
+        const settings = get(playbackSettingsStore);
 
         stopNarrationAudio();
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
@@ -262,8 +265,8 @@ import { goto } from '$app/navigation';
         const {prevRank, skipped} = resolvePreviousRank(
             $tracks,
             $currentTrack.rank,
-            $currentSelection.playbackOrder,
-            $currentSelection.skipPlayed ?? false,
+            settings.playbackOrder,
+            settings.skipPlayed,
             playedRanks
         );
 
@@ -481,19 +484,27 @@ import { goto } from '$app/navigation';
     function backToOptions() {
         if ($currentSelection && $currentTrack) {
 
+            const settings = get(playbackSettingsStore);
+
             const resume: ResumeState = {
+                // program identity (from selection)
                 mode: $currentSelection.mode,
                 context: $currentSelection.context ?? {},
+                language: $currentSelection.language, // keep language with the program for now
 
-                language: $currentSelection.language,
+                // progress (from selection)
                 startRank: $currentSelection.startRank,
                 endRank: $currentSelection.endRank,
-                playbackOrder: $currentSelection.playbackOrder,
-                pauseMode: $currentSelection.pauseMode,
+                currentRank: $currentRank,
 
-                voices: $currentSelection.voices,
-                skipPlayed: $currentSelection.skipPlayed ?? false,
-                currentRank: $currentRank
+                // playback behavior (from settings store)
+                playbackOrder: settings.playbackOrder,
+                pauseMode: settings.pauseMode,
+                voices: settings.voices,
+                skipPlayed: settings.skipPlayed,
+
+                // add if ResumeState includes it
+                // voicePlayMode: settings.voicePlayMode,
             };
 
             // ⭐ THIS LINE WAS MISSING
@@ -535,7 +546,12 @@ import { goto } from '$app/navigation';
 
         if (hasParams) {
             sel = buildSelectionFromUrl(url);
-            console.log('🔥 BUILT SELECTION FROM URL:', sel);
+            console.log('🔥 BUILT SELECTION FROM URL (raw):', sel);
+
+            sel = buildSelectionFromUrl(url);
+            currentSelection.set(sel);
+
+            console.log('✅ SELECTION AFTER MERGE (store wins):', sel);
 
             currentSelection.set(sel);
 
@@ -573,10 +589,13 @@ import { goto } from '$app/navigation';
         await loadForSelection(sel, initialRank);
 
         // 🧠 Adjust initial track if skipPlayed is enabled
-        if (sel.skipPlayed) {
+// 🧠 Adjust initial track if skipPlayed is enabled
+        const settings = get(playbackSettingsStore);
+
+        if (settings.skipPlayed) {
             const {nextRank, skipped} = resolveInitialRank(
                 $tracks,
-                sel.playbackOrder,
+                settings.playbackOrder,
                 true,
                 playedRanks
             );
@@ -625,11 +644,11 @@ import { goto } from '$app/navigation';
                 mode={headerMode}
                 programType={$currentSelection.programType}
                 language={$currentSelection.language}
-                voices={$currentSelection.voices}
-                playbackOrder={$currentSelection.playbackOrder}
-                voicePlayMode={$currentSelection.voicePlayMode}
-                pauseMode={$currentSelection.pauseMode}
-                skipPlayed={$currentSelection.skipPlayed}
+                voices={settings.voices}
+                playbackOrder={settings.playbackOrder}
+                voicePlayMode={settings.voicePlayMode}
+                pauseMode={settings.pauseMode}
+                skipPlayed={settings.skipPlayed}
                 categoryMode="single"
         />
     {/if}

@@ -400,8 +400,11 @@
     function resumeByKey(programKey: string, startRank = 1, total = 40) {
         const parts = programKey.split('|');
         const type = parts[0];
+        const settings = get(playbackSettingsStore);
 
         let url: string;
+
+        console.log("PLAYBACK SETTINGS AT LAUNCH:", settings);
 
         if (type === 'DG') {
             const decade = parts[1];
@@ -426,6 +429,8 @@
                 pauseMode: settings.pauseMode,
                 skipPlayed: settings.skipPlayed
             });
+
+            console.log("🚀 Launch URL:", url);
 
         } else if (type === 'COL') {
             const collection = parts[1];
