@@ -43,6 +43,7 @@
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
 
+
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
     console.log('🌍 Car page API_BASE =', API_BASE);
@@ -215,6 +216,10 @@
 
 
     async function nextTrack() {
+
+        console.log("TRACK COUNT:", $tracks.length);
+        console.log("TRACK RANKS:", $tracks.map(t => t.rank));
+
         if (!$currentTrack || !$tracks) return;
 
         const settings = get(playbackSettingsStore);
@@ -223,6 +228,8 @@
 
         // 1. Stop backend playback and WAIT
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
+
+        playedRanks.push($currentTrack.rank);
 
         // 2. Compute next rank locally
         const {nextRank, skipped} = resolveNextRank(

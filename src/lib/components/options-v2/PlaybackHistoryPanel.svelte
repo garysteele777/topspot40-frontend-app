@@ -379,6 +379,48 @@
         return p.playedRanks.length >= p.total;
     }
 
+    function determineStartRank(p: ProgramHistory): number {
+
+        const settings = get(playbackSettingsStore);
+
+        // Skip OFF → always start from beginning
+        if (!settings.skipPlayed) {
+            return settings.playbackOrder === 'down'
+                ? p.total
+                : 1;
+        }
+
+        // Skip ON
+        if (settings.playbackOrder === 'up') {
+
+            for (let i = 1; i <= p.total; i++) {
+                if (!p.playedRanks.includes(i)) return i;
+            }
+
+        }
+
+        if (settings.playbackOrder === 'down') {
+
+            for (let i = p.total; i >= 1; i--) {
+                if (!p.playedRanks.includes(i)) return i;
+            }
+
+        }
+
+        if (settings.playbackOrder === 'shuffle') {
+
+            const unplayed: number[] = [];
+
+            for (let i = 1; i <= p.total; i++) {
+                if (!p.playedRanks.includes(i)) unplayed.push(i);
+            }
+
+            return unplayed[Math.floor(Math.random() * unplayed.length)] ?? 1;
+        }
+
+        return 1;
+    }
+
 
     function clearOne(p: ProgramHistory) {
         resetProgram(p.key);
@@ -389,10 +431,16 @@
     }
 
     function resumeProgram(p: ProgramHistory) {
+
         if (!p) return;
 
-        const nextRank = p.playedRanks.length + 1;
-        const startRank = nextRank > p.total ? 1 : nextRank;
+        const settings = get(playbackSettingsStore);
+
+        const startRank = determineStartRank(p);
+
+        console.log("START RANK CALCULATED:", startRank);
+        console.log("SKIP PLAYED:", settings.skipPlayed);
+        console.log("PLAYED RANKS:", p.playedRanks);
 
         resumeByKey(p.key, startRank, p.total);
     }
@@ -461,7 +509,9 @@
         }
 
         // append resume rank
-        const finalUrl = `${url}&currentRank=${startRank}`;
+        const finalUrl = `${url}&startRank=${startRank}`;
+
+        console.log("🚀 Final URL:", finalUrl);
 
         goto(finalUrl);
     }
