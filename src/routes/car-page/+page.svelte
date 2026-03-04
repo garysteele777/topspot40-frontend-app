@@ -273,12 +273,13 @@
             $tracks,
             $currentTrack.rank,
             settings.playbackOrder,
-            settings.skipPlayed,
+            false, // ignore skipPlayed for Previous navigation
             playedRanks
         );
 
         if (prevRank == null) {
             console.log('⏮ No valid previous track');
+            status.set('⏮ Already at the beginning');
             return;
         }
 
