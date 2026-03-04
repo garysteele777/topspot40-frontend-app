@@ -33,6 +33,8 @@ type SequenceItemExtended = SequenceItem & {
     artistArtwork?: string | null;
 };
 
+const PROGRAM_LENGTH = 40;
+
 // ------------------------------------------------------------
 // Local normalization helper
 // ------------------------------------------------------------
@@ -112,7 +114,8 @@ export async function loadTrackSequence(
     }
 
     const startRank = 1;
-    const endRank = 999;
+    const endRank = PROGRAM_LENGTH;
+
 
     try {
         // --------------------------------------------------------
@@ -142,8 +145,13 @@ export async function loadTrackSequence(
             if (!rows.length) return [];
 
             const mapped = mapItemsToTracks(rows, startRank, endRank);
-            loaderCache.set(key, mapped);
-            return mapped;
+
+            // TopSpot programs are fixed at 40 tracks.
+            // Extra tracks in Supabase (41–45) are editorial backups.
+            const capped = mapped.slice(0, PROGRAM_LENGTH);
+
+            loaderCache.set(key, capped);
+            return capped;
         }
 
         // --------------------------------------------------------
@@ -169,8 +177,10 @@ export async function loadTrackSequence(
         if (!rows.length) return [];
 
         const mapped = mapItemsToTracks(rows, startRank, endRank);
-        loaderCache.set(key, mapped);
-        return mapped;
+        const capped = mapped.slice(0, PROGRAM_LENGTH);
+
+        loaderCache.set(key, capped);
+        return capped;
 
     } catch (err) {
         console.error('❌ loadTrackSequence failed:', err);

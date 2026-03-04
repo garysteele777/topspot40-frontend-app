@@ -1,8 +1,8 @@
 <script lang="ts">
     import {page} from '$app/state';
-    import {onMount} from 'svelte';
     import type {ProgramKey} from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
+    import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
 
     import type {PlaybackProgramType} from '$lib/types/program';
     import {
@@ -74,27 +74,6 @@
         toggleFavorite('DG', groupKey, rankingId);
     }
 
-    async function fetchDGTracks(decade: string, genre: string): Promise<TrackRow[]> {
-        const base = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
-
-        const url =
-            `${base}/supabase/decade-genre/get-sequence` +
-            `?decade=${encodeURIComponent(decade)}` +
-            `&genre=${encodeURIComponent(genre)}` +
-            `&start_rank=1&end_rank=40`;
-
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`DG list failed: ${res.status}`);
-
-        const data = await res.json() as {
-            status: string;
-            total: number;
-            tracks: TrackRow[];
-        };
-
-        return data.tracks ?? [];
-    }
-
     async function loadProgramView() {
         errorMsg = null;
         tracks = [];
@@ -105,7 +84,25 @@
 
         loading = true;
         try {
-            tracks = await fetchDGTracks(decadeSlug, genreSlug);
+            const selection = {
+                mode: 'decade_genre',
+                language: 'en',
+                startRank: 1,
+                endRank: 40,
+                context: {
+                    decade: decadeSlug!,
+                    genre: genreSlug!
+                }
+            };
+
+            const loaded = await loadTrackSequence(selection as any);
+
+            tracks = loaded.map(t => ({
+                rankingId: t.rankingId ?? 0,
+                rank: t.rank ?? 0,
+                trackName: t.trackName ?? '',
+                artistName: t.artistName ?? ''
+            }));
         } catch (err) {
             errorMsg = err instanceof Error ? err.message : 'Failed to load tracks';
         } finally {
