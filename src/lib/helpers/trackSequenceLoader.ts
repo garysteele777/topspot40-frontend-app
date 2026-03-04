@@ -113,8 +113,13 @@ export async function loadTrackSequence(
         return loaderCache.get(key)!;
     }
 
-    const startRank = 1;
-    const endRank = PROGRAM_LENGTH;
+    const isAllDecades =
+        sel.mode === 'decade_genre' && (sel.context as any)?.decade === 'ALL';
+
+    const startRank = sel.startRank ?? 1;
+    const endRank = isAllDecades
+        ? (sel.endRank ?? PROGRAM_LENGTH)     // allow 320 / 2560 etc
+        : PROGRAM_LENGTH;                     // normal DG stays 40
 
 
     try {
@@ -146,12 +151,11 @@ export async function loadTrackSequence(
 
             const mapped = mapItemsToTracks(rows, startRank, endRank);
 
-            // TopSpot programs are fixed at 40 tracks.
-            // Extra tracks in Supabase (41–45) are editorial backups.
-            const capped = mapped.slice(0, PROGRAM_LENGTH);
+// Only cap normal decades to 40. ALL decades stays full length.
+            const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);
 
-            loaderCache.set(key, capped);
-            return capped;
+            loaderCache.set(key, finalTracks);
+            return finalTracks;
         }
 
         // --------------------------------------------------------

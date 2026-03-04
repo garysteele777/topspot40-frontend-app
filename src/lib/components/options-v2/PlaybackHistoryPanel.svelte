@@ -619,22 +619,33 @@
                                     </span>
 
                                     <div class="history-row__actions">
-                                        <button
-                                                class="btn btn--primary"
-                                                on:click={() => {
-                                          if (row.program) resumeProgram(row.program);
-                                          else resumeByKey(row.key, 1, row.total);
-                                        }}
-                                        >
-                                            ▶ Play
-                                        </button>
+                                        {#if block.decade === 'ALL'}
+                                            <!-- Combined decades: Shuffle play only -->
+                                            <button
+                                                    class="btn btn--primary"
+                                                    on:click={() => resumeByKey(row.key, 1, row.total)}
+                                            >
+                                                🔀 Shuffle Play
+                                            </button>
+                                        {:else}
+                                            <!-- Normal decade programs -->
+                                            <button
+                                                    class="btn btn--primary"
+                                                    on:click={() => {
+                    if (row.program) resumeProgram(row.program);
+                    else resumeByKey(row.key, 1, row.total);
+                }}
+                                            >
+                                                ▶ Play
+                                            </button>
 
-                                        <button
-                                                class="btn btn--secondary"
-                                                on:click={() => goto(`/program?programKey=${encodeURIComponent(row.key)}`)}
-                                        >
-                                            👁 View
-                                        </button>
+                                            <button
+                                                    class="btn btn--secondary"
+                                                    on:click={() => goto(`/program?programKey=${encodeURIComponent(row.key)}`)}
+                                            >
+                                                👁 View
+                                            </button>
+                                        {/if}
                                     </div>
                                 </li>
                             {/each}
