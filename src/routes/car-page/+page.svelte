@@ -653,7 +653,7 @@
                 programType={$currentSelection.programType}
                 language={$currentSelection.language}
                 voices={settings.voices}
-                playbackOrder={settings.playbackOrder}
+                playbackOrder={$currentSelection.playbackOrder}
                 voicePlayMode={settings.voicePlayMode}
                 pauseMode={settings.pauseMode}
                 skipPlayed={settings.skipPlayed}

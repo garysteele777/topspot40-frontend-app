@@ -18,6 +18,26 @@ import {SvelteMap} from 'svelte/reactivity';
 // Extend SequenceItem with all optional fields received
 // ------------------------------------------------------------
 type SequenceItemExtended = SequenceItem & {
+    // ranking context
+    rankingId?: number;
+    ranking_id?: number;
+
+    spotifyTrackId?: string | null;
+    spotify_track_id?: string | null;
+
+    trackName?: string | null;
+    track_name?: string | null;
+
+    artistName?: string | null;
+    artist_name?: string | null;
+
+    decadeSlug?: string | null;
+    decade_slug?: string | null;
+
+    genreSlug?: string | null;
+    genre_slug?: string | null;
+
+    // narration fields
     info?: string | null;
     intro?: string | null;
 
@@ -151,7 +171,7 @@ export async function loadTrackSequence(
 
             const mapped = mapItemsToTracks(rows, startRank, endRank);
 
-// Only cap normal decades to 40. ALL decades stays full length.
+            // Only cap normal decades to 40. ALL decades stays full length.
             const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);
 
             loaderCache.set(key, finalTracks);
@@ -177,6 +197,26 @@ export async function loadTrackSequence(
             data.rankings ??
             (data.rows as SequenceItemExtended[]) ??
             [];
+
+        if (rows.length) {
+            console.log('🎧 Raw rows received from Supabase:', rows.length);
+
+            console.table(
+                rows.slice(0, 20).map(r => ({
+                    rankingId: r.rankingId ?? r.ranking_id,
+                    rank: r.rank,
+                    track: r.trackName ?? r.track_name,
+                    artist: r.artistName ?? r.artist_name,
+                    spotifyTrackId: r.spotifyTrackId ?? r.spotify_track_id,
+                    decade: r.decadeSlug ?? r.decade_slug,
+                    genre: r.genreSlug ?? r.genre_slug
+                }))
+            );
+
+            // optional — expose full array for inspection
+            // @ts-ignore debug
+            window.__TS40_ROWS__ = rows;
+        }
 
         if (!rows.length) return [];
 

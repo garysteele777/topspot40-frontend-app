@@ -279,7 +279,7 @@
                 const superAllRow = {
                     decade: 'ALL',
                     genreSlug: 'all_genres',
-                    key: 'DG|ALL|SUPER_ALL',
+                    key: 'DG|ALL|ALL',
                     program: null,
                     played: totalPlayedAll,
                     favorites: catalogDecades.reduce((dTotal, realDecade) => {
@@ -445,10 +445,21 @@
         resumeByKey(p.key, startRank, p.total);
     }
 
-    function resumeByKey(programKey: string, startRank = 1, total = 40) {
+    function resumeByKeyShuffle(programKey: string, startRank = 1, total = 40) {
+        resumeByKey(programKey, startRank, total, {forceShuffle: true});
+    }
+
+    function resumeByKey(
+        programKey: string,
+        startRank = 1,
+        total = 40,
+        opts?: { forceShuffle?: boolean }
+    ) {
         const parts = programKey.split('|');
         const type = parts[0];
         const settings = get(playbackSettingsStore);
+
+        const launchOrder: PlaybackOrder = opts?.forceShuffle ? 'shuffle' : settings.playbackOrder;
 
         let url: string;
 
@@ -472,7 +483,7 @@
                 genre,
                 language: selection.language,
                 voices: settings.voices,
-                playbackOrder: settings.playbackOrder,
+                playbackOrder: launchOrder,
                 voicePlayMode: settings.voicePlayMode,
                 pauseMode: settings.pauseMode,
                 skipPlayed: settings.skipPlayed
@@ -497,7 +508,7 @@
                 collectionCategory,
                 language: selection.language,
                 voices: settings.voices,
-                playbackOrder: settings.playbackOrder,
+                playbackOrder: launchOrder,
                 voicePlayMode: settings.voicePlayMode,
                 pauseMode: settings.pauseMode,
                 skipPlayed: settings.skipPlayed
@@ -509,7 +520,7 @@
         }
 
         // append resume rank
-        const finalUrl = `${url}&startRank=${startRank}`;
+        const finalUrl = `${url}&startRank=${startRank}&endRank=${total}`;
 
         console.log("🚀 Final URL:", finalUrl);
 
@@ -620,10 +631,9 @@
 
                                     <div class="history-row__actions">
                                         {#if block.decade === 'ALL'}
-                                            <!-- Combined decades: Shuffle play only -->
                                             <button
                                                     class="btn btn--primary"
-                                                    on:click={() => resumeByKey(row.key, 1, row.total)}
+                                                    on:click={() => resumeByKeyShuffle(row.key, 1, row.total)}
                                             >
                                                 🔀 Shuffle Play
                                             </button>
