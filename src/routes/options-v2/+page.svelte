@@ -317,6 +317,7 @@
     async function launchCarMode() {
         const base = {
             layoutMode: 'car' as const,
+            programType: get(currentSelection).programType,   // ⭐ add this
             language,
             voices: selectedVoices,
             startRank,
@@ -346,6 +347,8 @@
         const url = await launchWithPlayback(
             payload as Parameters<typeof launchWithPlayback>[0]
         );
+
+        console.log("🧭 URL returned from launchWithPlayback:", url);
 
         if (!url) return;
 

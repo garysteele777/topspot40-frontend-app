@@ -7,6 +7,7 @@ export type LayoutMode = 'car' | 'list';
 
 export type BuildParams = {
     layoutMode: LayoutMode;
+    programType?: string;   // ⭐ add this
 
     // browsing
     decade?: string;
@@ -52,6 +53,8 @@ function addParam(
 export function buildLaunchUrl(p: BuildParams): string {
     const base = p.layoutMode === 'car' ? '/car-page' : '/list-page';
     const qs = new URLSearchParams();
+
+    addParam(qs, 'programType', p.programType);
 
     // mode resolver
     if (p.collection) {

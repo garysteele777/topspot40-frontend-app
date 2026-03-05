@@ -7,6 +7,7 @@ import {normalizeVoices} from '$lib/helpers/normalizeVoices';
 
 export function buildSelectionFromUrl(url: URL): SelectionState {
     const sp = url.searchParams;
+    const programType = (sp.get('programType') ?? 'DG') as SelectionState['programType'];
 
     const decade = sp.get('decade') ?? '';
     const genre = sp.get('genre') ?? '';
@@ -124,10 +125,15 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     }
 
     return {
-        programType: 'DG',
+        programType,
         mode: 'decade_genre',
         language,
-        context: {decade, genre},
+        context: {
+            decade,
+            genre,
+            favoritesType: programType === 'FAV_DG' ? 'DG' : '',
+            favoritesGroup: programType === 'FAV_DG' ? decade : ''
+        },
         startRank: finalStartRank,
         endRank: finalEndRank,
         currentRank,

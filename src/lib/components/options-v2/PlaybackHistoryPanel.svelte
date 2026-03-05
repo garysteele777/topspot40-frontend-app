@@ -2,6 +2,7 @@
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+    import {launchWithPlayback} from '$lib/utils/buildLaunchUrl';
 
     import {
         countFavorites,
@@ -152,7 +153,7 @@
     type PauseMode = 'pause_between' | 'continuous';
     type VoicePlayMode = 'before' | 'over';
 
-    function playShuffleFavorites(decade: string) {
+    async function playShuffleFavorites(decade: string) {
         console.log('▶ Shuffle Favorites for', decade);
 
         currentSelection.update((s) => ({
@@ -172,7 +173,22 @@
             playbackOrder: 'shuffle'
         }));
 
-        goto('/car-page');
+        const s = get(currentSelection);
+
+        const url = await launchWithPlayback({
+            layoutMode: 'car',
+            programType: s.programType,   // ⭐ ADD THIS
+            language: s.language,
+            playbackOrder: s.playbackOrder,
+            skipPlayed: s.skipPlayed,
+            pauseMode: s.pauseMode,
+            voicePlayMode: 'before',
+            voices: s.voices,
+
+            decade: s.context?.decade ?? decade,
+            genre: 'ALL'
+        });
+        if (url) goto(url);
     }
 
     function playShuffleAllDecadeFavorites() {
@@ -195,7 +211,22 @@
             playbackOrder: 'shuffle'
         }));
 
-        goto('/car-page');
+        const s = get(currentSelection);
+
+        const url = buildLaunchUrl({
+            layoutMode: 'car',
+            programType: s.programType,
+            language: s.language,
+            voices: s.voices,
+            playbackOrder: 'shuffle',
+            voicePlayMode: 'before',
+            pauseMode: s.pauseMode,
+            skipPlayed: s.skipPlayed,
+            decade: 'ALL',
+            genre: 'ALL'
+        });
+
+        goto(url);
     }
 
     function totalPlayedAcrossAll(): number {
