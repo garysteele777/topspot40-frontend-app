@@ -196,7 +196,8 @@
             voices: s.voices,
 
             decade,
-            genre
+            genre,
+            favoritesGroup: group
         });
 
         if (url) goto(url);

@@ -12,6 +12,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const decade = sp.get('decade') ?? '';
     const genre = sp.get('genre') ?? '';
     const collection = sp.get('collection') ?? '';
+    const favoritesGroup = sp.get('favoritesGroup') ?? '';
 
     const language = normalizeLanguage(sp.get('language'));
 
@@ -132,7 +133,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             decade,
             genre,
             favoritesType: programType === 'FAV_DG' ? 'DG' : '',
-            favoritesGroup: programType === 'FAV_DG' ? decade : ''
+            favoritesGroup: programType === 'FAV_DG' ? favoritesGroup : ''
         },
         startRank: finalStartRank,
         endRank: finalEndRank,

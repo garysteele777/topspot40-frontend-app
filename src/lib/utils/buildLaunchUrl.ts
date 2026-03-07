@@ -15,6 +15,8 @@ export type BuildParams = {
     collection?: string;
     collectionCategory?: string;
 
+    // ⭐ FAVORITES
+    favoritesGroup?: string;
 
     // playback
     language: string;
@@ -66,6 +68,7 @@ export function buildLaunchUrl(p: BuildParams): string {
         qs.set('mode', 'decade_genre');
         addParam(qs, 'decade', p.decade);
         addParam(qs, 'genre', p.genre);
+        addParam(qs, 'favoritesGroup', p.favoritesGroup);
     }
 
     // main params (same keys you already use)
