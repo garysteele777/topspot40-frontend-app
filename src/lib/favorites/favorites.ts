@@ -86,6 +86,13 @@ export function toggleFavorite(
 
     let result = {added: false, count: 0};
 
+    if (program === 'DG' && !group.includes('|')) {
+        console.warn("Invalid DG favorite group:", group);
+        return {added: false, count: 0};
+    }
+
+    console.log("toggleFavorite called with:", program, group, rankingId);
+
     favoritesStore.update((data) => {
 
         const existing = data[program][group] ?? [];

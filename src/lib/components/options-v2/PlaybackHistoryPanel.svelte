@@ -24,6 +24,7 @@
     import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
     import {goto} from '$app/navigation';
     import {currentSelection} from '$lib/carmode/CarMode.store';
+    import {favoritesStore} from '$lib/favorites/favorites';
 
     let catalogDecades: string[] = [];
     let catalogGenres: string[] = [];
@@ -111,6 +112,10 @@
         return [...new Set(all)];
     }
 
+    function getGenreFavorites(decade: string, genre: string): number[] {
+        return getFavorites('DG', `${decade}|${genre}`);
+    }
+
     // ─────────────────────────────────────────────
     // Launch helpers (avoid URL parsing crashes)
     // ─────────────────────────────────────────────
@@ -153,8 +158,13 @@
     type PauseMode = 'pause_between' | 'continuous';
     type VoicePlayMode = 'before' | 'over';
 
-    async function playShuffleFavorites(decade: string) {
-        console.log('▶ Shuffle Favorites for', decade);
+    async function playShuffleFavorites(group: string) {
+
+        const [decade, genre] = group.includes('|')
+            ? group.split('|')
+            : [group, 'ALL'];
+
+        console.log('▶ Shuffle Favorites for', group);
 
         currentSelection.update((s) => ({
             ...s,
@@ -165,10 +175,10 @@
             context: {
                 ...(s.context ?? {}),
                 favoritesType: 'DG',
-                favoritesGroup: decade,
-                decade
+                favoritesGroup: group,
+                decade,
+                genre
             },
-
 
             playbackOrder: 'shuffle'
         }));
@@ -177,7 +187,7 @@
 
         const url = await launchWithPlayback({
             layoutMode: 'car',
-            programType: s.programType,   // ⭐ ADD THIS
+            programType: s.programType,
             language: s.language,
             playbackOrder: s.playbackOrder,
             skipPlayed: s.skipPlayed,
@@ -185,9 +195,10 @@
             voicePlayMode: 'before',
             voices: s.voices,
 
-            decade: s.context?.decade ?? decade,
-            genre: 'ALL'
+            decade,
+            genre
         });
+
         if (url) goto(url);
     }
 
@@ -229,18 +240,16 @@
         goto(url);
     }
 
-    function totalPlayedAcrossAll(): number {
-        let total = 0;
 
-        for (const realDecade of catalogDecades) {
-            for (const genre of catalogGenres) {
-                const key = `DG|${realDecade}|${genre}`;
-                const p = historyByKey.get(key);
-                total += p?.playedRanks.length ?? 0;
-            }
+    function clearDecadeFavorites(decade: string) {
+        for (const genre of catalogGenres) {
+            clearFavorites('DG', `${decade}|${genre}`);
         }
+    }
 
-        return total;
+    function totalPlayedAcrossAll(): number {
+        return Object.values(playedCountByProgram)
+            .reduce((sum, n) => sum + n, 0);
     }
 
     onMount(async () => {
@@ -287,6 +296,37 @@
         return m;
     })();
 
+    $: decadeFavoriteCounts = (() => {
+        const data = $favoritesStore.DG;
+        const result: Record<string, number> = {};
+
+        for (const key in data) {
+
+            // ignore invalid keys like "1950s"
+            if (!key.includes('|')) continue;
+
+            const [decade] = key.split('|');
+
+            if (!result[decade]) {
+                result[decade] = 0;
+            }
+
+            result[decade] += data[key].length;
+        }
+
+        return result;
+    })();
+
+    $: playedCountByProgram = (() => {
+        const result: Record<string, number> = {};
+
+        for (const p of $programHistory) {
+            result[p.key] = p.playedRanks.length;
+        }
+
+        return result;
+    })();
+
 
     $: decadeGenreMap = (() => {
         const sortedDecades = [...catalogDecades]
@@ -297,15 +337,9 @@
             // ───────────── ALL synthetic block ─────────────
             if (decade === 'ALL') {
 
-                let totalPlayedAll = 0;
-
-                for (const realDecade of catalogDecades) {
-                    for (const genre of catalogGenres) {
-                        const key = `DG|${realDecade}|${genre}`;
-                        const p = historyByKey.get(key);
-                        totalPlayedAll += p?.playedRanks.length ?? 0;
-                    }
-                }
+                const totalPlayedAll = Object.entries(playedCountByProgram)
+                    .filter(([key]) => key.startsWith('DG|'))
+                    .reduce((sum, [, count]) => sum + count, 0);
 
                 const superAllRow = {
                     decade: 'ALL',
@@ -323,13 +357,9 @@
 
                 const perGenreRows = catalogGenres.map(genre => {
 
-                    let totalPlayed = 0;
-
-                    for (const realDecade of catalogDecades) {
-                        const key = `DG|${realDecade}|${genre}`;
-                        const p = historyByKey.get(key);
-                        totalPlayed += p?.playedRanks.length ?? 0;
-                    }
+                    const totalPlayed = Object.entries(playedCountByProgram)
+                        .filter(([key]) => key.endsWith(`|${genre}`))
+                        .reduce((sum, [, count]) => sum + count, 0);
 
                     return {
                         decade: 'ALL',
@@ -579,15 +609,10 @@
             {:else}
 
                 {#each decadeGenreMap as block}
-                    {@const favCount = block.decade === 'ALL'
-                        ? catalogDecades.reduce((decadeTotal, realDecade) => {
-                            return decadeTotal + catalogGenres.reduce((genreTotal, genre) => {
-                                return genreTotal + countFavorites('DG', `${realDecade}|${genre}`);
-                            }, 0);
-                        }, 0)
-                        : catalogGenres.reduce((total, genre) => {
-                            return total + countFavorites('DG', `${block.decade}|${genre}`);
-                        }, 0)
+                    {@const favCount =
+                        block.decade === 'ALL'
+                            ? Object.values(decadeFavoriteCounts).reduce((a, b) => a + b, 0)
+                            : decadeFavoriteCounts[block.decade] ?? 0
                     }
                     <details class="history-subsection">
                         <summary class="history-subsection__summary">
@@ -631,12 +656,40 @@
                                     <button
                                             class="btn btn--ghost"
                                             disabled={favCount === 0}
-                                            on:click={() => clearFavorites('DG', block.decade)}
+                                            on:click={() => clearDecadeFavorites(block.decade)}
                                     >
                                         🧹
                                     </button>
                                 </div>
                             </li>
+
+                            {#if block.decade !== 'ALL'}
+                                {#each catalogGenres as genre}
+                                    {@const genreFavCount = countFavorites('DG', `${block.decade}|${genre}`)}
+
+                                    {#if genreFavCount > 0}
+                                        <li class="history-row history-row--favorite">
+                <span class="history-row__label">
+                    ⭐ {block.decade} {toTitleCaseFromSlug(genre)} Favorites
+                </span>
+
+                                            <span class="history-row__progress">
+                    {genreFavCount} Tracks
+                </span>
+
+                                            <div class="history-row__actions">
+                                                <button
+                                                        class="btn btn--primary"
+                                                        on:click={() => playShuffleFavorites(`${block.decade}|${genre}`)}
+                                                >
+                                                    ▶ Play Shuffle
+                                                </button>
+                                            </div>
+                                        </li>
+                                    {/if}
+                                {/each}
+                            {/if}
+
 
                             {#each block.genres as row}
                                 <li class="history-row history-row--genre">
