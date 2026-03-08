@@ -33,22 +33,23 @@ export async function loadForSelection(
 
         let favoriteIds: number[] = [];
 
-        if (group === 'ALL') {
-            // Pull from favorites store directly
-            const raw = localStorage.getItem('ts-favorites-v1');
-            if (raw) {
-                const parsed = JSON.parse(raw) as { DG?: Record<string, number[]> };
-                const dg = parsed?.DG ?? {};
+        if (sel.context?.genre === 'ALL') {
+            const decade = sel.context?.decade;
 
-                for (const decade of Object.keys(dg)) {
-                    favoriteIds.push(...dg[decade]);
+            if (decade) {
+                const raw = localStorage.getItem('ts-favorites-v1');
+
+                if (raw) {
+                    const parsed = JSON.parse(raw) as { DG?: Record<string, number[]> };
+                    const dg = parsed?.DG ?? {};
+
+                    favoriteIds = Object.entries(dg)
+                        .filter(([key]) => key.startsWith(`${decade}|`))
+                        .flatMap(([, ids]) => ids);
                 }
             }
 
-            // Remove duplicates
             favoriteIds = [...new Set(favoriteIds)];
-        } else {
-            favoriteIds = getFavorites('DG', group);
         }
 
         const response = await fetch(

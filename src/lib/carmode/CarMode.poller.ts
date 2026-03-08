@@ -464,17 +464,27 @@ export function startPlaybackPolling() {
 export async function skipToNextTrack(): Promise<void> {
     console.log('⏭ Manual skip requested');
 
-    // 1) Count current track as played
+    // 1️⃣ Stop Spotify immediately
+    await fetch(`${API_BASE}/playback/stop`, {
+        method: 'POST'
+    }).catch(() => {
+    });
+
+    // small buffer to clear audio pipeline
+    const AUDIO_PIPELINE_CLEAR_DELAY_MS = 1200;
+    await new Promise(resolve => setTimeout(resolve, AUDIO_PIPELINE_CLEAR_DELAY_MS));
+
+    // 2️⃣ Count current track as played
     markPlayed();
 
-    // 2) Stop any narration immediately
+    // 3️⃣ Stop any narration immediately
     narrationQueue = [];
     narrationLock = false;
 
-    // 3) Snap UI to finished
+    // 4️⃣ Snap UI to finished
     finalizeTrackUI();
 
-    // 4) Tell backend to advance (same signal as natural end)
+    // 5️⃣ Tell backend to advance
     await fetch(`${API_BASE}/playback/track-finished`, {
         method: 'POST'
     }).catch(() => {
