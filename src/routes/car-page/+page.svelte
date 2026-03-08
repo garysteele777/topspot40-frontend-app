@@ -42,6 +42,9 @@
 
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
+    let shuffleOrder: number[] = [];
+    let shuffleIndex = 0;
+    let lastProgramKey: string | null = null;
 
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
@@ -49,6 +52,17 @@
     console.log('🌍 Car page API_BASE =', API_BASE);
 
     $: settings = $playbackSettingsStore;
+
+    function shuffleArray<T>(arr: T[]): T[] {
+        const copy = [...arr];
+
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+
+        return copy;
+    }
 
     function stopNarrationAudio() {
         // Kill any browser-side narration audio still playing
@@ -220,7 +234,7 @@
         console.log("TRACK COUNT:", $tracks.length);
         console.log("TRACK RANKS:", $tracks.map(t => t.rank));
 
-        if (!$currentTrack || !$tracks) return;
+        if (!$currentTrack || $tracks.length === 0) return;
 
         const settings = get(playbackSettingsStore);
 
@@ -262,7 +276,7 @@
     }
 
     async function prevTrack() {
-        if (!$currentTrack || !$tracks) return;
+        if (!$currentTrack || $tracks.length === 0) return;
 
         const settings = get(playbackSettingsStore);
 
@@ -340,20 +354,36 @@
             return {nextRank: null, skipped};
         }
 
-        // shuffle
+// shuffle
         const candidates = skipPlayedEnabled
             ? list.filter(t => !playedRanks.includes(t.rank))
             : list;
 
         if (!candidates.length) return {nextRank: null, skipped: 0};
 
-        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+// if only one candidate remains, just return it
+        if (candidates.length === 1) {
+            return {
+                nextRank: candidates[0].rank,
+                skipped: skipPlayedEnabled ? list.length - candidates.length : 0
+            };
+        }
+
+// create shuffle order if needed
+        if (shuffleOrder.length !== candidates.length || shuffleIndex >= shuffleOrder.length) {
+            shuffleOrder = shuffleArray(candidates.map(t => t.rank));
+            shuffleIndex = 0;
+        }
+
+        const nextRank = shuffleOrder[shuffleIndex++];
+
+        const nextTrack = candidates.find(t => t.rank === nextRank);
+
+        if (!nextTrack) return {nextRank: null, skipped: 0};
 
         return {
-            nextRank: pick.rank,
-            skipped: skipPlayedEnabled
-                ? list.length - candidates.length
-                : 0
+            nextRank: nextTrack.rank,
+            skipped: skipPlayedEnabled ? list.length - candidates.length : 0
         };
     }
 
@@ -362,13 +392,23 @@
 
     $: {
         const sel = $currentSelection;
+
         if (!sel) {
+            shuffleOrder = [];
+            shuffleIndex = 0;
             playedRanks = [];
+            lastProgramKey = null;
         } else {
             const key =
                 sel.mode === 'collection'
                     ? `COL|${sel.context?.collection_slug}`
                     : `DG|${sel.context?.decade}|${sel.context?.genre}`;
+
+            if (key !== lastProgramKey) {
+                shuffleOrder = [];
+                shuffleIndex = 0;
+                lastProgramKey = key;
+            }
 
             const history = $programHistoryStore.find(p => p.key === key);
             playedRanks = history?.playedRanks ?? [];

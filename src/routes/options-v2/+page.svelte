@@ -354,8 +354,15 @@
 
         if (browser) {
             const key = buildProgramKey(activeGroup, decades, genres, collections);
-            const label = buildProgramLabel(activeGroup, decades, genres, collections);
 
+            let favoritesGroup: string | undefined;
+
+            if (key.startsWith('DG|')) {
+                const [, decade, genre] = key.split('|');
+                favoritesGroup = `${decade}|${genre}`;
+            }
+
+            const label = buildProgramLabel(activeGroup, decades, genres, collections, favoritesGroup);
             if (activeGroup === 'collection' && collections[0]) {
                 upsertProgram(
                     key,

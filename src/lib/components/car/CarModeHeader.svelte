@@ -54,16 +54,31 @@
             {#if mode === 'decade_genre'}
   <span class="cm-main-text">
 
-    {#if programType === 'FAV_DG'}
-      {#if (decade ?? '').toUpperCase() === 'ALL'}
+{#if programType === 'FAV_DG'}
+
+  {#if (decade ?? '').toUpperCase() === 'ALL'}
+
+      {#if genre}
+          ⭐ All Decades {genre.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} Favorites
+      {:else}
           ⭐ All Decades Favorites (All Genres)
+      {/if}
+
+  {:else}
+
+      {#if genre}
+          ⭐ {decade ?? '—'} {genre.replace(/_/g, ' ')} Favorites
       {:else}
           ⭐ {decade ?? '—'} Favorites (All Genres)
       {/if}
 
-    {:else}
-      {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
-    {/if}
+  {/if}
+
+{:else}
+
+  {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
+
+{/if}
 
   </span>
             {:else}
