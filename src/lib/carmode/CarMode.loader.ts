@@ -33,23 +33,14 @@ export async function loadForSelection(
 
         let favoriteIds: number[] = [];
 
-        if (sel.context?.genre === 'ALL') {
-            const decade = sel.context?.decade;
+        const raw = localStorage.getItem('ts-favorites-v1');
 
-            if (decade) {
-                const raw = localStorage.getItem('ts-favorites-v1');
+        if (raw) {
+            const parsed = JSON.parse(raw) as { DG?: Record<string, number[]> };
+            const dg = parsed?.DG ?? {};
 
-                if (raw) {
-                    const parsed = JSON.parse(raw) as { DG?: Record<string, number[]> };
-                    const dg = parsed?.DG ?? {};
-
-                    favoriteIds = Object.entries(dg)
-                        .filter(([key]) => key.startsWith(`${decade}|`))
-                        .flatMap(([, ids]) => ids);
-                }
-            }
-
-            favoriteIds = [...new Set(favoriteIds)];
+            // ⭐ use the exact group key
+            favoriteIds = dg[group] ?? [];
         }
 
         const response = await fetch(
@@ -65,6 +56,8 @@ export async function loadForSelection(
             status.set('Failed to load favorites.');
             return;
         }
+
+        console.log("⭐ FAVORITES loaded:", favoriteIds);
 
         const data: unknown = await response.json();
 

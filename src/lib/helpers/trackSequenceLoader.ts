@@ -85,10 +85,17 @@ function mapItemsToTracks(
 
     for (const raw of rows) {
         const r = raw.rank ?? 0;
-        if (r < startRank || r > endRank) continue;
+
+        if (r < startRank || r > Math.min(endRank, 40)) continue;
 
         const row = preNormalizeRow(raw);
-        result.push(normalizeTrack(row));
+        const track = normalizeTrack(row);
+
+        track.sourceRank = track.rank;
+        track.decadeSlug = row.decadeSlug ?? row.decade_slug ?? undefined;
+        track.decadeName = (track.decadeSlug ?? '').toUpperCase();
+
+        result.push(track);
     }
 
     return result.sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
@@ -221,10 +228,12 @@ export async function loadTrackSequence(
         if (!rows.length) return [];
 
         const mapped = mapItemsToTracks(rows, startRank, endRank);
-        const capped = mapped.slice(0, PROGRAM_LENGTH);
 
-        loaderCache.set(key, capped);
-        return capped;
+// Only cap normal decades to 40
+        const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);
+
+        loaderCache.set(key, finalTracks);
+        return finalTracks;
 
     } catch (err) {
         console.error('❌ loadTrackSequence failed:', err);

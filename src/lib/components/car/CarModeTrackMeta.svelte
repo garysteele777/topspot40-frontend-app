@@ -47,15 +47,30 @@
 <!-- META -->
 <div class="meta-under-cover">
 <span class="text-gray-400 text-sm">
-  {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
-    {@const rid = currentTrack?.rankingId}
-      {@const idx = rid != null ? tracks.findIndex(t => t.rankingId === rid) : -1}
-      Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
-  {:else}
-    Rank {currentTrack?.rank ?? '?'} of {tracks.length}
-  {/if}
-</span>
 
+{#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
+
+    {@const rid = currentTrack?.rankingId}
+    {@const idx = rid != null ? tracks.findIndex(t => t.rankingId === rid) : -1}
+
+    Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
+
+{:else if tracks.length > 40}
+
+    {@const rid = currentTrack?.rankingId}
+    {@const idx = rid != null ? tracks.findIndex(t => t.rankingId === rid) : -1}
+
+    Pick #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
+    • Rank {currentTrack?.sourceRank ?? currentTrack?.rank ?? '?'}
+    from the {currentTrack?.decadeName ?? currentTrack?.decadeSlug ?? '?'} chart
+
+{:else}
+
+    Rank {currentTrack?.rank ?? '?'} of {tracks.length}
+
+{/if}
+
+</span>
 
     <div class="track-title">— {titleCased}</div>
     <div class="text-gray-200">{artistCased}</div>
