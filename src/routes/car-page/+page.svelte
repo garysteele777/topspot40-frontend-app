@@ -616,7 +616,6 @@
             sel = buildSelectionFromUrl(url);
             console.log('🔥 BUILT SELECTION FROM URL (raw):', sel);
 
-            sel = buildSelectionFromUrl(url);
             currentSelection.set(sel);
 
             console.log('✅ SELECTION AFTER MERGE (store wins):', sel);
@@ -660,7 +659,7 @@
 // 🧠 Adjust initial track if skipPlayed is enabled
         const settings = get(playbackSettingsStore);
 
-        if (settings.skipPlayed) {
+        if (settings.skipPlayed && !$currentTrack) {
             const {nextRank, skipped} = resolveInitialRank(
                 $tracks,
                 settings.playbackOrder,

@@ -68,6 +68,12 @@ const asAudioKey = (v: unknown): AudioKey | null => {
     return bucket && key ? {bucket, key} : null;
 };
 
+function decadeFromYear(year: number | null): string | null {
+    if (!year) return null;
+    const decade = Math.floor(year / 10) * 10;
+    return `${decade}s`;
+}
+
 
 function firstDefined(raw: RawTrack, keys: string[]): unknown {
     for (const k of keys) {
@@ -99,6 +105,11 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
     const albumArtworkVal = firstDefined(raw, ['albumArtwork', 'album_artwork', 'album_image_url']);
 
     const yearReleasedVal = firstDefined(raw, ['yearReleased', 'year_released', 'release_year']);
+    const decadeSlugVal = firstDefined(raw, ['decadeSlug', 'decade_slug']);
+    const decadeNameVal = firstDefined(raw, ['decadeName', 'decade_name']);
+
+    const genreSlugVal = firstDefined(raw, ['genreSlug', 'genre_slug']);
+    const genreNameVal = firstDefined(raw, ['genreName', 'genre_name']);
 
     const durationMsVal = firstDefined(raw, ['durationMs', 'duration_ms']);
     const spotifyTrackIdVal = firstDefined(raw, ['spotifyTrackId', 'spotify_id', 'track_spotify_id']);
@@ -111,6 +122,13 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
     const detailKeyVal = firstDefined(raw, ['detailKey']);
     const artistKeyVal = firstDefined(raw, ['artistKey']);
     const artistArtworkVal = firstDefined(raw, ['artistArtwork', 'artist_artwork']);
+
+    const yearReleased = asNumber(yearReleasedVal, null);
+
+    const decade =
+        asString(decadeNameVal) ??
+        asString(decadeSlugVal) ??
+        decadeFromYear(yearReleased);
 
 
     return {
@@ -126,7 +144,13 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         albumArtwork: asString(albumArtworkVal, null),
         artistArtwork: asString(artistArtworkVal, null),
 
-        yearReleased: asNumber(yearReleasedVal, null),
+        yearReleased,
+
+        decadeSlug: decade,
+        decadeName: decade,
+
+        genreSlug: asString(genreSlugVal, null),
+        genreName: asString(genreNameVal, null),
 
         durationMs: asNumber(durationMsVal, null),
 

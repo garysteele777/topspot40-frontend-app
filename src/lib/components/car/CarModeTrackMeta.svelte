@@ -42,6 +42,16 @@
         phase === 'track' && currentTrack?.durationMs
             ? Math.floor(currentTrack.durationMs / 1000)
             : duration;
+
+    let idx = -1;
+
+    $: {
+        const rid = currentTrack?.rankingId;
+        idx =
+            rid != null
+                ? tracks.findIndex(t => tracks.findIndex(t => t.rankingId === rid))
+                : -1;
+    }
 </script>
 
 <!-- META -->
@@ -50,19 +60,13 @@
 
 {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
 
-    {@const rid = currentTrack?.rankingId}
-    {@const idx = rid != null ? tracks.findIndex(t => t.rankingId === rid) : -1}
-
     Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
 
 {:else if tracks.length > 40}
 
-    {@const rid = currentTrack?.rankingId}
-    {@const idx = rid != null ? tracks.findIndex(t => t.rankingId === rid) : -1}
-
     Pick #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
     • Rank {currentTrack?.sourceRank ?? currentTrack?.rank ?? '?'}
-    from the {currentTrack?.decadeName ?? currentTrack?.decadeSlug ?? '?'} chart
+    • Released {currentTrack?.yearReleased ?? '?'}
 
 {:else}
 

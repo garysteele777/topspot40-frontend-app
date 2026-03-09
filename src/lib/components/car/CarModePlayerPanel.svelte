@@ -126,7 +126,19 @@
     }
 
 
-    $: console.log('Current track:', currentTrack);
+    let lastTrackKey: string | null = null;
+
+    $: {
+        const key =
+            currentTrack
+                ? `${currentTrack.trackName}|${currentTrack.artistName}`
+                : null;
+
+        if (key !== lastTrackKey) {
+            console.log('Current track:', currentTrack);
+            lastTrackKey = key;
+        }
+    }
 
     $: isFavoritesProgram =
         $currentSelection?.programType === 'FAV_DG' ||

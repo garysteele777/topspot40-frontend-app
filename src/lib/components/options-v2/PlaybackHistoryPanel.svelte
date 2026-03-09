@@ -57,14 +57,14 @@
 
 
     const genreIconMap: Record<string, string> = {
-        blues_jazz: '🎷',
-        country: '🤠',
-        folk_acoustic: '🪕',
-        latin_global: '💃',
-        pop: '🎤',
-        rnb_soul: '🎹',
-        rock: '🎸',
-        tv_themes: '📺'
+        blues_jazz: '. . . 🎷',
+        country: '. . . 🤠',
+        folk_acoustic: '. . . 🪕',
+        latin_global: '. . . 💃',
+        pop: '. . . 🎤',
+        rnb_soul: '. . . 🎹',
+        rock: '. . . 🎸',
+        tv_themes: '. . . 📺'
     };
 
     function getGenreIcon(slug: string | undefined): string {
