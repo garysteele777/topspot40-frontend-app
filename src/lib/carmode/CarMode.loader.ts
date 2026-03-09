@@ -8,6 +8,8 @@ import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
 import {getFavorites} from '$lib/favorites/favorites';
 
+import {upsertProgram, type ProgramKey} from '$lib/carmode/programHistory';
+
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
 export async function loadForSelection(
@@ -39,9 +41,24 @@ export async function loadForSelection(
             const parsed = JSON.parse(raw) as { DG?: Record<string, number[]> };
             const dg = parsed?.DG ?? {};
 
-            // ⭐ use the exact group key
-            favoriteIds = dg[group] ?? [];
+            const decade = sel.context?.decade;
+            const genre = sel.context?.genre;
+
+            if (genre === 'ALL' && decade) {
+                // ⭐ combine all genres for the decade
+                favoriteIds = Object.entries(dg)
+                    .filter(([key]) => key.startsWith(`${decade}|`))
+                    .flatMap(([, ids]) => ids);
+            } else {
+                // ⭐ normal single-genre favorites
+                favoriteIds = dg[group] ?? [];
+            }
         }
+
+// remove duplicates
+        favoriteIds = [...new Set(favoriteIds)];
+
+        console.log("⭐ FAVORITES loaded:", favoriteIds);
 
         const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/supabase/decade-genre/get-favorites`,
@@ -97,6 +114,36 @@ export async function loadForSelection(
         const ordered = applyPlaybackOrder(normalized, 'shuffle');
 
         tracks.set(ordered.map(toCarModeTrack));
+
+        // Initialize program history entry
+        if (sel.mode === 'decade_genre') {
+            const decade = sel.context?.decade;
+            const genre = sel.context?.genre;
+
+            if (decade && genre) {
+                const key = `DG|${decade}|${genre}` as ProgramKey;
+
+                upsertProgram(
+                    key,
+                    `${decade} • ${genre}`,
+                    ordered.length
+                );
+            }
+        }
+
+        if (sel.mode === 'collection') {
+            const slug = sel.context?.collection_slug;
+
+            if (slug) {
+                const key = `COL|${slug}` as ProgramKey;
+
+                upsertProgram(
+                    key,
+                    slug,
+                    ordered.length
+                );
+            }
+        }
 
         const first = ordered[0] ?? null;
         currentTrack.set(first ? toCarModeTrack(first) : null);
@@ -158,6 +205,40 @@ export async function loadForSelection(
 
         // 3) Set tracks FIRST (so UI shows Rank X of N correctly)
         tracks.set(ordered.map(toCarModeTrack));
+
+        // Initialize program history entry
+        if (sel.mode === 'decade_genre') {
+            const decade = sel.context?.decade;
+            const genre = sel.context?.genre;
+
+            if (decade && genre) {
+                const programKey = `DG|${decade}|${genre}` as ProgramKey;
+
+                console.log('🧠 Creating program history:', programKey);
+
+                upsertProgram(
+                    programKey,
+                    `${decade} • ${genre}`,
+                    ordered.length
+                );
+            }
+        }
+
+        if (sel.mode === 'collection') {
+            const slug = sel.context?.collection_slug;
+
+            if (slug) {
+                const programKey = `COL|${slug}` as ProgramKey;
+
+                console.log('🧠 Creating collection history:', programKey);
+
+                upsertProgram(
+                    programKey,
+                    slug,
+                    ordered.length
+                );
+            }
+        }
 
         // 4) Pick the initial track.
         // Use initialRank if provided; else default to 1.

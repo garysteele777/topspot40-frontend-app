@@ -9,7 +9,11 @@
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
-    import {programHistoryStore} from '$lib/carmode/programHistory';
+    import {
+        programHistoryStore,
+        markRankPlayed,
+        type ProgramKey
+    } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
     import {
         startPlaybackPolling,
@@ -45,7 +49,7 @@
     let shuffleOrder: number[] = [];
     let shuffleIndex = 0;
     let lastProgramKey: string | null = null;
-
+    let programKey: ProgramKey | null = null;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -243,7 +247,20 @@
         // 1. Stop backend playback and WAIT
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
 
-        playedRanks.push($currentTrack.rank);
+        if (!playedRanks.includes($currentTrack.rank)) {
+            playedRanks.push($currentTrack.rank);
+        }
+
+        const sel = $currentSelection;
+
+        if (sel) {
+            const key: ProgramKey =
+                sel.mode === 'collection'
+                    ? `COL|${sel.context?.collection_slug}`
+                    : `DG|${sel.context?.decade}|${sel.context?.genre}`;
+
+            markRankPlayed(key, $currentTrack.rank);
+        }
 
         // 2. Compute next rank locally
         const {nextRank, skipped} = resolveNextRank(
@@ -398,11 +415,14 @@
             shuffleIndex = 0;
             playedRanks = [];
             lastProgramKey = null;
+            programKey = null;
         } else {
-            const key =
+            const key: ProgramKey =
                 sel.mode === 'collection'
                     ? `COL|${sel.context?.collection_slug}`
                     : `DG|${sel.context?.decade}|${sel.context?.genre}`;
+
+            programKey = key;
 
             if (key !== lastProgramKey) {
                 shuffleOrder = [];

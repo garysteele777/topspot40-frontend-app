@@ -58,26 +58,38 @@ let narrationSignaled = false;
 
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
-import {markRankPlayed} from '$lib/carmode/programHistory';
+import {markRankPlayed, programHistoryStore} from '$lib/carmode/programHistory';
 
 
 function markPlayed(): void {
     const sel = get(currentSelection);
-    if (!sel || !sel.context || lastRank == null) return;
+    const track = get(currentTrack);
+
+    if (!sel || !track) return;
 
     let key: ProgramKey | null = null;
 
     if (sel.mode === 'decade_genre') {
-        key = `DG|${sel.context.decade}|${sel.context.genre}`;
+        key = `DG|${sel.context?.decade}|${sel.context?.genre}`;
     } else if (sel.mode === 'collection') {
-        key = `COL|${sel.context.collection_slug}`;
+        key = `COL|${sel.context?.collection_slug}`;
     }
 
     if (!key) return;
 
-    markRankPlayed(key, lastRank);
-}
+    const history = get(programHistoryStore)
+        .find(p => p.key === key);
 
+    if (!history) {
+        // program not yet created → create it
+        markRankPlayed(key, track.rank);
+        return;
+    }
+
+    if (!history.playedRanks.includes(track.rank)) {
+        markRankPlayed(key, track.rank);
+    }
+}
 
 /* ─────────────────────────────────────────────
    Finalize UI when a track ends
