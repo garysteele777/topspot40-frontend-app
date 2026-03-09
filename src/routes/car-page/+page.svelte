@@ -659,30 +659,7 @@
 // 🧠 Adjust initial track if skipPlayed is enabled
         const settings = get(playbackSettingsStore);
 
-        if (settings.skipPlayed && !$currentTrack) {
-            const {nextRank, skipped} = resolveInitialRank(
-                $tracks,
-                settings.playbackOrder,
-                true,
-                playedRanks
-            );
-
-            if (nextRank != null) {
-                const next = $tracks.find(t => t.rank === nextRank);
-                if (next) {
-                    currentRank.set(next.rank);
-                    currentTrack.set(next);
-
-                    if (skipped > 0) {
-                        status.set(
-                            `🎵 Already heard that one… jumping ahead! (${skipped} skipped)`
-                        );
-                    }
-                }
-            }
-        }
-
-/// ─────────────────────────────────────────────
+        /// ─────────────────────────────────────────────
 // Prepare Spotify playback (warmup)
 // ─────────────────────────────────────────────
 
@@ -735,9 +712,20 @@
                 onPrev={prevTrack}
                 onNext={nextTrack}
                 onPlayPause={async () => {
-        markUserStartedPlayback();
-        if ($currentTrack) await playTrackByRank($currentTrack.rank);
-    }}
+                if (!$currentTrack) return;
+
+                    markUserStartedPlayback();
+
+                    // 🛑 prevent poller from overriding track during startup
+                    stopPlaybackPolling();
+
+                    currentRank.set($currentTrack.rank);
+
+                    await playTrackByRank($currentTrack.rank);
+
+                    // restart poller after backend begins playback
+                    setTimeout(() => startPlaybackPolling(), 500);
+                }}
                 onBackToOptions={backToOptions}
         />
 

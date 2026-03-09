@@ -56,6 +56,8 @@ let trackFinalized = false;
 let lastRank: number | null = null;
 let narrationSignaled = false;
 
+let manualPlaybackActive = false;
+
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
 import {markRankPlayed, programHistoryStore} from '$lib/carmode/programHistory';
@@ -260,7 +262,9 @@ export function startPlaybackPolling() {
 // ─────────────────────────────
 // Rank change → update UI track card
 // ─────────────────────────────
-            if (typeof data.currentRank === 'number' && data.currentRank !== lastRank) {
+            if (!manualPlaybackActive &&
+                typeof data.currentRank === 'number' &&
+                data.currentRank !== lastRank) {
 
                 // ✅ ADD THIS LINE (counts the previous track as played)
                 markPlayed();
@@ -379,6 +383,7 @@ export function startPlaybackPolling() {
                 const spotifyId = data.context.spotify_track_id as string;
 
                 if (spotifyId !== lastSpotifyId) {
+                    manualPlaybackActive = false;
                     dlog('🎵 TRACK start:', spotifyId);
 
 
@@ -527,5 +532,6 @@ export function stopPlaybackPolling() {
 
 // Compatibility export
 export function markUserStartedPlayback() {
-    console.log('▶️ markUserStartedPlayback called (noop)');
+    manualPlaybackActive = true;
+    console.log('🧠 Manual playback started');
 }
