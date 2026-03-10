@@ -262,40 +262,40 @@ export function startPlaybackPolling() {
 // ─────────────────────────────
 // Rank change → update UI track card
 // ─────────────────────────────
-            if (!manualPlaybackActive &&
-                typeof data.currentRank === 'number' &&
-                data.currentRank !== lastRank) {
-
-                // ✅ ADD THIS LINE (counts the previous track as played)
+            if (
+                manualPlaybackActive &&
+                rankingId != null &&
+                rankingId !== get(currentTrack)?.rankingId
+            ) {
                 markPlayed();
 
                 const list = get(tracks);
-                const next = list.find(t => t.rank === data.currentRank);
+                const next = list.find(t => t.rankingId === rankingId);
 
-                dlog(`🎯 Rank: ${lastRank} → ${data.currentRank}`, next?.trackName);
+                dlog("UI before:", get(currentTrack));
 
-
-                currentRank.set(data.currentRank);
+                dlog("🎯 Track update", {
+                    backendRank: data.currentRank,
+                    rankingId,
+                    track: next?.trackName,
+                    artist: next?.artistName
+                });
 
                 if (next) {
-                    currentTrack.set({
-                        ...next,
-                        rankingId
-                    });
+                    currentTrack.set(next);
+                    currentRank.set(next.rank);
                 }
 
+                manualPlaybackActive = false;
 
-                // Reset progress/UI for new track
                 elapsed.set(0);
                 duration.set(0);
                 progress.set(0);
-
 
                 trackFinalized = false;
 
                 lastRank = data.currentRank;
             }
-
             // Keep rankingId synced even if rank did not change
             const existing = get(currentTrack);
 

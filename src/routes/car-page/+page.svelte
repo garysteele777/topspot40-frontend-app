@@ -5,6 +5,7 @@
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+    import {tick} from 'svelte';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
@@ -79,6 +80,50 @@
 
     function setNarrationModalOpen(v: boolean): void {
         showNarrationModal.set(v);
+    }
+
+    async function playTrack(trackObj: CarModeTrack) {
+
+        console.log("▶️ playTrack called for:", trackObj.trackName, trackObj.artistName);
+
+        const sel = $currentSelection;
+        if (!sel) return;
+
+        const settings = get(playbackSettingsStore);
+
+        const payload = {
+            track: {
+                track_id: trackObj.id,
+                ranking_id: trackObj.rankingId,
+                spotify_track_id: trackObj.spotifyTrackId,
+                rank: trackObj.rank,
+                track_name: trackObj.trackName,
+                artist_name: trackObj.artistName
+            },
+            selection: {
+                language: sel.language,
+                voices: settings.voices,
+                voicePlayMode: settings.voicePlayMode,
+                pauseMode: settings.pauseMode,
+                continuous: settings.pauseMode === 'continuous'
+            },
+            context: {
+                type: 'decade_genre',
+                decade: sel.context?.decade,
+                genre: sel.context?.genre
+            }
+        };
+
+        console.log("🚀 PLAY TRACK REQUEST", payload);
+
+        const res = await fetch(`${API_BASE}/playback/play-track`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        const result = await res.json().catch(() => null);
+        console.log("🎬 play-track response:", result);
     }
 
 
@@ -192,9 +237,9 @@
             }
 
             // ⭐ NORMAL decades → single-track playback
-            const trackObj = $tracks.find(t => t.rank === rank);
+            const trackObj = $currentTrack;
             if (!trackObj) {
-                console.error("No track found for rank:", rank);
+                console.error("No current track selected");
                 return;
             }
 
@@ -274,69 +319,53 @@
         }
 
         // 2. Compute next rank locally
-        const {nextRank, skipped} = resolveNextRank(
-            $tracks,
-            $currentTrack.rank,
-            settings.playbackOrder,
-            settings.skipPlayed,
-            playedRanks
-        );
+        const currentIndex =
+            $tracks.findIndex(t => t.rankingId === $currentTrack.rankingId);
 
-        if (nextRank == null) {
-            console.log('⏭ No valid next track (maybe all played)');
-            return;
+        if (currentIndex === -1) return;
+
+        let nextIndex = currentIndex + 1;
+
+        if (nextIndex >= $tracks.length) {
+            nextIndex = 0; // wrap
         }
 
-        const next = $tracks.find(t => t.rank === nextRank);
-        if (!next) return;
+        const next = $tracks[nextIndex];
 
         currentRank.set(next.rank);
-
-        if (skipped > 0) {
-            status.set(`🎵 Already heard that one… jumping ahead! (${skipped} skipped)`);
-        }
 
         currentTrack.set(next);
 
         await new Promise(r => setTimeout(r, 50));
 
-        await playTrackByRank(next.rank);
+        await playTrack(next);
     }
 
     async function prevTrack() {
         if (!$currentTrack || $tracks.length === 0) return;
 
-        const settings = get(playbackSettingsStore);
-
         stopNarrationAudio();
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
 
-        const {prevRank, skipped} = resolvePreviousRank(
-            $tracks,
-            $currentTrack.rank,
-            settings.playbackOrder,
-            false, // ignore skipPlayed for Previous navigation
-            playedRanks
-        );
+        const currentIndex =
+            $tracks.findIndex(t => t.rankingId === $currentTrack.rankingId);
 
-        if (prevRank == null) {
-            console.log('⏮ No valid previous track');
-            status.set('⏮ Already at the beginning');
-            return;
+        if (currentIndex === -1) return;
+
+        let prevIndex = currentIndex - 1;
+
+        if (prevIndex < 0) {
+            prevIndex = $tracks.length - 1; // wrap
         }
 
-        const prev = $tracks.find(t => t.rank === prevRank);
+        const prev = $tracks[prevIndex];
         if (!prev) return;
 
         currentRank.set(prev.rank);
         currentTrack.set(prev);
 
-        if (skipped > 0) {
-            status.set(`⏮ Skipped ${skipped} already-played track(s)`);
-        }
-
         await new Promise(r => setTimeout(r, 50));
-        await playTrackByRank(prev.rank);
+        await playTrack(prev);
     }
 
 
@@ -666,6 +695,32 @@
         }
         await loadForSelection(sel, initialRank);
 
+        const startupSettings = get(playbackSettingsStore);
+
+
+        // if ($tracks.length > 0 && $currentRank == null) {
+        //
+        //     if (startupSettings.playbackOrder === 'shuffle') {
+        //         const randomIndex = Math.floor(Math.random() * $tracks.length);
+        //         const first = $tracks[randomIndex];
+        //
+        //         currentTrack.set(first);
+        //         currentRank.set(first.rank);
+        //
+        //     } else if (startupSettings.playbackOrder === 'down') {
+        //         const first = $tracks[$tracks.length - 1];
+        //
+        //         currentTrack.set(first);
+        //         currentRank.set(first.rank);
+        //
+        //     } else {
+        //         const first = $tracks[0];
+        //
+        //         currentTrack.set(first);
+        //         currentRank.set(first.rank);
+        //     }
+        // }
+
         // 🧠 Adjust initial track if skipPlayed is enabled
 // 🧠 Adjust initial track if skipPlayed is enabled
         const settings = get(playbackSettingsStore);
@@ -727,9 +782,9 @@
 
                 markUserStartedPlayback();
 
-                currentRank.set($currentTrack.rank);
+                // currentRank.set($currentTrack.rank);
 
-                await playTrackByRank($currentTrack.rank);
+               await playTrack($currentTrack);
             }}
                 onBackToOptions={backToOptions}
         />

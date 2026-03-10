@@ -16,6 +16,15 @@ export async function loadForSelection(
     sel: SelectionState,
     initialRank?: number | null
 ): Promise<void> {
+
+    try {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/playback/reset`, {
+            method: 'POST'
+        });
+    } catch (err) {
+        console.warn('Playback reset failed', err);
+    }
+
     status.set('Loading tracks…');
     console.log('🚀 LOADER selection.programType =', sel.programType);
 
@@ -242,11 +251,22 @@ export async function loadForSelection(
 
         // 4) Pick the initial track.
         // Use initialRank if provided; else default to 1.
-        const startRank = typeof initialRank === 'number' && Number.isFinite(initialRank) ? initialRank : 1;
+        const startRank =
+            sel.playbackOrder === 'shuffle'
+                ? 1
+                : typeof initialRank === 'number' && Number.isFinite(initialRank)
+                    ? initialRank
+                    : 1;
 
-        const first = isInlineFavorites
-            ? (ordered[0] ?? null)
-            : pickInitialTrack(ordered, sel.playbackOrder, startRank, 40);
+        let first: LoadedTrack | null = null;
+
+        if (isInlineFavorites) {
+            first = ordered[0] ?? null;
+        } else if (sel.playbackOrder === 'shuffle') {
+            first = ordered[0] ?? null;
+        } else {
+            first = pickInitialTrack(ordered, sel.playbackOrder, startRank, 40);
+        }
 
         if (first) {
             currentTrack.set(toCarModeTrack(first));

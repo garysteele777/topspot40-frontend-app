@@ -135,7 +135,7 @@
                 : null;
 
         if (key !== lastTrackKey) {
-            console.log('Current track:', currentTrack);
+            console.log('Current track v3:', currentTrack);
             lastTrackKey = key;
         }
     }
