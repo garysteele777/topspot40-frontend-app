@@ -83,6 +83,9 @@
 
 
     async function playTrackByRank(rank: number) {
+
+        console.log("▶️ playTrackByRank called with rank:", rank);
+
         const sel = $currentSelection;
         if (!sel) return;
 
