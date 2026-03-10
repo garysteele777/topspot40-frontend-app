@@ -209,7 +209,7 @@ export async function loadTrackSequence(
             console.log('🎧 Raw rows received from Supabase:', rows.length);
 
             console.table(
-                rows.slice(0, 20).map(r => ({
+                rows.slice(0, 40).map(r => ({
                     rankingId: r.rankingId ?? r.ranking_id,
                     rank: r.rank,
                     track: r.trackName ?? r.track_name,

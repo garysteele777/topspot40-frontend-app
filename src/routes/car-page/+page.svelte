@@ -177,51 +177,97 @@
             return;
         }
 
-        // 🟢 DECADE / SINGLE TRACK MODE
-        const trackObj = $tracks.find(t => t.rank === rank);
-        if (!trackObj) {
-            console.error("No track found for rank:", rank);
-            return;
-        }
+// 🟢 DECADE-GENRE MODE
+        if (sel.mode === 'decade_genre') {
 
-        const payload = {
-            track: {
-                track_id: trackObj.id,
-                spotify_track_id: trackObj.spotifyTrackId,
-                rank: trackObj.rank,
-                track_name: trackObj.trackName,
-                artist_name: trackObj.artistName
-            },
-            selection: {
-                language: sel.language,
-                voices: settings.voices,
-                voicePlayMode: settings.voicePlayMode,
-                pauseMode: settings.pauseMode,
-                continuous: settings.pauseMode === 'continuous'
+            const decade = sel.context?.decade;
+            const genre = sel.context?.genre;
+
+            if (!decade || !genre) {
+                console.error('Missing decade/genre context:', sel.context);
+                return;
             }
-            ,
-            context:
-                sel.mode === 'decade_genre'
-                    ? {
-                        type: 'decade_genre',
-                        decade: sel.context?.decade,
-                        genre: sel.context?.genre
-                    }
-                    : {}
-        };
 
-        console.log('▶️ SINGLE TRACK payload:', payload);
+            // ⭐ ONLY use sequence engine for ALL decades
+            if (decade === 'ALL') {
 
-        const res = await fetch(`${API_BASE}/playback/play-track`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
+                const params = new URLSearchParams({
+                    decade,
+                    genre,
+                    start_rank: String(rank),
+                    end_rank: String(sel.endRank),
 
-        const result = await res.json().catch(() => null);
-        console.log('🎬 play-track response:', result);
+                    mode:
+                        settings.playbackOrder === 'up'
+                            ? 'count_up'
+                            : settings.playbackOrder === 'down'
+                                ? 'count_down'
+                                : 'random',
+
+                    continuous: settings.pauseMode === 'continuous' ? 'true' : 'false',
+
+                    play_intro: settings.voices.includes('intro') ? 'true' : 'false',
+                    play_detail: settings.voices.includes('detail') ? 'true' : 'false',
+                    play_artist_description: settings.voices.includes('artist') ? 'true' : 'false',
+
+                    voice_style: settings.voicePlayMode
+                });
+
+                console.log('🚀 ALL-DECADES SEQUENCE:', params.toString());
+
+                const res = await fetch(
+                    `${API_BASE}/supabase/decade-genre/play-sequence?${params.toString()}`,
+                    {method: 'GET'}
+                );
+
+                const result = await res.json().catch(() => null);
+                console.log('📦 decade-genre-sequence response:', result);
+                status.set('🎶 Starting program…');
+
+                return;
+            }
+
+            // ⭐ NORMAL decades → single-track playback
+            const trackObj = $tracks.find(t => t.rank === rank);
+            if (!trackObj) {
+                console.error("No track found for rank:", rank);
+                return;
+            }
+
+            const payload = {
+                track: {
+                    track_id: trackObj.id,
+                    spotify_track_id: trackObj.spotifyTrackId,
+                    rank: trackObj.rank,
+                    track_name: trackObj.trackName,
+                    artist_name: trackObj.artistName
+                },
+                selection: {
+                    language: sel.language,
+                    voices: settings.voices,
+                    voicePlayMode: settings.voicePlayMode,
+                    pauseMode: settings.pauseMode,
+                    continuous: settings.pauseMode === 'continuous'
+                },
+                context: {
+                    type: 'decade_genre',
+                    decade,
+                    genre
+                }
+            };
+
+            console.log('▶️ SINGLE TRACK payload:', payload);
+
+            const res = await fetch(`${API_BASE}/playback/play-track`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            const result = await res.json().catch(() => null);
+            console.log('🎬 play-track response:', result);
+        }
     }
-
 
     // Backend owns playback now. Frontend only signals stop.
     async function clearAllPlayback() {
@@ -714,18 +760,12 @@
                 onPlayPause={async () => {
                 if (!$currentTrack) return;
 
-                    markUserStartedPlayback();
+                markUserStartedPlayback();
 
-                    // 🛑 prevent poller from overriding track during startup
-                    stopPlaybackPolling();
+                currentRank.set($currentTrack.rank);
 
-                    currentRank.set($currentTrack.rank);
-
-                    await playTrackByRank($currentTrack.rank);
-
-                    // restart poller after backend begins playback
-                    setTimeout(() => startPlaybackPolling(), 500);
-                }}
+                await playTrackByRank($currentTrack.rank);
+            }}
                 onBackToOptions={backToOptions}
         />
 
