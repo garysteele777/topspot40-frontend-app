@@ -9,6 +9,8 @@ import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
 import {getFavorites} from '$lib/favorites/favorites';
 
 import {upsertProgram, type ProgramKey} from '$lib/carmode/programHistory';
+import {get} from 'svelte/store';
+import {programHistoryStore} from '$lib/carmode/programHistory';
 
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
@@ -251,6 +253,32 @@ export async function loadForSelection(
 
         // 4) Pick the initial track.
         // Use initialRank if provided; else default to 1.
+        let candidateTracks = ordered;
+
+        if (sel.skipPlayed) {
+            const history = get(programHistoryStore);
+
+            let programKey: ProgramKey | null = null;
+
+            if (sel.mode === 'decade_genre') {
+                const d = sel.context?.decade;
+                const g = sel.context?.genre;
+                if (d && g) programKey = `DG|${d}|${g}` as ProgramKey;
+            }
+
+            if (sel.mode === 'collection') {
+                const slug = sel.context?.collection_slug;
+                if (slug) programKey = `COL|${slug}` as ProgramKey;
+            }
+
+            if (programKey) {
+                const program = history.find(p => p.key === programKey);
+                const played = new Set(program?.playedRanks ?? []);
+
+                candidateTracks = ordered.filter(t => !played.has(t.rank));
+            }
+        }
+
         const startRank =
             sel.playbackOrder === 'shuffle'
                 ? 1
@@ -261,11 +289,18 @@ export async function loadForSelection(
         let first: LoadedTrack | null = null;
 
         if (isInlineFavorites) {
-            first = ordered[0] ?? null;
+            first = candidateTracks[0] ?? null;
+
         } else if (sel.playbackOrder === 'shuffle') {
-            first = ordered[0] ?? null;
+            first = candidateTracks[0] ?? null;
+
         } else {
-            first = pickInitialTrack(ordered, sel.playbackOrder, startRank, 40);
+            first = pickInitialTrack(
+                candidateTracks,
+                sel.playbackOrder,
+                startRank,
+                candidateTracks.length
+            );
         }
 
         if (first) {

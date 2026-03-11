@@ -2,6 +2,7 @@
     import type {LoadedTrack} from '$lib/utils/normalizeTrack';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
     import {currentSelection} from '$lib/carmode/CarMode.store';
+    import {programHistoryStore} from '$lib/carmode/programHistory';
 
     export let currentTrack: LoadedTrack | null = null;
     export let tracks: LoadedTrack[] = [];
@@ -49,9 +50,29 @@
         const rid = currentTrack?.rankingId;
         idx =
             rid != null
-                ? tracks.findIndex(t => tracks.findIndex(t => t.rankingId === rid))
+                ? tracks.findIndex(t => t.rankingId === rid)
                 : -1;
     }
+
+    let programTotal = tracks.length;
+
+    $: {
+        const sel = $currentSelection;
+        let key: string | null = null;
+
+        if (sel?.mode === 'decade_genre') {
+            const d = sel.context?.decade;
+            const g = sel.context?.genre;
+            if (d && g) key = `DG|${d}|${g}`;
+        }
+
+        const program = key
+            ? $programHistoryStore.find(p => p.key === key)
+            : null;
+
+        programTotal = program?.total ?? tracks.length;
+    }
+
 </script>
 
 <!-- META -->
@@ -70,7 +91,7 @@
 
 {:else}
 
-    Rank {currentTrack?.rank ?? '?'} of {tracks.length}
+    Rank {currentTrack?.rank ?? '?'} of {programTotal}
 
 {/if}
 
