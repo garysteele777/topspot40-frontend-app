@@ -1,11 +1,9 @@
 <script lang="ts">
-    console.log('🚗 MODULE LOADED');
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
-    import {tick} from 'svelte';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
@@ -47,27 +45,11 @@
 
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
-    let shuffleOrder: number[] = [];
-    let shuffleIndex = 0;
     let lastProgramKey: string | null = null;
-    let programKey: ProgramKey | null = null;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
-    console.log('🌍 Car page API_BASE =', API_BASE);
-
     $: settings = $playbackSettingsStore;
-
-    function shuffleArray<T>(arr: T[]): T[] {
-        const copy = [...arr];
-
-        for (let i = copy.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [copy[i], copy[j]] = [copy[j], copy[i]];
-        }
-
-        return copy;
-    }
 
     function stopNarrationAudio() {
         // Kill any browser-side narration audio still playing
@@ -127,158 +109,6 @@
     }
 
 
-    async function playTrackByRank(rank: number) {
-
-        console.log("▶️ playTrackByRank called with rank:", rank);
-
-        const sel = $currentSelection;
-        if (!sel) return;
-
-        const settings = get(playbackSettingsStore);
-
-        // ⭐ FAVORITES MODE (FAV_DG / FAV_COL) → single-track backend
-        if (sel.programType === 'FAV_DG' || sel.programType === 'FAV_COL') {
-            const trackObj = $tracks.find(t => t.rank === rank);
-            if (!trackObj) {
-                console.error("No track found for rank:", rank);
-                return;
-            }
-
-            if (trackObj.rankingId == null) {
-                console.error("Favorites playback requires trackObj.rankingId (TrackRanking.id) but it is null");
-                return;
-            }
-
-            const favPayload = {
-                track: {
-                    track_id: trackObj.id,
-                    spotify_track_id: trackObj.spotifyTrackId,
-                    ranking_id: trackObj.rankingId, // ✅ favorites key
-                    rank: trackObj.rank,
-                    track_name: trackObj.trackName,
-                    artist_name: trackObj.artistName
-                },
-                selection: {
-                    language: sel.language, // program-level for now
-                    voices: settings.voices,
-                    voicePlayMode: settings.voicePlayMode,
-                    pauseMode: settings.pauseMode,
-                    continuous: settings.pauseMode === 'continuous'
-                },
-                context: {
-                    type: 'favorites',
-                    program: sel.programType,          // 'FAV_DG' | 'FAV_COL'
-                    decade: sel.context?.decade ?? null,
-                    collection_slug: sel.context?.collection_slug ?? null
-                }
-            };
-
-            console.log('⭐ FAVORITES play-track payload:', favPayload);
-
-            const res = await fetch(`${API_BASE}/playback/play-track`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(favPayload)
-            });
-
-            const result = await res.json().catch(() => null);
-            console.log('🎬 favorites play-track response:', result);
-            return;
-        }
-
-
-        // 🟢 COLLECTION MODE: start a SEQUENCE, not a single track
-        if (sel.mode === 'collection') {
-            const slug = sel.context?.collection_slug;
-            if (!slug) {
-                console.error('Missing collection_slug context:', sel.context);
-                return;
-            }
-
-            const params = new URLSearchParams({
-                collection_slug: slug,
-                start_rank: String(rank),
-                end_rank: String(sel.endRank),
-                mode:
-                    settings.playbackOrder === 'up'
-                        ? 'count_up'
-                        : settings.playbackOrder === 'down'
-                            ? 'count_down'
-                            : 'random',
-                continuous: settings.pauseMode === 'continuous' ? 'true' : 'false',
-                play_intro: settings.voices.includes('intro') ? 'true' : 'false',
-                play_detail: settings.voices.includes('detail') ? 'true' : 'false',
-                play_artist_description: settings.voices.includes('artist') ? 'true' : 'false',
-                voice_style: settings.voicePlayMode
-            });
-
-
-            console.log('🚀 COLLECTION SEQUENCE:', params.toString());
-
-            const res = await fetch(
-                `${API_BASE}/supabase/collections/play-collection-sequence?${params.toString()}`,
-                {method: 'GET'}
-            );
-
-            const result = await res.json().catch(() => null);
-            console.log('📦 collection-sequence response:', result);
-            return;
-        }
-
-// 🟢 DECADE-GENRE MODE
-        if (sel.mode === 'decade_genre') {
-
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
-
-            if (!decade || !genre) {
-                console.error('Missing decade/genre context:', sel.context);
-                return;
-            }
-
-            // ⭐ NORMAL decades → single-track playback
-            const trackObj = $currentTrack;
-            if (!trackObj) {
-                console.error("No current track selected");
-                return;
-            }
-
-            const payload = {
-                track: {
-                    track_id: trackObj.id,
-                    spotify_track_id: trackObj.spotifyTrackId,
-                    rank: trackObj.rank,
-                    track_name: trackObj.trackName,
-                    artist_name: trackObj.artistName
-                },
-                selection: {
-                    language: sel.language,
-                    voices: settings.voices,
-                    voicePlayMode: settings.voicePlayMode,
-                    pauseMode: settings.pauseMode,
-                    continuous: settings.pauseMode === 'continuous'
-                },
-                context: {
-                    type: 'decade_genre',
-                    decade,
-                    genre
-                }
-            };
-
-            console.log('▶️ SINGLE TRACK payload:', payload);
-            console.log('🚀 PLAY TRACK REQUEST', payload);
-
-            const res = await fetch(`${API_BASE}/playback/play-track`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-
-            const result = await res.json().catch(() => null);
-            console.log('🎬 play-track response:', result);
-        }
-    }
-
     // Backend owns playback now. Frontend only signals stop.
     async function clearAllPlayback() {
         try {
@@ -288,23 +118,22 @@
         }
     }
 
+    async function stopPlayback() {
+        stopNarrationAudio();
+        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
+    }
 
     async function nextTrack() {
-
-        console.log("TRACK COUNT:", $tracks.length);
-        console.log("TRACK RANKS:", $tracks.map(t => t.rank));
-
         if (!$currentTrack || $tracks.length === 0) return;
 
-        const settings = get(playbackSettingsStore);
+        await stopPlayback();
 
-        stopNarrationAudio();
+        const rankingId = $currentTrack.rankingId;
+        if (rankingId == null) return;
 
-        // 1. Stop backend playback and WAIT
-        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
-
-        if (!playedRanks.includes($currentTrack.rank)) {
-            playedRanks.push($currentTrack.rank);
+        // track played ranks using rankingId (safer for ALL mode)
+        if (!playedRanks.includes(rankingId)) {
+            playedRanks.push(rankingId);
         }
 
         const sel = $currentSelection;
@@ -318,22 +147,16 @@
             markRankPlayed(key, $currentTrack.rank);
         }
 
-        // 2. Compute next rank locally
         const currentIndex =
-            $tracks.findIndex(t => t.rankingId === $currentTrack.rankingId);
+            $tracks.findIndex(t => t.rankingId === rankingId);
 
         if (currentIndex === -1) return;
 
-        let nextIndex = currentIndex + 1;
-
-        if (nextIndex >= $tracks.length) {
-            nextIndex = 0; // wrap
-        }
+        const nextIndex = (currentIndex + 1) % $tracks.length;
 
         const next = $tracks[nextIndex];
 
         currentRank.set(next.rank);
-
         currentTrack.set(next);
 
         await new Promise(r => setTimeout(r, 50));
@@ -344,105 +167,32 @@
     async function prevTrack() {
         if (!$currentTrack || $tracks.length === 0) return;
 
-        stopNarrationAudio();
-        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
+        await stopPlayback();
+
+        const rankingId = $currentTrack.rankingId;
+        if (rankingId == null) return;
 
         const currentIndex =
-            $tracks.findIndex(t => t.rankingId === $currentTrack.rankingId);
+            $tracks.findIndex(t => t.rankingId === rankingId);
 
         if (currentIndex === -1) return;
 
-        let prevIndex = currentIndex - 1;
-
-        if (prevIndex < 0) {
-            prevIndex = $tracks.length - 1; // wrap
-        }
-
+        const prevIndex = (currentIndex - 1 + $tracks.length) % $tracks.length;
         const prev = $tracks[prevIndex];
-        if (!prev) return;
 
         currentRank.set(prev.rank);
         currentTrack.set(prev);
 
         await new Promise(r => setTimeout(r, 50));
+
         await playTrack(prev);
     }
-
 
     // ─────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────
     const toTitleCase = (text: string | null | undefined): string =>
         text ? text.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1)) : '';
-
-    function resolveNextRank(
-        list: CarModeTrack[],
-        currentRankValue: number,
-        order: 'up' | 'down' | 'shuffle',
-        skipPlayedEnabled: boolean,
-        playedRanks: number[]
-    ): { nextRank: number | null; skipped: number } {
-
-        if (!list.length) return {nextRank: null, skipped: 0};
-
-        const currentIndex = list.findIndex(t => t.rank === currentRankValue);
-        if (currentIndex === -1) return {nextRank: null, skipped: 0};
-
-        const isPlayed = (rank: number) =>
-            skipPlayedEnabled && playedRanks.includes(rank);
-
-        let skipped = 0;
-
-        if (order === 'up') {
-            for (let i = currentIndex + 1; i < list.length; i++) {
-                const r = list[i].rank;
-                if (!isPlayed(r)) return {nextRank: r, skipped};
-                skipped++;
-            }
-            return {nextRank: null, skipped};
-        }
-
-        if (order === 'down') {
-            for (let i = currentIndex - 1; i >= 0; i--) {
-                const r = list[i].rank;
-                if (!isPlayed(r)) return {nextRank: r, skipped};
-                skipped++;
-            }
-            return {nextRank: null, skipped};
-        }
-
-// shuffle
-        const candidates = skipPlayedEnabled
-            ? list.filter(t => !playedRanks.includes(t.rank))
-            : list;
-
-        if (!candidates.length) return {nextRank: null, skipped: 0};
-
-// if only one candidate remains, just return it
-        if (candidates.length === 1) {
-            return {
-                nextRank: candidates[0].rank,
-                skipped: skipPlayedEnabled ? list.length - candidates.length : 0
-            };
-        }
-
-// create shuffle order if needed
-        if (shuffleOrder.length !== candidates.length || shuffleIndex >= shuffleOrder.length) {
-            shuffleOrder = shuffleArray(candidates.map(t => t.rank));
-            shuffleIndex = 0;
-        }
-
-        const nextRank = shuffleOrder[shuffleIndex++];
-
-        const nextTrack = candidates.find(t => t.rank === nextRank);
-
-        if (!nextTrack) return {nextRank: null, skipped: 0};
-
-        return {
-            nextRank: nextTrack.rank,
-            skipped: skipPlayedEnabled ? list.length - candidates.length : 0
-        };
-    }
 
 
     let playedRanks: number[] = [];
@@ -451,123 +201,21 @@
         const sel = $currentSelection;
 
         if (!sel) {
-            shuffleOrder = [];
-            shuffleIndex = 0;
-            playedRanks = [];
             lastProgramKey = null;
-            programKey = null;
+            playedRanks = [];
         } else {
             const key: ProgramKey =
                 sel.mode === 'collection'
                     ? `COL|${sel.context?.collection_slug}`
                     : `DG|${sel.context?.decade}|${sel.context?.genre}`;
 
-            programKey = key;
-
             if (key !== lastProgramKey) {
-                shuffleOrder = [];
-                shuffleIndex = 0;
                 lastProgramKey = key;
             }
 
             const history = $programHistoryStore.find(p => p.key === key);
             playedRanks = history?.playedRanks ?? [];
         }
-    }
-
-
-    function resolvePreviousRank(
-        list: CarModeTrack[],
-        currentRankValue: number,
-        order: 'up' | 'down' | 'shuffle',
-        skipPlayedEnabled: boolean,
-        playedRanks: number[]
-    ): { prevRank: number | null; skipped: number } {
-
-        if (!list.length) return {prevRank: null, skipped: 0};
-
-        const currentIndex = list.findIndex(t => t.rank === currentRankValue);
-        if (currentIndex === -1) return {prevRank: null, skipped: 0};
-
-        const isPlayed = (rank: number) =>
-            skipPlayedEnabled && playedRanks.includes(rank);
-
-        let skipped = 0;
-
-        if (order === 'up') {
-            for (let i = currentIndex - 1; i >= 0; i--) {
-                const r = list[i].rank;
-                if (!isPlayed(r)) return {prevRank: r, skipped};
-                skipped++;
-            }
-            return {prevRank: null, skipped};
-        }
-
-        if (order === 'down') {
-            for (let i = currentIndex + 1; i < list.length; i++) {
-                const r = list[i].rank;
-                if (!isPlayed(r)) return {prevRank: r, skipped};
-                skipped++;
-            }
-            return {prevRank: null, skipped};
-        }
-
-        // shuffle has no true "previous"
-        return {prevRank: null, skipped: 0};
-    }
-
-    function resolveInitialRank(
-        list: CarModeTrack[],
-        order: 'up' | 'down' | 'shuffle',
-        skipPlayedEnabled: boolean,
-        playedRanks: number[]
-    ): { nextRank: number | null; skipped: number } {
-
-        if (!list.length) return {nextRank: null, skipped: 0};
-
-        const sorted = [...list].sort((a, b) => a.rank - b.rank);
-
-        const isPlayed = (rank: number) =>
-            skipPlayedEnabled && playedRanks.includes(rank);
-
-        let skipped = 0;
-
-        if (order === 'up') {
-            for (const track of sorted) {
-                if (!isPlayed(track.rank)) {
-                    return {nextRank: track.rank, skipped};
-                }
-                skipped++;
-            }
-            return {nextRank: null, skipped};
-        }
-
-        if (order === 'down') {
-            for (let i = sorted.length - 1; i >= 0; i--) {
-                const r = sorted[i].rank;
-                if (!isPlayed(r)) {
-                    return {nextRank: r, skipped};
-                }
-                skipped++;
-            }
-            return {nextRank: null, skipped};
-        }
-
-        // shuffle
-        const candidates = skipPlayedEnabled
-            ? sorted.filter(t => !playedRanks.includes(t.rank))
-            : sorted;
-
-        if (!candidates.length) return {nextRank: null, skipped: 0};
-
-        const pick = candidates[Math.floor(Math.random() * candidates.length)];
-
-        return {
-            nextRank: pick.rank,
-            skipped: skipPlayedEnabled
-                ? sorted.length - candidates.length
-                : 0
-        };
     }
 
     $: uiDecade =
@@ -628,10 +276,6 @@
     // ─────────────────────────────────────────────
     onMount(async () => {
 
-        console.log('🚗 CarMode onMount START');
-        console.log('API BASE:', import.meta.env.VITE_API_BASE_URL);
-        console.log('🔥 FULL URL:', window.location.href);
-
         // 🧹 Step 0: Reset backend transport safely
         try {
             const res = await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
@@ -655,10 +299,6 @@
         if (hasParams) {
             sel = buildSelectionFromUrl(url);
             console.log('🔥 BUILT SELECTION FROM URL (raw):', sel);
-
-            currentSelection.set(sel);
-
-            console.log('✅ SELECTION AFTER MERGE (store wins):', sel);
 
             currentSelection.set(sel);
 
@@ -695,45 +335,14 @@
         }
         await loadForSelection(sel, initialRank);
 
-        const startupSettings = get(playbackSettingsStore);
-
-
-        // if ($tracks.length > 0 && $currentRank == null) {
-        //
-        //     if (startupSettings.playbackOrder === 'shuffle') {
-        //         const randomIndex = Math.floor(Math.random() * $tracks.length);
-        //         const first = $tracks[randomIndex];
-        //
-        //         currentTrack.set(first);
-        //         currentRank.set(first.rank);
-        //
-        //     } else if (startupSettings.playbackOrder === 'down') {
-        //         const first = $tracks[$tracks.length - 1];
-        //
-        //         currentTrack.set(first);
-        //         currentRank.set(first.rank);
-        //
-        //     } else {
-        //         const first = $tracks[0];
-        //
-        //         currentTrack.set(first);
-        //         currentRank.set(first.rank);
-        //     }
-        // }
-
-        // 🧠 Adjust initial track if skipPlayed is enabled
-// 🧠 Adjust initial track if skipPlayed is enabled
-        const settings = get(playbackSettingsStore);
-
         /// ─────────────────────────────────────────────
-// Prepare Spotify playback (warmup)
-// ─────────────────────────────────────────────
+        // Prepare Spotify playback (warmup)
+        // ─────────────────────────────────────────────
 
 
         if (url.searchParams.get('debug') === '1') {
             debugParams = Object.fromEntries(url.searchParams.entries());
         }
-        console.log('🚗 CarMode onMount END');
     });
 
 
