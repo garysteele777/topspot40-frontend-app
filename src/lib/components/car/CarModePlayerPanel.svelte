@@ -52,14 +52,13 @@
     let programTotal = 0;
 
     $: currentIndex =
-        currentTrack?.rankingId != null
+        currentTrack && currentTrack.rankingId != null
             ? tracks.findIndex(t => t.rankingId === currentTrack.rankingId)
             : -1;
 
-
     $: nextTrack =
-        currentIndex >= 0 && currentIndex < sessionTotal - 1
-            ? tracks[currentIndex + 1]
+        sessionTotal > 0 && currentIndex >= 0
+            ? tracks[(currentIndex + 1) % sessionTotal]
             : null;
 
     $: {
@@ -253,7 +252,7 @@
             {/if}
 
             <div class="progress-line">
-                Completed {completed} of {programTotal}
+                Completed {completed} of {programTotal} ({Math.round(percent)}%)
                 <span class="dot">•</span>
                 Remaining {remaining}
             </div>
