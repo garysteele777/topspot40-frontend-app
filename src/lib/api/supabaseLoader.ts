@@ -5,10 +5,24 @@
 
 export type SequenceItem = {
     rank: number;
+
+    rankingId?: number;
+    ranking_id?: number;
+
     trackName?: string;
     track_name?: string;
+
     artistName?: string;
     artist_name?: string;
+
+    spotifyTrackId?: string;
+    spotify_track_id?: string;
+
+    decadeSlug?: string;
+    decade_slug?: string;
+
+    genreSlug?: string;
+    genre_slug?: string;
 };
 
 export type DecadeGenreResponse = {

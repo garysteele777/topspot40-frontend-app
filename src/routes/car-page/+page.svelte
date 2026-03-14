@@ -72,6 +72,11 @@
         if (!sel) return;
 
         const settings = get(playbackSettingsStore);
+        const programDecade = sel.context?.decade;
+        const decadeForPlayback =
+            programDecade === 'ALL'
+                ? trackObj.decadeSlug ?? programDecade
+                : programDecade;
 
         const payload = {
             track: {
@@ -91,12 +96,17 @@
             },
             context: {
                 type: 'decade_genre',
-                decade: sel.context?.decade,
+                decade: decadeForPlayback,
                 genre: sel.context?.genre
             }
         };
 
         console.log("🚀 PLAY TRACK REQUEST", payload);
+        console.log("🎯 Playback decade resolution:", {
+            programDecade,
+            trackDecade: trackObj.decadeSlug,
+            decadeForPlayback
+        });
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',

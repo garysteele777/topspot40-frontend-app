@@ -40,6 +40,7 @@ let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
 
 let lastSpotifyId: string | null = null;
+let spotifyStartLock = false;
 
 // Narration queue + lock
 let narrationLock = false;
@@ -57,6 +58,7 @@ let lastRank: number | null = null;
 let narrationSignaled = false;
 
 let manualPlaybackActive = false;
+let activeSpotifyTrackId: string | null = null;
 
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
@@ -382,21 +384,27 @@ export function startPlaybackPolling() {
             if (phase === 'track' && data.context?.spotify_track_id) {
                 const spotifyId = data.context.spotify_track_id as string;
 
-                if (spotifyId !== lastSpotifyId) {
+                if (spotifyId !== activeSpotifyTrackId && !spotifyStartLock) {
+                    spotifyStartLock = true;
+
                     manualPlaybackActive = false;
                     dlog('🎵 TRACK start:', spotifyId);
 
-
+                    activeSpotifyTrackId = spotifyId;   // 👈 the real guard
                     lastSpotifyId = spotifyId;
-                    trackFinalized = false;   // 👈 reset for new track
+                    trackFinalized = false;
 
-                    await fetch(`${API_BASE}/playback/play-spotify`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({spotify_track_id: spotifyId})
-                    }).catch(err => {
+                    try {
+                        await fetch(`${API_BASE}/playback/play-spotify`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({spotify_track_id: spotifyId})
+                        });
+                    } catch (err) {
                         console.error('❌ Spotify start failed', err);
-                    });
+                    } finally {
+                        spotifyStartLock = false;
+                    }
                 }
             }
 

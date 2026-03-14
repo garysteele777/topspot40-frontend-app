@@ -91,9 +91,24 @@ function mapItemsToTracks(
         const row = preNormalizeRow(raw);
         const track = normalizeTrack(row);
 
+        // attach ranking info
         track.sourceRank = track.rank;
-        track.decadeSlug = row.decadeSlug ?? row.decade_slug ?? undefined;
-        track.decadeName = (track.decadeSlug ?? '').toUpperCase();
+
+        // attach decade + genre metadata
+        track.decadeSlug =
+            row.decadeSlug ??
+            row.decade_slug ??
+            (row as any).decade ??
+            undefined;
+
+        track.genreSlug =
+            row.genreSlug ??
+            row.genre_slug ??
+            (row as any).genre ??
+            undefined;
+
+        track.decadeName = track.decadeSlug?.toUpperCase();
+        track.genreName = track.genreSlug?.toUpperCase();
 
         result.push(track);
     }
