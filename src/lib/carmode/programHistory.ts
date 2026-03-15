@@ -91,10 +91,30 @@ export function upsertProgram(
 }
 
 
-export function markRankPlayed(key: ProgramKey, rank: number) {
+export function markRankPlayed(
+    key: ProgramKey,
+    rank: number,
+    label?: string,
+    total: number = 40
+) {
+
     const all = loadAll();
-    const p = all.find(x => x.key === key);
-    if (!p) return;
+    let p = all.find(x => x.key === key);
+
+    // ⭐ Lazy creation
+    if (!p) {
+        const canonicalTotal = canonicalTotalForKey(key, total);
+
+        p = {
+            key,
+            label: label ?? key,
+            total: canonicalTotal,
+            playedRanks: [],
+            updatedAt: Date.now()
+        };
+
+        all.unshift(p);
+    }
 
     if (!p.playedRanks.includes(rank)) {
         p.playedRanks.push(rank);
