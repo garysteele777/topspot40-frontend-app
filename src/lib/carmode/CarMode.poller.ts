@@ -62,37 +62,42 @@ let activeSpotifyTrackId: string | null = null;
 
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
-import {markRankPlayed, programHistoryStore} from '$lib/carmode/programHistory';
+import {markRankPlayed} from '$lib/carmode/programHistory';
 
 
 function markPlayed(): void {
-    const sel = get(currentSelection);
     const track = get(currentTrack);
+    const sel = get(currentSelection);
 
-    if (!sel || !track) return;
+    if (!track || !sel) return;
 
     let key: ProgramKey | null = null;
 
     if (sel.mode === 'decade_genre') {
-        key = `DG|${sel.context?.decade}|${sel.context?.genre}`;
+        const decade = track.decadeSlug;
+        const genre = track.genreSlug;
+
+        if (!decade || !genre) return;
+
+        key = `DG|${decade}|${genre}` as ProgramKey;
     } else if (sel.mode === 'collection') {
-        key = `COL|${sel.context?.collection_slug}`;
+        const slug = sel.context?.collection_slug;
+        if (!slug) return;
+
+        key = `COL|${slug}` as ProgramKey;
     }
 
     if (!key) return;
 
-    const history = get(programHistoryStore)
-        .find(p => p.key === key);
+    console.log("🎯 HISTORY WRITE", {
+        key,
+        decade: track.decadeSlug,
+        genre: track.genreSlug,
+        rank: track.rank,
+        trackName: track.trackName
+    });
 
-    if (!history) {
-        // program not yet created → create it
-        markRankPlayed(key, track.rank);
-        return;
-    }
-
-    if (!history.playedRanks.includes(track.rank)) {
-        markRankPlayed(key, track.rank);
-    }
+    markRankPlayed(key, track.rank);
 }
 
 /* ─────────────────────────────────────────────

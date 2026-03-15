@@ -59,6 +59,16 @@ export function upsertProgram(
     total: number,
     extra?: Partial<ProgramHistory>
 ) {
+
+    // 🚫 Prevent aggregate DG buckets (ALL decade or ALL genre)
+    if (key.startsWith('DG|')) {
+        const [, decade, genre] = key.split('|');
+
+        if (decade === 'ALL' || genre === 'ALL') {
+            return; // do not create program history entry
+        }
+    }
+
     const all = loadAll();
     const idx = all.findIndex(p => p.key === key);
 
@@ -70,7 +80,7 @@ export function upsertProgram(
         total: canonicalTotal,
         playedRanks: idx >= 0 ? all[idx].playedRanks : [],
         updatedAt: Date.now(),
-        ...extra   // ⭐ THIS IS THE CRITICAL LINE
+        ...extra
     };
 
     if (idx >= 0) all[idx] = next;

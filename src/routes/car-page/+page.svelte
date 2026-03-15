@@ -78,6 +78,11 @@
                 ? trackObj.decadeSlug ?? programDecade
                 : programDecade;
 
+        const programGenre = sel.context?.genre;
+        const genreForPlayback =
+            programGenre === 'ALL'
+                ? trackObj.genreSlug ?? programGenre
+                : programGenre;
         const payload = {
             track: {
                 track_id: trackObj.id,
@@ -97,7 +102,7 @@
             context: {
                 type: 'decade_genre',
                 decade: decadeForPlayback,
-                genre: sel.context?.genre
+                genre: genreForPlayback
             }
         };
 
@@ -106,6 +111,10 @@
             programDecade,
             trackDecade: trackObj.decadeSlug,
             decadeForPlayback
+        });
+        console.log("🎯 Playback bucket:", {
+            decadeForPlayback,
+            genreForPlayback
         });
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
@@ -149,12 +158,25 @@
         const sel = $currentSelection;
 
         if (sel) {
-            const key: ProgramKey =
-                sel.mode === 'collection'
-                    ? `COL|${sel.context?.collection_slug}`
-                    : `DG|${sel.context?.decade}|${sel.context?.genre}`;
+            let key: ProgramKey | null = null;
 
-            markRankPlayed(key, $currentTrack.rank);
+            if (sel.mode === 'collection') {
+                const slug = sel.context?.collection_slug;
+                if (slug) {
+                    key = `COL|${slug}`;
+                }
+            } else if (sel.mode === 'decade_genre') {
+                const decade = $currentTrack.decadeSlug;
+                const genre = $currentTrack.genreSlug;
+
+                if (decade && genre) {
+                    key = `DG|${decade}|${genre}` as ProgramKey;
+                }
+            }
+
+            if (key) {
+                markRankPlayed(key, $currentTrack.rank);
+            }
         }
 
         const currentIndex =
