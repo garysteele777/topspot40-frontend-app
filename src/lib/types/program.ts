@@ -2,4 +2,5 @@ export type PlaybackProgramType =
   | 'DG'
   | 'COL'
   | 'FAV_DG'
-  | 'FAV_COL';
+  | 'FAV_COL'
+  | 'RADIO';

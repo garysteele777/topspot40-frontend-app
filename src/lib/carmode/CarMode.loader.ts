@@ -30,6 +30,18 @@ export async function loadForSelection(
     status.set('Loading tracks…');
     console.log('🚀 LOADER selection.programType =', sel.programType);
 
+    // 🎧 RADIO MODE DETECTION (ALL / ALL)
+    if (
+        sel.mode === 'decade_genre' &&
+        sel.context?.decade === 'ALL' &&
+        sel.context?.genre === 'ALL'
+    ) {
+        console.log('📻 RADIO MODE detected (ALL / ALL)');
+
+        // mark program type so player launches radio engine
+        sel.programType = 'RADIO';
+    }
+
     tracks.set([]);
     currentTrack.set(null);
 
@@ -286,7 +298,7 @@ export async function loadForSelection(
                     ? initialRank
                     : 1;
 
-        let first: LoadedTrack | null = null;
+        let first: LoadedTrack | null;
 
         if (isInlineFavorites) {
             first = candidateTracks[0] ?? null;

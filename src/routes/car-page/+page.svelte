@@ -117,6 +117,29 @@
             genreForPlayback
         });
 
+        if (
+            sel?.programType === 'RADIO' ||
+            (
+                sel?.mode === 'decade_genre' &&
+                sel?.context?.decade === 'ALL' &&
+                sel?.context?.genre === 'ALL'
+            )
+        ) {
+            console.log('📻 Starting ALL/ALL radio station');
+
+            const res = await fetch(
+                `${API_BASE}/supabase/decade-genre/play-sequence?decade=ALL&genre=ALL`,
+                {
+                    method: 'GET'
+                }
+            );
+
+            const data = await res.json();
+            console.log('📻 radio response:', data);
+
+            return;
+        }
+
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
