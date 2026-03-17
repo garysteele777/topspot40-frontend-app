@@ -41,6 +41,7 @@ let lastPhase: PlaybackPhase | null = null;
 
 let lastSpotifyId: string | null = null;
 let spotifyStartLock = false;
+let finishedTrackId: string | null = null;
 
 // Narration queue + lock
 let narrationLock = false;
@@ -56,7 +57,6 @@ let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
 let narrationSignaled = false;
 
-let manualPlaybackActive = false;
 let activeSpotifyTrackId: string | null = null;
 
 
@@ -97,6 +97,15 @@ function markPlayed(): void {
     });
 
     markRankPlayed(key, track.rank);
+}
+
+function isSingleMode(): boolean {
+    const sel = get(currentSelection);
+
+    return (
+        sel?.mode === 'decade_genre' &&
+        sel?.categoryMode === 'single'
+    );
 }
 
 /* ─────────────────────────────────────────────
@@ -248,20 +257,50 @@ export function startPlaybackPolling() {
             if (!res.ok) return;
 
             const data = await res.json();
+            // console.log("STATUS SNAPSHOT", data); // temporary
 
             const spotifyId = data.context?.spotify_track_id ?? null;
 
-            if (spotifyId && spotifyId !== activeSpotifyTrackId) {
+            if (
+                spotifyId &&
+                (
+                    spotifyId !== activeSpotifyTrackId ||
+                    !get(currentTrack)?.spotifyTrackId ||
+                    get(currentTrack)?.trackName === 'TopSpot Radio'
+                )
+            ) {
                 activeSpotifyTrackId = spotifyId;
+                finishedTrackId = null;
 
-                const next = get(tracks).find(t => t.spotifyTrackId === spotifyId);
+                const list = get(tracks);
+                const next = list.find(t => t.spotifyTrackId === spotifyId);
 
                 if (next) {
+                    // normal ranked playback
                     currentTrack.set(next);
                     currentRank.set(next.rank);
-                }
+                } else {
+                    // radio fallback
+                    const fallbackTrack = {
+                        id: null,
+                        rankingId: data.context?.ranking_id ?? null,
+                        rank: data.current_rank ?? 0,
+                        trackName: data.track_name ?? '',
+                        artistName: data.artist_name ?? '',
+                        spotifyTrackId: spotifyId,
+                        decadeSlug: data.context?.decade ?? null,
+                        decadeName: null,
+                        genreSlug: data.context?.genre ?? null,
+                        genreName: null,
+                        yearReleased: null,
+                        albumArtwork: data.context?.album_artwork ?? null
+                    };
 
-                manualPlaybackActive = false;
+                    currentTrack.set(fallbackTrack);
+                    currentRank.set(fallbackTrack.rank);
+
+                    dlog('📻 Radio fallback track created:', fallbackTrack.trackName);
+                }
 
                 elapsed.set(0);
                 duration.set(0);
@@ -269,7 +308,7 @@ export function startPlaybackPolling() {
 
                 trackFinalized = false;
 
-                dlog('🎯 UI track switch:', next?.trackName);
+                dlog('🎯 UI track switch:', next?.trackName ?? data.track_name);
             }
 
 
@@ -288,6 +327,36 @@ export function startPlaybackPolling() {
                             : null;
 
             dlog('🎯 rankingId:', rankingId);
+
+            // ─────────────────────────────
+// Rank change → update UI track card (radio-safe)
+// ─────────────────────────────
+            if (
+                rankingId != null &&
+                rankingId !== get(currentTrack)?.rankingId &&
+                !spotifyId
+            ) {
+                const list = get(tracks);
+                const next = list.find(t => t.rankingId === rankingId);
+
+                dlog('🎯 Rank-based UI update', {
+                    rankingId,
+                    previous: get(currentTrack)?.trackName,
+                    next: next?.trackName
+                });
+
+                if (next) {
+                    currentTrack.set(next);
+                    currentRank.set(next.rank);
+
+                    // reset UI timing
+                    elapsed.set(0);
+                    duration.set(0);
+                    progress.set(0);
+
+                    trackFinalized = false;
+                }
+            }
 
 
             const phase = data.phase as PlaybackPhase;
@@ -366,7 +435,6 @@ export function startPlaybackPolling() {
                 } else if (!spotifyStartLock) {
                     spotifyStartLock = true;
 
-                    manualPlaybackActive = false;
                     dlog('🎵 TRACK start:', spotifyId);
 
                     lastSpotifyId = spotifyId;       // playback guard
@@ -429,52 +497,89 @@ export function startPlaybackPolling() {
 // 🏁 Detect natural track end and finalize UI
             if (
                 phase === 'track' &&
-                !trackFinalized &&
-                durationSec > 0 &&
+                spotifyId &&
+                finishedTrackId !== spotifyId &&
+                durationSec > 1 &&
                 elapsedSec >= durationSec
             ) {
+                finishedTrackId = spotifyId;   // ⭐ important
                 trackFinalized = true;
 
-                console.log('🏁 Track reached end (single fire), finalizing UI');
-                finalizeTrackUI();
+                console.log('🏁 Track reached end (single fire), finalizing UI', {
+                    elapsedSec,
+                    durationSec,
+                    track: data.track_name
+                });
 
+                finalizeTrackUI();
                 markPlayed();
 
+                const single = isSingleMode();
 
-                // 🔥 Tell backend the track is finished (this advances radio mode)
+                console.log('🧪 SINGLE CHECK', {
+                    single,
+                    selection: get(currentSelection)
+                });
+
+                if (single) {
+                    console.log('🛑 Single mode: not advancing after natural track end');
+                } else {
+                    try {
+                        dlog('📡 track-finished');
+
+                        await fetch(`${API_BASE}/playback/track-finished`, {
+                            method: 'POST'
+                        });
+
+                    } catch (err) {
+                        console.error('❌ Failed to signal track-finished', err);
+                    }
+                }
+
                 try {
                     dlog('📡 track-finished');
+
                     await fetch(`${API_BASE}/playback/track-finished`, {
                         method: 'POST'
                     });
+
                 } catch (err) {
                     console.error('❌ Failed to signal track-finished', err);
                 }
             }
-
             // Fallback: detect leaving track phase
             if (
                 lastPhase === 'track' &&
                 phase !== 'track' &&
                 !trackFinalized &&
-                get(timingSource) === 'spotify'
+                get(timingSource) === 'spotify' &&
+                durationSec > 1
             ) {
                 trackFinalized = true;
 
-                console.log('🏁 Track ended via phase transition');
+                console.log('🏁 Track ended via phase transition', {
+                    elapsedSec,
+                    durationSec,
+                    from: lastPhase,
+                    to: phase,
+                    track: data.track_name
+                });
 
                 finalizeTrackUI();
                 markPlayed();
 
-                try {
-                    await fetch(`${API_BASE}/playback/track-finished`, {
-                        method: 'POST'
-                    });
-                } catch (err) {
-                    console.error('❌ Failed to signal track-finished', err);
+                if (!isSingleMode()) {
+                    try {
+                        await fetch(`${API_BASE}/playback/track-finished`, {
+                            method: 'POST'
+                        });
+                    } catch (err) {
+                        console.error('❌ Failed to signal track-finished', err);
+                    }
+                } else {
+                    console.log('🛑 Single mode: not advancing after phase transition');
                 }
             }
-
 
             lastPhase = phase;
 
@@ -511,11 +616,15 @@ export async function skipToNextTrack(): Promise<void> {
     // 4️⃣ Snap UI to finished
     finalizeTrackUI();
 
-    // 5️⃣ Tell backend to advance
-    await fetch(`${API_BASE}/playback/track-finished`, {
-        method: 'POST'
-    }).catch(() => {
-    });
+    // 5️⃣ Tell backend to advance only when not in Single mode
+    if (!isSingleMode()) {
+        await fetch(`${API_BASE}/playback/track-finished`, {
+            method: 'POST'
+        }).catch(() => {
+        });
+    } else {
+        console.log('🛑 Single mode: skip finalized UI only, no advance');
+    }
 }
 
 
@@ -542,6 +651,5 @@ export function stopPlaybackPolling() {
 
 // Compatibility export
 export function markUserStartedPlayback() {
-    manualPlaybackActive = true;
     console.log('🧠 Manual playback started');
 }
