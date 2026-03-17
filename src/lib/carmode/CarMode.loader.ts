@@ -40,6 +40,29 @@ export async function loadForSelection(
 
         // mark program type so player launches radio engine
         sel.programType = 'RADIO';
+
+        if (sel.programType === 'RADIO') {
+
+            const placeholder: CarModeTrack = {
+                id: null,
+                rankingId: null,
+                rank: 0,
+                trackName: 'TopSpot Radio',
+                artistName: 'Press Play to Start',
+                spotifyTrackId: '',
+                albumArtwork: null,
+                durationSeconds: 0
+            };
+
+            tracks.set([placeholder]);
+            currentTrack.set(placeholder);
+
+            status.set('Radio ready. Press Play.');
+
+            console.log('📻 Radio mode loader finished — waiting for Play.');
+            return;
+        }
+
     }
 
     tracks.set([]);

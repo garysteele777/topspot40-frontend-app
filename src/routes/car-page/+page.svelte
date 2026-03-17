@@ -127,11 +127,17 @@
         ) {
             console.log('📻 Starting ALL/ALL radio station');
 
+            const params = new URLSearchParams({
+                decade: 'ALL',
+                genre: 'ALL',
+                play_intro: 'false',
+                play_detail: 'false',
+                play_artist_description: 'false'
+            });
+
             const res = await fetch(
-                `${API_BASE}/supabase/decade-genre/play-sequence?decade=ALL&genre=ALL`,
-                {
-                    method: 'GET'
-                }
+                `${API_BASE}/supabase/decade-genre/play-sequence?${params.toString()}`,
+                {method: 'GET'}
             );
 
             const data = await res.json();

@@ -54,7 +54,6 @@ let narrationQueue: NarrationItem[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
-let lastRank: number | null = null;
 let narrationSignaled = false;
 
 let manualPlaybackActive = false;
@@ -249,6 +248,31 @@ export function startPlaybackPolling() {
             if (!res.ok) return;
 
             const data = await res.json();
+
+            const spotifyId = data.context?.spotify_track_id ?? null;
+
+            if (spotifyId && spotifyId !== activeSpotifyTrackId) {
+                activeSpotifyTrackId = spotifyId;
+
+                const next = get(tracks).find(t => t.spotifyTrackId === spotifyId);
+
+                if (next) {
+                    currentTrack.set(next);
+                    currentRank.set(next.rank);
+                }
+
+                manualPlaybackActive = false;
+
+                elapsed.set(0);
+                duration.set(0);
+                progress.set(0);
+
+                trackFinalized = false;
+
+                dlog('🎯 UI track switch:', next?.trackName);
+            }
+
+
             dlog('⏱ Poll data:', data);
 
             // ─────────────────────────────
@@ -264,58 +288,6 @@ export function startPlaybackPolling() {
                             : null;
 
             dlog('🎯 rankingId:', rankingId);
-
-
-// ─────────────────────────────
-// Rank change → update UI track card
-// ─────────────────────────────
-            if (
-                manualPlaybackActive &&
-                rankingId != null &&
-                rankingId !== get(currentTrack)?.rankingId
-            ) {
-                markPlayed();
-
-                const list = get(tracks);
-                const next = list.find(t => t.rankingId === rankingId);
-
-                dlog("UI before:", get(currentTrack));
-
-                dlog("🎯 Track update", {
-                    backendRank: data.currentRank,
-                    rankingId,
-                    track: next?.trackName,
-                    artist: next?.artistName
-                });
-
-                if (next) {
-                    currentTrack.set(next);
-                    currentRank.set(next.rank);
-                }
-
-                manualPlaybackActive = false;
-
-                elapsed.set(0);
-                duration.set(0);
-                progress.set(0);
-
-                trackFinalized = false;
-
-                lastRank = data.currentRank;
-            }
-            // Keep rankingId synced even if rank did not change
-            const existing = get(currentTrack);
-
-            if (
-                existing &&
-                rankingId != null &&
-                existing.rankingId !== rankingId
-            ) {
-                currentTrack.set({
-                    ...existing,
-                    rankingId
-                });
-            }
 
 
             const phase = data.phase as PlaybackPhase;
@@ -389,14 +361,16 @@ export function startPlaybackPolling() {
             if (phase === 'track' && data.context?.spotify_track_id) {
                 const spotifyId = data.context.spotify_track_id as string;
 
-                if (spotifyId !== activeSpotifyTrackId && !spotifyStartLock) {
+                if (lastSpotifyId === spotifyId) {
+                    // already started playback for this track
+                } else if (!spotifyStartLock) {
                     spotifyStartLock = true;
 
                     manualPlaybackActive = false;
                     dlog('🎵 TRACK start:', spotifyId);
 
-                    activeSpotifyTrackId = spotifyId;   // 👈 the real guard
-                    lastSpotifyId = spotifyId;
+                    lastSpotifyId = spotifyId;       // playback guard
+                    activeSpotifyTrackId = spotifyId; // UI state
                     trackFinalized = false;
 
                     try {
@@ -457,7 +431,7 @@ export function startPlaybackPolling() {
                 phase === 'track' &&
                 !trackFinalized &&
                 durationSec > 0 &&
-                elapsedSecRaw >= durationSec
+                elapsedSec >= durationSec
             ) {
                 trackFinalized = true;
 
@@ -469,7 +443,30 @@ export function startPlaybackPolling() {
 
                 // 🔥 Tell backend the track is finished (this advances radio mode)
                 try {
-                    dlog('📡 narration-finished');
+                    dlog('📡 track-finished');
+                    await fetch(`${API_BASE}/playback/track-finished`, {
+                        method: 'POST'
+                    });
+                } catch (err) {
+                    console.error('❌ Failed to signal track-finished', err);
+                }
+            }
+
+            // Fallback: detect leaving track phase
+            if (
+                lastPhase === 'track' &&
+                phase !== 'track' &&
+                !trackFinalized &&
+                get(timingSource) === 'spotify'
+            ) {
+                trackFinalized = true;
+
+                console.log('🏁 Track ended via phase transition');
+
+                finalizeTrackUI();
+                markPlayed();
+
+                try {
                     await fetch(`${API_BASE}/playback/track-finished`, {
                         method: 'POST'
                     });
