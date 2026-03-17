@@ -49,6 +49,11 @@ export type CarModeTrack = DurationLike & {
 
     decade?: string;
     genre?: string;
+
+    // 🎧 ALL-RADIO metadata
+    setNumber?: number;
+    blockPosition?: number;
+    blockSize?: number;
 };
 
 

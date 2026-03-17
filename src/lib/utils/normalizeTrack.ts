@@ -42,6 +42,10 @@ export type LoadedTrack = {
 
     genreSlug?: string | null;
     genreName?: string | null;
+
+    setNumber?: number;
+    blockPosition?: number;
+    blockSize?: number;
 };
 
 

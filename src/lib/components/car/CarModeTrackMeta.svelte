@@ -79,7 +79,18 @@
 <div class="meta-under-cover">
 <span class="text-gray-400 text-sm">
 
-{#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
+{#if $currentSelection?.programType === 'ALL'}
+
+<div class="radio-set">
+    Set {currentTrack?.setNumber ?? '?'}
+    • {toTitleCase(currentTrack?.decadeSlug)} / {toTitleCase(currentTrack?.genreSlug)}
+</div>
+
+<div class="radio-track">
+    Track {currentTrack?.blockPosition ?? '?'} of {currentTrack?.blockSize ?? '?'}
+</div>
+
+{:else if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
 
     Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
 
@@ -304,6 +315,19 @@
         outline: 2px solid rgba(207, 185, 145, 0.6); /* Purdue gold-ish */
         outline-offset: 6px;
         border-radius: 14px;
+    }
+
+    .radio-set {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #CFB991; /* Purdue gold */
+        letter-spacing: 0.03em;
+    }
+
+    .radio-track {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 2px;
     }
 
 </style>
