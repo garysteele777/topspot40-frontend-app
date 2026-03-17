@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { getBackendUrl } from '$lib/config';
   console.log('🚀 create-account page loaded');
 
-  import { browser } from '$app/environment';
+  //import { browser } from '$app/environment';
 
   type CheckoutResponse =
     | { url: string }
@@ -11,12 +12,17 @@
   async function startCheckout() {
     try {
       // Determine backend URL
-      const BACKEND_URL = browser
+      /*const BACKEND_URL = window.location.hostname === 'localhost'
         ? 'http://127.0.0.1:8000' // local dev backend
-        : 'https://api.topspot40.com'; // production backend
+        : 'https://api.topspot40.com'; // production backend*/
+
+      const BACKEND_URL = getBackendUrl(); // dynamic backend
+      console.log('Using backend URL:', BACKEND_URL);
+
 
       const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       });
 
       // Ensure JSON response
