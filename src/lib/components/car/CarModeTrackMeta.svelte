@@ -73,22 +73,37 @@
         programTotal = program?.total ?? tracks.length;
     }
 
+    $: isRadioStation =
+        $currentSelection?.mode === 'decade_genre' &&
+        $currentSelection?.context?.decade === 'ALL' &&
+        $currentSelection?.context?.genre === 'ALL';
+
+    $: isRadioPlaceholder =
+        isRadioStation &&
+        currentTrack?.trackName === 'TopSpot Radio' &&
+        currentTrack?.artistName === 'Press Play to Start';
+
+
 </script>
 
 <!-- META -->
 <div class="meta-under-cover">
 <span class="text-gray-400 text-sm">
 
-{#if $currentSelection?.programType === 'ALL'}
+{#if isRadioStation}
+    {#if isRadioPlaceholder}
+        <div class="radio-set">TopSpot Radio</div>
+        <div class="radio-track">Shuffle across all decades and genres</div>
+    {:else}
+        <div class="radio-set">
+            Set {currentTrack?.setNumber ?? '?'} • {toTitleCase(currentTrack?.decadeSlug)}
+            • {toTitleCase(currentTrack?.genreSlug)}
+        </div>
 
-<div class="radio-set">
-    Set {currentTrack?.setNumber ?? '?'}
-    • {toTitleCase(currentTrack?.decadeSlug)} / {toTitleCase(currentTrack?.genreSlug)}
-</div>
-
-<div class="radio-track">
-    Track {currentTrack?.blockPosition ?? '?'} of {currentTrack?.blockSize ?? '?'}
-</div>
+        <div class="radio-track">
+            Track {currentTrack?.blockPosition ?? '?'} of {currentTrack?.blockSize ?? '?'}
+        </div>
+    {/if}
 
 {:else if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
 
@@ -108,8 +123,13 @@
 
 </span>
 
-    <div class="track-title">— {titleCased}</div>
-    <div class="text-gray-200">{artistCased}</div>
+    {#if isRadioPlaceholder}
+        <div class="track-title">— TopSpot Radio</div>
+        <div class="text-gray-300">Press Play to Start</div>
+    {:else}
+        <div class="track-title">— {titleCased}</div>
+        <div class="text-gray-200">{artistCased}</div>
+    {/if}
 </div>
 
 <!-- PROGRESS -->
@@ -329,5 +349,4 @@
         color: #9ca3af;
         margin-top: 2px;
     }
-
 </style>

@@ -276,8 +276,13 @@ export function startPlaybackPolling() {
                 const next = list.find(t => t.spotifyTrackId === spotifyId);
 
                 if (next) {
-                    // normal ranked playback
-                    currentTrack.set(next);
+                    currentTrack.set({
+                        ...next,
+                        setNumber: data.context?.set_number,
+                        blockPosition: data.context?.block_position,
+                        blockSize: data.context?.block_size
+                    });
+
                     currentRank.set(next.rank);
                 } else {
                     // radio fallback
@@ -293,7 +298,10 @@ export function startPlaybackPolling() {
                         genreSlug: data.context?.genre ?? null,
                         genreName: null,
                         yearReleased: null,
-                        albumArtwork: data.context?.album_artwork ?? null
+                        albumArtwork: data.context?.album_artwork ?? null,
+                        setNumber: data.context?.set_number,
+                        blockPosition: data.context?.block_position,
+                        blockSize: data.context?.block_size,
                     };
 
                     currentTrack.set(fallbackTrack);

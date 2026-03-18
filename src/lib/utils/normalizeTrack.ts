@@ -134,6 +134,7 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         asString(decadeSlugVal) ??
         decadeFromYear(yearReleased);
 
+    console.log("NORMALIZED TRACK", normalizeTrack(raw));
 
     return {
         id: typeof idVal === 'string' || typeof idVal === 'number' ? idVal : null,
@@ -171,6 +172,10 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         introKey: asAudioKey(introKeyVal),
         detailKey: asAudioKey(detailKeyVal),
         artistKey: asAudioKey(artistKeyVal),
+
+        setNumber: asNumber(firstDefined(raw, ['set_number']), null) ?? undefined,
+        blockPosition: asNumber(firstDefined(raw, ['block_position']), null) ?? undefined,
+        blockSize: asNumber(firstDefined(raw, ['block_size']), null) ?? undefined,
     };
 
 }
