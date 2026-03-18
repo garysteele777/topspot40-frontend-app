@@ -9,7 +9,7 @@
 <div class="success-container">
 	<h1>🎉 Payment Successful!</h1>
 	<p>Thank you for subscribing to TopSpot40. Your account is now active.</p>
-	<a href="/" class="btn">Go to Home</a>
+	<a href="/dashboard" class="btn">Go to Home</a>
 </div>
 
 <style>
