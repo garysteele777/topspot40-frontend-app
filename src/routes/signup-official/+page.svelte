@@ -1,7 +1,9 @@
 <!-- src/routes/+page.svelte -->
 <script lang="ts">
+	import { getBackendUrl } from '$lib/config';
+
 	function signInWithSpotify() {
-		window.location.href = 'https://api.topspot40.com/api/auth/spotify/login';
+		window.location.href = `${getBackendUrl()}/api/auth/spotify/login`; // /api/auth/ ?
 	}
 
 	function goBack() {
