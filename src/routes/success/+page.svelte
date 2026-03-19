@@ -1,8 +1,44 @@
 <script>
 	import { onMount } from 'svelte';
+	import { getBackendUrl } from '$lib/config';
 
-	onMount(() => {
+    let verified = false;
+    let error = null;	
+
+	onMount(async () => {
 		console.log('✅ Payment success page loaded');
+
+		const params = new URLSearchParams(window.location.search);
+		const session_id = params.get('session_id');
+
+		console.log('Session ID:', session_id);
+
+		if (!session_id) {
+			console.error('❌ No session_id found in URL');
+			return;
+		}
+
+		try {
+			const res = await fetch(
+				`${getBackendUrl()}/api/verify-subscription?session_id=${session_id}`,
+				{
+					method: 'GET',
+					credentials: 'include'
+				}
+			);
+
+			const data = await res.json();
+			console.log('✅ Verify response:', data);
+			if (data.is_active) {
+				verified = true;
+				window.location.href = '/dashboard';
+			} else {
+				window.location.href = '/create-account';
+			}
+		} catch (err) {
+			console.error('❌ Error verifying subscription:', err);
+		}
+
 	});
 </script>
 
