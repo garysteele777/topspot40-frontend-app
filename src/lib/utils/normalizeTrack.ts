@@ -56,7 +56,10 @@ const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'obj
 const asString = (v: unknown, fallback: string | null = null): string | null =>
     typeof v === 'string' ? v : fallback;
 
-const asNumber = (v: unknown, fallback: number | null = null): number | null => {
+const asNumber = (
+    v: unknown,
+    fallback: number | undefined = undefined
+): number | undefined => {
     if (typeof v === 'number' && !Number.isNaN(v)) return v;
     if (typeof v === 'string') {
         const n = Number(v);
@@ -72,11 +75,11 @@ const asAudioKey = (v: unknown): AudioKey | null => {
     return bucket && key ? {bucket, key} : null;
 };
 
-function decadeFromYear(year: number | null): string | null {
-    if (!year) return null;
-    const decade = Math.floor(year / 10) * 10;
-    return `${decade}s`;
-}
+// function decadeFromYear(year: number | null): string | null {
+//     if (!year) return null;
+//     const decade = Math.floor(year / 10) * 10;
+//     return `${decade}s`;
+// }
 
 
 function firstDefined(raw: RawTrack, keys: string[]): unknown {
@@ -101,48 +104,96 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
 
     const rankVal = firstDefined(raw, ['rank', 'ranking']);
 
-
     const trackNameVal = firstDefined(raw, ['trackName', 'track_name', 'title']);
-    const artistNameVal = firstDefined(raw, ['artistName', 'artist_name', 'artist_display_name', 'artist', 'track_artist']);
+    const artistNameVal = firstDefined(raw, [
+        'artistName',
+        'artist_name',
+        'artist_display_name',
+        'artist',
+        'track_artist'
+    ]);
 
     const albumNameVal = firstDefined(raw, ['albumName', 'album_name']);
-    const albumArtworkVal = firstDefined(raw, ['albumArtwork', 'album_artwork', 'album_image_url']);
+    const albumArtworkVal = firstDefined(raw, [
+        'albumArtwork',
+        'album_artwork',
+        'album_image_url'
+    ]);
 
-    const yearReleasedVal = firstDefined(raw, ['yearReleased', 'year_released', 'release_year']);
-    const decadeSlugVal = firstDefined(raw, ['decadeSlug', 'decade_slug']);
-    const decadeNameVal = firstDefined(raw, ['decadeName', 'decade_name']);
+    const artistArtworkVal = firstDefined(raw, ['artistArtwork', 'artist_artwork']);
 
-    const genreSlugVal = firstDefined(raw, ['genreSlug', 'genre_slug']);
-    const genreNameVal = firstDefined(raw, ['genreName', 'genre_name']);
+    // ⭐ Pull context FIRST (before using it)
+    const context = isObject(raw.context) ? raw.context : {};
+
+    const setNumberVal =
+        firstDefined(context, ['setNumber', 'set_number']);
+
+    const blockPositionVal =
+        firstDefined(context, ['blockPosition', 'block_position']);
+
+    const blockSizeVal =
+        firstDefined(context, ['blockSize', 'block_size']);
+
+    const yearReleasedVal = firstDefined(raw, [
+        'yearReleased',
+        'year_released',
+        'release_year'
+    ]);
+
+    const decadeSlugVal =
+        firstDefined(raw, ['decadeSlug', 'decade_slug']) ??
+        context['decade_slug'];
+
+    const decadeNameVal =
+        firstDefined(raw, ['decadeName', 'decade_name']) ??
+        context['decade_name'];
+
+    const genreSlugVal =
+        firstDefined(raw, ['genreSlug', 'genre_slug']) ??
+        context['genre_slug'];
+
+    const genreNameVal =
+        firstDefined(raw, ['genreName', 'genre_name']) ??
+        context['genre_name'];
 
     const durationMsVal = firstDefined(raw, ['durationMs', 'duration_ms']);
-    const spotifyTrackIdVal = firstDefined(raw, ['spotifyTrackId', 'spotify_id', 'track_spotify_id']);
+    const spotifyTrackIdVal = firstDefined(raw, [
+        'spotifyTrackId',
+        'spotify_id',
+        'track_spotify_id'
+    ]);
 
     const introVal = firstDefined(raw, ['intro']);
     const detailVal = firstDefined(raw, ['detail', 'detail_text']);
-    const artistDescVal = firstDefined(raw, ['artistDescription', 'artist_description']);
+    const artistDescVal = firstDefined(raw, [
+        'artistDescription',
+        'artist_description'
+    ]);
 
     const introKeyVal = firstDefined(raw, ['introKey']);
     const detailKeyVal = firstDefined(raw, ['detailKey']);
     const artistKeyVal = firstDefined(raw, ['artistKey']);
-    const artistArtworkVal = firstDefined(raw, ['artistArtwork', 'artist_artwork']);
 
-    const yearReleased = asNumber(yearReleasedVal, null);
+    const yearReleased = asNumber(yearReleasedVal, undefined);
 
     const decade =
         asString(decadeNameVal) ??
         asString(decadeSlugVal) ??
-        decadeFromYear(yearReleased);
-
+        null;
 
     return {
-        id: typeof idVal === 'string' || typeof idVal === 'number' ? idVal : null,
-        rankingId: asNumber(rankingIdVal, null),
+        id:
+            typeof idVal === 'string' || typeof idVal === 'number'
+                ? idVal
+                : null,
+
+        rankingId: asNumber(rankingIdVal, undefined),
 
         rank: asNumber(rankVal, 0) ?? 0,
 
         trackName: asString(trackNameVal, '') ?? '',
-        artistName: asString(artistNameVal, 'Unknown Artist') ?? 'Unknown Artist',
+        artistName:
+            asString(artistNameVal, 'Unknown Artist') ?? 'Unknown Artist',
 
         albumName: asString(albumNameVal, null),
         albumArtwork: asString(albumArtworkVal, null),
@@ -156,10 +207,14 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         genreSlug: asString(genreSlugVal, null),
         genreName: asString(genreNameVal, null),
 
-        durationMs: asNumber(durationMsVal, null),
+        // ✅ ADD THESE RIGHT HERE
+        setNumber: asNumber(setNumberVal, undefined),
+        blockPosition: asNumber(blockPositionVal, undefined),
+        blockSize: asNumber(blockSizeVal, undefined),
+        durationMs: asNumber(durationMsVal, undefined),
 
-        durationSeconds: asNumber(durationMsVal, null)
-            ? Math.round((asNumber(durationMsVal, null) ?? 0) / 1000)
+        durationSeconds: asNumber(durationMsVal, undefined)
+            ? Math.round((asNumber(durationMsVal, undefined) ?? 0) / 1000)
             : null,
 
         spotifyTrackId: asString(spotifyTrackIdVal, null),
@@ -171,6 +226,6 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         introKey: asAudioKey(introKeyVal),
         detailKey: asAudioKey(detailKeyVal),
         artistKey: asAudioKey(artistKeyVal),
-    };
 
+    };
 }

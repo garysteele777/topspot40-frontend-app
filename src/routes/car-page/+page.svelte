@@ -280,15 +280,28 @@
         }
     }
 
+    const isRadioMode =
+        $currentSelection?.mode === 'decade_genre' &&
+        $currentSelection?.context?.decade === 'ALL' &&
+        $currentSelection?.context?.genre === 'ALL';
+
     $: uiDecade =
         $currentSelection?.mode === 'decade_genre'
-            ? ($currentTrack?.decadeName ?? toTitleCase($currentSelection.context?.decade ?? ''))
+            ? (
+                isRadioMode
+                    ? ($currentTrack?.decadeName ?? '')
+                    : ($currentTrack?.decadeName ?? toTitleCase($currentSelection.context?.decade ?? ''))
+            )
             : collectionNameMap[$currentSelection?.context?.collection_slug ?? ''] ??
             toTitleCase($currentSelection?.context?.collection_slug ?? '');
 
     $: uiGenre =
         $currentSelection?.mode === 'decade_genre'
-            ? ($currentTrack?.genreName ?? toTitleCase($currentSelection.context?.genre ?? ''))
+            ? (
+                isRadioMode
+                    ? ($currentTrack?.genreName ?? '')
+                    : ($currentTrack?.genreName ?? toTitleCase($currentSelection.context?.genre ?? ''))
+            )
             : '';
 
     $: headerMode =

@@ -79,7 +79,8 @@ function preNormalizeRow(t: SequenceItemExtended): SequenceItemExtended {
 function mapItemsToTracks(
     rows: SequenceItemExtended[],
     startRank: number,
-    endRank: number
+    endRank: number,
+    sel: SelectionState   // 👈 ADD THIS
 ): LoadedTrack[] {
     const result: LoadedTrack[] = [];
 
@@ -99,12 +100,14 @@ function mapItemsToTracks(
             row.decadeSlug ??
             row.decade_slug ??
             (row as any).decade ??
+            (sel.context?.decade as string | undefined) ??
             undefined;
 
         track.genreSlug =
             row.genreSlug ??
             row.genre_slug ??
             (row as any).genre ??
+            (sel.context?.genre as string | undefined) ??
             undefined;
 
         track.decadeName = track.decadeSlug?.toUpperCase();
@@ -191,7 +194,7 @@ export async function loadTrackSequence(
 
             if (!rows.length) return [];
 
-            const mapped = mapItemsToTracks(rows, startRank, endRank);
+            const mapped = mapItemsToTracks(rows, startRank, endRank, sel);
 
             // Only cap normal decades to 40. ALL decades stays full length.
             const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);
@@ -242,7 +245,7 @@ export async function loadTrackSequence(
 
         if (!rows.length) return [];
 
-        const mapped = mapItemsToTracks(rows, startRank, endRank);
+        const mapped = mapItemsToTracks(rows, startRank, endRank, sel);
 
 // Only cap normal decades to 40
         const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);

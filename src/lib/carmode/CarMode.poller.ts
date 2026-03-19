@@ -276,26 +276,48 @@ export function startPlaybackPolling() {
                 const next = list.find(t => t.spotifyTrackId === spotifyId);
 
                 if (next) {
-                    // normal ranked playback
-                    currentTrack.set(next);
-                    currentRank.set(next.rank);
+                    const ctx = data.context ?? {};
+
+                    const enriched = {
+                        ...next,
+
+                        decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
+                        decadeName: ctx?.decade_name ?? next.decadeName,
+                        genreSlug: ctx?.genre_slug ?? next.genreSlug,
+                        genreName: ctx?.genre_name ?? next.genreName,
+
+                        setNumber: ctx?.set_number ?? next.setNumber,
+                        blockPosition: ctx?.block_position ?? next.blockPosition,
+                        blockSize: ctx?.block_size ?? next.blockSize,
+                    };
+
+                    currentTrack.set(enriched);
+                    currentRank.set(enriched.rank);
                 } else {
                     // radio fallback
+                    const ctx = data.context ?? {};
+
                     const fallbackTrack = {
                         id: null,
-                        rankingId: data.context?.ranking_id ?? null,
+                        rankingId: ctx?.ranking_id ?? null,
                         rank: data.current_rank ?? 0,
                         trackName: data.track_name ?? '',
                         artistName: data.artist_name ?? '',
                         spotifyTrackId: spotifyId,
-                        decadeSlug: data.context?.decade ?? null,
-                        decadeName: null,
-                        genreSlug: data.context?.genre ?? null,
-                        genreName: null,
-                        yearReleased: null,
-                        albumArtwork: data.context?.album_artwork ?? null
-                    };
 
+                        // 🔥 FIXED MAPPING
+                        decadeSlug: ctx?.decade_slug ?? null,
+                        decadeName: ctx?.decade_name ?? null,
+                        genreSlug: ctx?.genre_slug ?? null,
+                        genreName: ctx?.genre_name ?? null,
+
+                        yearReleased: null,
+                        albumArtwork: ctx?.album_artwork ?? null,
+
+                        setNumber: ctx.set_number,
+                        blockPosition: ctx.block_position,
+                        blockSize: ctx.block_size,
+                    };
                     currentTrack.set(fallbackTrack);
                     currentRank.set(fallbackTrack.rank);
 
