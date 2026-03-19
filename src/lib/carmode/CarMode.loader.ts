@@ -31,17 +31,35 @@ export async function loadForSelection(
     console.log('🚀 LOADER selection.programType =', sel.programType);
 
     // 🎧 RADIO MODE DETECTION (ALL / ALL)
+    const decade =
+        sel.context?.decade ??
+        sel.context?.decade_slug ??
+        sel.context?.decadeName ??
+        sel.context?.decadeSlug;
+
+    const genre =
+        sel.context?.genre ??
+        sel.context?.genre_slug ??
+        sel.context?.genreName ??
+        sel.context?.genreSlug;
+
+    console.log("🧪 RADIO CHECK:", {
+        decade,
+        genre,
+        raw: sel.context
+    });
+
     if (
         sel.mode === 'decade_genre' &&
-        sel.context?.decade === 'ALL' &&
-        sel.context?.genre === 'ALL'
+        decade === 'ALL' &&
+        genre === 'ALL'
     ) {
         console.log('📻 RADIO MODE detected (ALL / ALL)');
 
         // mark program type so player launches radio engine
-        sel.programType = 'RADIO';
+        const isRadio = true;
 
-        if (sel.programType === 'RADIO') {
+        if (isRadio) {
 
             const placeholder: CarModeTrack = {
                 id: null,
@@ -87,8 +105,17 @@ export async function loadForSelection(
             const parsed = JSON.parse(raw) as { DG?: Record<string, number[]> };
             const dg = parsed?.DG ?? {};
 
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
+            const decade =
+                sel.context?.decade ??
+                sel.context?.decade_slug ??
+                sel.context?.decadeName ??
+                sel.context?.decadeSlug;
+
+            const genre =
+                sel.context?.genre ??
+                sel.context?.genre_slug ??
+                sel.context?.genreName ??
+                sel.context?.genreSlug;
 
             if (genre === 'ALL' && decade) {
                 // ⭐ combine all genres for the decade
@@ -163,8 +190,17 @@ export async function loadForSelection(
 
         // Initialize program history entry
         if (sel.mode === 'decade_genre') {
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
+            const decade =
+                sel.context?.decade ??
+                sel.context?.decade_slug ??
+                sel.context?.decadeName ??
+                sel.context?.decadeSlug;
+
+            const genre =
+                sel.context?.genre ??
+                sel.context?.genre_slug ??
+                sel.context?.genreName ??
+                sel.context?.genreSlug;
 
             if (decade && genre) {
                 const key = `DG|${decade}|${genre}` as ProgramKey;
@@ -221,8 +257,14 @@ export async function loadForSelection(
         // 2) Optional: "favorites" genre within decade_genre mode (not FAV_DG program)
         let filtered: LoadedTrack[] = sequence;
 
+        const genre =
+            sel.context?.genre ??
+            sel.context?.genre_slug ??
+            sel.context?.genreName ??
+            sel.context?.genreSlug;
+
         const isInlineFavorites =
-            sel.mode === 'decade_genre' && sel.context?.genre === 'favorites';
+            sel.mode === 'decade_genre' && genre === 'favorites';
 
         if (isInlineFavorites) {
             const decade = sel.context?.decade;
@@ -254,8 +296,17 @@ export async function loadForSelection(
 
         // Initialize program history entry
         if (sel.mode === 'decade_genre') {
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
+            const decade =
+                sel.context?.decade ??
+                sel.context?.decade_slug ??
+                sel.context?.decadeName ??
+                sel.context?.decadeSlug;
+
+            const genre =
+                sel.context?.genre ??
+                sel.context?.genre_slug ??
+                sel.context?.genreName ??
+                sel.context?.genreSlug;
 
             if (decade && genre) {
                 const programKey = `DG|${decade}|${genre}` as ProgramKey;
@@ -296,8 +347,17 @@ export async function loadForSelection(
             let programKey: ProgramKey | null = null;
 
             if (sel.mode === 'decade_genre') {
-                const d = sel.context?.decade;
-                const g = sel.context?.genre;
+                const d =
+                    sel.context?.decade ??
+                    sel.context?.decade_slug ??
+                    sel.context?.decadeName ??
+                    sel.context?.decadeSlug;
+
+                const g =
+                    sel.context?.genre ??
+                    sel.context?.genre_slug ??
+                    sel.context?.genreName ??
+                    sel.context?.genreSlug;
                 if (d && g) programKey = `DG|${d}|${g}` as ProgramKey;
             }
 

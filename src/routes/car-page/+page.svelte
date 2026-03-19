@@ -282,14 +282,13 @@
 
     $: uiDecade =
         $currentSelection?.mode === 'decade_genre'
-            ? toTitleCase($currentSelection.context?.decade ?? '')
+            ? ($currentTrack?.decadeName ?? toTitleCase($currentSelection.context?.decade ?? ''))
             : collectionNameMap[$currentSelection?.context?.collection_slug ?? ''] ??
             toTitleCase($currentSelection?.context?.collection_slug ?? '');
 
-
     $: uiGenre =
         $currentSelection?.mode === 'decade_genre'
-            ? toTitleCase($currentSelection.context?.genre ?? '')
+            ? ($currentTrack?.genreName ?? toTitleCase($currentSelection.context?.genre ?? ''))
             : '';
 
     $: headerMode =
