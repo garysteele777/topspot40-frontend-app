@@ -544,16 +544,6 @@ export function startPlaybackPolling() {
                     }
                 }
 
-                try {
-                    dlog('📡 track-finished');
-
-                    await fetch(`${API_BASE}/playback/track-finished`, {
-                        method: 'POST'
-                    });
-
-                } catch (err) {
-                    console.error('❌ Failed to signal track-finished', err);
-                }
             }
             // Fallback: detect leaving track phase
             if (

@@ -118,12 +118,10 @@
         });
 
         if (
-            sel?.programType === 'RADIO' ||
-            (
-                sel?.mode === 'decade_genre' &&
-                sel?.context?.decade === 'ALL' &&
-                sel?.context?.genre === 'ALL'
-            )
+            sel?.mode === 'decade_genre' &&
+            sel?.context?.decade === 'ALL' &&
+            sel?.context?.genre === 'ALL' &&
+            trackObj.rank === 0   // 👈 ONLY for initial "radio start"
         ) {
             console.log('📻 Starting ALL/ALL radio station');
 
@@ -145,6 +143,8 @@
 
             return;
         }
+
+        console.log('🎯 CALLING BACKEND play-track for:', trackObj.trackName);
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -172,9 +172,12 @@
     }
 
     async function nextTrack() {
+
+        console.log('⏭ NEXT BUTTON CLICKED');
+
         if (!$currentTrack || $tracks.length === 0) return;
 
-        await stopPlayback();
+        // await stopPlayback();
 
         const rankingId = $currentTrack.rankingId;
         if (rankingId == null) return;
@@ -207,22 +210,20 @@
                 markRankPlayed(key, $currentTrack.rank);
             }
         }
+        //
+        // const currentIndex =
+        //     $tracks.findIndex(t => t.rankingId === rankingId);
+        //
+        // if (currentIndex === -1) return;
 
-        const currentIndex =
-            $tracks.findIndex(t => t.rankingId === rankingId);
+        console.log('🚀 CALLING BACKEND /playback/next');
 
-        if (currentIndex === -1) return;
+        const res = await fetch(`${API_BASE}/supabase/decade-genre/next`, {
+            method: 'POST'
+        });
 
-        const nextIndex = (currentIndex + 1) % $tracks.length;
-
-        const next = $tracks[nextIndex];
-
-        currentRank.set(next.rank);
-        currentTrack.set(next);
-
-        await new Promise(r => setTimeout(r, 50));
-
-        await playTrack(next);
+        const data = await res.json().catch(() => null);
+        console.log('⏭ BACKEND NEXT RESPONSE:', data);
     }
 
     async function prevTrack() {

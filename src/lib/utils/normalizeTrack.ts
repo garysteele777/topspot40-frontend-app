@@ -134,7 +134,7 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         asString(decadeSlugVal) ??
         decadeFromYear(yearReleased);
 
-    console.log("NORMALIZED TRACK", normalizeTrack(raw));
+    console.log("NORMALIZED TRACK INPUT", raw);
 
     return {
         id: typeof idVal === 'string' || typeof idVal === 'number' ? idVal : null,
