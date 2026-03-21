@@ -70,7 +70,14 @@
             ? $programHistoryStore.find(p => p.key === key)
             : null;
 
-        programTotal = program?.total ?? tracks.length;
+        if (isRadioStation) {
+            // Radio mode: tracks[] is not reliable
+            // Use fallback that grows instead of staying at 1
+            programTotal = idx >= 0 ? idx + 1 : 1;
+        } else {
+            // All existing modes untouched
+            programTotal = program?.total ?? tracks.length;
+        }
     }
 
     $: isRadioStation =
