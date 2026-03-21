@@ -536,15 +536,16 @@ export function startPlaybackPolling() {
                 finalizeTrackUI();
                 markPlayed();
 
-                const single = isSingleMode();
+                const sel = get(currentSelection);
+                const isPauseMode = sel?.pauseMode === 'pause';
 
-                console.log('🧪 SINGLE CHECK', {
-                    single,
-                    selection: get(currentSelection)
+                console.log('🧪 PAUSE CHECK', {
+                    isPauseMode,
+                    selection: sel
                 });
 
-                if (single) {
-                    console.log('🛑 Single mode: not advancing after natural track end');
+                if (isPauseMode) {
+                    console.log('🛑 Pause mode: not advancing after track end');
                 } else {
                     try {
                         dlog('📡 track-finished');
@@ -558,16 +559,6 @@ export function startPlaybackPolling() {
                     }
                 }
 
-                try {
-                    dlog('📡 track-finished');
-
-                    await fetch(`${API_BASE}/playback/track-finished`, {
-                        method: 'POST'
-                    });
-
-                } catch (err) {
-                    console.error('❌ Failed to signal track-finished', err);
-                }
             }
             // Fallback: detect leaving track phase
             if (
