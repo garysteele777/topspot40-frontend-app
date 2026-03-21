@@ -125,12 +125,14 @@
         ) {
             console.log('📻 Starting ALL/ALL radio station');
 
+            const settings = get(playbackSettingsStore);
+
             const params = new URLSearchParams({
                 decade: 'ALL',
                 genre: 'ALL',
-                play_intro: 'false',
-                play_detail: 'false',
-                play_artist_description: 'false'
+                play_intro: String(settings.voices.includes('intro')),
+                play_detail: String(settings.voices.includes('detail')),
+                play_artist_description: String(settings.voices.includes('artist'))
             });
 
             const res = await fetch(
