@@ -125,6 +125,11 @@
     }
 
 
+    $: isRadioMode =
+        $currentSelection?.context?.decade === 'ALL' &&
+        $currentSelection?.context?.genre === 'ALL';
+
+
     let lastTrackKey: string | null = null;
 
     $: {
@@ -139,6 +144,10 @@
         }
     }
 
+    $: {
+        console.log("SELECTION FULL", $currentSelection);
+    }
+
     $: isFavoritesProgram =
         $currentSelection?.programType === 'FAV_DG' ||
         $currentSelection?.programType === 'FAV_COL';
@@ -150,6 +159,12 @@
            • Decade: ${currentTrack.decadeName ?? currentTrack.decadeSlug ?? ''}
            • Genre: ${currentTrack.genreName ?? currentTrack.genreSlug ?? ''}`
             : null;
+
+    async function nextSet() {
+        await fetch('/supabase/decade-genre/next-set', {
+            method: 'POST'
+        });
+    }
 
 
     function onToggleFavorite() {
@@ -231,67 +246,75 @@
     }
     />
 
+    <p style="color: yellow;">
+        DEBUG → {$currentSelection?.programType} | radio={isRadioMode ? 'YES' : 'NO'}
+    </p>
 
-    {#if programTotal > 0}
-        <div class="car-extra-info">
+
+    {#if nextTrack || isRadioMode}
+        <div class="next-line">
+        <span>
             {#if nextTrack}
-                <div class="next-line">
-                    <span>
-                        {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
-                            Next: Favorite #{currentIndex + 2} – {nextTrack.trackName} – {nextTrack.artistName}
-                        {:else}
-                            Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
-                        {/if}
-                    </span>
-
-
-                    <button class="next-btn" on:click={skipToNextTrack}>
-                        ⏭ Next
-                    </button>
-                </div>
+                {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
+                    Next: Favorite #{currentIndex + 2} – {nextTrack.trackName} – {nextTrack.artistName}
+                {:else}
+                    Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
+                {/if}
+            {:else}
+                Next: (radio continues…)
             {/if}
+        </span>
 
-            <div class="progress-line">
-                Completed {completed} of {programTotal} ({Math.round(percent)}%)
-                <span class="dot">•</span>
-                Remaining {remaining}
-            </div>
+            <div class="flex gap-2 items-center">
+                <!-- Next Track -->
+                <button class="next-btn" on:click={skipToNextTrack}>
+                    ⏭
+                </button>
 
-            <div class="overall-progress">
-                <div
-                        class="overall-bar"
-                        style="width: {percent}%">
-                </div>
+                <!-- Next Set (radio only) -->
+                {#if isRadioMode}
+                    <button class="next-btn" on:click={nextSet}>
+                        ⏭⏭
+                    </button>
+                {/if}
             </div>
         </div>
     {/if}
 
-    <!-- Narration -->
-    <div class="w-full flex justify-center px-4 mt-4">
-        <CarModeNarration
-                track={currentTrack}
-                onBackToOptions={onBackToOptions}
-                onOpenModal={() => setShowNarrationModal(true)}
-        />
+    <div class="progress-line">
+        Completed {completed} of {programTotal} ({Math.round(percent)}%)
+        <span class="dot">•</span>
+        Remaining {remaining}
     </div>
 
-    <CarModeNarrationModal
+    <div class="overall-progress">
+        <div
+                class="overall-bar"
+                style="width: {percent}%">
+        </div>
+    </div>
+
+
+
+<!-- Narration -->
+<div class="w-full flex justify-center px-4 mt-4">
+    <CarModeNarration
             track={currentTrack}
-            open={showNarrationModal}
-            onClose={() => setShowNarrationModal(false)}
+            onBackToOptions={onBackToOptions}
+            onOpenModal={() => setShowNarrationModal(true)}
     />
+</div>
+
+<CarModeNarrationModal
+        track={currentTrack}
+        open={showNarrationModal}
+        onClose={() => setShowNarrationModal(false)}
+/>
 </div>
 <style>
     /* ─────────────────────────────────────────────
        Progress + Next Section
     ───────────────────────────────────────────── */
-
-    .car-extra-info {
-        margin-top: 0.75rem;
-        text-align: center;
-        opacity: 0.8;
-        font-size: 0.8rem;
-    }
 
     .next-line {
         display: flex;

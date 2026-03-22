@@ -376,6 +376,22 @@
             sel = buildSelectionFromUrl(url);
             console.log('🔥 BUILT SELECTION FROM URL (raw):', sel);
 
+            // 🔥 Normalize programType based on selection
+            if (sel.mode === 'decade_genre') {
+                const isRadio =
+                    sel.context?.decade === 'ALL' &&
+                    sel.context?.genre === 'ALL';
+
+                sel.programType = isRadio ? 'RADIO_DG' : 'DG';
+            }
+
+            if (sel.mode === 'collection') {
+                const isRadio =
+                    sel.context?.collection === 'ALL';
+
+                sel.programType = isRadio ? 'RADIO_COL' : 'COL';
+            }
+
             currentSelection.set(sel);
 
             const cr = url.searchParams.get('currentRank');
