@@ -48,6 +48,7 @@
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
     let lastProgramKey: string | null = null;
+    let nextTrackLock = false;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -179,6 +180,9 @@
 
         console.log('⏭ NEXT BUTTON CLICKED');
 
+        if (nextTrackLock) return;
+        nextTrackLock = true;
+
         if (!$currentTrack || $tracks.length === 0) return;
 
         // await stopPlayback();
@@ -220,10 +224,6 @@
         //
         // if (currentIndex === -1) return;
 
-        const isRadioMode =
-            sel?.mode === 'decade_genre' &&
-            sel?.categoryMode === 'multiple';
-
         if (isRadioMode) {
             console.log('📻 RADIO → NEXT SET');
 
@@ -252,6 +252,10 @@
 
             await playTrack(next);
         }
+
+        setTimeout(() => {
+            nextTrackLock = false;
+        }, 500);
     }
 
     async function prevTrack() {
