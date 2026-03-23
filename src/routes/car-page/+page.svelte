@@ -220,14 +220,38 @@
         //
         // if (currentIndex === -1) return;
 
-        console.log('🚀 CALLING BACKEND /playback/next');
+        const isRadioMode =
+            sel?.mode === 'decade_genre' &&
+            sel?.categoryMode === 'multiple';
 
-        const res = await fetch(`${API_BASE}/supabase/decade-genre/next`, {
-            method: 'POST'
-        });
+        if (isRadioMode) {
+            console.log('📻 RADIO → NEXT SET');
 
-        const data = await res.json().catch(() => null);
-        console.log('⏭ BACKEND NEXT RESPONSE:', data);
+            const res = await fetch(`${API_BASE}/supabase/decade-genre/next`, {
+                method: 'POST'
+            });
+
+            const data = await res.json().catch(() => null);
+            console.log('⏭ BACKEND NEXT RESPONSE:', data);
+
+        } else {
+            console.log('🎵 NORMAL → NEXT TRACK (local)');
+
+            const currentIndex =
+                $tracks.findIndex(t => t.rankingId === rankingId);
+
+            if (currentIndex === -1) return;
+
+            const nextIndex = (currentIndex + 1) % $tracks.length;
+            const next = $tracks[nextIndex];
+
+            currentRank.set(next.rank);
+            currentTrack.set(next);
+
+            await new Promise(r => setTimeout(r, 50));
+
+            await playTrack(next);
+        }
     }
 
     async function prevTrack() {

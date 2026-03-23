@@ -365,7 +365,8 @@ export function startPlaybackPolling() {
             if (
                 rankingId != null &&
                 rankingId !== get(currentTrack)?.rankingId &&
-                !spotifyId
+                !spotifyId &&
+                !hasPlaybackStarted   // 🔥 ADD THIS LINE
             ) {
                 const list = get(tracks);
                 const next = list.find(t => t.rankingId === rankingId);
@@ -388,7 +389,6 @@ export function startPlaybackPolling() {
                     trackFinalized = false;
                 }
             }
-
 
 
             playbackPhase.set(phase);
