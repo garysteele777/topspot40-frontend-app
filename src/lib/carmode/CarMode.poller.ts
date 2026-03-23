@@ -260,8 +260,17 @@ export function startPlaybackPolling() {
             // console.log("STATUS SNAPSHOT", data); // temporary
 
             const spotifyId = data.context?.spotify_track_id ?? null;
+            const phase = data.phase as PlaybackPhase;
+
+
+            const hasPlaybackStarted =
+                phase === 'intro' ||
+                phase === 'detail' ||
+                phase === 'artist' ||
+                phase === 'track';
 
             if (
+                hasPlaybackStarted &&   // ✅ ONLY allow AFTER playback begins
                 spotifyId &&
                 (
                     spotifyId !== activeSpotifyTrackId ||
@@ -381,7 +390,7 @@ export function startPlaybackPolling() {
             }
 
 
-            const phase = data.phase as PlaybackPhase;
+
             playbackPhase.set(phase);
 
             const prevPhase = lastPhase;

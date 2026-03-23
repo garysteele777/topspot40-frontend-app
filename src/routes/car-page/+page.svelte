@@ -43,6 +43,8 @@
     import {fetchGroupedCatalog} from '$lib/api/catalog';
     import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
 
+    let initialTrack = null;
+
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
     let lastProgramKey: string | null = null;
