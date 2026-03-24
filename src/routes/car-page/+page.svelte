@@ -202,8 +202,10 @@
 
             if (sel.mode === 'collection') {
                 const slug = sel.context?.collection_slug;
-                if (slug) {
-                    key = `COL|${slug}`;
+                const group = sel.context?.collection_group_slug;
+
+                if (slug && group) {
+                    key = `COL|${slug}|${group}` as ProgramKey;
                 }
             } else if (sel.mode === 'decade_genre') {
                 const decade = $currentTrack.decadeSlug;

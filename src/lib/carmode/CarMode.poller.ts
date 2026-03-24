@@ -3,7 +3,7 @@
 import {get} from 'svelte/store';
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {browser} from '$app/environment';
-import type {ProgramKey} from '$lib/carmode/programHistory';
+import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 
 
 import {
@@ -63,42 +63,6 @@ let trackSwitchTime = 0;
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
 import {markRankPlayed} from '$lib/carmode/programHistory';
-
-
-function markPlayed(): void {
-    const track = get(currentTrack);
-    const sel = get(currentSelection);
-
-    if (!track || !sel) return;
-
-    let key: ProgramKey | null = null;
-
-    if (sel.mode === 'decade_genre') {
-        const decade = track.decadeSlug;
-        const genre = track.genreSlug;
-
-        if (!decade || !genre) return;
-
-        key = `DG|${decade}|${genre}` as ProgramKey;
-    } else if (sel.mode === 'collection') {
-        const slug = sel.context?.collection_slug;
-        if (!slug) return;
-
-        key = `COL|${slug}` as ProgramKey;
-    }
-
-    if (!key) return;
-
-    console.log("🎯 HISTORY WRITE", {
-        key,
-        decade: track.decadeSlug,
-        genre: track.genreSlug,
-        rank: track.rank,
-        trackName: track.trackName
-    });
-
-    markRankPlayed(key, track.rank);
-}
 
 function isSingleMode(): boolean {
     const sel = get(currentSelection);
@@ -530,13 +494,6 @@ export function startPlaybackPolling() {
             }
 
 
-// 🏁 Detect natural track end and finalize UI
-//             console.log('🧪 TIMING CHECK', {
-//                 elapsedSec,
-//                 durationSec,
-//                 phase,
-//                 spotifyId
-//             });
             if (
                 phase === 'track' &&
                 spotifyId &&
@@ -557,7 +514,7 @@ export function startPlaybackPolling() {
                 });
 
                 finalizeTrackUI();
-                markPlayed();
+                markCurrentTrackPlayed();
 
                 const sel = get(currentSelection);
                 const isPauseMode = sel?.pauseMode === 'pause';
@@ -596,7 +553,7 @@ export function startPlaybackPolling() {
                 });
 
                 finalizeTrackUI();
-                markPlayed();
+                markCurrentTrackPlayed();
 
                 if (!isSingleMode()) {
                     try {
@@ -635,7 +592,7 @@ export async function skipToNextTrack(): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, AUDIO_PIPELINE_CLEAR_DELAY_MS));
 
     // 2️⃣ Count current track as played
-    markPlayed();
+    markCurrentTrackPlayed();
 
     // 3️⃣ Stop any narration immediately
     narrationQueue = [];

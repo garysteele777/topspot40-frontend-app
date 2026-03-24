@@ -408,7 +408,9 @@
         ];
     })();
     $: collectionPrograms = $programHistory.filter(
-        (p): p is ProgramHistory => p.key.startsWith('COL|')
+        (p): p is ProgramHistory =>
+            p.key.startsWith('COL|') &&
+            p.key.split('|').length === 3
     );
 
     $: collectionGroupMap = (() => {

@@ -52,9 +52,19 @@
         Language
     } from '$lib/types/playback';
 
+    type CollectionMeta = {
+        collectionGroup: string;
+        collectionGroupSlug: string;
+        totalTracks: number;
+    };
+
     type OptionItem = { id: string; label: string; mp3?: string };
 
-    type CollectionItem = { slug: string; name: string };
+    type CollectionItem = {
+        slug: string;
+        name: string;
+        totalTracks: number;   // ⭐ ADD THIS
+    };
     type CollectionGroup = {
         slug: string;
         name: string;
@@ -71,8 +81,8 @@
     let startRank = 1;
     let endRank = 40;
 
-    const categoryMode = 'single' as const;
-    const voicePlayMode = 'before' as const;
+    // const categoryMode = 'single' as const;
+    // const voicePlayMode = 'before' as const;
     // Selections
     let decades: string[] = [];
     let genres: string[] = [];
@@ -297,17 +307,18 @@
     }
 
 
-    function findCollectionMeta(slug: string) {
+    function findCollectionMeta(slug: string): CollectionMeta | undefined {
         for (const group of collectionGroups) {
             const match = group.items.find(i => i.slug === slug);
             if (match) {
                 return {
                     collectionGroup: group.name,
-                    collectionGroupSlug: group.slug
+                    collectionGroupSlug: group.slug,
+                    totalTracks: match.totalTracks   // ⭐ THIS IS THE FIX
                 };
             }
         }
-        return {};
+        return undefined;
     }
 
 
@@ -339,7 +350,9 @@
                 : {
                     ...base,
                     collection: collections[0],
-                    collectionCategory: findCollectionMeta(collections[0]).collectionGroupSlug
+                    collectionCategory: collections[0]
+                        ? findCollectionMeta(collections[0])?.collectionGroupSlug ?? ''
+                        : ''
                 };
 
         console.log('🚀 Launch payload:', payload);
@@ -364,11 +377,14 @@
 
             const label = buildProgramLabel(activeGroup, decades, genres, collections, favoritesGroup);
             if (activeGroup === 'collection' && collections[0]) {
+                const meta = findCollectionMeta(collections[0]);
+                const total = meta?.totalTracks ?? 0;
+
                 upsertProgram(
                     key,
                     label,
-                    getTotalTracks(startRank, endRank),
-                    findCollectionMeta(collections[0])   // ⭐ THIS IS IT
+                    total,
+                    meta
                 );
             } else {
                 upsertProgram(
@@ -754,12 +770,6 @@
         color: #fdfaf3;
     }
 
-    .picker-controls,
-    .expand-controls {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
 
     .toolbar-btn {
         padding: 0.28rem 0.7rem;

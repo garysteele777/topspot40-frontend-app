@@ -14,6 +14,7 @@ import {programHistoryStore} from '$lib/carmode/programHistory';
 
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
+
 export async function loadForSelection(
     sel: SelectionState,
     initialRank?: number | null
@@ -215,9 +216,10 @@ export async function loadForSelection(
 
         if (sel.mode === 'collection') {
             const slug = sel.context?.collection_slug;
+            const group = sel.context?.collection_group_slug;
 
-            if (slug) {
-                const key = `COL|${slug}` as ProgramKey;
+            if (slug && group) {
+                const key = `COL|${slug}|${group}` as ProgramKey;
 
                 upsertProgram(
                     key,
@@ -323,9 +325,10 @@ export async function loadForSelection(
 
         if (sel.mode === 'collection') {
             const slug = sel.context?.collection_slug;
+            const group = sel.context?.collection_group_slug;
 
-            if (slug) {
-                const programKey = `COL|${slug}` as ProgramKey;
+            if (slug && group) {
+                const programKey = `COL|${slug}|${group}` as ProgramKey;
 
                 console.log('🧠 Creating collection history:', programKey);
 
@@ -363,7 +366,10 @@ export async function loadForSelection(
 
             if (sel.mode === 'collection') {
                 const slug = sel.context?.collection_slug;
-                if (slug) programKey = `COL|${slug}` as ProgramKey;
+                const group = sel.context?.collection_group_slug;
+                if (slug && group) {
+                    programKey = `COL|${slug}|${group}` as ProgramKey;
+                }
             }
 
             if (programKey) {

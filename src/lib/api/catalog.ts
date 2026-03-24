@@ -2,7 +2,13 @@
 
 export interface DecadeItem { id: number; name: string; slug: string }
 export interface GenreItem  { id: number; name: string; slug: string }
-export interface CollectionLeaf { id: number; name: string; slug: string }
+
+export interface CollectionLeaf {
+  id: number;
+  name: string;
+  slug: string;
+  totalTracks?: number;   // ⭐ ADD THIS
+}
 
 export function toSlug(input: string): string {
   return input
