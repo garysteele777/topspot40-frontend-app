@@ -58,6 +58,7 @@ let trackFinalized = false;
 let narrationSignaled = false;
 
 let activeSpotifyTrackId: string | null = null;
+let trackSwitchTime = 0;
 
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
@@ -269,16 +270,18 @@ export function startPlaybackPolling() {
                 phase === 'artist' ||
                 phase === 'track';
 
+            const justSwitchedRecently = Date.now() - trackSwitchTime < 1500;
+
             if (
                 hasPlaybackStarted &&   // ✅ ONLY allow AFTER playback begins
                 spotifyId &&
+                !justSwitchedRecently &&
                 (
-                    spotifyId !== activeSpotifyTrackId ||
-                    !get(currentTrack)?.spotifyTrackId ||
-                    get(currentTrack)?.trackName === 'TopSpot Radio'
+                    spotifyId !== activeSpotifyTrackId
                 )
             ) {
                 activeSpotifyTrackId = spotifyId;
+                trackSwitchTime = Date.now();   // 🔥 ADD THIS
                 finishedTrackId = null;
 
                 const list = get(tracks);
@@ -461,15 +464,15 @@ export function startPlaybackPolling() {
             if (phase === 'track' && data.context?.spotify_track_id) {
                 const spotifyId = data.context.spotify_track_id as string;
 
-                if (lastSpotifyId === spotifyId) {
-                    // already started playback for this track
-                } else if (!spotifyStartLock) {
+                if (lastSpotifyId !== spotifyId && !spotifyStartLock) {
+
                     spotifyStartLock = true;
 
                     dlog('🎵 TRACK start:', spotifyId);
 
-                    lastSpotifyId = spotifyId;       // playback guard
-                    activeSpotifyTrackId = spotifyId; // UI state
+                    lastSpotifyId = spotifyId;
+                    activeSpotifyTrackId = spotifyId;
+                    trackSwitchTime = Date.now();
                     trackFinalized = false;
 
                     try {
@@ -514,7 +517,9 @@ export function startPlaybackPolling() {
                 durationSec > 0 ? Math.min(elapsedSecRaw, durationSec) : elapsedSecRaw;
 
 // 🔥 ONLY update timing when Spotify owns the clock
-            if (get(timingSource) === 'spotify') {
+            const justSwitched = Date.now() - trackSwitchTime < 1500;
+
+            if (get(timingSource) === 'spotify' && !justSwitched) {
                 elapsed.set(elapsedSec);
                 duration.set(durationSec);
 
@@ -526,12 +531,21 @@ export function startPlaybackPolling() {
 
 
 // 🏁 Detect natural track end and finalize UI
+//             console.log('🧪 TIMING CHECK', {
+//                 elapsedSec,
+//                 durationSec,
+//                 phase,
+//                 spotifyId
+//             });
             if (
                 phase === 'track' &&
                 spotifyId &&
-                finishedTrackId !== spotifyId &&
+                finishedTrackId !== spotifyId &&   // 🔥 FIRST LINE OF DEFENSE
+                !trackFinalized &&
                 durationSec > 1 &&
-                elapsedSec >= durationSec
+                elapsedSec >= durationSec &&
+                elapsedSec > 2 &&
+                !justSwitched
             ) {
                 finishedTrackId = spotifyId;   // ⭐ important
                 trackFinalized = true;
@@ -570,13 +584,7 @@ export function startPlaybackPolling() {
 
             }
             // Fallback: detect leaving track phase
-            if (
-                lastPhase === 'track' &&
-                phase !== 'track' &&
-                !trackFinalized &&
-                get(timingSource) === 'spotify' &&
-                durationSec > 1
-            ) {
+            if (false && lastPhase === 'track' && phase !== 'track') {
                 trackFinalized = true;
 
                 console.log('🏁 Track ended via phase transition', {
@@ -592,9 +600,7 @@ export function startPlaybackPolling() {
 
                 if (!isSingleMode()) {
                     try {
-                        await fetch(`${API_BASE}/playback/track-finished`, {
-                            method: 'POST'
-                        });
+                        console.log('🚫 Fallback track-finished disabled');
                     } catch (err) {
                         console.error('❌ Failed to signal track-finished', err);
                     }
