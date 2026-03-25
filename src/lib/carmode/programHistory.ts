@@ -67,7 +67,7 @@ export function upsertProgram(
     const all = loadAll();
     const idx = all.findIndex(p => p.key === key);
 
-    const canonicalTotal = canonicalTotalForKey(key, total);
+    const canonicalTotal = canonicalTotalForKey(key, total ?? 0);
 
     // 👇 ADD THIS LOG
     console.log("🧠 upsertProgram TOTAL DEBUG:", {
@@ -98,25 +98,15 @@ export function markRankPlayed(
     key: ProgramKey,
     rank: number,
     label?: string,
-    total: number = 40
+    total?: number
 ) {
 
     const all = loadAll();
     let p = all.find(x => x.key === key);
 
-    // ⭐ Lazy creation
     if (!p) {
-        const canonicalTotal = canonicalTotalForKey(key, total);
-
-        p = {
-            key,
-            label: label ?? key,
-            total: canonicalTotal,
-            playedRanks: [],
-            updatedAt: Date.now()
-        };
-
-        all.unshift(p);
+        // Do NOT create incomplete program entries
+        return;
     }
 
     if (!p.playedRanks.includes(rank)) {

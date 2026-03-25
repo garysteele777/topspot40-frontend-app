@@ -12,6 +12,7 @@ import {
     seedCollectionPrograms,
     type ProgramKey
 } from '$lib/carmode/programHistory';
+import {upsertProgram} from '$lib/carmode/programHistory';
 
 // Normalized types
 export type NormalizedDecade = {
@@ -110,8 +111,44 @@ export function normalizeCatalog(
     }));
 
     if (browser) {
+        // Seed collections (existing)
         seedCollectionPrograms(buildCollectionHistorySeeds(collectionGroups));
+
+        // 🔥 Seed DG programs (NEW)
+        const dgSeeds = buildDGHistorySeeds(data);
+
+        console.log("🔥 DG SEEDS:", dgSeeds);
+
+        for (const e of dgSeeds) {
+            console.log("🌱 Seeding DG:", e);
+            upsertProgram(e.key, e.label, e.total);
+        }
     }
 
     return {decades, genres, collectionGroups};
+}
+
+function buildDGHistorySeeds(data: GroupedCatalog): {
+    key: ProgramKey;
+    label: string;
+    total: number;
+}[] {
+    const entries: {
+        key: ProgramKey;
+        label: string;
+        total: number;
+    }[] = [];
+
+    for (const row of data.decade_genre_totals ?? []) {
+        const decade = row.decade;
+        const genre = row.genre;
+
+        entries.push({
+            key: `DG|${decade}|${genre}`,
+            label: `${decade} ${genre}`,
+            total: row.total_tracks ?? 0
+        });
+    }
+
+    return entries;
 }

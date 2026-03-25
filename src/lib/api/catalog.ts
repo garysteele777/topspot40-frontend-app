@@ -29,6 +29,13 @@ export interface GroupedCatalog {
   decades: DecadeItem[];
   genres: GenreItem[];
   collections: CollectionGroup[];
+
+  // 🔥 ADD THIS
+  decade_genre_totals?: {
+    decade: string;
+    genre: string;
+    total_tracks: number;
+  }[];
 }
 
 // Prefer VITE_API_BASE_URL, fallback to local backend

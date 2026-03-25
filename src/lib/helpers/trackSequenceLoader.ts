@@ -224,7 +224,7 @@ export async function loadTrackSequence(
             [];
 
         if (rows.length) {
-            console.log('🎧 Raw rows received from Supabase:', rows.length);
+            // console.log('🎧 Raw rows received from Supabase:', rows.length);
 
             console.table(
                 rows.slice(0, 40).map(r => ({
