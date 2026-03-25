@@ -77,7 +77,8 @@
         } else {
             const program = $programHistoryStore.find(p => p.key === key);
             completed = program?.playedRanks.length ?? 0;
-            programTotal = program?.total ?? 0;
+            programTotal = tracks.length;
+            completed = program?.playedRanks.length ?? 0;
         }
     }
 

@@ -53,7 +53,7 @@ type SequenceItemExtended = SequenceItem & {
     artistArtwork?: string | null;
 };
 
-const PROGRAM_LENGTH = 40;
+// const PROGRAM_LENGTH = 40;
 
 // ------------------------------------------------------------
 // Local normalization helper
@@ -78,16 +78,12 @@ function preNormalizeRow(t: SequenceItemExtended): SequenceItemExtended {
 // ------------------------------------------------------------
 function mapItemsToTracks(
     rows: SequenceItemExtended[],
-    startRank: number,
-    endRank: number,
-    sel: SelectionState   // 👈 ADD THIS
+    sel: SelectionState
 ): LoadedTrack[] {
     const result: LoadedTrack[] = [];
 
     for (const raw of rows) {
-        const r = raw.rank ?? 0;
-
-        if (r < startRank || r > Math.min(endRank, 40)) continue;
+        // no rank filtering here
 
         const row = preNormalizeRow(raw);
         const track = normalizeTrack(row);
@@ -131,7 +127,7 @@ function mkCacheKey(sel: SelectionState): string {
             sel.context?.collectionId ??
             sel.context?.collection ??
             '';
-        return `c:${slug}:${sel.language}:${sel.startRank}:${sel.endRank}`;
+        return `c:${slug}:${sel.language}`;
     }
 
     const decade = sel.context?.decade ?? '';
@@ -157,15 +153,6 @@ export async function loadTrackSequence(
     if (loaderCache.has(key)) {
         return loaderCache.get(key)!;
     }
-
-    const isAllDecades =
-        sel.mode === 'decade_genre' && (sel.context as any)?.decade === 'ALL';
-
-    const startRank = sel.startRank ?? 1;
-    const endRank = isAllDecades
-        ? (sel.endRank ?? PROGRAM_LENGTH)     // allow 320 / 2560 etc
-        : PROGRAM_LENGTH;                     // normal DG stays 40
-
 
     try {
         // --------------------------------------------------------
@@ -194,10 +181,7 @@ export async function loadTrackSequence(
 
             if (!rows.length) return [];
 
-            const mapped = mapItemsToTracks(rows, startRank, endRank, sel);
-
-            // Only cap normal decades to 40. ALL decades stays full length.
-            const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);
+            const finalTracks = mapItemsToTracks(rows, sel);
 
             loaderCache.set(key, finalTracks);
             return finalTracks;
@@ -227,7 +211,7 @@ export async function loadTrackSequence(
             // console.log('🎧 Raw rows received from Supabase:', rows.length);
 
             console.table(
-                rows.slice(0, 40).map(r => ({
+                rows.slice(0, 99).map(r => ({
                     rankingId: r.rankingId ?? r.ranking_id,
                     rank: r.rank,
                     track: r.trackName ?? r.track_name,
@@ -245,10 +229,9 @@ export async function loadTrackSequence(
 
         if (!rows.length) return [];
 
-        const mapped = mapItemsToTracks(rows, startRank, endRank, sel);
+        const mapped = mapItemsToTracks(rows, sel);
 
-// Only cap normal decades to 40
-        const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);
+        const finalTracks = mapped;
 
         loaderCache.set(key, finalTracks);
         return finalTracks;
@@ -257,14 +240,4 @@ export async function loadTrackSequence(
         console.error('❌ loadTrackSequence failed:', err);
         return [];
     }
-}
-
-// ------------------------------------------------------------
-// FAST FIRST-TRACK LOADER (UI-only)
-// ------------------------------------------------------------
-export async function loadFirstTrack(
-    sel: SelectionState
-): Promise<LoadedTrack | null> {
-    const tracks = await loadTrackSequence(sel);
-    return tracks[0] ?? null;
 }
