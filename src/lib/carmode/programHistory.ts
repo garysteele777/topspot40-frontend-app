@@ -44,13 +44,6 @@ export const programHistoryStore = writable<ProgramHistory[]>(
 );
 
 function canonicalTotalForKey(key: ProgramKey, incomingTotal: number): number {
-    // Only force 40 for normal decade programs.
-    // For ALL decades (DG|ALL|...), keep the real total (320, 2560, etc.).
-    if (key.startsWith('DG|')) {
-        const parts = key.split('|');
-        const decade = parts[1] ?? '';
-        if (decade !== 'ALL') return 40;
-    }
     return incomingTotal;
 }
 
@@ -75,6 +68,14 @@ export function upsertProgram(
     const idx = all.findIndex(p => p.key === key);
 
     const canonicalTotal = canonicalTotalForKey(key, total);
+
+    // 👇 ADD THIS LOG
+    console.log("🧠 upsertProgram TOTAL DEBUG:", {
+        key,
+        incomingTotal: total,
+        canonicalTotal,
+        label
+    });
 
     const next: ProgramHistory = {
         key,
