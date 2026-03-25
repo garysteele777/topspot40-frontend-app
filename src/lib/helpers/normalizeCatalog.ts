@@ -7,6 +7,11 @@
 // ------------------------------------------------------------
 
 import type {GroupedCatalog} from '$lib/api/catalog';
+import {browser} from '$app/environment';
+import {
+    seedCollectionPrograms,
+    type ProgramKey
+} from '$lib/carmode/programHistory';
 
 // Normalized types
 export type NormalizedDecade = {
@@ -26,9 +31,41 @@ export type NormalizedCollectionGroup = {
         id: string | number;
         name: string;
         slug: string;
-        totalTracks: number;   // ⭐ ADD THIS
+        totalTracks: number;
     }[];
 };
+
+function buildCollectionHistorySeeds(
+    collectionGroups: NormalizedCollectionGroup[]
+): {
+    key: ProgramKey;
+    label: string;
+    total: number;
+    collectionGroup: string;
+    collectionGroupSlug: string;
+}[] {
+    const entries: {
+        key: ProgramKey;
+        label: string;
+        total: number;
+        collectionGroup: string;
+        collectionGroupSlug: string;
+    }[] = [];
+
+    for (const group of collectionGroups) {
+        for (const item of group.items) {
+            entries.push({
+                key: `COL|${item.slug}|${group.slug}`,
+                label: item.name,
+                total: item.totalTracks ?? 0,
+                collectionGroup: group.name,
+                collectionGroupSlug: group.slug
+            });
+        }
+    }
+
+    return entries;
+}
 
 // ------------------------------------------------------------
 // Main normalize function
@@ -68,9 +105,13 @@ export function normalizeCatalog(
             id: item.id ?? j,
             name: item.name ?? item.slug ?? `item-${j}`,
             slug: item.slug ?? `item-${j}`,
-            totalTracks: item.totalTracks ?? 0   // ⭐ THIS FIXES EVERYTHING
+            totalTracks: item.totalTracks ?? 0
         }))
     }));
+
+    if (browser) {
+        seedCollectionPrograms(buildCollectionHistorySeeds(collectionGroups));
+    }
 
     return {decades, genres, collectionGroups};
 }

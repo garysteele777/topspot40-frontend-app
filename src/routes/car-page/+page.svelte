@@ -43,8 +43,6 @@
     import {fetchGroupedCatalog} from '$lib/api/catalog';
     import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
 
-    let initialTrack = null;
-
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
     let lastProgramKey: string | null = null;
@@ -96,17 +94,23 @@
                 artist_name: trackObj.artistName
             },
             selection: {
-                language: sel.language,
+                ...sel,
                 voices: settings.voices,
                 voicePlayMode: settings.voicePlayMode,
                 pauseMode: settings.pauseMode,
                 continuous: settings.pauseMode === 'continuous'
             },
-            context: {
-                type: 'decade_genre',
-                decade: decadeForPlayback,
-                genre: genreForPlayback
-            }
+            context:
+                sel.mode === 'collection'
+                    ? {
+                        type: 'collection',
+                        collection_slug: sel.context?.collection_slug
+                    }
+                    : {
+                        type: 'decade_genre',
+                        decade: decadeForPlayback,
+                        genre: genreForPlayback
+                    }
         };
 
         console.log("🚀 PLAY TRACK REQUEST", payload);
@@ -150,6 +154,8 @@
         }
 
         console.log('🎯 CALLING BACKEND play-track for:', trackObj.trackName);
+
+        console.log('🚀 FINAL PAYLOAD:', payload);
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -300,10 +306,10 @@
             lastProgramKey = null;
             playedRanks = [];
         } else {
-            const key: ProgramKey =
+            const key =
                 sel.mode === 'collection'
                     ? `COL|${sel.context?.collection_slug}`
-                    : `DG|${sel.context?.decade}|${sel.context?.genre}`;
+                    : `DG|${sel.context?.decade}|${sel.context?.genre}` as ProgramKey;
 
             if (key !== lastProgramKey) {
                 lastProgramKey = key;

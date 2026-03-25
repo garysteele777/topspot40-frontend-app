@@ -2,7 +2,9 @@ import {writable} from 'svelte/store';
 import {browser} from '$app/environment';
 
 
-export type ProgramKey = `DG|${string}|${string}` | `COL|${string}`;
+export type ProgramKey =
+    | `DG|${string}|${string}`
+    | `COL|${string}|${string}`;
 
 export type ProgramHistory = {
     key: ProgramKey;
@@ -43,7 +45,7 @@ export const programHistoryStore = writable<ProgramHistory[]>(
 
 function canonicalTotalForKey(key: ProgramKey, incomingTotal: number): number {
     // Only force 40 for normal decade programs.
-    // For ALL decades (DG|ALL|...), keep the real total (320, 2560, etc).
+    // For ALL decades (DG|ALL|...), keep the real total (320, 2560, etc.).
     if (key.startsWith('DG|')) {
         const parts = key.split('|');
         const decade = parts[1] ?? '';
@@ -138,4 +140,36 @@ export function resetProgram(key: ProgramKey) {
 export function resetAllPrograms() {
     localStorage.removeItem(STORAGE_KEY);
     programHistoryStore.set([]);
+}
+
+export function seedCollectionPrograms(
+    entries: {
+        key: ProgramKey;
+        label: string;
+        total: number;
+        collectionGroup?: string;
+        collectionGroupSlug?: string;
+    }[]
+) {
+    const all = loadAll();
+    const map = new Map(all.map(p => [p.key, p]));
+
+    for (const e of entries) {
+        if (!map.has(e.key)) {
+            map.set(e.key, {
+                key: e.key,
+                label: e.label,
+                total: e.total,
+                playedRanks: [],
+                updatedAt: Date.now(),
+                collectionGroup: e.collectionGroup,
+                collectionGroupSlug: e.collectionGroupSlug
+            });
+        }
+    }
+
+    const next = Array.from(map.values());
+
+    saveAll(next);
+    programHistoryStore.set(next);
 }
