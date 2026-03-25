@@ -73,17 +73,36 @@
         if (!sel) return;
 
         const settings = get(playbackSettingsStore);
-        const programDecade = sel.context?.decade;
-        const decadeForPlayback =
-            programDecade === 'ALL'
-                ? trackObj.decadeSlug ?? programDecade
-                : programDecade;
 
-        const programGenre = sel.context?.genre;
-        const genreForPlayback =
-            programGenre === 'ALL'
-                ? trackObj.genreSlug ?? programGenre
-                : programGenre;
+        let decadeForPlayback: string | undefined;
+        let genreForPlayback: string | undefined;
+
+        if (sel.mode !== 'collection') {
+            const programDecade = sel.context?.decade;
+            decadeForPlayback =
+                programDecade === 'ALL'
+                    ? trackObj.decadeSlug ?? programDecade
+                    : programDecade;
+
+            const programGenre = sel.context?.genre;
+            genreForPlayback =
+                programGenre === 'ALL'
+                    ? trackObj.genreSlug ?? programGenre
+                    : programGenre;
+
+            console.log("🎯 Playback decade resolution:", {
+                programDecade,
+                trackDecade: trackObj.decadeSlug,
+                decadeForPlayback
+            });
+
+            console.log("🎯 Playback bucket:", {
+                decadeForPlayback,
+                genreForPlayback
+            });
+        }
+
+
         const payload = {
             track: {
                 track_id: trackObj.id,
@@ -114,15 +133,7 @@
         };
 
         console.log("🚀 PLAY TRACK REQUEST", payload);
-        console.log("🎯 Playback decade resolution:", {
-            programDecade,
-            trackDecade: trackObj.decadeSlug,
-            decadeForPlayback
-        });
-        console.log("🎯 Playback bucket:", {
-            decadeForPlayback,
-            genreForPlayback
-        });
+
 
         if (
             sel?.mode === 'decade_genre' &&
