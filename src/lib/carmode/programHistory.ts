@@ -70,12 +70,12 @@ export function upsertProgram(
     const canonicalTotal = canonicalTotalForKey(key, total ?? 0);
 
     // 👇 ADD THIS LOG
-    console.log("🧠 upsertProgram TOTAL DEBUG:", {
-        key,
-        incomingTotal: total,
-        canonicalTotal,
-        label
-    });
+    // console.log("🧠 upsertProgram TOTAL DEBUG:", {
+    //     key,
+    //     incomingTotal: total,
+    //     canonicalTotal,
+    //     label
+    // });
 
     const next: ProgramHistory = {
         key,

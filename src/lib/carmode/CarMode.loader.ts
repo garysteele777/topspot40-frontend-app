@@ -344,6 +344,8 @@ export async function loadForSelection(
         // Use initialRank if provided; else default to 1.
         let candidateTracks = ordered;
 
+        let playedRanks = new Set<number>();
+
         if (sel.skipPlayed) {
             const history = get(programHistoryStore);
 
@@ -361,12 +363,14 @@ export async function loadForSelection(
                     sel.context?.genre_slug ??
                     sel.context?.genreName ??
                     sel.context?.genreSlug;
+
                 if (d && g) programKey = `DG|${d}|${g}` as ProgramKey;
             }
 
             if (sel.mode === 'collection') {
                 const slug = sel.context?.collection_slug;
                 const group = sel.context?.collection_group_slug;
+
                 if (slug && group) {
                     programKey = `COL|${slug}|${group}` as ProgramKey;
                 }
@@ -374,9 +378,7 @@ export async function loadForSelection(
 
             if (programKey) {
                 const program = history.find(p => p.key === programKey);
-                const played = new Set(program?.playedRanks ?? []);
-
-                candidateTracks = ordered.filter(t => !played.has(t.rank));
+                playedRanks = new Set(program?.playedRanks ?? []);
             }
         }
 
@@ -386,6 +388,13 @@ export async function loadForSelection(
                 : typeof initialRank === 'number' && Number.isFinite(initialRank)
                     ? initialRank
                     : 1;
+
+        console.log('🧪 END RANK CHECK', {
+            selEndRank: sel.endRank,
+            orderedLength: ordered.length,
+            playbackOrder: sel.playbackOrder,
+            playedRanks: Array.from(playedRanks)
+        });
 
         let first: LoadedTrack | null;
 
@@ -397,10 +406,11 @@ export async function loadForSelection(
 
         } else {
             first = pickInitialTrack(
-                candidateTracks,
+                ordered,
                 sel.playbackOrder,
                 startRank,
-                candidateTracks.length
+                ordered.length,
+                playedRanks
             );
         }
 

@@ -117,10 +117,10 @@ export function normalizeCatalog(
         // 🔥 Seed DG programs (NEW)
         const dgSeeds = buildDGHistorySeeds(data);
 
-        console.log("🔥 DG SEEDS:", dgSeeds);
+        // console.log("🔥 DG SEEDS:", dgSeeds);
 
         for (const e of dgSeeds) {
-            console.log("🌱 Seeding DG:", e);
+            // console.log("🌱 Seeding DG:", e);
             upsertProgram(e.key, e.label, e.total);
         }
     }
