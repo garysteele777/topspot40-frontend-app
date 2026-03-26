@@ -329,6 +329,7 @@ export function startPlaybackPolling() {
             // ─────────────────────────────
 // Rank change → update UI track card (radio-safe)
 // ─────────────────────────────
+            /*
             if (
                 rankingId != null &&
                 rankingId !== get(currentTrack)?.rankingId &&
@@ -356,6 +357,7 @@ export function startPlaybackPolling() {
                     trackFinalized = false;
                 }
             }
+            */
 
 
             playbackPhase.set(phase);

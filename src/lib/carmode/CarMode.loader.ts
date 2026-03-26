@@ -344,7 +344,7 @@ export async function loadForSelection(
         // Use initialRank if provided; else default to 1.
         let candidateTracks = ordered;
 
-        let playedRanks = new Set<number>();
+        let playedRanks: Set<number>;
 
         if (sel.skipPlayed) {
             const history = get(programHistoryStore);
@@ -379,15 +379,24 @@ export async function loadForSelection(
             if (programKey) {
                 const program = history.find(p => p.key === programKey);
                 playedRanks = new Set(program?.playedRanks ?? []);
+            } else {
+                playedRanks = new Set();
             }
+
+        } else {
+            // 🚨 HARD RESET — THIS IS THE KEY
+            playedRanks = new Set();
         }
 
-        const startRank =
-            sel.playbackOrder === 'shuffle'
-                ? 1
-                : typeof initialRank === 'number' && Number.isFinite(initialRank)
-                    ? initialRank
-                    : 1;
+// 🚫 Resume removed — always start fresh
+        let startRank = 1;
+
+// Only resume IF explicitly intended (future feature)
+        const isResume = false;
+
+        if (isResume && typeof initialRank === 'number') {
+            startRank = initialRank;
+        }
 
         console.log('🧪 END RANK CHECK', {
             selEndRank: sel.endRank,
@@ -405,12 +414,13 @@ export async function loadForSelection(
             first = candidateTracks[0] ?? null;
 
         } else {
+            console.log('🚨 FINAL skipPlayed USED:', sel.skipPlayed);
             first = pickInitialTrack(
                 ordered,
                 sel.playbackOrder,
                 startRank,
                 ordered.length,
-                playedRanks
+                sel.skipPlayed ? playedRanks : new Set()
             );
         }
 
