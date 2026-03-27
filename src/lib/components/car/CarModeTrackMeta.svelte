@@ -118,7 +118,7 @@
 
 {:else if tracks.length > 40}
 
-    Pick #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
+    Pick #{currentTrack?.rank ?? '?'} of {tracks.length}
     • Rank {currentTrack?.sourceRank ?? currentTrack?.rank ?? '?'}
     • Released {currentTrack?.yearReleased ?? '?'}
 

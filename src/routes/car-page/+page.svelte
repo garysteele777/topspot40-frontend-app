@@ -203,13 +203,17 @@
         if (!$currentTrack || $tracks.length === 0) return;
 
         // await stopPlayback();
-
         const rankingId = $currentTrack.rankingId;
-        if (rankingId == null) return;
+        const rank = $currentTrack.rank;
+
+// Only block if BOTH are missing (should never happen)
+        if (rankingId == null && rank == null) return;
 
         // track played ranks using rankingId (safer for ALL mode)
-        if (!playedRanks.includes(rankingId)) {
-            playedRanks.push(rankingId);
+        const playedKey = rankingId ?? rank;
+
+        if (playedKey != null && !playedRanks.includes(playedKey)) {
+            playedRanks.push(playedKey);
         }
 
         const sel = $currentSelection;
@@ -257,7 +261,9 @@
             console.log('🎵 NORMAL → NEXT TRACK (local)');
 
             const currentIndex =
-                $tracks.findIndex(t => t.rankingId === rankingId);
+                rankingId != null
+                    ? $tracks.findIndex(t => t.rankingId === rankingId)
+                    : $tracks.findIndex(t => t.rank === rank);
 
             if (currentIndex === -1) return;
 
