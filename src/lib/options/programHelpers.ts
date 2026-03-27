@@ -4,13 +4,15 @@ export function buildProgramKey(
     activeGroup: 'decade_genre' | 'collection',
     decades: string[],
     genres: string[],
-    collections: string[]
+    collections: string[],
+    collectionCategory?: string   // 👈 ADD THIS
 ): ProgramKey {
+
     if (activeGroup === 'decade_genre') {
         return `DG|${decades[0] ?? ''}|${genres[0] ?? ''}` as ProgramKey;
     }
 
-    return `COL|${collections[0] ?? ''}` as ProgramKey;
+    return `COL|${collections[0] ?? ''}|${collectionCategory ?? ''}` as ProgramKey;
 }
 
 function prettyGenre(slug: string): string {

@@ -323,10 +323,23 @@
             lastProgramKey = null;
             playedRanks = [];
         } else {
-            const key =
-                sel.mode === 'collection'
-                    ? `COL|${sel.context?.collection_slug}`
-                    : `DG|${sel.context?.decade}|${sel.context?.genre}` as ProgramKey;
+            let key: ProgramKey | null = null;
+
+            if (sel.mode === 'collection') {
+                const slug = sel.context?.collection_slug;
+                const group = sel.context?.collection_group_slug;
+
+                if (slug && group) {
+                    key = `COL|${slug}|${group}` as ProgramKey;
+                }
+            } else {
+                const decade = sel.context?.decade;
+                const genre = sel.context?.genre;
+
+                if (decade && genre) {
+                    key = `DG|${decade}|${genre}` as ProgramKey;
+                }
+            }
 
             if (key !== lastProgramKey) {
                 lastProgramKey = key;

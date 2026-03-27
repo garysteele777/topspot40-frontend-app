@@ -32,8 +32,8 @@ function buildProgramKey(track: any, sel: any): ProgramKey | null {
     }
 
     if (sel.mode === 'collection') {
-        const collection = sel.context?.collection;
-        const group = sel.context?.collectionCategory;
+        const collection = sel.context?.collection_slug;
+        const group = sel.context?.collection_group_slug;
 
         if (!collection || !group) return null;
 

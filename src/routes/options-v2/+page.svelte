@@ -366,7 +366,20 @@
         if (!url) return;
 
         if (browser) {
-            const key = buildProgramKey(activeGroup, decades, genres, collections);
+            let collectionCategory: string | undefined;
+
+            if (activeGroup === 'collection' && collections[0]) {
+                const meta = findCollectionMeta(collections[0]);
+                collectionCategory = meta?.collectionGroupSlug;
+            }
+
+            const key = buildProgramKey(
+                activeGroup,
+                decades,
+                genres,
+                collections,
+                collectionCategory   // 👈 THIS is the missing piece
+            );
 
             let favoritesGroup: string | undefined;
 

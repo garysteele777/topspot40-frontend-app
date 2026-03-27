@@ -344,48 +344,41 @@ export async function loadForSelection(
         // Use initialRank if provided; else default to 1.
         let candidateTracks = ordered;
 
-        let playedRanks: Set<number>;
+        let playedRanks = new Set<number>();
 
-        if (sel.skipPlayed) {
-            const history = get(programHistoryStore);
 
-            let programKey: ProgramKey | null = null;
+        const history = get(programHistoryStore);
 
-            if (sel.mode === 'decade_genre') {
-                const d =
-                    sel.context?.decade ??
-                    sel.context?.decade_slug ??
-                    sel.context?.decadeName ??
-                    sel.context?.decadeSlug;
+        let programKey: ProgramKey | null = null;
 
-                const g =
-                    sel.context?.genre ??
-                    sel.context?.genre_slug ??
-                    sel.context?.genreName ??
-                    sel.context?.genreSlug;
+        if (sel.mode === 'decade_genre') {
+            const d =
+                sel.context?.decade ??
+                sel.context?.decade_slug ??
+                sel.context?.decadeName ??
+                sel.context?.decadeSlug;
 
-                if (d && g) programKey = `DG|${d}|${g}` as ProgramKey;
+            const g =
+                sel.context?.genre ??
+                sel.context?.genre_slug ??
+                sel.context?.genreName ??
+                sel.context?.genreSlug;
+
+            if (d && g) programKey = `DG|${d}|${g}` as ProgramKey;
+        }
+
+        if (sel.mode === 'collection') {
+            const slug = sel.context?.collection_slug;
+            const group = sel.context?.collection_group_slug;
+
+            if (slug && group) {
+                programKey = `COL|${slug}|${group}` as ProgramKey;
             }
+        }
 
-            if (sel.mode === 'collection') {
-                const slug = sel.context?.collection_slug;
-                const group = sel.context?.collection_group_slug;
-
-                if (slug && group) {
-                    programKey = `COL|${slug}|${group}` as ProgramKey;
-                }
-            }
-
-            if (programKey) {
-                const program = history.find(p => p.key === programKey);
-                playedRanks = new Set(program?.playedRanks ?? []);
-            } else {
-                playedRanks = new Set();
-            }
-
-        } else {
-            // 🚨 HARD RESET — THIS IS THE KEY
-            playedRanks = new Set();
+        if (programKey) {
+            const program = history.find(p => p.key === programKey);
+            playedRanks = new Set(program?.playedRanks ?? []);
         }
 
 // 🚫 Resume removed — always start fresh

@@ -407,9 +407,10 @@
             ...sortedDecades.map(buildBlock)
         ];
     })();
+
     $: collectionPrograms = $programHistory.filter(
         (p): p is ProgramHistory =>
-            p.key.startsWith('COL|') &&
+            p.key.startsWith('COL|') &&   // ✅ ONLY pipe format
             p.key.split('|').length === 3
     );
 
@@ -417,11 +418,25 @@
         const map = new Map<string, ProgramHistory[]>();
 
         for (const p of collectionPrograms) {
-            const collectionSlug = p.key.split('|')[1];
-            if (!collectionSlug) continue;
+            let parts: string[];
 
-            const groupSlug = collectionSlugToGroupSlug[collectionSlug];
-            if (!groupSlug) continue;
+            if (p.key.includes('|')) {
+                parts = p.key.split('|');
+            } else {
+                parts = p.key.split('/');
+            }
+
+            const [, collectionSlug, groupSlug] = parts;
+
+            if (!collectionSlug || !groupSlug) continue;
+
+            console.log('🧪 GROUP BUILD', {
+                key: p.key,
+                collectionSlug,
+                groupSlug,
+                total: p.total,
+                played: p.playedRanks
+            });
 
             if (!map.has(groupSlug)) map.set(groupSlug, []);
             map.get(groupSlug)!.push(p);
@@ -772,6 +787,7 @@
 
                             <ul class="history-list">
                                 {#each group.programs as row}
+                                    {console.log('🎯 ROW IN UI', row)}
                                     {@const collectionSlug = row.key.split('|')[1] ?? ''}
 
                                     <li class="history-row">
