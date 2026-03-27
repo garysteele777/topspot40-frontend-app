@@ -3,7 +3,7 @@
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     import {launchWithPlayback} from '$lib/utils/buildLaunchUrl';
-
+    import ProgramRow from './ProgramRow.svelte';
     import {
         countFavorites,
         clearFavorites,
@@ -787,29 +787,22 @@
 
                             <ul class="history-list">
                                 {#each group.programs as row}
-                                    {console.log('🎯 ROW IN UI', row)}
+                                    {@const isCollection = row.key.startsWith('COL|')}
                                     {@const collectionSlug = row.key.split('|')[1] ?? ''}
+                                    {@const played = playedCount(row)}
+                                    {@const total = row.total}
+                                    {@const percent = pct(played, total)}
 
-                                    <li class="history-row">
-                                <span class="history-row__label">
-                                    {collectionNameMap[collectionSlug] ?? row.label}
-                                </span>
-
-                                        <span class="history-row__progress">
-                        {isCompleted(row)
-                            ? 'Completed'
-                            : `${playedCount(row)} / ${row.total}`}
-                    </span>
-
-                                        <div class="history-row__actions">
-                                            <button
-                                                    class="btn btn--primary"
-                                                    on:click={() => resumeProgram(row)}
-                                            >
-                                                ▶ {isCompleted(row) ? 'Restart' : 'Play'}
-                                            </button>
-
-                                        </div>
+                                    <li class="history-row history-row--genre">
+                                        <ProgramRow
+                                                {row}
+                                                label={collectionNameMap[collectionSlug] ?? row.label}
+                                                played={played}
+                                                total={total}
+                                                percent={percent}
+                                                isCollection={true}
+                                                onPlay={() => resumeProgram(row)}
+                                        />
                                     </li>
                                 {/each}
                             </ul>
@@ -937,4 +930,5 @@
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
     }
+
 </style>
