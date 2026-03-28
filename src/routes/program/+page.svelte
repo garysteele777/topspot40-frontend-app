@@ -3,6 +3,9 @@
     import type {ProgramKey} from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
     import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
+    import {onMount} from 'svelte';
+    import {fetchGroupedCatalog} from '$lib/api/catalog';
+    import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
 
     import type {PlaybackProgramType} from '$lib/types/program';
     import {
@@ -19,6 +22,9 @@
     let genreSlug: string | null = null;
     let groupKey: string | null = null;
 
+    let collectionNameMap: Record<string, string> = {};
+    let collectionGroupNameMap: Record<string, string> = {};
+
 
     let programKey: ProgramKey | null = null;
 
@@ -32,17 +38,6 @@
             ? $favoritesStore.DG?.[groupKey] ?? []
             : [];
 
-    let currentHistory: typeof $programHistoryStore[number] | undefined;
-
-    $: {
-        if (!programKey) {
-            currentHistory = undefined;
-        } else {
-            currentHistory = $programHistoryStore.find(p => p.key === programKey);
-        }
-    }
-
-
     // ✅ Match backend shape from /get-sequence
     type TrackRow = {
         rankingId: number;
@@ -55,12 +50,52 @@
     let loading = false;
     let errorMsg: string | null = null;
 
+    onMount(async () => {
+        try {
+            const data = await fetchGroupedCatalog();
+            const normalized = normalizeCatalog(data);
+
+            const groupMap: Record<string, string> = {};
+            const nameMap: Record<string, string> = {};
+
+            for (const group of normalized.collectionGroups) {
+                groupMap[group.slug] = group.name;
+
+                for (const item of group.items) {
+                    nameMap[item.slug] = item.name;
+                }
+            }
+
+            collectionGroupNameMap = groupMap;
+            collectionNameMap = nameMap;
+
+            console.log('🎨 Program page maps loaded', {
+                collectionNameMap,
+                collectionGroupNameMap
+            });
+
+        } catch (err) {
+            console.error('Failed to load catalog:', err);
+        }
+    });
+
+    function formatSlug(slug: string | null): string {
+        if (!slug) return '';
+
+        return slug
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
     function handleClearPlayed() {
         if (!programKey) return;
 
-        const confirmed = confirm(
-            `Clear played history for ${decadeSlug} — ${genreSlug}?`
-        );
+        const label =
+            programType === 'COL'
+                ? `${displayCollectionName ?? decadeSlug} — ${displayGroupName ?? genreSlug}`
+                : `${displayDecadeName ?? decadeSlug} — ${displayGenreName ?? genreSlug}`;
+
+        const confirmed = confirm(`Clear played history for ${label}?`);
 
         if (!confirmed) return;
 
@@ -77,6 +112,8 @@
     async function loadProgramView() {
         errorMsg = null;
         tracks = [];
+
+        console.log('📦 loadProgramView called');
 
         if (!programKey) return;
 
@@ -161,9 +198,39 @@
         groupKey = null;
     }
 
+    let lastLoadedKey: string | null = null;
+
+    $: if (programKey && programType && programKey !== lastLoadedKey) {
+        console.log('🚀 LOADING PROGRAM VIEW:', programKey);
+        lastLoadedKey = programKey;
+        loadProgramView();
+    }
+
+    $: displayDecadeName =
+        programType === 'DG'
+            ? formatSlug(decadeSlug)
+            : null;
+
+    $: displayGenreName =
+        programType === 'DG'
+            ? formatSlug(genreSlug)
+            : null;
+
+
+    $: displayCollectionName =
+        programType === 'COL' && decadeSlug
+            ? collectionNameMap?.[decadeSlug] ?? decadeSlug
+            : null;
+
+    $: displayGroupName =
+        programType === 'COL' && genreSlug
+            ? collectionGroupNameMap?.[genreSlug] ?? genreSlug
+            : null;
+
     function isPlayed(rank: number): boolean {
-        if (!currentHistory) return false;
-        return currentHistory.playedRanks.includes(rank);
+        const program = $programHistoryStore.find(p => p.key === programKey);
+        if (!program) return false;
+        return program.playedRanks.includes(rank);
     }
 
 </script>
@@ -183,7 +250,11 @@
 
     {:else}
         <h2>
-            {decadeSlug} — {genreSlug}
+            {#if programType === 'COL'}
+                {displayCollectionName} — {displayGroupName}
+            {:else}
+                {displayDecadeName} — {displayGenreName}
+            {/if}
         </h2>
 
         <div class="program-actions">
