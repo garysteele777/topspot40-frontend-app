@@ -430,13 +430,13 @@
 
             if (!collectionSlug || !groupSlug) continue;
 
-            console.log('🧪 GROUP BUILD', {
-                key: p.key,
-                collectionSlug,
-                groupSlug,
-                total: p.total,
-                played: p.playedRanks
-            });
+            // console.log('🧪 GROUP BUILD', {
+            //     key: p.key,
+            //     collectionSlug,
+            //     groupSlug,
+            //     total: p.total,
+            //     played: p.playedRanks
+            // });
 
             if (!map.has(groupSlug)) map.set(groupSlug, []);
             map.get(groupSlug)!.push(p);
@@ -711,54 +711,56 @@
 
                             {#each block.genres as row}
                                 <li class="history-row history-row--genre">
-                                    <span class="history-row__label">
-                                        {block.decade === 'ALL' && row.genreSlug === 'all_genres'
-                                            ? '🎶'
-                                            : getGenreIcon(row.genreSlug)
-                                        }
 
-                                        {block.decade === 'ALL' && row.genreSlug === 'all_genres'
-                                            ? `All Decades, All Genres (${allDecadesAllGenresTotal()} tracks)`
-                                            : block.decade === 'ALL'
-                                                ? `All ${toTitleCaseFromSlug(row.genreSlug)} (${allDecadesPerGenreTotal()} tracks)`
-                                                : `${block.decade} ${toTitleCaseFromSlug(row.genreSlug)}`
-                                        }
-                                    </span>
+                                    {#if block.decade === 'ALL'}
 
-                                    <span class="history-row__progress">
-                                        ✓ {row.played} / {row.total}
-                                        • {pct(row.played, row.total)}%
-                                        &nbsp;&nbsp;⭐ {row.favorites}
-                                    </span>
+                                        <!-- ALL ROWS (custom UI stays) -->
 
-                                    <div class="history-row__actions">
-                                        {#if block.decade === 'ALL'}
+                                        <span class="history-row__label">
+                {row.genreSlug === 'all_genres'
+                    ? '🎶'
+                    : getGenreIcon(row.genreSlug)
+                }
+
+                                            {row.genreSlug === 'all_genres'
+                                                ? `All Decades, All Genres (${allDecadesAllGenresTotal()} tracks)`
+                                                : `All ${toTitleCaseFromSlug(row.genreSlug)} (${allDecadesPerGenreTotal()} tracks)`
+                                            }
+            </span>
+
+                                        <span class="history-row__progress">
+                ✓ {row.played} / {row.total}
+                                            • {pct(row.played, row.total)}%
+                &nbsp;&nbsp;⭐ {row.favorites}
+            </span>
+
+                                        <div class="history-row__actions">
                                             <button
                                                     class="btn btn--primary"
                                                     on:click={() => resumeByKeyShuffle(row.key, 1, row.total)}
                                             >
                                                 🔀 Shuffle Play
                                             </button>
-                                        {:else}
-                                            <!-- Normal decade programs -->
-                                            <button
-                                                    class="btn btn--primary"
-                                                    on:click={() => {
-                    if (row.program) resumeProgram(row.program);
-                    else resumeByKey(row.key, 1, row.total);
-                }}
-                                            >
-                                                ▶ Play
-                                            </button>
+                                        </div>
 
-                                            <button
-                                                    class="btn btn--secondary"
-                                                    on:click={() => goto(`/program?programKey=${encodeURIComponent(row.key)}`)}
-                                            >
-                                                👁 View
-                                            </button>
-                                        {/if}
-                                    </div>
+                                    {:else}
+
+                                        <!-- NORMAL DG ROWS -->
+
+                                        <ProgramRow
+                                                row={row.program ?? null}
+                                                label={`${getGenreIcon(row.genreSlug)} ${block.decade} ${toTitleCaseFromSlug(row.genreSlug)}`}
+                                                played={row.played}
+                                                total={row.total}
+                                                percent={pct(row.played, row.total)}
+                                                onPlay={() => {
+                                                if (row.program) resumeProgram(row.program);
+                                                else resumeByKey(row.key, 1, row.total);
+                                            }}
+                                        />
+
+                                    {/if}
+
                                 </li>
                             {/each}
                         </ul>

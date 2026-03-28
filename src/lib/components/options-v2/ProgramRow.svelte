@@ -2,7 +2,7 @@
     import {goto} from '$app/navigation';
     import type {ProgramHistory} from '$lib/carmode/programHistory';
 
-    export let row: ProgramHistory;
+    export let row: ProgramHistory | null;
     export let label: string;
     export let played: number;
     export let total: number;
@@ -27,11 +27,11 @@
         </button>
 
         <button
-            class="btn btn--secondary"
-            disabled={isCollection}
-            title={isCollection ? 'Collection Program View not implemented yet' : ''}
-            on:click={() => {
-                if (!isCollection) {
+                class="btn btn--secondary"
+                disabled={!row}
+                title={!row ? 'No program available' : ''}
+                on:click={() => {
+                if (row) {
                     goto(`/program?programKey=${encodeURIComponent(row.key)}`);
                 }
             }}
@@ -48,6 +48,7 @@
         align-items: center;
         width: 100%;
         gap: 10px;
+        padding: 4px 0;
     }
 
     .history-row__label {
@@ -67,7 +68,4 @@
         gap: 6px;
     }
 
-    .history-row__inner {
-    padding: 4px 0;
-}
 </style>

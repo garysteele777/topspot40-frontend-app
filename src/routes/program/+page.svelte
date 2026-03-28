@@ -80,20 +80,36 @@
 
         if (!programKey) return;
 
-        if (programType !== 'DG' || !decadeSlug || !genreSlug) return;
+        if (
+            (programType !== 'DG' && programType !== 'COL') ||
+            !decadeSlug ||
+            !genreSlug
+        ) return;
 
         loading = true;
         try {
-            const selection = {
-                mode: 'decade_genre',
-                language: 'en',
-                startRank: 1,
-                endRank: 40,
-                context: {
-                    decade: decadeSlug!,
-                    genre: genreSlug!
-                }
-            };
+            const selection =
+                programType === 'COL'
+                    ? {
+                        mode: 'collection',
+                        language: 'en',
+                        startRank: 1,
+                        endRank: 40,
+                        context: {
+                            collection: decadeSlug!,
+                            group: genreSlug!
+                        }
+                    }
+                    : {
+                        mode: 'decade_genre',
+                        language: 'en',
+                        startRank: 1,
+                        endRank: 40,
+                        context: {
+                            decade: decadeSlug!,
+                            genre: genreSlug!
+                        }
+                    };
 
             const loaded = await loadTrackSequence(selection as any);
 
@@ -111,38 +127,38 @@
     }
 
     $: if (programKey) {
-        const parts = programKey.split('|');
+        const parts = (programKey as string).split('|');
         programType = parts[0] as PlaybackProgramType;
 
         if (programType === 'DG') {
             decadeSlug = parts[1] ?? null;
             genreSlug = parts[2] ?? null;
 
-            // 🔥 Favorites now stored per decade+genre
             groupKey =
                 decadeSlug && genreSlug
                     ? `${decadeSlug}|${genreSlug}`
                     : null;
+
+        } else if (programType === 'COL') {
+            const collectionSlug = parts[1] ?? null;
+            const group = parts[2] ?? null;
+
+            decadeSlug = collectionSlug;
+            genreSlug = group;
+
+            groupKey = collectionSlug;
+
         } else {
             decadeSlug = null;
             genreSlug = null;
             groupKey = null;
         }
-    }
 
-    let lastLoadedKey: string | null = null;
-
-    $: {
-        if (
-            programType === 'DG' &&
-            decadeSlug &&
-            genreSlug &&
-            programKey &&
-            programKey !== lastLoadedKey
-        ) {
-            lastLoadedKey = programKey;
-            loadProgramView();
-        }
+    } else {
+        programType = null;
+        decadeSlug = null;
+        genreSlug = null;
+        groupKey = null;
     }
 
     function isPlayed(rank: number): boolean {
@@ -161,9 +177,9 @@
         <h2>Program View</h2>
         <p>Program View is not available for Favorites programs.</p>
 
-    {:else if programType !== 'DG'}
+    {:else if programType !== 'DG' && programType !== 'COL'}
         <h2>Program View</h2>
-        <p>Program View is only implemented for Decade/Genre (DG) right now.</p>
+        <p>Program View is only implemented for Decade/Genre and Collections right now.</p>
 
     {:else}
         <h2>
