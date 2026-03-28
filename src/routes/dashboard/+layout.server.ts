@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { getBackendUrl } from '$lib/config';
 
 export async function load({ fetch }) {
+    console.log('🔥 DASHBOARD LAYOUT HIT');
     const backend = getBackendUrl();
 
     const res = await fetch(`${backend}/api/stripe/subscription-status`, {
