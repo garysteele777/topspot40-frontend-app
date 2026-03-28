@@ -4,6 +4,7 @@
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+    import { loadCatalogOnce } from '$lib/stores/loadCatalogOnce';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
@@ -40,8 +41,6 @@
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
     import {saveResumeState} from '$lib/utils/smartResume';
-    import {fetchGroupedCatalog} from '$lib/api/catalog';
-    import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
 
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
@@ -474,11 +473,10 @@
 
 
         try {
-            const data = await fetchGroupedCatalog();
-            const normalized = normalizeCatalog(data);
+            const normalized = await loadCatalogOnce();
 
             const map: Record<string, string> = {};
-            for (const group of normalized.collectionGroups) {
+            for (const group of normalized.collectionGroups ?? []) {
                 for (const item of group.items) {
                     map[item.slug] = item.name;
                 }

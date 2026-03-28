@@ -4,8 +4,7 @@
     import {goto} from '$app/navigation';
     import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
     import {onMount} from 'svelte';
-    import {fetchGroupedCatalog} from '$lib/api/catalog';
-    import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
+    import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
 
     import type {PlaybackProgramType} from '$lib/types/program';
     import {
@@ -52,13 +51,12 @@
 
     onMount(async () => {
         try {
-            const data = await fetchGroupedCatalog();
-            const normalized = normalizeCatalog(data);
+            const normalized = await loadCatalogOnce();
 
             const groupMap: Record<string, string> = {};
             const nameMap: Record<string, string> = {};
 
-            for (const group of normalized.collectionGroups) {
+            for (const group of normalized.collectionGroups ?? []) {
                 groupMap[group.slug] = group.name;
 
                 for (const item of group.items) {

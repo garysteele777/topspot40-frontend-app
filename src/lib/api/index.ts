@@ -6,7 +6,6 @@ export * from './playbackPauseLoader';
 export * from './supabaseLoader';
 
 export {
-  fetchGroupedCatalog,
   loadCatalogSummary,
   toSlug
 } from './catalog';

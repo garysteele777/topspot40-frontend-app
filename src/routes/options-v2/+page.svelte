@@ -6,6 +6,7 @@
     import {goto} from '$app/navigation';
     import {get} from 'svelte/store';
     import {currentSelection} from '$lib/carmode/CarMode.store';
+    import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     // ─────────────────────────────────────────────
     // Stores
     // ─────────────────────────────────────────────
@@ -21,7 +22,6 @@
         getTotalTracks
     } from '$lib/options/programHelpers';
 
-    import {loadCatalog} from '$lib/options/loadCatalog';
     import {buildSelectionFromResume} from '$lib/options/applyResume';
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
     import {summarizeVoices, summarizeSelection} from '$lib/options/summaries';
@@ -51,6 +51,8 @@
         PlaybackOrder,
         Language
     } from '$lib/types/playback';
+
+    console.log('📦 OPTIONS PAGE MOUNTED');
 
     type CollectionMeta = {
         collectionGroup: string;
@@ -189,9 +191,12 @@
     // ─────────────────────────────────────────────
     onMount(async () => {
         pendingSelection = buildSelectionFromResume(loadResumeState());
+        console.log('📍 OPTIONS PAGE MOUNTED');
 
         try {
-            const normalized = await loadCatalog();
+
+
+            const normalized = await loadCatalogOnce();
 
             decadeOptions = mapOptions(normalized.decades);
             genreOptions = mapOptions(normalized.genres);
