@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
+    import {derived} from 'svelte/store';
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
@@ -59,6 +60,25 @@
             a.currentTime = 0;
         });
     }
+
+
+    const pauseMessage = derived(
+        [playbackPhase, isPlaying],
+        ([$phase, $playing]) => {
+            if ($playing) return '';
+
+            if ($phase === 'track') {
+                return '⏸ Paused — Press ▶ to resume track';
+            }
+
+            if ($phase === 'intro' || $phase === 'detail' || $phase === 'artist') {
+                return '⏸ Paused — Press ▶ to restart narration';
+            }
+
+            return '';
+        }
+    );
+
 
     function setNarrationModalOpen(v: boolean): void {
         showNarrationModal.set(v);
@@ -509,6 +529,7 @@
         void clearAllPlayback();
     });
 
+
 </script>
 
 
@@ -577,6 +598,7 @@ if (
 
     const data = await res.json().catch(() => null);
 
+
     if (data?.restart_track && $currentTrack) {
         console.log('🔁 Restarting track after narration pause');
         markUserStartedPlayback();
@@ -606,6 +628,12 @@ if (
         </div>
     {/if}
 
+    {#if $pauseMessage}
+        <div class="pause-banner">
+            {$pauseMessage}
+        </div>
+    {/if}
+
 </div>
 
 <style>
@@ -629,6 +657,32 @@ if (
                 #08080a 100%
         );
         color: #fff;
+    }
+
+    .pause-banner {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+
+        padding: 10px 16px;
+        border-radius: 10px;
+
+        font-size: 14px;
+    }
+
+    .pause-banner {
+        opacity: 0;
+        animation: fadeIn 0.3s forwards;
+    }
+
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
     }
 
 </style>
