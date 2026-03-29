@@ -4,7 +4,7 @@
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
-    import { loadCatalogOnce } from '$lib/stores/loadCatalogOnce';
+    import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
@@ -545,14 +545,38 @@
                 onPrev={prevTrack}
                 onNext={nextTrack}
                 onPlayPause={async () => {
-                if (!$currentTrack) return;
+    if (!$currentTrack) return;
 
-                markUserStartedPlayback();
+    const playing = get(isPlaying);
 
-                // currentRank.set($currentTrack.rank);
+    if (playing) {
+        console.log('⏸ PAUSE requested');
 
-               await playTrack($currentTrack);
-            }}
+        await fetch(`${API_BASE}/playback/pause`, {
+            method: 'POST'
+        });
+
+        return;
+    }
+
+    // If NOT playing → decide resume vs new play
+    const phase = get(playbackPhase);
+
+    if (phase === 'track' || phase === 'paused') {
+        console.log('▶️ RESUME requested');
+
+        await fetch(`${API_BASE}/playback/resume`, {
+            method: 'POST'
+        });
+
+        return;
+    }
+
+    console.log('▶️ FRESH PLAY requested');
+
+    markUserStartedPlayback();
+    await playTrack($currentTrack);
+}}
                 onBackToOptions={backToOptions}
         />
 

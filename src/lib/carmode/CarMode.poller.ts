@@ -237,12 +237,11 @@ export function startPlaybackPolling() {
             const justSwitchedRecently = Date.now() - trackSwitchTime < 1500;
 
             if (
-                hasPlaybackStarted &&   // ✅ ONLY allow AFTER playback begins
+                hasPlaybackStarted &&
                 spotifyId &&
                 !justSwitchedRecently &&
-                (
-                    spotifyId !== activeSpotifyTrackId
-                )
+                !data.isPaused &&   // 🧠 ADD THIS
+                (spotifyId !== activeSpotifyTrackId)
             ) {
                 activeSpotifyTrackId = spotifyId;
                 trackSwitchTime = Date.now();   // 🔥 ADD THIS
@@ -430,7 +429,11 @@ export function startPlaybackPolling() {
             if (phase === 'track' && data.context?.spotify_track_id) {
                 const spotifyId = data.context.spotify_track_id as string;
 
-                if (lastSpotifyId !== spotifyId && !spotifyStartLock) {
+                if (
+                    lastSpotifyId !== spotifyId &&
+                    !spotifyStartLock &&
+                    !data.isPaused   // 🧠 THIS IS THE KEY
+                ) {
 
                     spotifyStartLock = true;
 
