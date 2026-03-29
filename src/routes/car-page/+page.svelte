@@ -562,15 +562,29 @@
     // If NOT playing → decide resume vs new play
     const phase = get(playbackPhase);
 
-    if (phase === 'track' || phase === 'paused') {
-        console.log('▶️ RESUME requested');
+if (
+    phase === 'track' ||
+    phase === 'paused' ||
+    phase === 'intro' ||
+    phase === 'detail' ||
+    phase === 'artist'
+) {
+    console.log('▶️ RESUME requested');
 
-        await fetch(`${API_BASE}/playback/resume`, {
-            method: 'POST'
-        });
+    const res = await fetch(`${API_BASE}/playback/resume`, {
+        method: 'POST'
+    });
 
-        return;
+    const data = await res.json().catch(() => null);
+
+    if (data?.restart_track && $currentTrack) {
+        console.log('🔁 Restarting track after narration pause');
+        markUserStartedPlayback();
+        await playTrack($currentTrack);
     }
+
+    return;
+}
 
     console.log('▶️ FRESH PLAY requested');
 
