@@ -612,7 +612,7 @@
     </header>
 
     <!-- ───────────── Decade–Genre ───────────── -->
-    <details class="history-section" open>
+    <details class="history-section">
         <summary class="history-section__summary">
             🎵 Decade–Genre Programs
         </summary>
