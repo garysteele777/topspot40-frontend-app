@@ -1,12 +1,10 @@
 <script lang="ts">
-  // FIXED: align with page.svelte
   type Language = 'en' | 'es' | 'ptbr';
   export let language: Language = 'en';
 </script>
 
 <div class="card">
-  <h3>Track Preview Language</h3>
-  <p class="hint">Choose the language for intros and details.</p>
+  <h3>Preview Language</h3>
 
   <div class="options">
     <button
@@ -46,12 +44,6 @@
   h3 {
     margin: 0 0 0.25rem;
     font-size: 1rem;
-  }
-
-  .hint {
-    margin: 0 0 0.5rem;
-    font-size: 0.85rem;
-    color: #b3b3b3;
   }
 
   .options {

@@ -14,8 +14,6 @@
     import HeroHeader from '$lib/components/options/HeroHeader.svelte';
     import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
-    import PlaybackOrderSelector from '$lib/components/options-v2/PlaybackOrderSelector.svelte';
-    import PauseModeSelector from '$lib/components/options-v2/PauseModeSelector.svelte';
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
 
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
@@ -216,39 +214,73 @@
 
     <div class="page">
 
-        <!-- ✅ Playback History now at top -->
-        <PlaybackHistoryPanel/>
-
 
         <!-- TOP CONFIG GRID (4 + 4) -->
         <section class="options-grid options-grid--compact">
 
-            <div class="opt-cell">
-                <LanguageSelector bind:language/>
+            <div class="opt-cell opt-cell--content">
+                <h3 class="section-title">Content</h3>
+
+                <div class="compact-block compact-block--content">
+                    <LanguageSelector bind:language/>
+                    <VoiceContentSelector bind:selectedVoices/>
+                </div>
             </div>
 
-            <div class="opt-cell">
-                <VoiceContentSelector bind:selectedVoices/>
+            <div class="opt-cell opt-cell--playback">
+                <h3 class="section-title">Playback</h3>
+
+                <div class="compact-block">
+
+                    <!-- ORDER -->
+                    <div class="compact-row">
+                        <span class="label">Order</span>
+
+                        <button class:selected={playbackOrder === 'up'} on:click={() => playbackOrder = 'up'}>
+                            Up
+                        </button>
+                        <button class:selected={playbackOrder === 'down'} on:click={() => playbackOrder = 'down'}>
+                            Down
+                        </button>
+                        <button class:selected={playbackOrder === 'shuffle'} on:click={() => playbackOrder = 'shuffle'}>
+                            Shuffle
+                        </button>
+                    </div>
+
+                    <!-- TRACK STRATEGY -->
+                    <div class="compact-row">
+                        <span class="label">Tracks</span>
+
+                        <button class:selected={skipPlayed} on:click={() => skipPlayed = true}>
+                            Favor New
+                        </button>
+
+                        <button class:selected={!skipPlayed} on:click={() => skipPlayed = false}>
+                            All Equal
+                        </button>
+                    </div>
+
+                    <!-- FLOW -->
+                    <div class="compact-row">
+                        <span class="label">Flow</span>
+
+                        <button class:selected={pauseMode === 'pause'} on:click={() => pauseMode = 'pause'}>
+                            Pause
+                        </button>
+
+                        <button class:selected={pauseMode === 'continuous'} on:click={() => pauseMode = 'continuous'}>
+                            Continuous
+                        </button>
+                    </div>
+
+                </div>
             </div>
-
-            <div class="opt-cell opt-cell--wide">
-                <PlaybackOrderSelector bind:playbackOrder/>
-
-                <label
-                        class="checkbox-row checkbox-row--compact"
-                        title="Skip tracks you've already played for this program"
-                >
-                    <input type="checkbox" bind:checked={skipPlayed}/>
-                    <span>Skip Played</span>
-                </label>
-            </div>
-
-            <div class="opt-cell">
-                <PauseModeSelector bind:pauseMode/>
-            </div>
-
 
         </section>
+
+        <!-- ✅ Playback History now at top -->
+        <PlaybackHistoryPanel/>
+
 
     </div>
 </div>
@@ -281,20 +313,18 @@
     .options-grid--compact {
         gap: 0.75rem;
         margin-bottom: 1.25rem;
-        grid-template-columns: repeat(4, minmax(180px, 1fr));
+        grid-template-columns: 1.35fr 0.95fr;
+        align-items: start;
     }
 
-    .opt-cell--wide {
-        grid-column: span 2;
+    .opt-cell--content,
+    .opt-cell--playback {
+        min-width: 0;
     }
 
     @media (max-width: 1100px) {
         .options-grid--compact {
-            grid-template-columns: repeat(2, minmax(240px, 1fr));
-        }
-
-        .opt-cell--wide {
-            grid-column: span 2;
+            grid-template-columns: 1fr;
         }
     }
 
@@ -303,9 +333,6 @@
             grid-template-columns: 1fr;
         }
 
-        .opt-cell--wide {
-            grid-column: auto;
-        }
     }
 
     /* =========================
@@ -328,25 +355,54 @@
         background: rgba(24, 24, 24, 0.98);
     }
 
-    /* =========================
-       CHECKBOX
-    ========================= */
+    .compact-block {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
 
-    .checkbox-row {
+    .compact-row {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-        font-size: 0.9rem;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    /* compact buttons */
+    .compact-row button {
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #ccc;
+        font-size: 0.8rem;
         cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    .checkbox-row input[type="checkbox"] {
-        accent-color: #cfb87c;
-        transform: scale(1.1);
+    .compact-row button:hover {
+        border-color: #666;
     }
 
-    .checkbox-row--compact {
-        font-size: 0.85rem;
-        opacity: 0.85;
+    /* SELECTED */
+    .compact-row button.selected {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 600;
+    }
+
+
+    .section-title {
+        font-size: 0.78rem;
+        color: #cfb87c;
+        margin: 0 0 0.45rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 700;
+    }
+
+    .compact-row button {
+        margin-right: 2px;
     }
 </style>
