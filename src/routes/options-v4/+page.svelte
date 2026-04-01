@@ -9,6 +9,7 @@
     import {loadResumeState} from '$lib/utils/smartResume';
     import {get} from 'svelte/store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
+    import {goto} from '$app/navigation';
 
 
     // ─────────────────────────────────────────────
@@ -49,6 +50,8 @@
     let genres: string[] = [];
     let collections: string[] = [];
 
+    let radioMode: 'nostalgia' | 'collections' | null = null;
+
     const playbackSettings = playbackSettingsStore;
 
     $: selectedVoices = $playbackSettings.voices as VoicePart[];
@@ -63,6 +66,40 @@
     // Resume lifecycle guard
     let hydrated = false;
     let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
+
+    function buildRadioContext(mode: 'nostalgia' | 'collections'): Record<string, string> {
+        if (mode === 'nostalgia') {
+            return {decade: 'ALL', genre: 'ALL'};
+        }
+        return {collection_slug: 'ALL'};
+    }
+
+    function startRadio(mode: 'nostalgia' | 'collections') {
+        console.log('📻 RADIO START:', mode);
+
+        const activeGroup: ModeType =
+            mode === 'nostalgia' ? 'decade_genre' : 'collection';
+
+        const context = buildRadioContext(mode);
+
+        const selection = {
+            activeGroup,
+
+            context,
+
+            language,
+            startRank: 1,
+            endRank: 9999,
+
+            playbackOrder,
+            pauseMode,
+            voices: selectedVoices,
+            skipPlayed
+        };
+
+        saveResumeFromLocal(selection);
+        goto('/car-page');
+    }
 
     // ─────────────────────────────────────────────
     // Helpers
@@ -336,11 +373,17 @@
                     </div>
 
                     <div class="radio-buttons">
-                        <button>
+                        <button
+                                class:active={radioMode === 'nostalgia'}
+                                on:click={() => startRadio('nostalgia')}
+                        >
                             Nostalgia Radio
                         </button>
 
-                        <button>
+                        <button
+                                class:active={radioMode === 'collections'}
+                                on:click={() => startRadio('collections')}
+                        >
                             Collections Radio
                         </button>
                     </div>
@@ -433,37 +476,7 @@
         gap: 12px;
     }
 
-    .compact-row {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
-    }
-
-    /* compact buttons */
-    .compact-row button {
-        padding: 4px 10px;
-        border-radius: 999px;
-        border: 1px solid #444;
-        background: #2a2a2a;
-        color: #ccc;
-        font-size: 0.8rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .compact-row button:hover {
-        border-color: #666;
-    }
-
     /* SELECTED */
-    .compact-row button.selected {
-        background: #cfb87c;
-        color: #000;
-        border-color: #cfb87c;
-        font-weight: 600;
-    }
-
 
     .section-title {
         font-size: 0.78rem;
@@ -472,10 +485,6 @@
         text-transform: uppercase;
         letter-spacing: 0.06em;
         font-weight: 700;
-    }
-
-    .compact-row button {
-        margin-right: 2px;
     }
 
 
@@ -525,65 +534,65 @@
     }
 
 
-/* =========================
-   PLAYBACK SECTION (FINAL)
-========================= */
+    /* =========================
+       PLAYBACK SECTION (FINAL)
+    ========================= */
 
-.playback-section {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+    .playback-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
 
-.playback-group {
-    display: grid;
-    grid-template-columns: 70px 1fr;
-    align-items: center;
-    column-gap: 10px;
-}
+    .playback-group {
+        display: grid;
+        grid-template-columns: 70px 1fr;
+        align-items: center;
+        column-gap: 10px;
+    }
 
-.playback-group .label {
-    font-size: 0.8rem;
-    color: #ccc;
-}
+    .playback-group .label {
+        font-size: 0.8rem;
+        color: #ccc;
+    }
 
-/* GRID FOR BUTTONS */
-.grid {
-    display: grid;
-    gap: 6px;
-}
+    /* GRID FOR BUTTONS */
+    .grid {
+        display: grid;
+        gap: 6px;
+    }
 
-/* 3 buttons (Order) */
-.grid {
-    grid-template-columns: repeat(3, 1fr);
-}
+    /* 3 buttons (Order) */
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 
-/* 2 buttons (Tracks, Flow) */
-.grid-2 {
-    grid-template-columns: repeat(2, 1fr);
-}
+    /* 2 buttons (Tracks, Flow) */
+    .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
 
-/* BUTTON STYLE (UNIFIED) */
-.grid button {
-    padding: 5px 10px;
-    border-radius: 999px;
-    border: 1px solid #444;
-    background: #2a2a2a;
-    color: #ccc;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
+    /* BUTTON STYLE (UNIFIED) */
+    .grid button {
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #ccc;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
 
-.grid button:hover {
-    border-color: #666;
-}
+    .grid button:hover {
+        border-color: #666;
+    }
 
-/* SELECTED */
-.grid button.selected {
-    background: #cfb87c;
-    color: #000;
-    border-color: #cfb87c;
-    font-weight: 600;
-}
+    /* SELECTED */
+    .grid button.selected {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 600;
+    }
 </style>
