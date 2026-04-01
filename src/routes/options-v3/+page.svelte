@@ -7,6 +7,9 @@
     import {buildSelectionFromResume} from '$lib/options/applyResume';
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
     import {loadResumeState} from '$lib/utils/smartResume';
+    import {get} from 'svelte/store';
+    import {programHistoryStore} from '$lib/carmode/programHistory';
+
 
     // ─────────────────────────────────────────────
     // UI Components
@@ -39,7 +42,7 @@
     let language: Language = 'en';
 
     let startRank = 1;
-    let endRank = 40;
+    let endRank = 1; // or undefined
 
 
     let decades: string[] = [];
@@ -112,7 +115,14 @@
 
         selectedVoices = (selection.voices ?? ['intro']) as VoicePart[];
         startRank = selection.startRank ?? 1;
-        endRank = selection.endRank ?? 40;
+        const totalTracks = getTotalTracksForSelection(
+            selection.mode,
+            decades,
+            genres,
+            collections
+        );
+
+        endRank = selection.endRank ?? totalTracks;
 
         playbackOrder = selection.playbackOrder ?? 'up';
         pauseMode = selection.pauseMode === 'continuous' ? 'continuous' : 'pause';
@@ -129,6 +139,37 @@
             decades = [];
             genres = [];
         }
+    }
+
+    function getTotalTracksForSelection(
+        mode: ModeType,
+        decades: string[],
+        genres: string[],
+        collections: string[]
+    ): number {
+
+        let programKey = '';
+
+        if (mode === 'decade_genre') {
+            const decade = decades[0];
+            const genre = genres[0];
+            if (!decade || !genre) return 0;
+
+            programKey = `DG|${decade}|${genre}`;
+        } else {
+            const collection = collections[0];
+            if (!collection) return 0;
+
+            programKey = `COL|${collection}`;
+        }
+
+        const historyList = get(programHistoryStore);
+        const entry = historyList.find(p => p.key === programKey);
+
+        console.log('🧠 PROGRAM KEY:', programKey);
+        console.log('🧠 HISTORY ENTRY:', entry);
+
+        return entry?.total ?? 0;
     }
 
 
@@ -218,6 +259,7 @@
         <!-- TOP CONFIG GRID (4 + 4) -->
         <section class="options-grid options-grid--compact">
 
+            <!-- LEFT: CONTENT -->
             <div class="opt-cell opt-cell--content">
                 <h3 class="section-title">Content</h3>
 
@@ -227,53 +269,87 @@
                 </div>
             </div>
 
-            <div class="opt-cell opt-cell--playback">
-                <h3 class="section-title">Playback</h3>
+            <!-- RIGHT: PLAYBACK + RADIO STACK -->
+            <div class="right-column">
 
-                <div class="compact-block">
+                <!-- PLAYBACK -->
+                <div class="opt-cell opt-cell--playback">
+                    <h3 class="section-title">Playback</h3>
 
-                    <!-- ORDER -->
-                    <div class="compact-row">
-                        <span class="label">Order</span>
+                    <div class="compact-block playback-block">
 
-                        <button class:selected={playbackOrder === 'up'} on:click={() => playbackOrder = 'up'}>
-                            Up
-                        </button>
-                        <button class:selected={playbackOrder === 'down'} on:click={() => playbackOrder = 'down'}>
-                            Down
-                        </button>
-                        <button class:selected={playbackOrder === 'shuffle'} on:click={() => playbackOrder = 'shuffle'}>
-                            Shuffle
-                        </button>
+                        <!-- ORDER -->
+                        <div class="compact-row playback-row">
+                            <span class="label playback-label">Order</span>
+
+                            <div class="button-group">
+                                <button class:selected={playbackOrder === 'up'} on:click={() => playbackOrder = 'up'}>
+                                    Up
+                                </button>
+                                <button class:selected={playbackOrder === 'down'}
+                                        on:click={() => playbackOrder = 'down'}>
+                                    Down
+                                </button>
+                                <button class:selected={playbackOrder === 'shuffle'}
+                                        on:click={() => playbackOrder = 'shuffle'}>
+                                    Shuffle
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TRACK STRATEGY -->
+                        <div class="compact-row playback-row">
+                            <span class="label playback-label">Tracks</span>
+
+                            <div class="button-group">
+                                <button class:selected={skipPlayed} on:click={() => skipPlayed = true}>
+                                    Favor New
+                                </button>
+
+                                <button class:selected={!skipPlayed} on:click={() => skipPlayed = false}>
+                                    All Equal
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- FLOW -->
+                        <div class="compact-row playback-row">
+                            <span class="label playback-label">Flow</span>
+
+                            <div class="button-group">
+                                <button class:selected={pauseMode === 'pause'} on:click={() => pauseMode = 'pause'}>
+                                    Pause
+                                </button>
+
+                                <button class:selected={pauseMode === 'continuous'}
+                                        on:click={() => pauseMode = 'continuous'}>
+                                    Continuous
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
-
-                    <!-- TRACK STRATEGY -->
-                    <div class="compact-row">
-                        <span class="label">Tracks</span>
-
-                        <button class:selected={skipPlayed} on:click={() => skipPlayed = true}>
-                            Favor New
-                        </button>
-
-                        <button class:selected={!skipPlayed} on:click={() => skipPlayed = false}>
-                            All Equal
-                        </button>
-                    </div>
-
-                    <!-- FLOW -->
-                    <div class="compact-row">
-                        <span class="label">Flow</span>
-
-                        <button class:selected={pauseMode === 'pause'} on:click={() => pauseMode = 'pause'}>
-                            Pause
-                        </button>
-
-                        <button class:selected={pauseMode === 'continuous'} on:click={() => pauseMode = 'continuous'}>
-                            Continuous
-                        </button>
-                    </div>
-
                 </div>
+
+                <!-- 🔥 RADIO (NEW) -->
+                <div class="opt-cell opt-cell--radio">
+                    <h3 class="section-title">TopSpot40 Radio — Quick Start</h3>
+
+                    <div class="radio-description">
+                        Nostalgia mixes decades and genres. Collections plays themed playlists.
+                    </div>
+
+                    <div class="radio-buttons">
+                        <button>
+                            Nostalgia Radio
+                        </button>
+
+                        <button>
+                            Collections Radio
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
         </section>
@@ -313,7 +389,7 @@
     .options-grid--compact {
         gap: 0.75rem;
         margin-bottom: 1.25rem;
-        grid-template-columns: 1.35fr 0.95fr;
+        grid-template-columns: 1fr 1fr;
         align-items: start;
     }
 
@@ -404,5 +480,83 @@
 
     .compact-row button {
         margin-right: 2px;
+    }
+
+
+    /* RIGHT COLUMN STACK */
+    .right-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    /* RADIO DESCRIPTION */
+    .radio-description {
+        font-size: 0.8rem;
+        color: #aaa;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+    }
+
+    /* RADIO BUTTONS */
+    .radio-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .radio-buttons button {
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #ccc;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .radio-buttons button:hover {
+        border-color: #666;
+    }
+
+    /* ACTIVE STATE (matches your gold theme) */
+    .radio-buttons button.active {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 600;
+    }
+
+    .playback-block {
+        gap: 14px;
+    }
+
+    .playback-row {
+        display: grid;
+        grid-template-columns: 68px 1fr;
+        align-items: center;
+        column-gap: 14px;
+    }
+
+    .playback-label {
+        display: inline-block;
+        font-size: 0.95rem;
+        color: #f5f5f5;
+    }
+
+    .button-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .button-group button {
+        min-width: 0;
+    }
+
+    .compact-row button,
+    .radio-buttons button {
+        padding: 5px 12px;
     }
 </style>

@@ -81,7 +81,7 @@
     let language: Language = 'en';
 
     let startRank = 1;
-    let endRank = 40;
+    let endRank = 0; // or undefined
 
     // const categoryMode = 'single' as const;
     // const voicePlayMode = 'before' as const;
@@ -153,7 +153,7 @@
         language = selection.language;
         selectedVoices = selection.voices ?? ['intro'];
         startRank = selection.startRank ?? 1;
-        endRank = selection.endRank ?? 40;
+        endRank = selection.endRank ?? endRank;
         playbackOrder = selection.playbackOrder ?? 'up';
         pauseMode = selection.pauseMode === 'continuous' ? 'continuous' : 'pause';
         skipPlayed = !!selection.skipPlayed;
@@ -424,7 +424,7 @@
         genres = [];
         collections = [];
         startRank = 1;
-        endRank = 40;
+        endRank = 0;
         playbackOrder = 'up';
         pauseMode = 'pause';
         selectedVoices = ['intro'];

@@ -379,6 +379,10 @@ export async function loadForSelection(
         if (programKey) {
             const program = history.find(p => p.key === programKey);
             playedRanks = new Set(program?.playedRanks ?? []);
+
+            console.log('🧠 PROGRAM KEY:', programKey);
+            console.log('🧠 HISTORY ENTRY:', program);
+            console.log('🧠 PLAYED RANKS:', Array.from(playedRanks));
         }
 
 // 🚫 Resume removed — always start fresh

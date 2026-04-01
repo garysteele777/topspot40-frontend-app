@@ -133,6 +133,10 @@
             },
             selection: {
                 ...sel,
+
+                // 🔥 ADD THIS (critical)
+                playbackOrder: settings.playbackOrder,
+
                 voices: settings.voices,
                 voicePlayMode: settings.voicePlayMode,
                 pauseMode: settings.pauseMode,
@@ -170,6 +174,14 @@
                 play_intro: String(settings.voices.includes('intro')),
                 play_detail: String(settings.voices.includes('detail')),
                 play_artist_description: String(settings.voices.includes('artist'))
+            });
+
+            console.log("🚀 FINAL SELECTION SENT:", {
+                playbackOrder: settings.playbackOrder,
+                selection: {
+                    ...sel,
+                    playbackOrder: settings.playbackOrder
+                }
             });
 
             const res = await fetch(
@@ -430,7 +442,7 @@
             saveResumeState(resume);
         }
 
-        window.location.href = '/options-v2';
+        window.location.href = '/options-v3';
     }
 
 
@@ -487,7 +499,7 @@
             // If we got here without params, treat it as invalid navigation.
             // This prevents stale store state from causing wrong modes.
             console.warn('⚠️ Car page opened without params — redirecting to Options');
-            await goto('/options-v2');
+            await goto('/options-v3');
             return;
         }
 
@@ -608,10 +620,16 @@ if (
     return;
 }
 
-    console.log('▶️ FRESH PLAY requested');
+console.log('▶️ FRESH PLAY requested');
 
-    markUserStartedPlayback();
-    await playTrack($currentTrack);
+markUserStartedPlayback();
+
+// 🚀 Always start from logical beginning, not selected track
+const firstTrack = $tracks[0];
+
+if (firstTrack) {
+    await playTrack(firstTrack);
+}
 }}
                 onBackToOptions={backToOptions}
         />
