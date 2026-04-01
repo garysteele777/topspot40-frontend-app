@@ -7,14 +7,6 @@
 
     export let selectedVoices: VoicePart[] = [...DJ_PRESET];
 
-    function toggle(part: VoicePart): void {
-        if (selectedVoices.includes(part)) {
-            selectedVoices = selectedVoices.filter((p) => p !== part);
-        } else {
-            selectedVoices = [...selectedVoices, part];
-        }
-    }
-
     function isSelected(part: VoicePart): boolean {
         return selectedVoices.includes(part);
     }
@@ -33,46 +25,24 @@
 <div class="card">
     <h3>Voice Content</h3>
 
-    <!-- Presets -->
-    <div class="presets">
-        <button
-                type="button"
-                class:preset-active={matchesPreset(RADIO_PRESET)}
-                on:click={() => setPreset(RADIO_PRESET)}
-        >
-            Radio Mode
+    <div class="grid">
+        <button class:selected={matchesPreset(RADIO_PRESET)} on:click={() => setPreset(RADIO_PRESET)}>
+            Radio
         </button>
 
-        <button
-                type="button"
-                class:preset-active={matchesPreset(DJ_PRESET)}
-                on:click={() => setPreset(DJ_PRESET)}
-        >
-            DJ Mode
+        <button class:selected={matchesPreset(DJ_PRESET)} on:click={() => setPreset(DJ_PRESET)}>
+            DJ
         </button>
 
-        <button
-                type="button"
-                class:preset-active={matchesPreset(STORY_PRESET)}
-                on:click={() => setPreset(STORY_PRESET)}
-        >
-            Story Mode
+        <button class:selected={matchesPreset(STORY_PRESET)} on:click={() => setPreset(STORY_PRESET)}>
+            Story
         </button>
     </div>
 
-    <!-- Voice parts (display only) -->
-    <div class="voice-parts">
-        <div class:selected={isSelected('intro')} class="voice-part">
-            Intro
-        </div>
-
-        <div class:selected={isSelected('detail')} class="voice-part">
-            Detail
-        </div>
-
-        <div class:selected={isSelected('artist')} class="voice-part">
-            Artist
-        </div>
+    <div class="grid voice-display">
+        <div class:selected={isSelected('intro')}>Intro</div>
+        <div class:selected={isSelected('detail')}>Detail</div>
+        <div class:selected={isSelected('artist')}>Artist</div>
     </div>
 </div>
 
@@ -89,67 +59,46 @@
         font-size: 1rem;
     }
 
-    /* Preset buttons row */
-    .presets {
+    .grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.5rem;
-        margin-bottom: 0.7rem;
     }
 
-    .presets button {
+    button {
         width: 100%;
         border-radius: 999px;
         border: 0;
         padding: 0.45rem 0.6rem;
         font-size: 0.9rem;
         cursor: pointer;
-        text-align: center;
         background: #333;
         color: #e0e0e0;
     }
 
-    .presets button.preset-active {
+    button.selected {
         background: #1db954;
         color: #000;
         font-weight: 600;
     }
 
-    .presets button:hover {
+    button:hover {
         background: #1db954;
         color: #000;
     }
 
-    /* Display-only voice parts row */
-    .voice-parts {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.5rem;
-        margin-top: 0.15rem;
+    .voice-display {
+        margin-top: 0.25rem;
     }
 
-    .voice-part {
+    .voice-display div {
         text-align: center;
-        font-size: 1rem;
-        font-weight: 500;
+        font-size: 0.9rem;
         color: #7f7f7f;
-        padding-top: 0.1rem;
     }
 
-    .voice-part.selected {
-        color: #ffffff;
-        font-weight: 700;
+    .voice-display div.selected {
+        color: #fff;
+        font-weight: 600;
     }
-
-    .presets,
-    .voice-parts {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 0.5rem;
-    }
-
-    .presets button {
-        height: 36px;
-    }
-
 </style>

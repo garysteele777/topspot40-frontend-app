@@ -4,31 +4,20 @@
 </script>
 
 <div class="card">
-    <h3>Preview Language (only English currently)</h3>
+    <h3>Preview Language</h3>
+    <p class="hint">English available now — more languages coming soon.</p>
 
-    <div class="options">
-        <button
-                type="button"
-                class:selected={language === 'en'}
-                on:click={() => (language = 'en')}
-        >
+    <div class="grid">
+        <button class:selected={language === 'en'} on:click={() => (language = 'en')}>
             English
         </button>
 
-        <button
-                type="button"
-                class:selected={language === 'es'}
-                on:click={() => (language = 'es')}
-        >
+        <button disabled>
             Español
         </button>
 
-        <button
-                type="button"
-                class:selected={language === 'ptbr'}
-                on:click={() => (language = 'ptbr')}
-        >
-            Português (BR)
+        <button disabled>
+            Português
         </button>
     </div>
 </div>
@@ -42,24 +31,30 @@
     }
 
     h3 {
-        margin: 0 0 0.25rem;
+        margin: 0 0 0.2rem;
         font-size: 1rem;
     }
 
-    .options {
-        display: flex;
-        gap: 0.4rem;
-        flex-wrap: wrap;
+    .hint {
+        margin: 0 0 0.5rem;
+        font-size: 0.8rem;
+        color: #a8a8a8;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
     }
 
     button {
-        flex: 1;
+        width: 100%;
         border-radius: 999px;
         border: 0;
-        padding: 0.35rem 0.5rem;
+        padding: 0.45rem 0.6rem;
         font-size: 0.9rem;
         cursor: pointer;
-        background: #282828;
+        background: #333;
         color: #e0e0e0;
     }
 
@@ -67,5 +62,10 @@
         background: #1db954;
         color: #000;
         font-weight: 600;
+    }
+
+    button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
     }
 </style>

@@ -119,6 +119,10 @@
         <button on:click={() => go('/options-v3')}>
             Options V3
         </button>
+
+        <button on:click={() => go('/options-v4')}>
+            Options V4
+        </button>
     </div>
 
 
