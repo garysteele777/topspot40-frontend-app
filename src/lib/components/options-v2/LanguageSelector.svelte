@@ -4,7 +4,7 @@
 </script>
 
 <div class="card">
-    <h3>Preview Language</h3>
+    <h3>Preview Language (only English currently)</h3>
 
     <div class="options">
         <button

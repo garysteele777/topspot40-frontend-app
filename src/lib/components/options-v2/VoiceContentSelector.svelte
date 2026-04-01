@@ -1,11 +1,11 @@
 <script lang="ts">
     import type {VoicePart} from '$lib/types/options';
 
-    export let selectedVoices: VoicePart[] = ['intro'];
-
     const DJ_PRESET: VoicePart[] = ['intro', 'detail'];
     const RADIO_PRESET: VoicePart[] = ['intro'];
     const STORY_PRESET: VoicePart[] = ['intro', 'detail', 'artist'];
+
+    export let selectedVoices: VoicePart[] = [...DJ_PRESET];
 
     function toggle(part: VoicePart): void {
         if (selectedVoices.includes(part)) {
