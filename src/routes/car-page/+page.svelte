@@ -442,7 +442,7 @@
             saveResumeState(resume);
         }
 
-        window.location.href = '/options-v3';
+        window.location.href = '/options-v4';
     }
 
 
@@ -499,7 +499,7 @@
             // If we got here without params, treat it as invalid navigation.
             // This prevents stale store state from causing wrong modes.
             console.warn('⚠️ Car page opened without params — redirecting to Options');
-            await goto('/options-v3');
+            await goto('/options-v4');
             return;
         }
 

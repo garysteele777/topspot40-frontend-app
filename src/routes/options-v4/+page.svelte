@@ -75,31 +75,36 @@
     }
 
     function startRadio(mode: 'nostalgia' | 'collections') {
-        console.log('📻 RADIO START:', mode);
+        console.log('📻 RADIO MODE SELECTED:', mode);
 
-        const activeGroup: ModeType =
-            mode === 'nostalgia' ? 'decade_genre' : 'collection';
+        radioMode = mode;
 
-        const context = buildRadioContext(mode);
+        // 🚫 Stop here for now — no navigation yet
+    }
 
+    function launchNostalgiaAll() {
         const selection = {
-            activeGroup,
-
-            context,
-
+            activeGroup: 'decade_genre' as ModeType,
+            context: {
+                decade: 'ALL',
+                genre: 'ALL'
+            },
             language,
             startRank: 1,
             endRank: 9999,
-
             playbackOrder,
             pauseMode,
             voices: selectedVoices,
             skipPlayed
         };
 
+        console.log('🚀 LAUNCHING NOSTALGIA RADIO:', selection);
+
         saveResumeFromLocal(selection);
-        goto('/car-page');
+
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL`);
     }
+
 
     // ─────────────────────────────────────────────
     // Helpers
@@ -387,6 +392,15 @@
                             Collections Radio
                         </button>
                     </div>
+
+                    {#if radioMode === 'nostalgia'}
+                        <div style="margin-top: 10px;">
+                            <button on:click={launchNostalgiaAll}>
+                                ▶ Start All Genres
+                            </button>
+                        </div>
+                    {/if}
+
                 </div>
 
             </div>

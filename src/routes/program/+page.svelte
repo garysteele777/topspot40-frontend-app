@@ -256,7 +256,7 @@
         </h2>
 
         <div class="program-actions">
-            <button type="button" on:click={() => goto('/options-v3')}>
+            <button type="button" on:click={() => goto('/options-v4')}>
                 ← Back to Options
             </button>
             <button type="button" on:click={handleClearPlayed}>
