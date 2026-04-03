@@ -66,6 +66,21 @@
     // Resume lifecycle guard
     let hydrated = false;
     let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
+    let selectedGenre: string | null = null;
+
+    const genreIcons: Record<string, string> = {
+        rock: '🎸',
+        country: '🤠',
+        pop: '🎤',
+        blues_jazz: '🎷',
+        rnb: '🎹',
+        rnb_soul: '🎹',
+        folk: '🪕',
+        folk_acoustic: '🪕',
+        latin: '💃',
+        latin_global: '💃',
+        tv_themes: '📺',
+    };
 
     function buildRadioContext(mode: 'nostalgia' | 'collections'): Record<string, string> {
         if (mode === 'nostalgia') {
@@ -103,6 +118,29 @@
         saveResumeFromLocal(selection);
 
         goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL`);
+    }
+
+    function launchNostalgiaGenre(genre: string) {
+        const selection = {
+            activeGroup: 'decade_genre' as ModeType,
+            context: {
+                decade: 'ALL',
+                genre
+            },
+            language,
+            startRank: 1,
+            endRank: 9999,
+            playbackOrder,
+            pauseMode,
+            voices: selectedVoices,
+            skipPlayed
+        };
+
+        console.log('🎯 LAUNCHING NOSTALGIA GENRE:', selection);
+
+        saveResumeFromLocal(selection);
+
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}`);
     }
 
 
@@ -393,11 +431,32 @@
                         </button>
                     </div>
 
+                    <div class="radio-separator">
+                        <span>Stations</span>
+                    </div>
+
+
                     {#if radioMode === 'nostalgia'}
                         <div style="margin-top: 10px;">
-                            <button on:click={launchNostalgiaAll}>
-                                ▶ Start All Genres
+                            <button class="start-all-btn" on:click={launchNostalgiaAll}>
+                                <span class="icon">📻</span>
+                                <span>Start All Genres: 1950s to the Present</span>
                             </button>
+                        </div>
+
+                        <div class="radio-genres">
+                            {#each genreOptions as g}
+                                <button
+                                        class="genre-btn"
+                                        class:selected={selectedGenre === g.id}
+                                        on:click={() => {
+                                            launchNostalgiaGenre(g.id);
+                                        }}
+                                >
+                                    <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
+                                    <span>{g.label}</span>
+                                </button>
+                            {/each}
                         </div>
                     {/if}
 
@@ -608,5 +667,123 @@
         color: #000;
         border-color: #cfb87c;
         font-weight: 600;
+    }
+
+    .radio-genres {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .radio-genres button {
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #ccc;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .radio-genres button:hover {
+        border-color: #666;
+    }
+
+    .genre-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+
+        padding: 6px 10px;
+        border-radius: 999px;
+
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #ccc;
+
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .genre-btn:hover {
+        border-color: #cfb87c;
+        color: #fff;
+        background: #333;
+    }
+
+    .genre-btn .icon {
+        font-size: 0.9rem;
+    }
+
+    .genre-btn.selected {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 600;
+    }
+
+    .start-all-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        width: 100%;
+        margin-top: 10px;
+        margin-bottom: 8px;
+
+        padding: 8px 12px;
+        border-radius: 999px;
+
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #ccc;
+
+        font-size: 0.9rem;
+        font-weight: 600;
+
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .start-all-btn:hover {
+        border-color: #666;
+        background: #333;
+        color: #fff;
+    }
+
+    .start-all-btn:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+
+    .start-all-btn .icon {
+        font-size: 1rem;
+    }
+
+    .radio-separator {
+        display: flex;
+        align-items: center;
+        margin: 10px 0 12px;
+        opacity: 0.9;
+    }
+
+    .radio-separator::before,
+    .radio-separator::after {
+        content: '';
+        flex: 1;
+        border-top: 1px dashed rgba(207, 184, 124, 0.35);
+    }
+
+    .radio-separator span {
+        padding: 0 8px;
+        font-size: 0.7rem;
+        color: rgba(207, 184, 124, 0.7);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
     }
 </style>
