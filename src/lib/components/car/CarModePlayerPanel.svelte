@@ -127,8 +127,8 @@
 
 
     $: isRadioMode =
-        $currentSelection?.context?.decade === 'ALL' &&
-        $currentSelection?.context?.genre === 'ALL';
+        $currentSelection?.mode === 'decade_genre' &&
+        $currentSelection?.context?.decade === 'ALL';
 
 
     let lastTrackKey: string | null = null;

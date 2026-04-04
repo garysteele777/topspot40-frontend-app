@@ -82,8 +82,7 @@
 
     $: isRadioStation =
         $currentSelection?.mode === 'decade_genre' &&
-        $currentSelection?.context?.decade === 'ALL' &&
-        $currentSelection?.context?.genre === 'ALL';
+        $currentSelection?.context?.decade === 'ALL'
 
     $: isRadioPlaceholder =
         isRadioStation &&

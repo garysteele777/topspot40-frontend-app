@@ -161,8 +161,7 @@
         if (
             sel?.mode === 'decade_genre' &&
             sel?.context?.decade === 'ALL' &&
-            sel?.context?.genre === 'ALL' &&
-            trackObj.rank === 0   // 👈 ONLY for initial "radio start"
+            trackObj.rank === 0
         ) {
             console.log('📻 Starting ALL/ALL radio station');
 
@@ -170,7 +169,7 @@
 
             const params = new URLSearchParams({
                 decade: 'ALL',
-                genre: 'ALL',
+                genre: sel.context?.genre ?? 'ALL',
                 play_intro: String(settings.voices.includes('intro')),
                 play_detail: String(settings.voices.includes('detail')),
                 play_artist_description: String(settings.voices.includes('artist'))
@@ -383,8 +382,7 @@
 
     const isRadioMode =
         $currentSelection?.mode === 'decade_genre' &&
-        $currentSelection?.context?.decade === 'ALL' &&
-        $currentSelection?.context?.genre === 'ALL';
+        $currentSelection?.context?.decade === 'ALL';
 
     $: uiDecade =
         $currentSelection?.mode === 'decade_genre'
@@ -478,8 +476,7 @@
             // 🔥 Normalize programType based on selection
             if (sel.mode === 'decade_genre') {
                 const isRadio =
-                    sel.context?.decade === 'ALL' &&
-                    sel.context?.genre === 'ALL';
+                    sel.context?.decade === 'ALL';
 
                 sel.programType = isRadio ? 'RADIO_DG' : 'DG';
             }

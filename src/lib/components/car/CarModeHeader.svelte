@@ -80,6 +80,12 @@
 
 {/if}
 
+      {#if programType === 'RADIO_DG'}
+        TopSpot Radio • {genre ? genre.replace(/_/g, ' ') : 'All Genres'}
+        {:else}
+            {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
+        {/if}
+
   </span>
             {:else}
 
