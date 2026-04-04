@@ -52,36 +52,31 @@ export async function loadForSelection(
 
     if (
         sel.mode === 'decade_genre' &&
-        decade === 'ALL' &&
-        genre === 'ALL'
+        decade === 'ALL'
     ) {
-        console.log('📻 RADIO MODE detected (ALL / ALL)');
+        console.log('📻 RADIO MODE detected (ALL / ANY)');
 
-        // mark program type so player launches radio engine
-        const isRadio = true;
+        // 🔥 THIS IS THE FIX
+        sel.programType = 'RADIO_DG';
 
-        if (isRadio) {
+        const placeholder: CarModeTrack = {
+            id: null,
+            rankingId: null,
+            rank: 0,
+            trackName: 'TopSpot Radio',
+            artistName: 'Press Play to Start',
+            spotifyTrackId: '',
+            albumArtwork: null,
+            durationSeconds: 0
+        };
 
-            const placeholder: CarModeTrack = {
-                id: null,
-                rankingId: null,
-                rank: 0,
-                trackName: 'TopSpot Radio',
-                artistName: 'Press Play to Start',
-                spotifyTrackId: '',
-                albumArtwork: null,
-                durationSeconds: 0
-            };
+        tracks.set([placeholder]);
+        currentTrack.set(placeholder);
 
-            tracks.set([placeholder]);
-            currentTrack.set(placeholder);
+        status.set('Radio ready. Press Play.');
 
-            status.set('Radio ready. Press Play.');
-
-            console.log('📻 Radio mode loader finished — waiting for Play.');
-            return;
-        }
-
+        console.log('📻 Radio mode loader finished — waiting for Play.');
+        return;
     }
 
     tracks.set([]);
