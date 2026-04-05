@@ -50,7 +50,7 @@
     let genres: string[] = [];
     let collections: string[] = [];
 
-    let radioMode: 'nostalgia' | 'collections' | null = null;
+    let radioMode: 'nostalgia' | 'collections' | null = 'nostalgia';
 
     const playbackSettings = playbackSettingsStore;
 
@@ -335,13 +335,75 @@
 
     <div class="page">
 
+        <!-- 🔥 RADIO (NEW) -->
+        <div class="opt-cell opt-cell--radio">
+            <h3 class="section-title">📻🐕 TopSpot40 Radio 📻🐕 </h3>
+
+            <div class="radio-description">
+                Nostalgia mixes decades and genres. Collections plays themed playlists.
+            </div>
+
+            <div class="radio-description">
+                DJ Mode • Shuffle • Favor New • Continuous
+            </div>
+
+            <div class="radio-buttons">
+                <button
+                        class:active={radioMode === 'nostalgia'}
+                        on:click={() => startRadio('nostalgia')}
+                >
+                    Nostalgia Radio
+                </button>
+
+                <button
+                        class:active={radioMode === 'collections'}
+                        on:click={() => startRadio('collections')}
+                >
+                    Collections Radio
+                </button>
+            </div>
+
+            <div class="radio-separator">
+                <span>Stations</span>
+            </div>
+
+
+            {#if radioMode === 'nostalgia'}
+                <div style="margin-top: 10px;">
+                    <button class="start-all-btn" on:click={launchNostalgiaAll}>
+                        <span class="icon">📻</span>
+                        <span>Start All Genres: 1950s to the Present</span>
+                    </button>
+                </div>
+
+                <div class="radio-genres">
+                    {#each genreOptions as g}
+                        <button
+                                class="genre-btn"
+                                class:selected={selectedGenre === g.id}
+                                on:click={() => {
+                                            launchNostalgiaGenre(g.id);
+                                        }}
+                        >
+                            <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
+                            <span>{g.label}</span>
+                        </button>
+                    {/each}
+                </div>
+            {/if}
+
+        </div>
+
+        <!-- ✅ Playback History now at top -->
+        <PlaybackHistoryPanel/>
+
 
         <!-- TOP CONFIG GRID (4 + 4) -->
         <section class="options-grid options-grid--compact">
 
             <!-- LEFT: CONTENT -->
             <div class="opt-cell opt-cell--content">
-                <h3 class="section-title">Content</h3>
+                <h3 class="section-title">Settings</h3>
 
                 <div class="compact-block compact-block--content">
                     <LanguageSelector bind:language/>
@@ -407,67 +469,9 @@
             <div class="right-column">
 
 
-                <!-- 🔥 RADIO (NEW) -->
-                <div class="opt-cell opt-cell--radio">
-                    <h3 class="section-title">TopSpot40 Radio — Quick Start</h3>
-
-                    <div class="radio-description">
-                        Nostalgia mixes decades and genres. Collections plays themed playlists.
-                    </div>
-
-                    <div class="radio-buttons">
-                        <button
-                                class:active={radioMode === 'nostalgia'}
-                                on:click={() => startRadio('nostalgia')}
-                        >
-                            Nostalgia Radio
-                        </button>
-
-                        <button
-                                class:active={radioMode === 'collections'}
-                                on:click={() => startRadio('collections')}
-                        >
-                            Collections Radio
-                        </button>
-                    </div>
-
-                    <div class="radio-separator">
-                        <span>Stations</span>
-                    </div>
-
-
-                    {#if radioMode === 'nostalgia'}
-                        <div style="margin-top: 10px;">
-                            <button class="start-all-btn" on:click={launchNostalgiaAll}>
-                                <span class="icon">📻</span>
-                                <span>Start All Genres: 1950s to the Present</span>
-                            </button>
-                        </div>
-
-                        <div class="radio-genres">
-                            {#each genreOptions as g}
-                                <button
-                                        class="genre-btn"
-                                        class:selected={selectedGenre === g.id}
-                                        on:click={() => {
-                                            launchNostalgiaGenre(g.id);
-                                        }}
-                                >
-                                    <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
-                                    <span>{g.label}</span>
-                                </button>
-                            {/each}
-                        </div>
-                    {/if}
-
-                </div>
-
             </div>
 
         </section>
-
-        <!-- ✅ Playback History now at top -->
-        <PlaybackHistoryPanel/>
 
 
     </div>
@@ -560,13 +564,6 @@
         font-weight: 700;
     }
 
-
-    /* RIGHT COLUMN STACK */
-    .right-column {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
 
     /* RADIO DESCRIPTION */
     .radio-description {
