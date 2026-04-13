@@ -446,6 +446,9 @@
 
     async function handleAutoNextTrack() {
         console.log('🎯 EVENT → nextTrack()');
+
+        await new Promise(r => setTimeout(r, 300)); // 🔥 try 300–500ms
+
         await nextTrack();
     }
 
