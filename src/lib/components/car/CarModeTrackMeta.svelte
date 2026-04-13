@@ -115,14 +115,6 @@
 
     Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
 
-{:else if tracks.length > 40}
-
-    Pick #{currentTrack?.rank ?? '?'} of {tracks.length}
-    • Rank {currentTrack?.sourceRank ?? currentTrack?.rank ?? '?'}
-    • Released {currentTrack?.yearReleased ?? '?'}
-
-{:else}
-
     Rank {currentTrack?.rank ?? '?'} of {programTotal}
 
 {/if}
