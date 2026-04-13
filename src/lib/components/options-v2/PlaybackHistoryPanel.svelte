@@ -749,10 +749,11 @@
                                                 played={row.played}
                                                 total={row.total}
                                                 percent={pct(row.played, row.total)}
-                                                onPlay={() => {
-                                                if (row.program) resumeProgram(row.program);
-                                                else resumeByKey(row.key, 1, row.total);
-                                            }}
+                                                favorites={row.favorites}
+                                        onPlay={() => {
+                                        if (row.program) resumeProgram(row.program);
+                                        else resumeByKey(row.key, 1, row.total);
+                                    }}
                                         />
 
                                     {/if}
@@ -785,7 +786,6 @@
 
                             <ul class="history-list">
                                 {#each group.programs as row}
-                                    {@const isCollection = row.key.startsWith('COL|')}
                                     {@const collectionSlug = row.key.split('|')[1] ?? ''}
                                     {@const played = playedCount(row)}
                                     {@const total = row.total}
@@ -798,7 +798,6 @@
                                                 played={played}
                                                 total={total}
                                                 percent={percent}
-                                                isCollection={true}
                                                 onPlay={() => resumeProgram(row)}
                                         />
                                     </li>

@@ -9,7 +9,7 @@
     export let percent: number;
 
     export let onPlay: () => void;
-    export let isCollection: boolean = false;
+    export let favorites: number = 0;
 </script>
 
 <div class="history-row__inner">
@@ -18,7 +18,7 @@
     </span>
 
     <span class="history-row__progress">
-        ✓ {played} / {total} • {percent}%
+        ✓ {played} / {total} • {percent}% • ⭐ {favorites}
     </span>
 
     <div class="history-row__actions">
