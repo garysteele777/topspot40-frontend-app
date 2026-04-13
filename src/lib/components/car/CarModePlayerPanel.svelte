@@ -7,7 +7,6 @@
 
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
-    import {skipToNextTrack} from '$lib/carmode/CarMode.poller';
 
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
@@ -40,7 +39,7 @@
     export let setShowNarrationModal: (v: boolean) => void;
 
     let isFav = false;
-
+    let favBurst = false;
 
     /* ─────────────────────────────────────────────
        Derived values (Next + Progress)
@@ -103,7 +102,7 @@
 
     $: programGroup =
         programType === 'DG'
-            ? $currentSelection?.context?.decade ?? null
+            ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
             : null;
 
     import {favoritesStore} from '$lib/favorites/favorites';
@@ -167,7 +166,6 @@
         });
     }
 
-
     function onToggleFavorite() {
         if (
             !programType ||
@@ -182,6 +180,12 @@
             programGroup,
             currentTrack.rankingId
         );
+
+        // 🔥 trigger animation
+        favBurst = false;
+        requestAnimationFrame(() => {
+            favBurst = true;
+        });
 
         console.log(
             added
@@ -207,22 +211,27 @@
         />
     </div>
 
-    {#if currentTrack?.rankingId != null && $currentSelection?.programType !== 'FAV_DG' && $currentSelection?.programType !== 'FAV_COL'}
-        <div class="fav-wrapper">
+    {#if currentTrack}
+        <div class="rank-line">
             <button
-                    class="fav-btn"
+                    class="fav-star"
+                    class:active={isFav}
+                    class:burst={favBurst}
                     on:click={onToggleFavorite}
-                    aria-pressed={isFav}
+                    on:animationend={() => favBurst = false}
+                    aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
             >
-                {#if isFav}
-                    ⭐ Saved to {$currentSelection?.context?.decade} Favorites
-                {:else}
-                    ☆ Save to {$currentSelection?.context?.decade} Favorites
-                {/if}
+                ★
             </button>
+
+            <span>
+            {currentTrack.rank} of {tracks.length}
+                {#if currentTrack.yearReleased}
+                • {currentTrack.yearReleased}
+            {/if}
+        </span>
         </div>
     {/if}
-
 
     <!-- Track Meta -->
     <div class="w-full flex justify-center px-4 mt-4">
@@ -344,39 +353,68 @@
        Favorites Button
     ───────────────────────────────────────────── */
 
-    .fav-btn {
-        margin-top: 10px;
-        padding: 6px 16px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        background: transparent;
-        color: #fff;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 150ms ease;
-    }
 
-    .fav-btn:hover {
-        border-color: gold;
-        color: gold;
-    }
-
-    .fav-btn[aria-pressed='true'] {
-        background: #cfb87c;
-        color: #111;
-        border-color: #cfb87c;
-    }
-
-    .fav-btn[aria-pressed='true']:hover {
-        background: #e3cf98;
-        border-color: #e3cf98;
-    }
-
-    .fav-wrapper {
+    .rank-line {
         display: flex;
         justify-content: center;
-        width: 100%;
+        align-items: center;
+        gap: 8px;
         margin-top: 10px;
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+    .fav-star {
+        border: none;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.35);
+        cursor: pointer;
+        font-size: 1.2rem;
+        line-height: 1;
+        padding: 0;
+        transition: transform 0.15s ease, color 0.15s ease;
+    }
+
+    .fav-star:hover {
+        transform: scale(1.15);
+        color: #cfb87c;
+    }
+
+    .fav-star.active {
+        color: #cfb87c;
+        transform: scale(1.1);
+    }
+
+    .fav-star {
+        border: none;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.35);
+        cursor: pointer;
+        font-size: 1.2rem;
+        line-height: 1;
+        padding: 0;
+        transform-origin: center;
+        transition: color 0.15s ease;
+    }
+
+    .fav-star.active {
+        color: #cfb87c;
+    }
+
+    .fav-star.burst {
+        animation: fav-pop 240ms ease-out;
+    }
+
+    @keyframes fav-pop {
+        0% {
+            transform: scale(1);
+        }
+        40% {
+            transform: scale(1.35);
+        }
+        100% {
+            transform: scale(1);
+        }
     }
 
 </style>
