@@ -208,14 +208,17 @@
 
     .track-title {
         margin: 0;
-        font-size: 1.4rem;
+        font-size: 1.05rem;
         font-weight: 600;
+        line-height: 1.3;
+        text-align: center; /* 👈 ensure center */
     }
 
     .track-artist {
         margin-top: 2px;
-        font-size: 0.95rem;
-        opacity: 0.7;
+        font-size: 0.9rem;
+        opacity: 0.65;
+        text-align: center; /* 👈 ensure center */
     }
 
 
@@ -264,8 +267,9 @@
     }
 
     .hero-wrap {
-        width: 100%;
-        max-height: 45vh; /* was 60vh */
+        width: min(100%, 420px);
+        aspect-ratio: 16 / 9;
+        margin: 0 auto;
         overflow: hidden;
         border-radius: 18px;
     }
@@ -280,9 +284,9 @@
     }
 
     .album-text {
-        margin-top: 14px;
-        text-align: left;
-        padding: 0 4px;
+        margin-top: 12px;
+        text-align: center; /* 🔥 center it */
+        padding: 0 8px;
     }
 
 
