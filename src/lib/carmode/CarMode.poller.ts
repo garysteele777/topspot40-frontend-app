@@ -532,13 +532,21 @@ export function startPlaybackPolling() {
                 if (isPauseMode) {
                     console.log('🛑 Pause mode: not advancing after track end');
                 } else {
-                    try {
-                        dlog('📡 track-finished');
+                    console.log('▶️ Continuous mode → advancing to next track');
 
+                    // 🔥 THIS IS THE MISSING PIECE
+                    // You need to call your frontend nextTrack()
+
+                    // BUT… we can’t call it directly here (scope issue)
+                    // So we trigger it via a custom event
+
+                    window.dispatchEvent(new CustomEvent('ts-next-track'));
+
+                    // (optional) still notify backend if needed
+                    try {
                         await fetch(`${API_BASE}/playback/track-finished`, {
                             method: 'POST'
                         });
-
                     } catch (err) {
                         console.error('❌ Failed to signal track-finished', err);
                     }

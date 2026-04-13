@@ -444,6 +444,11 @@
     }
 
 
+    async function handleAutoNextTrack() {
+        console.log('🎯 EVENT → nextTrack()');
+        await nextTrack();
+    }
+
     // ─────────────────────────────────────────────
     // Lifecycle
     // ─────────────────────────────────────────────
@@ -458,9 +463,11 @@
             console.warn('⚠️ Backend reset failed (continuing anyway):', err);
         }
 
-        // ⏱ Step 1: Start polling AFTER reset
+// ⏱ Step 1: Start polling AFTER reset
         startPlaybackPolling();
         console.log('⏱ Playback polling started from onMount');
+
+        window.addEventListener('ts-next-track', handleAutoNextTrack);
 
 
         const url = new URL(window.location.href);
@@ -534,10 +541,10 @@
 
 
     onDestroy(() => {
+        window.removeEventListener('ts-next-track', handleAutoNextTrack);
         stopPlaybackPolling();
         void clearAllPlayback();
     });
-
 
 </script>
 
