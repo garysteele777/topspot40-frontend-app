@@ -260,6 +260,7 @@ export function startPlaybackPolling() {
                         intro: data.intro ?? next.intro,
                         detail: data.detail ?? next.detail,
                         artistText: data.artist_text ?? next.artistText,
+                        artistArtwork: ctx?.artist_artwork ?? next.artistArtwork,
 
                         decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
                         decadeName: ctx?.decade_name ?? next.decadeName,
@@ -289,6 +290,7 @@ export function startPlaybackPolling() {
                         intro: data.intro ?? null,
                         detail: data.detail ?? null,
                         artistText: data.artist_text ?? null,
+                        artistArtwork: ctx?.artist_artwork ?? null,
 
                         decadeSlug: ctx?.decade_slug ?? null,
                         decadeName: ctx?.decade_name ?? null,

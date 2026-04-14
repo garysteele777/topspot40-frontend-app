@@ -1,8 +1,8 @@
 <script lang="ts">
     import {fade, fly} from 'svelte/transition';
-    import type {LoadedTrack} from '$lib/utils/normalizeTrack';
+    import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 
-    export let track: LoadedTrack | null = null;
+    export let track: CarModeTrack | null = null;
     export let open = false;
     export let onClose: () => void;
 
@@ -100,7 +100,7 @@
     $: bodyText =
         mode === 'intro' ? (track?.intro ?? '—') :
             mode === 'detail' ? (track?.detail ?? '—') :
-                (track?.artistDescription ?? '—');
+                (track?.artistText ?? '—');
 
 
 </script>
