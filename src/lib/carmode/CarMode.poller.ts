@@ -256,6 +256,11 @@ export function startPlaybackPolling() {
                     const enriched = {
                         ...next,
 
+                        // 🔥 ADD THESE
+                        intro: data.intro ?? next.intro,
+                        detail: data.detail ?? next.detail,
+                        artistText: data.artist_text ?? next.artistText,
+
                         decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
                         decadeName: ctx?.decade_name ?? next.decadeName,
                         genreSlug: ctx?.genre_slug ?? next.genreSlug,
@@ -280,7 +285,11 @@ export function startPlaybackPolling() {
                         artistName: data.artist_name ?? '',
                         spotifyTrackId: spotifyId,
 
-                        // 🔥 FIXED MAPPING
+                        // 🔥 ADD THESE
+                        intro: data.intro ?? null,
+                        detail: data.detail ?? null,
+                        artistText: data.artist_text ?? null,
+
                         decadeSlug: ctx?.decade_slug ?? null,
                         decadeName: ctx?.decade_name ?? null,
                         genreSlug: ctx?.genre_slug ?? null,

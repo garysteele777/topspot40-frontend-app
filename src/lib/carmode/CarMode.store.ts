@@ -12,6 +12,11 @@ import {selection as baseSelection} from '$lib/stores/selection';
 export type CarModeTrack = LoadedTrack & {
     rankingId: number | null;
 
+    // Narration
+    intro?: string | null;
+    detail?: string | null;
+    artistText?: string | null;
+
     // ⭐ Favorites metadata
     sourceRank?: number | null;
 
