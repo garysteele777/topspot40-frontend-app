@@ -211,7 +211,7 @@
         />
     </div>
 
-    {#if currentTrack}
+    {#if currentTrack && !isRadioMode}
         <div class="rank-line">
             <button
                     class="fav-star"

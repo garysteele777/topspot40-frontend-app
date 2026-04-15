@@ -271,13 +271,12 @@
                 markRankPlayed(key, $currentTrack.rank);
             }
         }
-        //
-        // const currentIndex =
-        //     $tracks.findIndex(t => t.rankingId === rankingId);
-        //
-        // if (currentIndex === -1) return;
 
-        if (isRadioMode) {
+        const isRadio =
+            sel?.mode === 'decade_genre' &&
+            sel?.context?.decade === 'ALL';
+
+        if (isRadio) {
             console.log('📻 RADIO → NEXT SET');
 
             const res = await fetch(`${API_BASE}/supabase/decade-genre/next`, {
@@ -618,11 +617,20 @@ if (
     const data = await res.json().catch(() => null);
 
 
-    if (data?.restart_track && $currentTrack) {
+const sel = $currentSelection;
+const isRadio =
+    sel?.mode === 'decade_genre' &&
+    sel?.context?.decade === 'ALL';
+
+if (data?.restart_track && $currentTrack) {
+    if (isRadio) {
+        console.log('📻 Radio resume: backend keeps control, skipping playTrack restart');
+    } else {
         console.log('🔁 Restarting track after narration pause');
         markUserStartedPlayback();
         await playTrack($currentTrack);
     }
+}
 
     return;
 }

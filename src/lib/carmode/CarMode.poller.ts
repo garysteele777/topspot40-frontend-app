@@ -4,7 +4,7 @@ import {get} from 'svelte/store';
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {browser} from '$app/environment';
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
-
+import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 
 import {
     timingSource,
@@ -533,27 +533,23 @@ export function startPlaybackPolling() {
                 markCurrentTrackPlayed();
 
                 const sel = get(currentSelection);
-                const isPauseMode = sel?.pauseMode === 'pause';
+                const settings = get(playbackSettingsStore);
 
-                console.log('🧪 PAUSE CHECK', {
-                    isPauseMode,
+                const isContinuous = settings.pauseMode === 'continuous';
+
+                console.log('🧪 MODE CHECK', {
+                    isContinuous,
+                    pauseMode: settings.pauseMode,
                     selection: sel
                 });
 
-                if (isPauseMode) {
+                if (!isContinuous) {
                     console.log('🛑 Pause mode: not advancing after track end');
                 } else {
                     console.log('▶️ Continuous mode → advancing to next track');
 
-                    // 🔥 THIS IS THE MISSING PIECE
-                    // You need to call your frontend nextTrack()
-
-                    // BUT… we can’t call it directly here (scope issue)
-                    // So we trigger it via a custom event
-
                     window.dispatchEvent(new CustomEvent('ts-next-track'));
 
-                    // (optional) still notify backend if needed
                     try {
                         await fetch(`${API_BASE}/playback/track-finished`, {
                             method: 'POST'
