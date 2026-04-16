@@ -143,6 +143,28 @@
         goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}`);
     }
 
+    function launchCollectionsAll() {
+        const selection = {
+            activeGroup: 'collection' as ModeType,
+            context: {
+                collection_slug: 'ALL'
+            },
+            language,
+            startRank: 1,
+            endRank: 9999,
+            playbackOrder,
+            pauseMode,
+            voices: selectedVoices,
+            skipPlayed
+        };
+
+        console.log('🚀 LAUNCHING COLLECTIONS RADIO:', selection);
+
+        saveResumeFromLocal(selection);
+
+        goto(`/car-page?mode=collections&collection=ALL`);
+    }
+
 
     // ─────────────────────────────────────────────
     // Helpers
@@ -389,6 +411,15 @@
                             <span>{g.label}</span>
                         </button>
                     {/each}
+                </div>
+            {/if}
+
+            {#if radioMode === 'collections'}
+                <div style="margin-top: 10px;">
+                    <button class="start-all-btn" on:click={launchCollectionsAll}>
+                        <span class="icon">📻</span>
+                        <span>Start All Collections</span>
+                    </button>
                 </div>
             {/if}
 
