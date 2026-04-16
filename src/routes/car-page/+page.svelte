@@ -144,10 +144,17 @@
             },
             context:
                 sel.mode === 'collection'
-                    ? {
-                        type: 'collection',
-                        collection_slug: sel.context?.collection_slug
-                    }
+                    ? (
+                        sel.programType === 'RADIO_COL'
+                            ? {
+                                type: 'collection_radio',
+                                collection_group_slug: sel.context?.collection_group_slug
+                            }
+                            : {
+                                type: 'collection',
+                                collection_slug: sel.context?.collection_slug
+                            }
+                    )
                     : {
                         type: 'decade_genre',
                         decade: decadeForPlayback,
@@ -491,10 +498,24 @@
             }
 
             if (sel.mode === 'collection') {
-                const isRadio =
-                    sel.context?.collection === 'ALL';
+                const collectionGroup =
+                    sel.context?.collection_group_slug ??
+                    sel.context?.collectionGroupSlug ??
+                    sel.context?.collection_group;
 
+                const collectionSlug =
+                    sel.context?.collection_slug ??
+                    sel.context?.collectionSlug ??
+                    sel.context?.collection;
+
+                const isRadio = collectionGroup === 'ALL';
                 sel.programType = isRadio ? 'RADIO_COL' : 'COL';
+
+                console.log('🧪 COLLECTION MODE CHECK', {
+                    collectionGroup,
+                    collectionSlug,
+                    programType: sel.programType
+                });
             }
 
             currentSelection.set(sel);

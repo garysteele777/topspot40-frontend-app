@@ -79,6 +79,49 @@ export async function loadForSelection(
         return;
     }
 
+    const collectionGroup =
+        sel.context?.collection_group_slug ??
+        sel.context?.collectionGroupSlug ??
+        sel.context?.collection_group;
+
+    const collectionSlug =
+        sel.context?.collection_slug ??
+        sel.context?.collectionSlug;
+
+    console.log('🧪 COLLECTION RADIO CHECK:', {
+        collectionGroup,
+        collectionSlug,
+        raw: sel.context
+    });
+
+    if (
+        sel.mode === 'collection' &&
+        collectionGroup === 'ALL'
+    ) {
+        console.log('📻 COLLECTIONS RADIO MODE detected (ALL GROUP)');
+
+        sel.programType = 'RADIO_COL';
+
+        const placeholder: CarModeTrack = {
+            id: null,
+            rankingId: null,
+            rank: 0,
+            trackName: 'TopSpot Collections Radio',
+            artistName: 'Press Play to Start',
+            spotifyTrackId: '',
+            albumArtwork: null,
+            durationSeconds: 0
+        };
+
+        tracks.set([placeholder]);
+        currentTrack.set(placeholder);
+
+        status.set('Collections Radio ready. Press Play.');
+
+        console.log('📻 Collections radio loader finished — waiting for Play.');
+        return;
+    }
+
     tracks.set([]);
     currentTrack.set(null);
 

@@ -1,35 +1,34 @@
 // src/lib/helpers/car/selectionFromUrl.ts
-import type {SelectionState} from './types';
-import type {PlaybackOrder} from './types';
-import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
-import {normalizeVoices} from '$lib/helpers/normalizeVoices';
-
+import type { SelectionState } from './types';
+import type { PlaybackOrder } from './types';
+import { normalizeLanguage } from '$lib/helpers/normalizeLanguage';
+import { normalizeVoices } from '$lib/helpers/normalizeVoices';
 
 export function buildSelectionFromUrl(url: URL): SelectionState {
     const sp = url.searchParams;
+
     const programType = (sp.get('programType') ?? 'DG') as SelectionState['programType'];
+    const modeParam = sp.get('mode');
 
     const decade = sp.get('decade') ?? '';
     const genre = sp.get('genre') ?? '';
     const collection = sp.get('collection') ?? '';
+    const collectionGroup = sp.get('collection_group') ?? '';
     const favoritesGroup = sp.get('favoritesGroup') ?? '';
 
     const language = normalizeLanguage(sp.get('language'));
 
     const startRank = Number(sp.get('startRank') ?? 1);
 
-    // ✅ FORCE SINGLE if categoryMode is single or endRank missing
     const rawEndRank = sp.get('endRank');
-    const endRank = rawEndRank != null ? Number(rawEndRank) : startRank; // ✅ default single-track
+    const endRank = rawEndRank != null ? Number(rawEndRank) : startRank;
 
     const voices = normalizeVoices((sp.get('voices') ?? 'intro').split(','));
-
 
     const playbackOrder = (sp.get('playbackOrder') ?? 'up') as PlaybackOrder;
     const voicePlayMode = sp.get('voicePlayMode') === 'over' ? 'over' : 'before';
     const pauseMode = sp.get('pauseMode') === 'continuous' ? 'continuous' : 'pause';
     const skipPlayed = sp.get('skipPlayed') === 'true';
-
 
     const finalStartRank = startRank;
     const finalEndRank = startRank === endRank ? startRank : endRank;
@@ -37,6 +36,35 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const collectionCategory = sp.get('collectionCategory') ?? '';
 
     const programKey = sp.get('programKey');
+
+    // 🔥 Collections Radio from URL
+    if (modeParam === 'collections') {
+        const group = collectionGroup || 'ALL';
+
+        return {
+            programType: 'RADIO_COL',
+            mode: 'collection',
+            language,
+            context: {
+                collection_group_slug: group
+            },
+            startRank: finalStartRank,
+            endRank: 9999,
+            currentRank,
+            playIntro: voices.includes('intro'),
+            playDetail: voices.includes('detail'),
+            playArtistDescription: voices.includes('artist'),
+            textIntro: false,
+            textDetail: false,
+            textArtistDescription: false,
+            voices,
+            playbackOrder,
+            voicePlayMode,
+            pauseMode,
+            categoryMode: 'single',
+            skipPlayed
+        };
+    }
 
     if (programKey) {
         const parts = programKey.split('|');
@@ -96,7 +124,6 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         }
     }
 
-
     if (collection) {
         return {
             programType: 'COL',
@@ -106,7 +133,6 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 collection_slug: collection,
                 collection_group_slug: collectionCategory
             },
-
             startRank: finalStartRank,
             endRank: finalEndRank,
             currentRank,

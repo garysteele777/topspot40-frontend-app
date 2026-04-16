@@ -147,7 +147,7 @@
         const selection = {
             activeGroup: 'collection' as ModeType,
             context: {
-                collection_slug: 'ALL'
+                collection_group_slug: 'ALL'
             },
             language,
             startRank: 1,
@@ -162,7 +162,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=collections&collection=ALL`);
+        goto(`/car-page?mode=collections&collection_group=ALL`);
     }
 
 
