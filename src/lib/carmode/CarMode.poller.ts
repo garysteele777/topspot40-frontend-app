@@ -47,7 +47,7 @@ let finishedTrackId: string | null = null;
 let narrationLock = false;
 type NarrationItem = {
     url: string;
-    phase: 'intro' | 'detail' | 'artist';
+    phase: 'set_intro' | 'liner' | 'intro' | 'detail' | 'artist';
 };
 
 let narrationQueue: NarrationItem[] = [];
@@ -62,7 +62,6 @@ let trackSwitchTime = 0;
 
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
-import {markRankPlayed} from '$lib/carmode/programHistory';
 
 function isSingleMode(): boolean {
     const sel = get(currentSelection);
@@ -98,7 +97,7 @@ function finalizeTrackUI(): void {
 
 function playOneAudio(
     url: string,
-    phase: 'intro' | 'detail' | 'artist'
+    phase: 'set_intro' | 'liner' | 'intro' | 'detail' | 'artist'
 ): Promise<void> {
     // ✅ SSR safety: Audio + window don't exist on the server
     if (!browser) return Promise.resolve();
@@ -386,7 +385,11 @@ export function startPlaybackPolling() {
 
             // 🛑 FRONTEND owns timing during narration — do NOT overwrite UI clock
             const isNarrationPhase =
-                phase === 'intro' || phase === 'detail' || phase === 'artist';
+                phase === 'set_intro' ||
+                phase === 'liner' ||
+                phase === 'intro' ||
+                phase === 'detail' ||
+                phase === 'artist';
 
             if (get(timingSource) === 'narration' && isNarrationPhase) {
                 lastPhase = phase;
@@ -409,7 +412,13 @@ export function startPlaybackPolling() {
                🎤 Narration handling
                ───────────────────────────── */
             if (
-                (phase === 'intro' || phase === 'detail' || phase === 'artist') &&
+                (
+                    phase === 'set_intro' ||
+                    phase === 'liner' ||
+                    phase === 'intro' ||
+                    phase === 'detail' ||
+                    phase === 'artist'
+                ) &&
                 data.context?.audio_url
             ) {
                 if (phase !== lastNarrationPhase) {
@@ -427,6 +436,8 @@ export function startPlaybackPolling() {
 
                 }
             } else if (
+                phase !== 'set_intro' &&
+                phase !== 'liner' &&
                 phase !== 'intro' &&
                 phase !== 'detail' &&
                 phase !== 'artist'
