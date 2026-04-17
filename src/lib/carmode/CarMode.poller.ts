@@ -256,6 +256,11 @@ export function startPlaybackPolling() {
                         ...next,
 
                         // 🔥 ADD THESE
+                        collection_name: ctx?.collection_name ?? next.collection_name,
+                        collection_group_name: ctx?.collection_group_name ?? next.collection_group_name,
+
+
+                        // 🔥 ADD THESE
                         intro: data.intro ?? next.intro,
                         detail: data.detail ?? next.detail,
                         artistText: data.artist_text ?? next.artistText,
@@ -284,6 +289,10 @@ export function startPlaybackPolling() {
                         trackName: data.track_name ?? '',
                         artistName: data.artist_name ?? '',
                         spotifyTrackId: spotifyId,
+
+                        // 🔥 ADD THESE
+                        collection_name: ctx?.collection_name ?? null,
+                        collection_group_name: ctx?.collection_group_name ?? null,
 
                         // 🔥 ADD THESE
                         intro: data.intro ?? null,
