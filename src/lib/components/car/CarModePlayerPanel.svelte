@@ -129,6 +129,19 @@
         $currentSelection?.mode === 'decade_genre' &&
         $currentSelection?.context?.decade === 'ALL';
 
+    $: if ($currentSelection?.programType === 'RADIO_COL' && currentTrack) {
+        console.log('RADIO_COL currentTrack full:', currentTrack);
+    }
+
+    $: collectionNameLabel =
+        currentTrack?.collection_name ?? '';
+
+    $: collectionGroupLabel =
+        currentTrack?.collection_group_name ?? 'Collections';
+
+    $: isCollectionsRadio =
+        $currentSelection?.programType === 'RADIO_COL';
+
 
     let lastTrackKey: string | null = null;
 
@@ -159,12 +172,6 @@
            • Decade: ${currentTrack.decadeName ?? currentTrack.decadeSlug ?? ''}
            • Genre: ${currentTrack.genreName ?? currentTrack.genreSlug ?? ''}`
             : null;
-
-    async function nextSet() {
-        await fetch('/supabase/decade-genre/next-set', {
-            method: 'POST'
-        });
-    }
 
     function onToggleFavorite() {
         if (
@@ -197,6 +204,7 @@
 
 <div class="w-full flex flex-col items-center">
 
+
     <!-- Player -->
     <div class="w-full max-w-xl mx-auto">
         <MiniPlayer
@@ -210,6 +218,22 @@
                 hideMeta={true}
         />
     </div>
+
+    {#if isCollectionsRadio}
+        <div class="radio-header">
+            <div class="set-label">
+                Set {currentTrack?.setNumber ?? 1} • Group: {collectionGroupLabel}
+            </div>
+
+            <div class="program-label">
+                Collection: {collectionNameLabel}
+            </div>
+
+            <div class="track-label">
+                Track {currentTrack?.blockPosition ?? 1} of {currentTrack?.blockSize ?? tracks.length}
+            </div>
+        </div>
+    {/if}
 
     {#if currentTrack && !isRadioMode}
         <div class="rank-line">
@@ -294,14 +318,6 @@
        Progress + Next Section
     ───────────────────────────────────────────── */
 
-    .next-line {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        font-weight: 500;
-    }
-
     .progress-line {
         display: flex;
         justify-content: center; /* centers horizontally */
@@ -314,22 +330,6 @@
 
     .dot {
         padding: 0 6px;
-    }
-
-    .next-btn {
-        background: #222;
-        color: #fff;
-        border: 1px solid #444;
-        border-radius: 6px;
-        padding: 4px 10px;
-        font-size: 0.7rem;
-        cursor: pointer;
-        transition: background 150ms ease, border-color 150ms ease;
-    }
-
-    .next-btn:hover {
-        background: #333;
-        border-color: #666;
     }
 
     .overall-progress {
@@ -415,6 +415,38 @@
         100% {
             transform: scale(1);
         }
+    }
+
+    .radio-header {
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .set-label {
+        font-size: 0.9rem;
+        opacity: 0.85;
+    }
+
+    .program-label {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-top: 2px;
+    }
+
+    .track-label {
+        font-size: 0.85rem;
+        opacity: 0.75;
+        margin-top: 2px;
+    }
+
+    /* Prevent long text from wrecking layout */
+    .set-label,
+    .program-label,
+    .track-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
 </style>

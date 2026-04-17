@@ -25,6 +25,10 @@ export type CarModeTrack = LoadedTrack & {
 
     decadeSlug?: string | null;
     decadeName?: string | null;
+
+    // Collections radio metadata
+    collection_name?: string | null;
+    collection_group_name?: string | null;
 };
 
 
