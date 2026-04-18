@@ -37,6 +37,13 @@ export type CollectionResponse = {
     rows?: SequenceItem[] | null;
 };
 
+export type CollectionGroupResponse = {
+    rankings?: SequenceItem[] | null;
+    tracks?: SequenceItem[] | null;
+    rows?: SequenceItem[] | null;
+};
+
+
 // ------------------------------------------------------------
 // API Base URL
 // ------------------------------------------------------------
@@ -86,4 +93,15 @@ export async function loadCollectionFromSupabase(payload: {
     url.searchParams.set('collection_slug', slug);
 
     return getJson<CollectionResponse>(url.toString());
+}
+
+export async function loadCollectionGroupFromSupabase(payload: {
+    collectionGroupSlug: string;
+}): Promise<CollectionGroupResponse> {
+    const {collectionGroupSlug} = payload;
+
+    const url = new URL('/supabase/collections/get-sequence', API_BASE);
+    url.searchParams.set('collection_group_slug', collectionGroupSlug);
+
+    return getJson<CollectionGroupResponse>(url.toString());
 }

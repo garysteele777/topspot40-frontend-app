@@ -5,11 +5,14 @@ import {normalizeTrack, type LoadedTrack} from '$lib/utils/normalizeTrack';
 
 import {
     loadCollectionFromSupabase,
+    loadCollectionGroupFromSupabase,
     loadDecadeGenreFromSupabase,
+    type CollectionGroupResponse,
     type CollectionResponse,
     type DecadeGenreResponse,
     type SequenceItem
 } from '$lib/api/supabaseLoader';
+
 
 // Svelte 5 reactive Map (silences ESLint warnings)
 import {SvelteMap} from 'svelte/reactivity';
@@ -122,12 +125,18 @@ const loaderCache = new SvelteMap<string, LoadedTrack[]>();
 
 function mkCacheKey(sel: SelectionState): string {
     if (sel.mode === 'collection') {
-        const slug =
+        const collectionSlug =
             sel.context?.collection_slug ??
             sel.context?.collectionId ??
             sel.context?.collection ??
             '';
-        return `c:${slug}:${sel.language}`;
+
+        const collectionGroupSlug =
+            sel.context?.collection_group_slug ??
+            sel.context?.collection_group ??
+            '';
+
+        return `c:${collectionSlug}:cg:${collectionGroupSlug}:${sel.language}`;
     }
 
     const decade = sel.context?.decade ?? '';
@@ -159,19 +168,52 @@ export async function loadTrackSequence(
         // COLLECTION MODE
         // --------------------------------------------------------
         if (sel.mode === 'collection') {
-            const slug =
+            const collectionSlug =
                 ctx.collection_slug ??
                 ctx.collectionId ??
                 ctx.collection ??
                 '';
 
-            if (!slug) {
-                console.warn('⚠ No slug found in collection context:', ctx);
+            const collectionGroupSlug =
+                ctx.collection_group_slug ??
+                ctx.collection_group ??
+                '';
+
+            console.log('🎯 COLLECTION INPUT:', {
+                collectionSlug,
+                collectionGroupSlug,
+                context: ctx
+            });
+
+            if (!collectionSlug && !collectionGroupSlug) {
+                console.warn('⚠ No collection slug or group found in collection context:', ctx);
                 return [];
             }
 
-            const data: CollectionResponse =
-                await loadCollectionFromSupabase({slug});
+            // Existing path: specific collection
+            if (collectionSlug) {
+                const data: CollectionResponse =
+                    await loadCollectionFromSupabase({slug: collectionSlug});
+
+                const rows: SequenceItemExtended[] =
+                    data.tracks ??
+                    data.rankings ??
+                    (data.rows as SequenceItemExtended[]) ??
+                    [];
+
+                if (!rows.length) return [];
+
+                const finalTracks = mapItemsToTracks(rows, sel);
+
+                loaderCache.set(key, finalTracks);
+                return finalTracks;
+            }
+
+// New path: collection group radio
+            const data: CollectionGroupResponse =
+                await loadCollectionGroupFromSupabase({
+                    collectionGroupSlug
+                });
 
             const rows: SequenceItemExtended[] =
                 data.tracks ??
@@ -179,7 +221,12 @@ export async function loadTrackSequence(
                 (data.rows as SequenceItemExtended[]) ??
                 [];
 
-            if (!rows.length) return [];
+            if (!rows.length) {
+                console.warn('⚠ No rows returned for collection group:', {
+                    collectionGroupSlug
+                });
+                return [];
+            }
 
             const finalTracks = mapItemsToTracks(rows, sel);
 

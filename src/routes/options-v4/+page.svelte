@@ -63,6 +63,12 @@
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
 
+    let collectionGroups: {
+        name: string;
+        slug: string;
+        items: { name: string; slug: string }[];
+    }[] = [];
+
     // Resume lifecycle guard
     let hydrated = false;
     let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
@@ -162,7 +168,29 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=collections&collection_group=ALL`);
+        goto(`/car-page?mode=radio_collections&collection_group=ALL`);
+    }
+
+    function launchCollectionGroup(groupSlug: string) {
+        const selection = {
+            activeGroup: 'collection' as ModeType,
+            context: {
+                collection_group_slug: groupSlug
+            },
+            language,
+            startRank: 1,
+            endRank: 9999,
+            playbackOrder,
+            pauseMode,
+            voices: selectedVoices,
+            skipPlayed
+        };
+
+        console.log('🎯 LAUNCHING COLLECTION GROUP:', selection);
+
+        saveResumeFromLocal(selection);
+
+        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}`);
     }
 
 
@@ -289,6 +317,8 @@
 
             decadeOptions = mapOptions(normalized.decades);
             genreOptions = mapOptions(normalized.genres);
+
+            collectionGroups = normalized.collectionGroups ?? [];
 
 
             if (pendingSelection) {
@@ -420,6 +450,19 @@
                         <span class="icon">📻</span>
                         <span>Start All Collections</span>
                     </button>
+                </div>
+
+                <!-- 🔥 NEW: Collection Group Buttons -->
+                <div class="radio-genres">
+                    {#each collectionGroups as group}
+                        <button
+                                class="genre-btn"
+                                on:click={() => launchCollectionGroup(group.slug)}
+                        >
+                            <span class="icon">📀</span>
+                            <span>{group.name}</span>
+                        </button>
+                    {/each}
                 </div>
             {/if}
 

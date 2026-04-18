@@ -96,30 +96,37 @@ export async function loadForSelection(
 
     if (
         sel.mode === 'collection' &&
-        collectionGroup === 'ALL'
+        collectionGroup &&
+        !collectionSlug
     ) {
-        console.log('📻 COLLECTIONS RADIO MODE detected (ALL GROUP)');
-
         sel.programType = 'RADIO_COL';
 
-        const placeholder: CarModeTrack = {
-            id: null,
-            rankingId: null,
-            rank: 0,
-            trackName: 'TopSpot Collections Radio',
-            artistName: 'Press Play to Start',
-            spotifyTrackId: '',
-            albumArtwork: null,
-            durationSeconds: 0
-        };
+        if (collectionGroup === 'ALL') {
+            console.log('📻 COLLECTIONS RADIO MODE detected (ALL GROUP)');
 
-        tracks.set([placeholder]);
-        currentTrack.set(placeholder);
+            const placeholder: CarModeTrack = {
+                id: null,
+                rankingId: null,
+                rank: 0,
+                trackName: 'TopSpot Collections Radio',
+                artistName: 'Press Play to Start',
+                spotifyTrackId: '',
+                albumArtwork: null,
+                durationSeconds: 0
+            };
 
-        status.set('Collections Radio ready. Press Play.');
+            tracks.set([placeholder]);
+            currentTrack.set(placeholder);
 
-        console.log('📻 Collections radio loader finished — waiting for Play.');
-        return;
+            status.set('Collections Radio ready. Press Play.');
+
+            console.log('📻 Collections radio loader finished — waiting for Play.');
+            return;
+        }
+
+        console.log('📻 COLLECTIONS RADIO MODE detected (NAMED GROUP)', {
+            collectionGroup
+        });
     }
 
     tracks.set([]);

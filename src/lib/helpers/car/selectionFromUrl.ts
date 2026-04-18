@@ -1,8 +1,8 @@
 // src/lib/helpers/car/selectionFromUrl.ts
-import type { SelectionState } from './types';
-import type { PlaybackOrder } from './types';
-import { normalizeLanguage } from '$lib/helpers/normalizeLanguage';
-import { normalizeVoices } from '$lib/helpers/normalizeVoices';
+import type {SelectionState} from './types';
+import type {PlaybackOrder} from './types';
+import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
+import {normalizeVoices} from '$lib/helpers/normalizeVoices';
 
 export function buildSelectionFromUrl(url: URL): SelectionState {
     const sp = url.searchParams;
@@ -38,7 +38,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const programKey = sp.get('programKey');
 
     // 🔥 Collections Radio from URL
-    if (modeParam === 'collections') {
+    if (modeParam === 'radio_collections' || modeParam === 'collections') {
         const group = collectionGroup || 'ALL';
 
         return {

@@ -508,10 +508,16 @@
                     sel.context?.collectionSlug ??
                     sel.context?.collection;
 
-                const isRadio = collectionGroup === 'ALL';
+                const modeParam = url.searchParams.get('mode');
+
+                const isRadio =
+                    modeParam === 'radio_collections' ||
+                    collectionGroup === 'ALL';
+
                 sel.programType = isRadio ? 'RADIO_COL' : 'COL';
 
                 console.log('🧪 COLLECTION MODE CHECK', {
+                    modeParam,
                     collectionGroup,
                     collectionSlug,
                     programType: sel.programType
