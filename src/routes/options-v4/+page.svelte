@@ -10,6 +10,7 @@
     import {get} from 'svelte/store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
+    import {currentSelection} from '$lib/carmode/CarMode.store';
 
 
     // ─────────────────────────────────────────────
@@ -123,7 +124,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL`);
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}`);
     }
 
     function launchNostalgiaGenre(genre: string) {
@@ -146,7 +147,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}`);
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}`);
     }
 
     function launchCollectionsAll() {
@@ -168,7 +169,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=radio_collections&collection_group=ALL`);
+        goto(`/car-page?mode=radio_collections&collection_group=ALL&language=${language}`);
     }
 
     function launchCollectionGroup(groupSlug: string) {
@@ -190,7 +191,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}`);
+        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}`);
     }
 
 
@@ -332,6 +333,18 @@
         }
     });
 
+    // ─────────────────────────────────────────────
+    // Sync selected language into currentSelection
+    // ─────────────────────────────────────────────
+    $: if (browser && hydrated) {
+        currentSelection.update(s => {
+            if (s.language === language) return s;
+            return {
+                ...s,
+                language
+            };
+        });
+    }
     // ─────────────────────────────────────────────
     // Auto-save (guarded)
     // ─────────────────────────────────────────────

@@ -65,18 +65,22 @@ async function getJson<T>(url: string): Promise<T> {
     return res.json() as Promise<T>;
 }
 
+export type TopSpotLanguage = 'en' | 'es' | 'ptbr';
+
 // ------------------------------------------------------------
 // DECADE + GENRE LOADER  (REAL BACKEND ROUTE)
 // ------------------------------------------------------------
 export async function loadDecadeGenreFromSupabase(payload: {
     decade: string;
     genre: string;
+    language?: TopSpotLanguage;
 }): Promise<DecadeGenreResponse> {
-    const {decade, genre} = payload;
+    const {decade, genre, language = 'en'} = payload;
 
     const url = new URL('/supabase/decade-genre/get-sequence', API_BASE);
     url.searchParams.set('decade', decade);
     url.searchParams.set('genre', genre);
+    url.searchParams.set('language', language);
 
     return getJson<DecadeGenreResponse>(url.toString());
 }
@@ -86,22 +90,26 @@ export async function loadDecadeGenreFromSupabase(payload: {
 // ------------------------------------------------------------
 export async function loadCollectionFromSupabase(payload: {
     slug: string;
+    language?: TopSpotLanguage;
 }): Promise<CollectionResponse> {
-    const {slug} = payload;
+    const {slug, language = 'en'} = payload;
 
     const url = new URL('/supabase/collections/get-sequence', API_BASE);
     url.searchParams.set('collection_slug', slug);
+    url.searchParams.set('language', language);
 
     return getJson<CollectionResponse>(url.toString());
 }
 
 export async function loadCollectionGroupFromSupabase(payload: {
     collectionGroupSlug: string;
+    language?: TopSpotLanguage;
 }): Promise<CollectionGroupResponse> {
-    const {collectionGroupSlug} = payload;
+    const {collectionGroupSlug, language = 'en'} = payload;
 
     const url = new URL('/supabase/collections/get-sequence', API_BASE);
     url.searchParams.set('collection_group_slug', collectionGroupSlug);
+    url.searchParams.set('language', language);
 
     return getJson<CollectionGroupResponse>(url.toString());
 }

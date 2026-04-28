@@ -129,29 +129,6 @@
         return 'All Decades';
     }
 
-    // function playShuffleAllDecadesAllGenres() {
-    //     console.log('▶ Shuffle ALL Decades, ALL Genres');
-    //
-    //     const selection = $currentSelection;
-    //
-    //     const url = buildLaunchUrl({
-    //         layoutMode: 'car',
-    //         decade: 'ALL',
-    //         genre: 'ALL',
-    //         language: selection.language,
-    //         voices: selection.voices,
-    //         playbackOrder: 'shuffle', // this one we DO override
-    //         voicePlayMode: 'before',
-    //         pauseMode: selection.pauseMode,
-    //         skipPlayed: selection.skipPlayed
-    //     });
-    //
-    //     goto(url);
-    // }
-    //
-
-    // type PauseMode = 'pause_between' | 'continuous';
-    // type VoicePlayMode = 'before' | 'over';
 
     type PlaybackOrder = 'up' | 'down' | 'shuffle';
 
@@ -545,7 +522,7 @@
                 return;
             }
 
-            const selection = $currentSelection;
+            const selection = get(currentSelection);
             const settings = get(playbackSettingsStore);
 
             url = buildLaunchUrl({
@@ -570,7 +547,7 @@
                 console.error('Invalid COL key:', programKey);
                 return;
             }
-            const selection = $currentSelection;
+            const selection = get(currentSelection);
             const settings = get(playbackSettingsStore);
 
             url = buildLaunchUrl({

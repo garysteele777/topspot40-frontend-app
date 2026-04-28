@@ -158,6 +158,9 @@ export async function loadTrackSequence(
     const ctx = sel.context as NonNullable<SelectionState['context']>;
     const key = mkCacheKey(sel);
 
+    const language = sel.language ?? 'en';
+    console.log('🌎 LOADER language:', language);
+
     // Cache hit
     if (loaderCache.has(key)) {
         return loaderCache.get(key)!;
@@ -193,7 +196,10 @@ export async function loadTrackSequence(
             // Existing path: specific collection
             if (collectionSlug) {
                 const data: CollectionResponse =
-                    await loadCollectionFromSupabase({slug: collectionSlug});
+                    await loadCollectionFromSupabase({
+                        slug: collectionSlug,
+                        language
+                    });
 
                 const rows: SequenceItemExtended[] =
                     data.tracks ??
@@ -245,7 +251,8 @@ export async function loadTrackSequence(
         const data: DecadeGenreResponse =
             await loadDecadeGenreFromSupabase({
                 decade,
-                genre
+                genre,
+                language
             });
 
         const rows: SequenceItemExtended[] =

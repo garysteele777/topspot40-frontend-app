@@ -5,18 +5,18 @@
 
 <div class="card">
     <h3>Preview Language</h3>
-    <p class="hint">English available now — more languages coming soon.</p>
+    <p class="hint">Choose narration language.</p>
 
     <div class="grid">
         <button class:selected={language === 'en'} on:click={() => (language = 'en')}>
             English
         </button>
 
-        <button disabled>
+        <button class:selected={language === 'es'} on:click={() => (language = 'es')}>
             Español
         </button>
 
-        <button disabled>
+        <button class:selected={language === 'ptbr'} on:click={() => (language = 'ptbr')}>
             Português
         </button>
     </div>
@@ -64,8 +64,4 @@
         font-weight: 600;
     }
 
-    button:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
 </style>

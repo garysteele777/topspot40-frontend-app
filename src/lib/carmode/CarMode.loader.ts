@@ -497,7 +497,11 @@ function toCarModeTrack(t: LoadedTrack): CarModeTrack {
         // 🔥 ADD THESE
         intro: (t as any).intro ?? null,
         detail: (t as any).detail ?? null,
-        artistText: (t as any).artistText ?? null,
+        artistText:
+            (t as any).artistText ??
+            (t as any).artistDescription ??
+            (t as any).artist_description ??
+            null,
 
         sourceRank: x.sourceRank,
         genreSlug: x.genreSlug,
