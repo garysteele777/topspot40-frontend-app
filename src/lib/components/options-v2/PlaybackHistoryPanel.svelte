@@ -422,17 +422,13 @@
                 parts = p.key.split('/');
             }
 
-            const [, collectionSlug, groupSlug] = parts;
+            const [, collectionSlug, rawGroupSlug] = parts;
+
+            const groupSlug = rawGroupSlug
+                ?.toLowerCase()
+                .replace(/-/g, '_');
 
             if (!collectionSlug || !groupSlug) continue;
-
-            // console.log('🧪 GROUP BUILD', {
-            //     key: p.key,
-            //     collectionSlug,
-            //     groupSlug,
-            //     total: p.total,
-            //     played: p.playedRanks
-            // });
 
             if (!map.has(groupSlug)) map.set(groupSlug, []);
             map.get(groupSlug)!.push(p);
@@ -750,7 +746,7 @@
                                                 total={row.total}
                                                 percent={pct(row.played, row.total)}
                                                 favorites={row.favorites}
-                                        onPlay={() => {
+                                                onPlay={() => {
                                         if (row.program) resumeProgram(row.program);
                                         else resumeByKey(row.key, 1, row.total);
                                     }}
