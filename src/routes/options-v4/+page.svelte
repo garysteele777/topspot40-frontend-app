@@ -124,7 +124,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}`);
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}&voices=${buildVoiceQuery()}`);
     }
 
     function launchNostalgiaGenre(genre: string) {
@@ -147,7 +147,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}`);
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}&voices=${buildVoiceQuery()}`);
     }
 
     function launchCollectionsAll() {
@@ -169,8 +169,13 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=radio_collections&collection_group=ALL&language=${language}`);
+        goto(`/car-page?mode=radio_collections&collection_group=ALL&language=${language}&voices=${buildVoiceQuery()}`);
     }
+
+    function buildVoiceQuery(): string {
+        return encodeURIComponent(selectedVoices.join(','));
+    }
+
 
     function launchCollectionGroup(groupSlug: string) {
         const selection = {
@@ -191,7 +196,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}`);
+        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}&voices=${buildVoiceQuery()}`);
     }
 
 
