@@ -177,10 +177,13 @@
             const params = new URLSearchParams({
                 decade: 'ALL',
                 genre: sel.context?.genre ?? 'ALL',
+                tts_language: sel.language ?? 'en',
                 play_intro: String(settings.voices.includes('intro')),
                 play_detail: String(settings.voices.includes('detail')),
                 play_artist_description: String(settings.voices.includes('artist'))
             });
+
+            console.log('🌎 RADIO PARAM STRING:', params.toString());
 
             console.log("🚀 FINAL SELECTION SENT:", {
                 playbackOrder: settings.playbackOrder,
