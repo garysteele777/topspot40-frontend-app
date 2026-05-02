@@ -120,57 +120,6 @@
 	</main>
 
 
-    <!-- TEMPORARY BLOCK/BUTTON!-->
-    <div class="temporary-button-group">
-        <button on:click={() => go('/options-v2')}>
-            Options V2
-        </button>
-
-        <button on:click={() => go('/options-v3')}>
-            Options V3
-        </button>
-
-        <button on:click={() => go('/options-v4')}>
-            Options V4
-        </button>
-    </div>
-
-
-    <section class="features">
-        <div class="features-grid">
-            <div class="feature-card" tabindex="0">
-                <div class="icon">🎵</div>
-                <h3>Personalized Rankings</h3>
-                <p>Discover your unique countdowns based on your Spotify history.</p>
-            </div>
-            <div class="feature-card" tabindex="0">
-                <div class="icon">⚡</div>
-                <h3>Fast & Easy</h3>
-                <p>Instant access to your top 40 songs with smooth playback and intuitive controls.</p>
-            </div>
-            <div class="feature-card" tabindex="0">
-                <div class="icon">📅</div>
-                <h3>Decades Reimagined</h3>
-                <p>Relive the best tracks of your favorite decades with a fresh perspective.</p>
-            </div>
-            <div class="feature-card" tabindex="0">
-                <div class="icon">🌟</div>
-                <h3>Exclusive Content</h3>
-                <p>Enjoy unique insights, artist stories, and curated playlists only on TopSpot40.</p>
-            </div>
-            <div class="feature-card" tabindex="0">
-                <div class="icon">🔒</div>
-                <h3>Secure & Private</h3>
-                <p>Your data is safe with us — we never share your personal info or listening habits.</p>
-            </div>
-            <div class="feature-card" tabindex="0">
-                <div class="icon">💡</div>
-                <h3>Smart Recommendations</h3>
-                <p>Discover new tracks and artists based on your top 40 and listening trends.</p>
-            </div>
-        </div>
-    </section>
-
 
 	<!-- TEMPORARY BLOCK/BUTTON!-->
 	<div class="temporary-button">
