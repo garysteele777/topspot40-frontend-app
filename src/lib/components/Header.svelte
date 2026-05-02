@@ -11,6 +11,8 @@
 	let showFeedbackModal = false;
 	let showContactModal = false;
 
+	export let user: any = null;
+
 	function handleClickOutside(event: MouseEvent) {
 		if (dropdownRef && !dropdownRef.contains(event.target as Node)) {
 			showDropdown = false;
@@ -33,7 +35,10 @@
 <header class="header">
 	<div class="logo">TopSpot40</div>
 	<div class="user-profile" bind:this={dropdownRef} on:click={() => (showDropdown = !showDropdown)}>
-		<img src="/user-avatar.png" alt="User" />
+		<!-- <img src="/user-avatar.png" alt="User" /> -->
+		 <img
+			src={user?.app_avatar_url || user?.spotify_profile_image || '/user-avatar.png'}
+			alt="User"/>
 		{#if showDropdown}
 			<DropdownMenu
 				onFeedback={() => {

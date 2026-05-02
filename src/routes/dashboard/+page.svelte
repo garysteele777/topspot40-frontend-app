@@ -74,6 +74,30 @@
 
 
 
+	let deferredPrompt: any;
+	let canInstall = false;
+
+	if (typeof window !== 'undefined') {
+		window.addEventListener('beforeinstallprompt', (e) => {
+			e.preventDefault();
+			deferredPrompt = e;
+			canInstall = true;
+		});
+	}
+
+	function install() {
+		if (deferredPrompt) {
+			deferredPrompt.prompt();
+
+			deferredPrompt.userChoice.finally(() => {
+				deferredPrompt = null;
+				canInstall = false;
+			});
+		}
+	}
+
+
+
 	// Navigate to the new player route
 	function goToPlayer() {
 		goto('/options-v2');
@@ -82,6 +106,12 @@
 </script>
 
 <Header />
+
+{#if canInstall}
+	<div class="pwa-bar">
+		<button on:click={install}>Install App</button>
+	</div>
+{/if}
 
 <div class="dashboard-wrapper">
 	<main class="dashboard">
@@ -139,4 +169,27 @@
 	button:hover {
 		background-color: #1db954;
 	}
+
+
+.pwa-bar {
+	display: flex;
+	justify-content: flex-end;
+	margin: 1rem 2rem 0 2rem;
+}
+
+.pwa-bar button {
+	background: rgba(29, 185, 84, 0.15);
+	border: 1px solid rgba(29, 185, 84, 0.4);
+	color: white;
+	padding: 0.5rem 0.9rem;
+	border-radius: 999px;
+	cursor: pointer;
+}
+
+.pwa-bar button:hover {
+	background: rgba(29, 185, 84, 0.25);
+}
+
+
+
 </style>
