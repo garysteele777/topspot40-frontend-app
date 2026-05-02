@@ -395,6 +395,99 @@
         color: #f1f1f1;
     }
 
+	.author {
+		font-size: 1rem;
+		color: #888;
+	}
+
+	@keyframes fadeInSlide {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.demo {
+		display: inline-block;
+		padding: 0.75rem 2rem;
+		background-color: #1db954;
+		color: white;
+		font-weight: 600;
+		border-radius: 9999px;
+		text-decoration: none;
+		font-size: 1rem;
+		box-shadow: 0 2px 8px rgb(37 99 235 / 0.4);
+		transition:
+			background-color 0.3s ease,
+			box-shadow 0.3s ease;
+		margin-top: 0.5rem;
+	}
+	.demo:hover {
+		background-color: #059669;
+	}
+
+	.marquee-wrapper {
+		overflow: hidden;
+		width: 100vw;
+		padding: 4rem 0;
+		background: linear-gradient(to right, #0f0f0f, #1c1c1c);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.hero-image {
+		display: flex;
+		gap: 2rem;
+		width: max-content;
+		animation: scrollLeft 60s linear infinite;
+		align-items: center;
+	}
+	.hero-album {
+		height: 420px;
+		width: 420px;
+		object-fit: cover;
+		border-radius: 1rem;
+		flex-shrink: 0;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+	}
+	@keyframes scrollLeft {
+		0% {
+			transform: translateX(0%);
+		}
+		100% {
+			transform: translateX(-50%);
+		}
+	}
+	.hero-album:hover {
+		transform: scale(1.05);
+	}
+
+	.listening-section {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 1.5rem;
+		margin: 4rem auto;
+		max-width: 1000px;
+		padding: 1rem;
+	}
+	.listener-image {
+		width: 220px;
+		height: 220px;
+		object-fit: cover;
+		border-radius: 1rem;
+		box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+		transition: transform 0.3s ease;
+	}
+	.listener-image:hover {
+		transform: scale(1.05);
+	}
+
 	.features {
 		max-width: 1200px;
 		margin: 5rem auto;
