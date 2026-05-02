@@ -18,9 +18,7 @@ export async function load({ fetch }) {
     }
 
     //  NOT subscribed → block dashboard
-    if (!data.is_subscribed) {
-        throw redirect(302, '/create-account');
-    }
+
 
     return {
         user: {
