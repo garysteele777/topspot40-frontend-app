@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { cubicOut, cubicIn } from 'svelte/easing';
 	import { goto } from '$app/navigation';
+	import { Music, Zap, Calendar, Radio, Lock, Lightbulb } from 'lucide-svelte';
 
 	let paragraph_message = [
 		'Discover and rank the top 40 like never before.',
@@ -42,6 +43,15 @@
 		'/images_of_listening_to_music/ben-blennerhassett-LR5eS1C9IUU-unsplash.jpg',
 		'/images_of_listening_to_music/ilias-chebbi-2gpfqhEFVZ8-unsplash.jpg',
 		'/images_of_listening_to_music/rupam-dutta-5OMff2RDqPs-unsplash.jpg'
+	];
+
+	let steps = [
+		{ title: 'Sign in with Spotify', description: 'Connect your Spotify Premium account to unlock playback.' },
+		{ title: 'Choose genre + decade', description: 'Pick Pop, Rock, Country, RnB/Soul, or Blues/Jazz and select a decade.' },
+		{ title: 'Select Language', description: 'Select English, Spanish, or Portuguese'},
+		{ title: 'Select listening mode', description: 'Radio Mode, DJ Mode, or Story Mode — each changes how tracks are introduced.' },
+		{ title: 'Pick playback style', description: 'Countdown, count-up, or shuffle — like real radio chart formats.' },
+		{ title: 'Press play', description: 'Listen to your Top 40 countdown with intros and context.' }
 	];
 
 	let currentAlbumIndex = 0;
@@ -93,7 +103,7 @@
 		</a>
 	</div>
 	<main>
-		<h1>Welcome to TopSpot40.com</h1>
+		<h1>Welcome to TopSpot40</h1>
 		<div class="message-container">
 			{#key currentIndex}
 				<p
@@ -128,37 +138,80 @@
 	<section class="features">
 		<div class="features-grid">
 			<div class="feature-card" tabindex="0">
-				<div class="icon">🎵</div>
-				<h3>Personalized Rankings</h3>
-				<p>Discover your unique countdowns based on your Spotify history.</p>
+				<div class="icon">
+					<div class="icon-wrapper">
+						<Music size={36} color="#1db954" />
+					</div>
+				</div>
+				<h3>Top 40 Rankings</h3>
+				<p>Top 40 songs ranked for every genre and decade.</p>
 			</div>
 			<div class="feature-card" tabindex="0">
-				<div class="icon">⚡</div>
+				<div class="icon">
+					<div class="icon-wrapper">
+						<Zap size={36} color="#1db954" />
+					</div>
+				</div>
 				<h3>Fast & Easy</h3>
 				<p>Instant access to your top 40 songs with smooth playback and intuitive controls.</p>
 			</div>
 			<div class="feature-card" tabindex="0">
-				<div class="icon">📅</div>
+				<div class="icon">
+					<div class="icon-wrapper">	
+						<Calendar size={36} color="#1db954" />
+					</div>
+				</div>
 				<h3>Decades Reimagined</h3>
-				<p>Relive the best tracks of your favorite decades with a fresh perspective.</p>
+				<p>Relive the best songs of your favorite decades with a fresh perspective.</p>
 			</div>
 			<div class="feature-card" tabindex="0">
-				<div class="icon">🌟</div>
-				<h3>Exclusive Content</h3>
-				<p>Enjoy unique insights, artist stories, and curated playlists only on TopSpot40.</p>
+				<div class="icon">
+					<div class="icon-wrapper">
+						<Radio size={36} color="#1db954" />
+					</div>
+				</div>
+				<h3>AI Radio Host</h3>
+				<p>Enjoy unique insights, intros, artist stories, and transitions between songs, only on TopSpot40.</p>
 			</div>
 			<div class="feature-card" tabindex="0">
-				<div class="icon">🔒</div>
-				<h3>Secure & Private</h3>
-				<p>Your data is safe with us — we never share your personal info or listening habits.</p>
+				<div class="icon">
+					<div class="icon-wrapper">
+						<Lock size={36} color="#1db954" />
+					</div>
+				</div>
+				<h3>Spotify Powered</h3>
+				<p>Connect your Premium Account instantly.</p>
 			</div>
 			<div class="feature-card" tabindex="0">
-				<div class="icon">💡</div>
-				<h3>Smart Recommendations</h3>
-				<p>Discover new tracks and artists based on your top 40 and listening trends.</p>
+				<div class="icon">
+					<div class="icon-wrapper">
+						<Lightbulb size={36} color="#1db954" />
+					</div>
+				</div>
+				<h3>Nostalgia On Demand</h3>
+				<p>Jump into 70s rock, 80s pop, 2000s country, and more.</p>
 			</div>
 		</div>
 	</section>
+
+
+<section class="how-it-works">
+    <h2>How TopSpot40 works</h2>
+    <div class="how-flow">
+        {#each steps as step, i}
+            <div class="flow-step">
+                <div class="step-number">{i + 1}</div>
+                <div class="step-content">
+                    <h3>{step.title}</h3>
+                    <p>{step.description}</p>
+                </div>
+            </div>
+        {/each}
+    </div>
+</section>
+
+
+
 
 	<!-- People Listening images Section -->
 	<div class="listening-section">
@@ -461,10 +514,18 @@
 		box-shadow: 0 8px 25px rgba(29, 185, 84, 0.7);
 	}
 	.icon {
-		font-size: 3.5rem;
-		margin-bottom: 1rem;
-		color: #1db954;
-		user-select: none;
+		margin-bottom: 1.25rem; 
+		display: flex;
+		justify-content: center;
+	}
+	.icon-wrapper {
+		background: rgba(29, 185, 84, 0.15);
+		border: 1px solid rgba(29, 185, 84, 0.3);
+		border-radius: 16px;
+		padding: 16px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 	}
 	.feature-card h3 {
 		font-size: 1.5rem;
@@ -497,6 +558,94 @@
 .temporary-button button:hover {
     background-color: #059669;
 }
+
+
+
+
+
+
+
+.how-it-works {
+    max-width: 700px;
+    margin: 6rem auto;
+    padding: 3rem 2.5rem;
+	background: #1a1a1a;
+	border-radius: 1.5rem;
+	border: 1px solid #2a2a2a;
+}
+
+.how-it-works h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 3rem;
+	color: white;
+}
+
+.how-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.flow-step {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 2.5rem;
+}
+
+/* Vertical connecting line */
+.flow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    width: 2px;
+    height: calc(100% - 10px);
+    background: linear-gradient(to bottom, #1db954, rgba(29,185,84,0.1));
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    background: #1db954;
+    color: #000;
+    font-weight: 800;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 12px rgba(29, 185, 84, 0.5);
+}
+
+.step-content {
+    padding-top: 0.5rem;
+}
+
+.step-content h3 {
+    margin: 0 0 0.4rem 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: white;
+	text-align: left;
+}
+
+.step-content p {
+    margin: 0;
+    color: #aaa;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    background: none;
+    -webkit-text-fill-color: #aaa;
+	text-align: left;
+}
+
 
 
 

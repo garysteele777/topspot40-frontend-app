@@ -1,7 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import { getBackendUrl } from '$lib/config';
+import type { LayoutServerLoad } from './$types';
 
-export async function load({ fetch }) {
+
+export const load: LayoutServerLoad = async ({ fetch }) => {
     console.log('🔥 DASHBOARD LAYOUT HIT');
     const backend = getBackendUrl();
 
@@ -18,8 +20,17 @@ export async function load({ fetch }) {
 
     // ❌ Not subscribed
     if (!data.is_subscribed) {
-        throw redirect(302, '/create-account');
+        throw redirect(302, '/signup-official');
     }
 
-    return {};
+    const userRes = await fetch(`${backend}/api/me`, {
+        credentials: 'include'
+    });
+
+    const user = userRes.ok ? await userRes.json() : null;
+
+
+    return {
+        user
+    } satisfies { user: any };
 }
