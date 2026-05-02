@@ -7,7 +7,6 @@
 
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
-    import {skipToNextTrack} from '$lib/carmode/CarMode.poller';
 
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
@@ -40,7 +39,7 @@
     export let setShowNarrationModal: (v: boolean) => void;
 
     let isFav = false;
-
+    let favBurst = false;
 
     /* ─────────────────────────────────────────────
        Derived values (Next + Progress)
@@ -77,7 +76,8 @@
         } else {
             const program = $programHistoryStore.find(p => p.key === key);
             completed = program?.playedRanks.length ?? 0;
-            programTotal = program?.total ?? 0;
+            programTotal = tracks.length;
+            completed = program?.playedRanks.length ?? 0;
         }
     }
 
@@ -102,7 +102,7 @@
 
     $: programGroup =
         programType === 'DG'
-            ? $currentSelection?.context?.decade ?? null
+            ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
             : null;
 
     import {favoritesStore} from '$lib/favorites/favorites';
@@ -125,6 +125,24 @@
     }
 
 
+    $: isRadioMode =
+        $currentSelection?.mode === 'decade_genre' &&
+        $currentSelection?.context?.decade === 'ALL';
+
+    $: if ($currentSelection?.programType === 'RADIO_COL' && currentTrack) {
+        console.log('RADIO_COL currentTrack full:', currentTrack);
+    }
+
+    $: collectionNameLabel =
+        currentTrack?.collection_name ?? '';
+
+    $: collectionGroupLabel =
+        currentTrack?.collection_group_name ?? 'Collections';
+
+    $: isCollectionsRadio =
+        $currentSelection?.programType === 'RADIO_COL';
+
+
     let lastTrackKey: string | null = null;
 
     $: {
@@ -139,6 +157,10 @@
         }
     }
 
+    $: {
+        console.log("SELECTION FULL", $currentSelection);
+    }
+
     $: isFavoritesProgram =
         $currentSelection?.programType === 'FAV_DG' ||
         $currentSelection?.programType === 'FAV_COL';
@@ -150,7 +172,6 @@
            • Decade: ${currentTrack.decadeName ?? currentTrack.decadeSlug ?? ''}
            • Genre: ${currentTrack.genreName ?? currentTrack.genreSlug ?? ''}`
             : null;
-
 
     function onToggleFavorite() {
         if (
@@ -167,6 +188,12 @@
             currentTrack.rankingId
         );
 
+        // 🔥 trigger animation
+        favBurst = false;
+        requestAnimationFrame(() => {
+            favBurst = true;
+        });
+
         console.log(
             added
                 ? `⭐ Saved to ${programGroup} favorites`
@@ -176,6 +203,7 @@
 </script>
 
 <div class="w-full flex flex-col items-center">
+
 
     <!-- Player -->
     <div class="w-full max-w-xl mx-auto">
@@ -191,22 +219,43 @@
         />
     </div>
 
-    {#if currentTrack?.rankingId != null && $currentSelection?.programType !== 'FAV_DG' && $currentSelection?.programType !== 'FAV_COL'}
-        <div class="fav-wrapper">
-            <button
-                    class="fav-btn"
-                    on:click={onToggleFavorite}
-                    aria-pressed={isFav}
-            >
-                {#if isFav}
-                    ⭐ Saved to {$currentSelection?.context?.decade} Favorites
-                {:else}
-                    ☆ Save to {$currentSelection?.context?.decade} Favorites
-                {/if}
-            </button>
+    {#if isCollectionsRadio}
+        <div class="radio-header">
+            <div class="set-label">
+                Set {currentTrack?.setNumber ?? 1} • Group: {collectionGroupLabel}
+            </div>
+
+            <div class="program-label">
+                Collection: {collectionNameLabel}
+            </div>
+
+            <div class="track-label">
+                Track {currentTrack?.blockPosition ?? 1} of {currentTrack?.blockSize ?? tracks.length}
+            </div>
         </div>
     {/if}
 
+    {#if currentTrack && !isRadioMode}
+        <div class="rank-line">
+            <button
+                    class="fav-star"
+                    class:active={isFav}
+                    class:burst={favBurst}
+                    on:click={onToggleFavorite}
+                    on:animationend={() => favBurst = false}
+                    aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
+            >
+                ★
+            </button>
+
+            <span>
+            {currentTrack.rank} of {tracks.length}
+                {#if currentTrack.yearReleased}
+                • {currentTrack.yearReleased}
+            {/if}
+        </span>
+        </div>
+    {/if}
 
     <!-- Track Meta -->
     <div class="w-full flex justify-center px-4 mt-4">
@@ -231,40 +280,23 @@
     }
     />
 
-
-    {#if programTotal > 0}
-        <div class="car-extra-info">
-            {#if nextTrack}
-                <div class="next-line">
-                    <span>
-                        {#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
-                            Next: Favorite #{currentIndex + 2} – {nextTrack.trackName} – {nextTrack.artistName}
-                        {:else}
-                            Next: #{nextTrack.rank} – {nextTrack.trackName} – {nextTrack.artistName}
-                        {/if}
-                    </span>
+    <!--    <p style="color: yellow;">-->
+    <!--        DEBUG → {$currentSelection?.programType} | radio={isRadioMode ? 'YES' : 'NO'}-->
+    <!--    </p>-->
 
 
-                    <button class="next-btn" on:click={skipToNextTrack}>
-                        ⏭ Next
-                    </button>
-                </div>
-            {/if}
+    {#if !isRadioMode}
+        <div class="progress-line">
+            Completed {completed} of {programTotal} ({Math.round(percent)}%)
+            <span class="dot">•</span>
+            Remaining {remaining}
+        </div>
 
-            <div class="progress-line">
-                Completed {completed} of {programTotal} ({Math.round(percent)}%)
-                <span class="dot">•</span>
-                Remaining {remaining}
-            </div>
-
-            <div class="overall-progress">
-                <div
-                        class="overall-bar"
-                        style="width: {percent}%">
-                </div>
-            </div>
+        <div class="overall-progress">
+            <div class="overall-bar" style="width: {percent}%"></div>
         </div>
     {/if}
+
 
     <!-- Narration -->
     <div class="w-full flex justify-center px-4 mt-4">
@@ -286,45 +318,18 @@
        Progress + Next Section
     ───────────────────────────────────────────── */
 
-    .car-extra-info {
-        margin-top: 0.75rem;
-        text-align: center;
-        opacity: 0.8;
-        font-size: 0.8rem;
-    }
-
-    .next-line {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        font-weight: 500;
-    }
-
     .progress-line {
-        font-size: 0.75rem;
-        color: #9ca3af;
-        margin-top: 2px;
+        display: flex;
+        justify-content: center; /* centers horizontally */
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+        margin-top: 8px;
+        width: 100%;
     }
 
     .dot {
         padding: 0 6px;
-    }
-
-    .next-btn {
-        background: #222;
-        color: #fff;
-        border: 1px solid #444;
-        border-radius: 6px;
-        padding: 4px 10px;
-        font-size: 0.7rem;
-        cursor: pointer;
-        transition: background 150ms ease, border-color 150ms ease;
-    }
-
-    .next-btn:hover {
-        background: #333;
-        border-color: #666;
     }
 
     .overall-progress {
@@ -348,39 +353,100 @@
        Favorites Button
     ───────────────────────────────────────────── */
 
-    .fav-btn {
-        margin-top: 10px;
-        padding: 6px 16px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        background: transparent;
-        color: #fff;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 150ms ease;
-    }
 
-    .fav-btn:hover {
-        border-color: gold;
-        color: gold;
-    }
-
-    .fav-btn[aria-pressed='true'] {
-        background: #cfb87c;
-        color: #111;
-        border-color: #cfb87c;
-    }
-
-    .fav-btn[aria-pressed='true']:hover {
-        background: #e3cf98;
-        border-color: #e3cf98;
-    }
-
-    .fav-wrapper {
+    .rank-line {
         display: flex;
         justify-content: center;
-        width: 100%;
+        align-items: center;
+        gap: 8px;
         margin-top: 10px;
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+    .fav-star {
+        border: none;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.35);
+        cursor: pointer;
+        font-size: 1.2rem;
+        line-height: 1;
+        padding: 0;
+        transition: transform 0.15s ease, color 0.15s ease;
+    }
+
+    .fav-star:hover {
+        transform: scale(1.15);
+        color: #cfb87c;
+    }
+
+    .fav-star.active {
+        color: #cfb87c;
+        transform: scale(1.1);
+    }
+
+    .fav-star {
+        border: none;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.35);
+        cursor: pointer;
+        font-size: 1.2rem;
+        line-height: 1;
+        padding: 0;
+        transform-origin: center;
+        transition: color 0.15s ease;
+    }
+
+    .fav-star.active {
+        color: #cfb87c;
+    }
+
+    .fav-star.burst {
+        animation: fav-pop 240ms ease-out;
+    }
+
+    @keyframes fav-pop {
+        0% {
+            transform: scale(1);
+        }
+        40% {
+            transform: scale(1.35);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .radio-header {
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .set-label {
+        font-size: 0.9rem;
+        opacity: 0.85;
+    }
+
+    .program-label {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-top: 2px;
+    }
+
+    .track-label {
+        font-size: 0.85rem;
+        opacity: 0.75;
+        margin-top: 2px;
+    }
+
+    /* Prevent long text from wrecking layout */
+    .set-label,
+    .program-label,
+    .track-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
 </style>

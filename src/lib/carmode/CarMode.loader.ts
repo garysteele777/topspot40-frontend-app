@@ -14,6 +14,7 @@ import {programHistoryStore} from '$lib/carmode/programHistory';
 
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
+
 export async function loadForSelection(
     sel: SelectionState,
     initialRank?: number | null
@@ -31,23 +32,83 @@ export async function loadForSelection(
     console.log('🚀 LOADER selection.programType =', sel.programType);
 
     // 🎧 RADIO MODE DETECTION (ALL / ALL)
+    const decade =
+        sel.context?.decade ??
+        sel.context?.decade_slug ??
+        sel.context?.decadeName ??
+        sel.context?.decadeSlug;
+
+    const genre =
+        sel.context?.genre ??
+        sel.context?.genre_slug ??
+        sel.context?.genreName ??
+        sel.context?.genreSlug;
+
+    console.log("🧪 RADIO CHECK:", {
+        decade,
+        genre,
+        raw: sel.context
+    });
+
     if (
         sel.mode === 'decade_genre' &&
-        sel.context?.decade === 'ALL' &&
-        sel.context?.genre === 'ALL'
+        decade === 'ALL'
     ) {
-        console.log('📻 RADIO MODE detected (ALL / ALL)');
+        console.log('📻 RADIO MODE detected (ALL / ANY)');
 
-        // mark program type so player launches radio engine
-        sel.programType = 'RADIO';
+        // 🔥 THIS IS THE FIX
+        sel.programType = 'RADIO_DG';
 
-        if (sel.programType === 'RADIO') {
+        const placeholder: CarModeTrack = {
+            id: null,
+            rankingId: null,
+            rank: 0,
+            trackName: 'TopSpot Radio',
+            artistName: 'Press Play to Start',
+            spotifyTrackId: '',
+            albumArtwork: null,
+            durationSeconds: 0
+        };
+
+        tracks.set([placeholder]);
+        currentTrack.set(placeholder);
+
+        status.set('Radio ready. Press Play.');
+
+        console.log('📻 Radio mode loader finished — waiting for Play.');
+        return;
+    }
+
+    const collectionGroup =
+        sel.context?.collection_group_slug ??
+        sel.context?.collectionGroupSlug ??
+        sel.context?.collection_group;
+
+    const collectionSlug =
+        sel.context?.collection_slug ??
+        sel.context?.collectionSlug;
+
+    console.log('🧪 COLLECTION RADIO CHECK:', {
+        collectionGroup,
+        collectionSlug,
+        raw: sel.context
+    });
+
+    if (
+        sel.mode === 'collection' &&
+        collectionGroup &&
+        !collectionSlug
+    ) {
+        sel.programType = 'RADIO_COL';
+
+        if (collectionGroup === 'ALL') {
+            console.log('📻 COLLECTIONS RADIO MODE detected (ALL GROUP)');
 
             const placeholder: CarModeTrack = {
                 id: null,
                 rankingId: null,
                 rank: 0,
-                trackName: 'TopSpot Radio',
+                trackName: 'TopSpot Collections Radio',
                 artistName: 'Press Play to Start',
                 spotifyTrackId: '',
                 albumArtwork: null,
@@ -57,12 +118,15 @@ export async function loadForSelection(
             tracks.set([placeholder]);
             currentTrack.set(placeholder);
 
-            status.set('Radio ready. Press Play.');
+            status.set('Collections Radio ready. Press Play.');
 
-            console.log('📻 Radio mode loader finished — waiting for Play.');
+            console.log('📻 Collections radio loader finished — waiting for Play.');
             return;
         }
 
+        console.log('📻 COLLECTIONS RADIO MODE detected (NAMED GROUP)', {
+            collectionGroup
+        });
     }
 
     tracks.set([]);
@@ -87,8 +151,17 @@ export async function loadForSelection(
             const parsed = JSON.parse(raw) as { DG?: Record<string, number[]> };
             const dg = parsed?.DG ?? {};
 
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
+            const decade =
+                sel.context?.decade ??
+                sel.context?.decade_slug ??
+                sel.context?.decadeName ??
+                sel.context?.decadeSlug;
+
+            const genre =
+                sel.context?.genre ??
+                sel.context?.genre_slug ??
+                sel.context?.genreName ??
+                sel.context?.genreSlug;
 
             if (genre === 'ALL' && decade) {
                 // ⭐ combine all genres for the decade
@@ -163,8 +236,17 @@ export async function loadForSelection(
 
         // Initialize program history entry
         if (sel.mode === 'decade_genre') {
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
+            const decade =
+                sel.context?.decade ??
+                sel.context?.decade_slug ??
+                sel.context?.decadeName ??
+                sel.context?.decadeSlug;
+
+            const genre =
+                sel.context?.genre ??
+                sel.context?.genre_slug ??
+                sel.context?.genreName ??
+                sel.context?.genreSlug;
 
             if (decade && genre) {
                 const key = `DG|${decade}|${genre}` as ProgramKey;
@@ -179,9 +261,10 @@ export async function loadForSelection(
 
         if (sel.mode === 'collection') {
             const slug = sel.context?.collection_slug;
+            const group = sel.context?.collection_group_slug;
 
-            if (slug) {
-                const key = `COL|${slug}` as ProgramKey;
+            if (slug && group) {
+                const key = `COL|${slug}|${group}` as ProgramKey;
 
                 upsertProgram(
                     key,
@@ -221,8 +304,14 @@ export async function loadForSelection(
         // 2) Optional: "favorites" genre within decade_genre mode (not FAV_DG program)
         let filtered: LoadedTrack[] = sequence;
 
+        const genre =
+            sel.context?.genre ??
+            sel.context?.genre_slug ??
+            sel.context?.genreName ??
+            sel.context?.genreSlug;
+
         const isInlineFavorites =
-            sel.mode === 'decade_genre' && sel.context?.genre === 'favorites';
+            sel.mode === 'decade_genre' && genre === 'favorites';
 
         if (isInlineFavorites) {
             const decade = sel.context?.decade;
@@ -254,8 +343,17 @@ export async function loadForSelection(
 
         // Initialize program history entry
         if (sel.mode === 'decade_genre') {
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
+            const decade =
+                sel.context?.decade ??
+                sel.context?.decade_slug ??
+                sel.context?.decadeName ??
+                sel.context?.decadeSlug;
+
+            const genre =
+                sel.context?.genre ??
+                sel.context?.genre_slug ??
+                sel.context?.genreName ??
+                sel.context?.genreSlug;
 
             if (decade && genre) {
                 const programKey = `DG|${decade}|${genre}` as ProgramKey;
@@ -272,9 +370,10 @@ export async function loadForSelection(
 
         if (sel.mode === 'collection') {
             const slug = sel.context?.collection_slug;
+            const group = sel.context?.collection_group_slug;
 
-            if (slug) {
-                const programKey = `COL|${slug}` as ProgramKey;
+            if (slug && group) {
+                const programKey = `COL|${slug}|${group}` as ProgramKey;
 
                 console.log('🧠 Creating collection history:', programKey);
 
@@ -290,36 +389,63 @@ export async function loadForSelection(
         // Use initialRank if provided; else default to 1.
         let candidateTracks = ordered;
 
-        if (sel.skipPlayed) {
-            const history = get(programHistoryStore);
+        let playedRanks = new Set<number>();
 
-            let programKey: ProgramKey | null = null;
 
-            if (sel.mode === 'decade_genre') {
-                const d = sel.context?.decade;
-                const g = sel.context?.genre;
-                if (d && g) programKey = `DG|${d}|${g}` as ProgramKey;
-            }
+        const history = get(programHistoryStore);
 
-            if (sel.mode === 'collection') {
-                const slug = sel.context?.collection_slug;
-                if (slug) programKey = `COL|${slug}` as ProgramKey;
-            }
+        let programKey: ProgramKey | null = null;
 
-            if (programKey) {
-                const program = history.find(p => p.key === programKey);
-                const played = new Set(program?.playedRanks ?? []);
+        if (sel.mode === 'decade_genre') {
+            const d =
+                sel.context?.decade ??
+                sel.context?.decade_slug ??
+                sel.context?.decadeName ??
+                sel.context?.decadeSlug;
 
-                candidateTracks = ordered.filter(t => !played.has(t.rank));
+            const g =
+                sel.context?.genre ??
+                sel.context?.genre_slug ??
+                sel.context?.genreName ??
+                sel.context?.genreSlug;
+
+            if (d && g) programKey = `DG|${d}|${g}` as ProgramKey;
+        }
+
+        if (sel.mode === 'collection') {
+            const slug = sel.context?.collection_slug;
+            const group = sel.context?.collection_group_slug;
+
+            if (slug && group) {
+                programKey = `COL|${slug}|${group}` as ProgramKey;
             }
         }
 
-        const startRank =
-            sel.playbackOrder === 'shuffle'
-                ? 1
-                : typeof initialRank === 'number' && Number.isFinite(initialRank)
-                    ? initialRank
-                    : 1;
+        if (programKey) {
+            const program = history.find(p => p.key === programKey);
+            playedRanks = new Set(program?.playedRanks ?? []);
+
+            console.log('🧠 PROGRAM KEY:', programKey);
+            console.log('🧠 HISTORY ENTRY:', program);
+            console.log('🧠 PLAYED RANKS:', Array.from(playedRanks));
+        }
+
+// 🚫 Resume removed — always start fresh
+        let startRank = 1;
+
+// Only resume IF explicitly intended (future feature)
+        const isResume = false;
+
+        if (isResume && typeof initialRank === 'number') {
+            startRank = initialRank;
+        }
+
+        console.log('🧪 END RANK CHECK', {
+            selEndRank: sel.endRank,
+            orderedLength: ordered.length,
+            playbackOrder: sel.playbackOrder,
+            playedRanks: Array.from(playedRanks)
+        });
 
         let first: LoadedTrack | null;
 
@@ -330,11 +456,13 @@ export async function loadForSelection(
             first = candidateTracks[0] ?? null;
 
         } else {
+            console.log('🚨 FINAL skipPlayed USED:', sel.skipPlayed);
             first = pickInitialTrack(
-                candidateTracks,
+                ordered,
                 sel.playbackOrder,
                 startRank,
-                candidateTracks.length
+                ordered.length,
+                sel.skipPlayed ? playedRanks : new Set()
             );
         }
 
@@ -365,6 +493,15 @@ function toCarModeTrack(t: LoadedTrack): CarModeTrack {
     return {
         ...t,
         rankingId: t.rankingId ?? null,
+
+        // 🔥 ADD THESE
+        intro: (t as any).intro ?? null,
+        detail: (t as any).detail ?? null,
+        artistText:
+            (t as any).artistText ??
+            (t as any).artistDescription ??
+            (t as any).artist_description ??
+            null,
 
         sourceRank: x.sourceRank,
         genreSlug: x.genreSlug,

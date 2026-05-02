@@ -3,8 +3,8 @@
 import {get} from 'svelte/store';
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {browser} from '$app/environment';
-import type {ProgramKey} from '$lib/carmode/programHistory';
-
+import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
+import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 
 import {
     timingSource,
@@ -41,12 +41,13 @@ let lastPhase: PlaybackPhase | null = null;
 
 let lastSpotifyId: string | null = null;
 let spotifyStartLock = false;
+let finishedTrackId: string | null = null;
 
 // Narration queue + lock
 let narrationLock = false;
 type NarrationItem = {
     url: string;
-    phase: 'intro' | 'detail' | 'artist';
+    phase: 'set_intro' | 'liner' | 'intro' | 'detail' | 'artist';
 };
 
 let narrationQueue: NarrationItem[] = [];
@@ -56,47 +57,19 @@ let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
 let narrationSignaled = false;
 
-let manualPlaybackActive = false;
 let activeSpotifyTrackId: string | null = null;
+let trackSwitchTime = 0;
 
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
-import {markRankPlayed} from '$lib/carmode/programHistory';
 
-
-function markPlayed(): void {
-    const track = get(currentTrack);
+function isSingleMode(): boolean {
     const sel = get(currentSelection);
 
-    if (!track || !sel) return;
-
-    let key: ProgramKey | null = null;
-
-    if (sel.mode === 'decade_genre') {
-        const decade = track.decadeSlug;
-        const genre = track.genreSlug;
-
-        if (!decade || !genre) return;
-
-        key = `DG|${decade}|${genre}` as ProgramKey;
-    } else if (sel.mode === 'collection') {
-        const slug = sel.context?.collection_slug;
-        if (!slug) return;
-
-        key = `COL|${slug}` as ProgramKey;
-    }
-
-    if (!key) return;
-
-    console.log("🎯 HISTORY WRITE", {
-        key,
-        decade: track.decadeSlug,
-        genre: track.genreSlug,
-        rank: track.rank,
-        trackName: track.trackName
-    });
-
-    markRankPlayed(key, track.rank);
+    return (
+        sel?.mode === 'decade_genre' &&
+        sel?.categoryMode === 'single'
+    );
 }
 
 /* ─────────────────────────────────────────────
@@ -124,7 +97,7 @@ function finalizeTrackUI(): void {
 
 function playOneAudio(
     url: string,
-    phase: 'intro' | 'detail' | 'artist'
+    phase: 'set_intro' | 'liner' | 'intro' | 'detail' | 'artist'
 ): Promise<void> {
     // ✅ SSR safety: Audio + window don't exist on the server
     if (!browser) return Promise.resolve();
@@ -248,20 +221,102 @@ export function startPlaybackPolling() {
             if (!res.ok) return;
 
             const data = await res.json();
+            // console.log("STATUS SNAPSHOT", data); // temporary
 
             const spotifyId = data.context?.spotify_track_id ?? null;
+            const phase = data.phase as PlaybackPhase;
 
-            if (spotifyId && spotifyId !== activeSpotifyTrackId) {
+
+            const hasPlaybackStarted =
+                phase === 'intro' ||
+                phase === 'detail' ||
+                phase === 'artist' ||
+                phase === 'track';
+
+            const justSwitchedRecently = Date.now() - trackSwitchTime < 1500;
+
+            if (
+                hasPlaybackStarted &&
+                spotifyId &&
+                !justSwitchedRecently &&
+                !data.isPaused &&   // 🧠 ADD THIS
+                (spotifyId !== activeSpotifyTrackId)
+            ) {
                 activeSpotifyTrackId = spotifyId;
+                trackSwitchTime = Date.now();   // 🔥 ADD THIS
+                finishedTrackId = null;
 
-                const next = get(tracks).find(t => t.spotifyTrackId === spotifyId);
+                const list = get(tracks);
+                const next = list.find(t => t.spotifyTrackId === spotifyId);
 
                 if (next) {
-                    currentTrack.set(next);
-                    currentRank.set(next.rank);
-                }
+                    const ctx = data.context ?? {};
 
-                manualPlaybackActive = false;
+                    const enriched = {
+                        ...next,
+
+                        // 🔥 ADD THESE
+                        collection_name: ctx?.collection_name ?? next.collection_name,
+                        collection_group_name: ctx?.collection_group_name ?? next.collection_group_name,
+
+
+                        // 🔥 ADD THESE
+                        intro: data.intro ?? next.intro,
+                        detail: data.detail ?? next.detail,
+                        artistText: data.artist_text ?? next.artistText,
+                        artistArtwork: ctx?.artist_artwork ?? next.artistArtwork,
+
+                        decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
+                        decadeName: ctx?.decade_name ?? next.decadeName,
+                        genreSlug: ctx?.genre_slug ?? next.genreSlug,
+                        genreName: ctx?.genre_name ?? next.genreName,
+
+                        setNumber: ctx?.set_number ?? next.setNumber,
+                        blockPosition: ctx?.block_position ?? next.blockPosition,
+                        blockSize: ctx?.block_size ?? next.blockSize,
+                    };
+
+                    currentTrack.set(enriched);
+                    currentRank.set(enriched.rank);
+                } else {
+                    // radio fallback
+                    const ctx = data.context ?? {};
+
+                    const fallbackTrack = {
+                        id: null,
+                        rankingId: ctx?.ranking_id ?? null,
+                        rank: data.current_rank ?? 0,
+                        trackName: data.track_name ?? '',
+                        artistName: data.artist_name ?? '',
+                        spotifyTrackId: spotifyId,
+
+                        // 🔥 ADD THESE
+                        collection_name: ctx?.collection_name ?? null,
+                        collection_group_name: ctx?.collection_group_name ?? null,
+
+                        // 🔥 ADD THESE
+                        intro: data.intro ?? null,
+                        detail: data.detail ?? null,
+                        artistText: data.artist_text ?? null,
+                        artistArtwork: ctx?.artist_artwork ?? null,
+
+                        decadeSlug: ctx?.decade_slug ?? null,
+                        decadeName: ctx?.decade_name ?? null,
+                        genreSlug: ctx?.genre_slug ?? null,
+                        genreName: ctx?.genre_name ?? null,
+
+                        yearReleased: null,
+                        albumArtwork: ctx?.album_artwork ?? null,
+
+                        setNumber: ctx.set_number,
+                        blockPosition: ctx.block_position,
+                        blockSize: ctx.block_size,
+                    };
+                    currentTrack.set(fallbackTrack);
+                    currentRank.set(fallbackTrack.rank);
+
+                    dlog('📻 Radio fallback track created:', fallbackTrack.trackName);
+                }
 
                 elapsed.set(0);
                 duration.set(0);
@@ -269,7 +324,7 @@ export function startPlaybackPolling() {
 
                 trackFinalized = false;
 
-                dlog('🎯 UI track switch:', next?.trackName);
+                dlog('🎯 UI track switch:', next?.trackName ?? data.track_name);
             }
 
 
@@ -289,8 +344,40 @@ export function startPlaybackPolling() {
 
             dlog('🎯 rankingId:', rankingId);
 
+            // ─────────────────────────────
+// Rank change → update UI track card (radio-safe)
+// ─────────────────────────────
+            /*
+            if (
+                rankingId != null &&
+                rankingId !== get(currentTrack)?.rankingId &&
+                !spotifyId &&
+                !hasPlaybackStarted   // 🔥 ADD THIS LINE
+            ) {
+                const list = get(tracks);
+                const next = list.find(t => t.rankingId === rankingId);
 
-            const phase = data.phase as PlaybackPhase;
+                dlog('🎯 Rank-based UI update', {
+                    rankingId,
+                    previous: get(currentTrack)?.trackName,
+                    next: next?.trackName
+                });
+
+                if (next) {
+                    currentTrack.set(next);
+                    currentRank.set(next.rank);
+
+                    // reset UI timing
+                    elapsed.set(0);
+                    duration.set(0);
+                    progress.set(0);
+
+                    trackFinalized = false;
+                }
+            }
+            */
+
+
             playbackPhase.set(phase);
 
             const prevPhase = lastPhase;
@@ -307,7 +394,11 @@ export function startPlaybackPolling() {
 
             // 🛑 FRONTEND owns timing during narration — do NOT overwrite UI clock
             const isNarrationPhase =
-                phase === 'intro' || phase === 'detail' || phase === 'artist';
+                phase === 'set_intro' ||
+                phase === 'liner' ||
+                phase === 'intro' ||
+                phase === 'detail' ||
+                phase === 'artist';
 
             if (get(timingSource) === 'narration' && isNarrationPhase) {
                 lastPhase = phase;
@@ -330,7 +421,13 @@ export function startPlaybackPolling() {
                🎤 Narration handling
                ───────────────────────────── */
             if (
-                (phase === 'intro' || phase === 'detail' || phase === 'artist') &&
+                (
+                    phase === 'set_intro' ||
+                    phase === 'liner' ||
+                    phase === 'intro' ||
+                    phase === 'detail' ||
+                    phase === 'artist'
+                ) &&
                 data.context?.audio_url
             ) {
                 if (phase !== lastNarrationPhase) {
@@ -348,6 +445,8 @@ export function startPlaybackPolling() {
 
                 }
             } else if (
+                phase !== 'set_intro' &&
+                phase !== 'liner' &&
                 phase !== 'intro' &&
                 phase !== 'detail' &&
                 phase !== 'artist'
@@ -361,16 +460,19 @@ export function startPlaybackPolling() {
             if (phase === 'track' && data.context?.spotify_track_id) {
                 const spotifyId = data.context.spotify_track_id as string;
 
-                if (lastSpotifyId === spotifyId) {
-                    // already started playback for this track
-                } else if (!spotifyStartLock) {
+                if (
+                    lastSpotifyId !== spotifyId &&
+                    !spotifyStartLock &&
+                    !data.isPaused   // 🧠 THIS IS THE KEY
+                ) {
+
                     spotifyStartLock = true;
 
-                    manualPlaybackActive = false;
                     dlog('🎵 TRACK start:', spotifyId);
 
-                    lastSpotifyId = spotifyId;       // playback guard
-                    activeSpotifyTrackId = spotifyId; // UI state
+                    lastSpotifyId = spotifyId;
+                    activeSpotifyTrackId = spotifyId;
+                    trackSwitchTime = Date.now();
                     trackFinalized = false;
 
                     try {
@@ -415,7 +517,9 @@ export function startPlaybackPolling() {
                 durationSec > 0 ? Math.min(elapsedSecRaw, durationSec) : elapsedSecRaw;
 
 // 🔥 ONLY update timing when Spotify owns the clock
-            if (get(timingSource) === 'spotify') {
+            const justSwitched = Date.now() - trackSwitchTime < 1500;
+
+            if (get(timingSource) === 'spotify' && !justSwitched) {
                 elapsed.set(elapsedSec);
                 duration.set(durationSec);
 
@@ -426,55 +530,81 @@ export function startPlaybackPolling() {
             }
 
 
-// 🏁 Detect natural track end and finalize UI
             if (
                 phase === 'track' &&
+                spotifyId &&
+                finishedTrackId !== spotifyId &&   // 🔥 FIRST LINE OF DEFENSE
                 !trackFinalized &&
-                durationSec > 0 &&
-                elapsedSec >= durationSec
+                durationSec > 1 &&
+                elapsedSec >= durationSec &&
+                elapsedSec > 2 &&
+                !justSwitched
             ) {
+                finishedTrackId = spotifyId;   // ⭐ important
                 trackFinalized = true;
 
-                console.log('🏁 Track reached end (single fire), finalizing UI');
+                console.log('🏁 Track reached end (single fire), finalizing UI', {
+                    elapsedSec,
+                    durationSec,
+                    track: data.track_name
+                });
+
                 finalizeTrackUI();
+                markCurrentTrackPlayed();
 
-                markPlayed();
+                const sel = get(currentSelection);
+                const settings = get(playbackSettingsStore);
 
+                const isContinuous = settings.pauseMode === 'continuous';
 
-                // 🔥 Tell backend the track is finished (this advances radio mode)
-                try {
-                    dlog('📡 track-finished');
-                    await fetch(`${API_BASE}/playback/track-finished`, {
-                        method: 'POST'
-                    });
-                } catch (err) {
-                    console.error('❌ Failed to signal track-finished', err);
+                console.log('🧪 MODE CHECK', {
+                    isContinuous,
+                    pauseMode: settings.pauseMode,
+                    selection: sel
+                });
+
+                if (!isContinuous) {
+                    console.log('🛑 Pause mode: not advancing after track end');
+                } else {
+                    console.log('▶️ Continuous mode → advancing to next track');
+
+                    window.dispatchEvent(new CustomEvent('ts-next-track'));
+
+                    try {
+                        await fetch(`${API_BASE}/playback/track-finished`, {
+                            method: 'POST'
+                        });
+                    } catch (err) {
+                        console.error('❌ Failed to signal track-finished', err);
+                    }
                 }
-            }
 
+            }
             // Fallback: detect leaving track phase
-            if (
-                lastPhase === 'track' &&
-                phase !== 'track' &&
-                !trackFinalized &&
-                get(timingSource) === 'spotify'
-            ) {
+            if (false && lastPhase === 'track' && phase !== 'track') {
                 trackFinalized = true;
 
-                console.log('🏁 Track ended via phase transition');
+                console.log('🏁 Track ended via phase transition', {
+                    elapsedSec,
+                    durationSec,
+                    from: lastPhase,
+                    to: phase,
+                    track: data.track_name
+                });
 
                 finalizeTrackUI();
-                markPlayed();
+                markCurrentTrackPlayed();
 
-                try {
-                    await fetch(`${API_BASE}/playback/track-finished`, {
-                        method: 'POST'
-                    });
-                } catch (err) {
-                    console.error('❌ Failed to signal track-finished', err);
+                if (!isSingleMode()) {
+                    try {
+                        console.log('🚫 Fallback track-finished disabled');
+                    } catch (err) {
+                        console.error('❌ Failed to signal track-finished', err);
+                    }
+                } else {
+                    console.log('🛑 Single mode: not advancing after phase transition');
                 }
             }
-
 
             lastPhase = phase;
 
@@ -502,7 +632,7 @@ export async function skipToNextTrack(): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, AUDIO_PIPELINE_CLEAR_DELAY_MS));
 
     // 2️⃣ Count current track as played
-    markPlayed();
+    markCurrentTrackPlayed();
 
     // 3️⃣ Stop any narration immediately
     narrationQueue = [];
@@ -511,11 +641,15 @@ export async function skipToNextTrack(): Promise<void> {
     // 4️⃣ Snap UI to finished
     finalizeTrackUI();
 
-    // 5️⃣ Tell backend to advance
-    await fetch(`${API_BASE}/playback/track-finished`, {
-        method: 'POST'
-    }).catch(() => {
-    });
+    // 5️⃣ Tell backend to advance only when not in Single mode
+    if (!isSingleMode()) {
+        await fetch(`${API_BASE}/playback/track-finished`, {
+            method: 'POST'
+        }).catch(() => {
+        });
+    } else {
+        console.log('🛑 Single mode: skip finalized UI only, no advance');
+    }
 }
 
 
@@ -542,6 +676,5 @@ export function stopPlaybackPolling() {
 
 // Compatibility export
 export function markUserStartedPlayback() {
-    manualPlaybackActive = true;
     console.log('🧠 Manual playback started');
 }

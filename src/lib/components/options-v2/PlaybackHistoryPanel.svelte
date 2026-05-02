@@ -2,26 +2,21 @@
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
-    import {launchWithPlayback} from '$lib/utils/buildLaunchUrl';
-
+    import {launchWithPlayback, buildLaunchUrl} from '$lib/utils/buildLaunchUrl';
+    import ProgramRow from './ProgramRow.svelte';
     import {
         countFavorites,
         clearFavorites,
-        getFavorites   // ✅ add this
     } from '$lib/favorites/favorites';
-
-    import {buildLaunchUrl} from '$lib/utils/buildLaunchUrl';
 
     import {
         programHistoryStore as programHistory,
-        resetProgram,
         resetAllPrograms,
         type ProgramHistory
     } from '$lib/carmode/programHistory';
 
     import {onMount} from 'svelte';
-    import {fetchGroupedCatalog} from '$lib/api/catalog';
-    import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
+    import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {goto} from '$app/navigation';
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {favoritesStore} from '$lib/favorites/favorites';
@@ -33,27 +28,27 @@
     let collectionNameMap: Record<string, string> = {};
     let collectionSlugToGroupSlug: Record<string, string> = {};
 
-    function parseProgramKey(key: string) {
-        const parts = key.split('|');
-
-        if (parts[0] === 'DG') {
-            return {
-                type: 'decade_genre' as const,
-                decade: parts[1],
-                genre: parts[2]
-            };
-        }
-
-        if (parts[0] === 'COL') {
-            return {
-                type: 'collection' as const,
-                collection: parts[1],
-                collectionCategory: parts[2]
-            };
-        }
-
-        return null;
-    }
+    // function parseProgramKey(key: string) {
+    //     const parts = key.split('|');
+    //
+    //     if (parts[0] === 'DG') {
+    //         return {
+    //             type: 'decade_genre' as const,
+    //             decade: parts[1],
+    //             genre: parts[2]
+    //         };
+    //     }
+    //
+    //     if (parts[0] === 'COL') {
+    //         return {
+    //             type: 'collection' as const,
+    //             collection: parts[1],
+    //             collectionCategory: parts[2]
+    //         };
+    //     }
+    //
+    //     return null;
+    // }
 
 
     const genreIconMap: Record<string, string> = {
@@ -99,22 +94,22 @@
         return m ? Number(m[0]) : Number.POSITIVE_INFINITY;
     }
 
-    function getAllDecadeFavorites(): number[] {
-        const all: number[] = [];
+    // function getAllDecadeFavorites(): number[] {
+    //     const all: number[] = [];
+    //
+    //     for (const decade of catalogDecades) {
+    //         for (const genre of catalogGenres) {
+    //             const ids = getFavorites('DG', `${decade}|${genre}`);
+    //             all.push(...ids);
+    //         }
+    //     }
+    //
+    //     return [...new Set(all)];
+    // }
 
-        for (const decade of catalogDecades) {
-            for (const genre of catalogGenres) {
-                const ids = getFavorites('DG', `${decade}|${genre}`);
-                all.push(...ids);
-            }
-        }
-
-        return [...new Set(all)];
-    }
-
-    function getGenreFavorites(decade: string, genre: string): number[] {
-        return getFavorites('DG', `${decade}|${genre}`);
-    }
+    // function getGenreFavorites(decade: string, genre: string): number[] {
+    //     return getFavorites('DG', `${decade}|${genre}`);
+    // }
 
     // ─────────────────────────────────────────────
     // Launch helpers (avoid URL parsing crashes)
@@ -134,29 +129,8 @@
         return 'All Decades';
     }
 
-    function playShuffleAllDecadesAllGenres() {
-        console.log('▶ Shuffle ALL Decades, ALL Genres');
-
-        const selection = $currentSelection;
-
-        const url = buildLaunchUrl({
-            layoutMode: 'car',
-            decade: 'ALL',
-            genre: 'ALL',
-            language: selection.language,
-            voices: selection.voices,
-            playbackOrder: 'shuffle', // this one we DO override
-            voicePlayMode: 'before',
-            pauseMode: selection.pauseMode,
-            skipPlayed: selection.skipPlayed
-        });
-
-        goto(url);
-    }
 
     type PlaybackOrder = 'up' | 'down' | 'shuffle';
-    type PauseMode = 'pause_between' | 'continuous';
-    type VoicePlayMode = 'before' | 'over';
 
     async function playShuffleFavorites(group: string) {
 
@@ -203,43 +177,43 @@
         if (url) goto(url);
     }
 
-    function playShuffleAllDecadeFavorites() {
-        console.log('▶ Shuffle ALL Decade Favorites');
-
-        currentSelection.update((s) => ({
-            ...s,
-
-            mode: 'decade_genre',       // keep consistent with header
-            programType: 'FAV_DG',
-
-            decade: 'ALL',              // 🔥 THIS is the key
-            genre: 'favorites',         // 🔥 force favorites label
-
-            context: {
-                favoritesType: 'DG',
-                favoritesGroup: 'ALL'
-            },
-
-            playbackOrder: 'shuffle'
-        }));
-
-        const s = get(currentSelection);
-
-        const url = buildLaunchUrl({
-            layoutMode: 'car',
-            programType: s.programType,
-            language: s.language,
-            voices: s.voices,
-            playbackOrder: 'shuffle',
-            voicePlayMode: 'before',
-            pauseMode: s.pauseMode,
-            skipPlayed: s.skipPlayed,
-            decade: 'ALL',
-            genre: 'ALL'
-        });
-
-        goto(url);
-    }
+    // function playShuffleAllDecadeFavorites() {
+    //     console.log('▶ Shuffle ALL Decade Favorites');
+    //
+    //     currentSelection.update((s) => ({
+    //         ...s,
+    //
+    //         mode: 'decade_genre',       // keep consistent with header
+    //         programType: 'FAV_DG',
+    //
+    //         decade: 'ALL',              // 🔥 THIS is the key
+    //         genre: 'favorites',         // 🔥 force favorites label
+    //
+    //         context: {
+    //             favoritesType: 'DG',
+    //             favoritesGroup: 'ALL'
+    //         },
+    //
+    //         playbackOrder: 'shuffle'
+    //     }));
+    //
+    //     const s = get(currentSelection);
+    //
+    //     const url = buildLaunchUrl({
+    //         layoutMode: 'car',
+    //         programType: s.programType,
+    //         language: s.language,
+    //         voices: s.voices,
+    //         playbackOrder: 'shuffle',
+    //         voicePlayMode: 'before',
+    //         pauseMode: s.pauseMode,
+    //         skipPlayed: s.skipPlayed,
+    //         decade: 'ALL',
+    //         genre: 'ALL'
+    //     });
+    //
+    //     goto(url);
+    // }
 
 
     function clearDecadeFavorites(decade: string) {
@@ -248,15 +222,14 @@
         }
     }
 
-    function totalPlayedAcrossAll(): number {
-        return Object.values(playedCountByProgram)
-            .reduce((sum, n) => sum + n, 0);
-    }
+    // function totalPlayedAcrossAll(): number {
+    //     return Object.values(playedCountByProgram)
+    //         .reduce((sum, n) => sum + n, 0);
+    // }
 
     onMount(async () => {
         try {
-            const data = await fetchGroupedCatalog();
-            const normalized = normalizeCatalog(data);
+            const normalized = await loadCatalogOnce();
 
             catalogDecades = normalized.decades.map(d => d.id);
             catalogGenres = normalized.genres.map(g => g.id);
@@ -265,7 +238,7 @@
             const nameMap: Record<string, string> = {};
             const slugToGroup: Record<string, string> = {};
 
-            for (const group of normalized.collectionGroups) {
+            for (const group of normalized.collectionGroups ?? []) {
                 groupMap[group.slug] = group.name;
 
                 for (const item of group.items) {
@@ -407,19 +380,32 @@
             ...sortedDecades.map(buildBlock)
         ];
     })();
+
     $: collectionPrograms = $programHistory.filter(
-        (p): p is ProgramHistory => p.key.startsWith('COL|')
+        (p): p is ProgramHistory =>
+            p.key.startsWith('COL|') &&   // ✅ ONLY pipe format
+            p.key.split('|').length === 3
     );
 
     $: collectionGroupMap = (() => {
         const map = new Map<string, ProgramHistory[]>();
 
         for (const p of collectionPrograms) {
-            const collectionSlug = p.key.split('|')[1];
-            if (!collectionSlug) continue;
+            let parts: string[];
 
-            const groupSlug = collectionSlugToGroupSlug[collectionSlug];
-            if (!groupSlug) continue;
+            if (p.key.includes('|')) {
+                parts = p.key.split('|');
+            } else {
+                parts = p.key.split('/');
+            }
+
+            const [, collectionSlug, rawGroupSlug] = parts;
+
+            const groupSlug = rawGroupSlug
+                ?.toLowerCase()
+                .replace(/-/g, '_');
+
+            if (!collectionSlug || !groupSlug) continue;
 
             if (!map.has(groupSlug)) map.set(groupSlug, []);
             map.get(groupSlug)!.push(p);
@@ -437,9 +423,9 @@
         return p.playedRanks.length;
     }
 
-    function isCompleted(p: ProgramHistory): boolean {
-        return p.playedRanks.length >= p.total;
-    }
+    // function isCompleted(p: ProgramHistory): boolean {
+    //     return p.playedRanks.length >= p.total;
+    // }
 
     function determineStartRank(p: ProgramHistory): number {
 
@@ -484,9 +470,9 @@
     }
 
 
-    function clearOne(p: ProgramHistory) {
-        resetProgram(p.key);
-    }
+    // function clearOne(p: ProgramHistory) {
+    //     resetProgram(p.key);
+    // }
 
     function clearAll() {
         resetAllPrograms();
@@ -536,7 +522,7 @@
                 return;
             }
 
-            const selection = $currentSelection;
+            const selection = get(currentSelection);
             const settings = get(playbackSettingsStore);
 
             url = buildLaunchUrl({
@@ -561,7 +547,7 @@
                 console.error('Invalid COL key:', programKey);
                 return;
             }
-            const selection = $currentSelection;
+            const selection = get(currentSelection);
             const settings = get(playbackSettingsStore);
 
             url = buildLaunchUrl({
@@ -599,7 +585,7 @@
     </header>
 
     <!-- ───────────── Decade–Genre ───────────── -->
-    <details class="history-section" open>
+    <details class="history-section">
         <summary class="history-section__summary">
             🎵 Decade–Genre Programs
         </summary>
@@ -694,54 +680,57 @@
 
                             {#each block.genres as row}
                                 <li class="history-row history-row--genre">
-                                    <span class="history-row__label">
-                                        {block.decade === 'ALL' && row.genreSlug === 'all_genres'
-                                            ? '🎶'
-                                            : getGenreIcon(row.genreSlug)
-                                        }
 
-                                        {block.decade === 'ALL' && row.genreSlug === 'all_genres'
-                                            ? `All Decades, All Genres (${allDecadesAllGenresTotal()} tracks)`
-                                            : block.decade === 'ALL'
-                                                ? `All ${toTitleCaseFromSlug(row.genreSlug)} (${allDecadesPerGenreTotal()} tracks)`
-                                                : `${block.decade} ${toTitleCaseFromSlug(row.genreSlug)}`
-                                        }
-                                    </span>
+                                    {#if block.decade === 'ALL'}
 
-                                    <span class="history-row__progress">
-                                        ✓ {row.played} / {row.total}
-                                        • {pct(row.played, row.total)}%
-                                        &nbsp;&nbsp;⭐ {row.favorites}
-                                    </span>
+                                        <!-- ALL ROWS (custom UI stays) -->
 
-                                    <div class="history-row__actions">
-                                        {#if block.decade === 'ALL'}
+                                        <span class="history-row__label">
+                {row.genreSlug === 'all_genres'
+                    ? '🎶'
+                    : getGenreIcon(row.genreSlug)
+                }
+
+                                            {row.genreSlug === 'all_genres'
+                                                ? `All Decades, All Genres (${allDecadesAllGenresTotal()} tracks)`
+                                                : `All ${toTitleCaseFromSlug(row.genreSlug)} (${allDecadesPerGenreTotal()} tracks)`
+                                            }
+            </span>
+
+                                        <span class="history-row__progress">
+                ✓ {row.played} / {row.total}
+                                            • {pct(row.played, row.total)}%
+                &nbsp;&nbsp;⭐ {row.favorites}
+            </span>
+
+                                        <div class="history-row__actions">
                                             <button
                                                     class="btn btn--primary"
                                                     on:click={() => resumeByKeyShuffle(row.key, 1, row.total)}
                                             >
                                                 🔀 Shuffle Play
                                             </button>
-                                        {:else}
-                                            <!-- Normal decade programs -->
-                                            <button
-                                                    class="btn btn--primary"
-                                                    on:click={() => {
-                    if (row.program) resumeProgram(row.program);
-                    else resumeByKey(row.key, 1, row.total);
-                }}
-                                            >
-                                                ▶ Play
-                                            </button>
+                                        </div>
 
-                                            <button
-                                                    class="btn btn--secondary"
-                                                    on:click={() => goto(`/program?programKey=${encodeURIComponent(row.key)}`)}
-                                            >
-                                                👁 View
-                                            </button>
-                                        {/if}
-                                    </div>
+                                    {:else}
+
+                                        <!-- NORMAL DG ROWS -->
+
+                                        <ProgramRow
+                                                row={row.program ?? null}
+                                                label={`${getGenreIcon(row.genreSlug)} ${block.decade} ${toTitleCaseFromSlug(row.genreSlug)}`}
+                                                played={row.played}
+                                                total={row.total}
+                                                percent={pct(row.played, row.total)}
+                                                favorites={row.favorites}
+                                                onPlay={() => {
+                                        if (row.program) resumeProgram(row.program);
+                                        else resumeByKey(row.key, 1, row.total);
+                                    }}
+                                        />
+
+                                    {/if}
+
                                 </li>
                             {/each}
                         </ul>
@@ -771,27 +760,19 @@
                             <ul class="history-list">
                                 {#each group.programs as row}
                                     {@const collectionSlug = row.key.split('|')[1] ?? ''}
+                                    {@const played = playedCount(row)}
+                                    {@const total = row.total}
+                                    {@const percent = pct(played, total)}
 
-                                    <li class="history-row">
-                                <span class="history-row__label">
-                                    {collectionNameMap[collectionSlug] ?? row.label}
-                                </span>
-
-                                        <span class="history-row__progress">
-                        {isCompleted(row)
-                            ? 'Completed'
-                            : `${playedCount(row)} / ${row.total}`}
-                    </span>
-
-                                        <div class="history-row__actions">
-                                            <button
-                                                    class="btn btn--primary"
-                                                    on:click={() => resumeProgram(row)}
-                                            >
-                                                ▶ {isCompleted(row) ? 'Restart' : 'Play'}
-                                            </button>
-
-                                        </div>
+                                    <li class="history-row history-row--genre">
+                                        <ProgramRow
+                                                {row}
+                                                label={collectionNameMap[collectionSlug] ?? row.label}
+                                                played={played}
+                                                total={total}
+                                                percent={percent}
+                                                onPlay={() => resumeProgram(row)}
+                                        />
                                     </li>
                                 {/each}
                             </ul>
@@ -919,4 +900,5 @@
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
     }
+
 </style>

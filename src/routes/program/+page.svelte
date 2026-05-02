@@ -3,6 +3,8 @@
     import type {ProgramKey} from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
     import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
+    import {onMount} from 'svelte';
+    import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
 
     import type {PlaybackProgramType} from '$lib/types/program';
     import {
@@ -19,6 +21,9 @@
     let genreSlug: string | null = null;
     let groupKey: string | null = null;
 
+    let collectionNameMap: Record<string, string> = {};
+    let collectionGroupNameMap: Record<string, string> = {};
+
 
     let programKey: ProgramKey | null = null;
 
@@ -32,17 +37,6 @@
             ? $favoritesStore.DG?.[groupKey] ?? []
             : [];
 
-    let currentHistory: typeof $programHistoryStore[number] | undefined;
-
-    $: {
-        if (!programKey) {
-            currentHistory = undefined;
-        } else {
-            currentHistory = $programHistoryStore.find(p => p.key === programKey);
-        }
-    }
-
-
     // ✅ Match backend shape from /get-sequence
     type TrackRow = {
         rankingId: number;
@@ -55,12 +49,51 @@
     let loading = false;
     let errorMsg: string | null = null;
 
+    onMount(async () => {
+        try {
+            const normalized = await loadCatalogOnce();
+
+            const groupMap: Record<string, string> = {};
+            const nameMap: Record<string, string> = {};
+
+            for (const group of normalized.collectionGroups ?? []) {
+                groupMap[group.slug] = group.name;
+
+                for (const item of group.items) {
+                    nameMap[item.slug] = item.name;
+                }
+            }
+
+            collectionGroupNameMap = groupMap;
+            collectionNameMap = nameMap;
+
+            console.log('🎨 Program page maps loaded', {
+                collectionNameMap,
+                collectionGroupNameMap
+            });
+
+        } catch (err) {
+            console.error('Failed to load catalog:', err);
+        }
+    });
+
+    function formatSlug(slug: string | null): string {
+        if (!slug) return '';
+
+        return slug
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
     function handleClearPlayed() {
         if (!programKey) return;
 
-        const confirmed = confirm(
-            `Clear played history for ${decadeSlug} — ${genreSlug}?`
-        );
+        const label =
+            programType === 'COL'
+                ? `${displayCollectionName ?? decadeSlug} — ${displayGroupName ?? genreSlug}`
+                : `${displayDecadeName ?? decadeSlug} — ${displayGenreName ?? genreSlug}`;
+
+        const confirmed = confirm(`Clear played history for ${label}?`);
 
         if (!confirmed) return;
 
@@ -78,22 +111,40 @@
         errorMsg = null;
         tracks = [];
 
+        console.log('📦 loadProgramView called');
+
         if (!programKey) return;
 
-        if (programType !== 'DG' || !decadeSlug || !genreSlug) return;
+        if (
+            (programType !== 'DG' && programType !== 'COL') ||
+            !decadeSlug ||
+            !genreSlug
+        ) return;
 
         loading = true;
         try {
-            const selection = {
-                mode: 'decade_genre',
-                language: 'en',
-                startRank: 1,
-                endRank: 40,
-                context: {
-                    decade: decadeSlug!,
-                    genre: genreSlug!
-                }
-            };
+            const selection =
+                programType === 'COL'
+                    ? {
+                        mode: 'collection',
+                        language: 'en',
+                        startRank: 1,
+                        endRank: 40,
+                        context: {
+                            collection: decadeSlug!,
+                            group: genreSlug!
+                        }
+                    }
+                    : {
+                        mode: 'decade_genre',
+                        language: 'en',
+                        startRank: 1,
+                        endRank: 40,
+                        context: {
+                            decade: decadeSlug!,
+                            genre: genreSlug!
+                        }
+                    };
 
             const loaded = await loadTrackSequence(selection as any);
 
@@ -111,43 +162,73 @@
     }
 
     $: if (programKey) {
-        const parts = programKey.split('|');
+        const parts = (programKey as string).split('|');
         programType = parts[0] as PlaybackProgramType;
 
         if (programType === 'DG') {
             decadeSlug = parts[1] ?? null;
             genreSlug = parts[2] ?? null;
 
-            // 🔥 Favorites now stored per decade+genre
             groupKey =
                 decadeSlug && genreSlug
                     ? `${decadeSlug}|${genreSlug}`
                     : null;
+
+        } else if (programType === 'COL') {
+            const collectionSlug = parts[1] ?? null;
+            const group = parts[2] ?? null;
+
+            decadeSlug = collectionSlug;
+            genreSlug = group;
+
+            groupKey = collectionSlug;
+
         } else {
             decadeSlug = null;
             genreSlug = null;
             groupKey = null;
         }
+
+    } else {
+        programType = null;
+        decadeSlug = null;
+        genreSlug = null;
+        groupKey = null;
     }
 
     let lastLoadedKey: string | null = null;
 
-    $: {
-        if (
-            programType === 'DG' &&
-            decadeSlug &&
-            genreSlug &&
-            programKey &&
-            programKey !== lastLoadedKey
-        ) {
-            lastLoadedKey = programKey;
-            loadProgramView();
-        }
+    $: if (programKey && programType && programKey !== lastLoadedKey) {
+        console.log('🚀 LOADING PROGRAM VIEW:', programKey);
+        lastLoadedKey = programKey;
+        loadProgramView();
     }
 
+    $: displayDecadeName =
+        programType === 'DG'
+            ? formatSlug(decadeSlug)
+            : null;
+
+    $: displayGenreName =
+        programType === 'DG'
+            ? formatSlug(genreSlug)
+            : null;
+
+
+    $: displayCollectionName =
+        programType === 'COL' && decadeSlug
+            ? collectionNameMap?.[decadeSlug] ?? decadeSlug
+            : null;
+
+    $: displayGroupName =
+        programType === 'COL' && genreSlug
+            ? collectionGroupNameMap?.[genreSlug] ?? genreSlug
+            : null;
+
     function isPlayed(rank: number): boolean {
-        if (!currentHistory) return false;
-        return currentHistory.playedRanks.includes(rank);
+        const program = $programHistoryStore.find(p => p.key === programKey);
+        if (!program) return false;
+        return program.playedRanks.includes(rank);
     }
 
 </script>
@@ -161,17 +242,21 @@
         <h2>Program View</h2>
         <p>Program View is not available for Favorites programs.</p>
 
-    {:else if programType !== 'DG'}
+    {:else if programType !== 'DG' && programType !== 'COL'}
         <h2>Program View</h2>
-        <p>Program View is only implemented for Decade/Genre (DG) right now.</p>
+        <p>Program View is only implemented for Decade/Genre and Collections right now.</p>
 
     {:else}
         <h2>
-            {decadeSlug} — {genreSlug}
+            {#if programType === 'COL'}
+                {displayCollectionName} — {displayGroupName}
+            {:else}
+                {displayDecadeName} — {displayGenreName}
+            {/if}
         </h2>
 
         <div class="program-actions">
-            <button type="button" on:click={() => goto('/options-v2')}>
+            <button type="button" on:click={() => goto('/options-v4')}>
                 ← Back to Options
             </button>
             <button type="button" on:click={handleClearPlayed}>

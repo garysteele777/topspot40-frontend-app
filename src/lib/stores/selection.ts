@@ -95,7 +95,8 @@ function loadInitial(): SelectionState {
                 parsed.programType !== 'DG' &&
                 parsed.programType !== 'COL' &&
                 parsed.programType !== 'FAV_DG' &&
-                parsed.programType !== 'FAV_COL'
+                parsed.programType !== 'FAV_COL' &&
+                parsed.programType !== 'ALL'
             ) {
                 parsed.programType = defaultSelection.programType;
             }

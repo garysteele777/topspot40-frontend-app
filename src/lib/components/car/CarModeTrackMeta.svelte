@@ -70,8 +70,25 @@
             ? $programHistoryStore.find(p => p.key === key)
             : null;
 
-        programTotal = program?.total ?? tracks.length;
+        if (isRadioStation) {
+            // Radio mode: tracks[] is not reliable
+            // Use fallback that grows instead of staying at 1
+            programTotal = idx >= 0 ? idx + 1 : 1;
+        } else {
+            // All existing modes untouched
+            programTotal = program?.total ?? tracks.length;
+        }
     }
+
+    $: isRadioStation =
+        $currentSelection?.mode === 'decade_genre' &&
+        $currentSelection?.context?.decade === 'ALL'
+
+    $: isRadioPlaceholder =
+        isRadioStation &&
+        currentTrack?.trackName === 'TopSpot Radio' &&
+        currentTrack?.artistName === 'Press Play to Start';
+
 
 </script>
 
@@ -79,17 +96,24 @@
 <div class="meta-under-cover">
 <span class="text-gray-400 text-sm">
 
-{#if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
+{#if isRadioStation}
+    {#if isRadioPlaceholder}
+        <div class="radio-set">TopSpot Radio</div>
+        <div class="radio-track">Shuffle across all decades and genres</div>
+    {:else}
+        <div class="radio-set">
+            Set {currentTrack?.setNumber ?? '?'} • {toTitleCase(currentTrack?.decadeSlug)}
+            • {toTitleCase(currentTrack?.genreSlug)}
+        </div>
+
+        <div class="radio-track">
+            Track {currentTrack?.blockPosition ?? '?'} of {currentTrack?.blockSize ?? '?'}
+        </div>
+    {/if}
+
+{:else if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
 
     Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
-
-{:else if tracks.length > 40}
-
-    Pick #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
-    • Rank {currentTrack?.sourceRank ?? currentTrack?.rank ?? '?'}
-    • Released {currentTrack?.yearReleased ?? '?'}
-
-{:else}
 
     Rank {currentTrack?.rank ?? '?'} of {programTotal}
 
@@ -97,8 +121,13 @@
 
 </span>
 
-    <div class="track-title">— {titleCased}</div>
-    <div class="text-gray-200">{artistCased}</div>
+    {#if isRadioPlaceholder}
+        <div class="track-title">— TopSpot Radio</div>
+        <div class="text-gray-300">Press Play to Start</div>
+    {:else}
+        <div class="track-title">— {titleCased}</div>
+        <div class="text-gray-200">{artistCased}</div>
+    {/if}
 </div>
 
 <!-- PROGRESS -->
@@ -306,4 +335,16 @@
         border-radius: 14px;
     }
 
+    .radio-set {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #CFB991; /* Purdue gold */
+        letter-spacing: 0.03em;
+    }
+
+    .radio-track {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
 </style>

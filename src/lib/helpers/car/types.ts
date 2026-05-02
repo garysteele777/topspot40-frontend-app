@@ -7,12 +7,18 @@ import type { SelectionState } from '$lib/stores/selection';
  */
 export type PlaybackPhase =
     | 'idle'
+    | 'loading'
+    | 'prelude'
+    | 'set_intro'
+    | 'liner'
     | 'intro'
     | 'detail'
     | 'artist'
     | 'track'
     | 'paused'
-    | 'stopped';
+    | 'stopped'
+    | 'ended'
+    | 'music';
 
 
 /**
@@ -49,6 +55,11 @@ export type CarModeTrack = DurationLike & {
 
     decade?: string;
     genre?: string;
+
+    // 🎧 ALL-RADIO metadata
+    setNumber?: number;
+    blockPosition?: number;
+    blockSize?: number;
 };
 
 

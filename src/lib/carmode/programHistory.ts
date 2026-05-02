@@ -2,7 +2,9 @@ import {writable} from 'svelte/store';
 import {browser} from '$app/environment';
 
 
-export type ProgramKey = `DG|${string}|${string}` | `COL|${string}`;
+export type ProgramKey =
+    | `DG|${string}|${string}`
+    | `COL|${string}|${string}`;
 
 export type ProgramHistory = {
     key: ProgramKey;
@@ -42,13 +44,6 @@ export const programHistoryStore = writable<ProgramHistory[]>(
 );
 
 function canonicalTotalForKey(key: ProgramKey, incomingTotal: number): number {
-    // Only force 40 for normal decade programs.
-    // For ALL decades (DG|ALL|...), keep the real total (320, 2560, etc).
-    if (key.startsWith('DG|')) {
-        const parts = key.split('|');
-        const decade = parts[1] ?? '';
-        if (decade !== 'ALL') return 40;
-    }
     return incomingTotal;
 }
 
@@ -72,7 +67,15 @@ export function upsertProgram(
     const all = loadAll();
     const idx = all.findIndex(p => p.key === key);
 
-    const canonicalTotal = canonicalTotalForKey(key, total);
+    const canonicalTotal = canonicalTotalForKey(key, total ?? 0);
+
+    // 👇 ADD THIS LOG
+    // console.log("🧠 upsertProgram TOTAL DEBUG:", {
+    //     key,
+    //     incomingTotal: total,
+    //     canonicalTotal,
+    //     label
+    // });
 
     const next: ProgramHistory = {
         key,
@@ -95,25 +98,15 @@ export function markRankPlayed(
     key: ProgramKey,
     rank: number,
     label?: string,
-    total: number = 40
+    total?: number
 ) {
 
     const all = loadAll();
     let p = all.find(x => x.key === key);
 
-    // ⭐ Lazy creation
     if (!p) {
-        const canonicalTotal = canonicalTotalForKey(key, total);
-
-        p = {
-            key,
-            label: label ?? key,
-            total: canonicalTotal,
-            playedRanks: [],
-            updatedAt: Date.now()
-        };
-
-        all.unshift(p);
+        // Do NOT create incomplete program entries
+        return;
     }
 
     if (!p.playedRanks.includes(rank)) {
@@ -138,4 +131,36 @@ export function resetProgram(key: ProgramKey) {
 export function resetAllPrograms() {
     localStorage.removeItem(STORAGE_KEY);
     programHistoryStore.set([]);
+}
+
+export function seedCollectionPrograms(
+    entries: {
+        key: ProgramKey;
+        label: string;
+        total: number;
+        collectionGroup?: string;
+        collectionGroupSlug?: string;
+    }[]
+) {
+    const all = loadAll();
+    const map = new Map(all.map(p => [p.key, p]));
+
+    for (const e of entries) {
+        if (!map.has(e.key)) {
+            map.set(e.key, {
+                key: e.key,
+                label: e.label,
+                total: e.total,
+                playedRanks: [],
+                updatedAt: Date.now(),
+                collectionGroup: e.collectionGroup,
+                collectionGroupSlug: e.collectionGroupSlug
+            });
+        }
+    }
+
+    const next = Array.from(map.values());
+
+    saveAll(next);
+    programHistoryStore.set(next);
 }

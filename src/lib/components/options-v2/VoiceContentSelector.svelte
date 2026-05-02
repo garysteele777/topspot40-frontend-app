@@ -1,96 +1,49 @@
 <script lang="ts">
-	import type { VoicePart } from '$lib/types/options';
+    import type {VoicePart} from '$lib/types/options';
 
-	export let selectedVoices: VoicePart[] = ['intro'];
+    const DJ_PRESET: VoicePart[] = ['intro', 'detail'];
+    const RADIO_PRESET: VoicePart[] = ['intro'];
+    const STORY_PRESET: VoicePart[] = ['intro', 'detail', 'artist'];
 
-	const DJ_PRESET: VoicePart[] = ['intro', 'detail'];
-	const RADIO_PRESET: VoicePart[] = ['intro'];
-	const STORY_PRESET: VoicePart[] = ['intro', 'detail', 'artist'];
+    export let selectedVoices: VoicePart[] = [...DJ_PRESET];
 
-	function toggle(part: VoicePart): void {
-		if (selectedVoices.includes(part)) {
-			selectedVoices = selectedVoices.filter((p) => p !== part);
-		} else {
-			selectedVoices = [...selectedVoices, part];
-		}
-	}
+    function isSelected(part: VoicePart): boolean {
+        return selectedVoices.includes(part);
+    }
 
-	function isSelected(part: VoicePart): boolean {
-		return selectedVoices.includes(part);
-	}
+    function setPreset(preset: VoicePart[]): void {
+        selectedVoices = [...preset];
+    }
 
-	function setPreset(preset: VoicePart[]): void {
-		// overwrite with that preset
-		selectedVoices = [...preset];
-	}
-
-	function matchesPreset(preset: VoicePart[]): boolean {
-		if (selectedVoices.length !== preset.length) return false;
-		const set = new Set(selectedVoices);
-		return preset.every((p) => set.has(p));
-	}
+    function matchesPreset(preset: VoicePart[]): boolean {
+        if (selectedVoices.length !== preset.length) return false;
+        const set = new Set(selectedVoices);
+        return preset.every((p) => set.has(p));
+    }
 </script>
 
 <div class="card">
-	<h3>Voice Content</h3>
-	<p class="hint">Pick which narration you want with each track.</p>
+    <h3>Voice Content</h3>
 
-	<!-- Quick presets row -->
-	<div class="presets">
-		<span class="preset-label">Quick presets:</span>
+    <div class="grid">
+        <button class:selected={matchesPreset(RADIO_PRESET)} on:click={() => setPreset(RADIO_PRESET)}>
+            Radio
+        </button>
 
-		<button
-			type="button"
-			class:preset-active={matchesPreset(RADIO_PRESET)}
-			on:click={() => setPreset(RADIO_PRESET)}
-		>
-			Radio Mode
-		</button>
+        <button class:selected={matchesPreset(DJ_PRESET)} on:click={() => setPreset(DJ_PRESET)}>
+            DJ
+        </button>
 
-		<button
-			type="button"
-			class:preset-active={matchesPreset(DJ_PRESET)}
-			on:click={() => setPreset(DJ_PRESET)}
-		>
-			DJ Mode
-		</button>
+        <button class:selected={matchesPreset(STORY_PRESET)} on:click={() => setPreset(STORY_PRESET)}>
+            Story
+        </button>
+    </div>
 
-
-		<button
-			type="button"
-			class:preset-active={matchesPreset(STORY_PRESET)}
-			on:click={() => setPreset(STORY_PRESET)}
-		>
-			Story Mode
-		</button>
-	</div>
-
-	<!-- Manual chips row -->
-	<div class="chips">
-		<button
-			type="button"
-			class:selected={isSelected('intro')}
-			on:click={() => toggle('intro')}
-		>
-			Intro
-		</button>
-
-		<button
-			type="button"
-			class:selected={isSelected('detail')}
-			on:click={() => toggle('detail')}
-		>
-			Detail
-		</button>
-
-		<button
-			type="button"
-			class:selected={isSelected('artist')}
-			on:click={() => toggle('artist')}
-		>
-			Artist
-		</button>
-	</div>
+    <div class="grid voice-display">
+        <div class:selected={isSelected('intro')}>Intro</div>
+        <div class:selected={isSelected('detail')}>Detail</div>
+        <div class:selected={isSelected('artist')}>Artist</div>
+    </div>
 </div>
 
 <style>
@@ -102,62 +55,50 @@
     }
 
     h3 {
-        margin: 0 0 0.25rem;
+        margin: 0 0 0.4rem;
         font-size: 1rem;
     }
 
-    .hint {
-        margin: 0 0 0.5rem;
-        font-size: 0.85rem;
-        color: #b3b3b3;
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
     }
 
-    .presets {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .preset-label {
-        font-size: 0.8rem;
-        color: #a3a3a3;
-        margin-right: 0.25rem;
-    }
-
-    .chips {
-        display: flex;
-        gap: 0.4rem;
-        flex-wrap: wrap;
-    }
-
-    .chips button,
-    .presets button {
+    button {
+        width: 100%;
         border-radius: 999px;
         border: 0;
-        padding: 0.25rem 0.7rem;
-        font-size: 0.85rem;
+        padding: 0.45rem 0.6rem;
+        font-size: 0.9rem;
         cursor: pointer;
-        background: #282828;
+        background: #333;
         color: #e0e0e0;
     }
 
-    .chips button.selected {
+    button.selected {
         background: #1db954;
         color: #000;
         font-weight: 600;
     }
 
-    .presets button.preset-active {
+    button:hover {
         background: #1db954;
         color: #000;
-        font-weight: 600;
     }
 
-    .chips button:hover,
-    .presets button:hover {
-        background: #1db954;
-        color: #000;
+    .voice-display {
+        margin-top: 0.25rem;
+    }
+
+    .voice-display div {
+        text-align: center;
+        font-size: 0.9rem;
+        color: #7f7f7f;
+    }
+
+    .voice-display div.selected {
+        color: #fff;
+        font-weight: 600;
     }
 </style>

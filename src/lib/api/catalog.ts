@@ -2,7 +2,13 @@
 
 export interface DecadeItem { id: number; name: string; slug: string }
 export interface GenreItem  { id: number; name: string; slug: string }
-export interface CollectionLeaf { id: number; name: string; slug: string }
+
+export interface CollectionLeaf {
+  id: number;
+  name: string;
+  slug: string;
+  totalTracks?: number;   // ⭐ ADD THIS
+}
 
 export function toSlug(input: string): string {
   return input
@@ -23,6 +29,13 @@ export interface GroupedCatalog {
   decades: DecadeItem[];
   genres: GenreItem[];
   collections: CollectionGroup[];
+
+  // 🔥 ADD THIS
+  decade_genre_totals?: {
+    decade: string;
+    genre: string;
+    total_tracks: number;
+  }[];
 }
 
 // Prefer VITE_API_BASE_URL, fallback to local backend

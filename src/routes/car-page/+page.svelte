@@ -1,9 +1,11 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
+    import {derived} from 'svelte/store';
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+    import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
@@ -40,12 +42,11 @@
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
     import {saveResumeState} from '$lib/utils/smartResume';
-    import {fetchGroupedCatalog} from '$lib/api/catalog';
-    import {normalizeCatalog} from '$lib/helpers/normalizeCatalog';
 
     let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
     let lastProgramKey: string | null = null;
+    let nextTrackLock = false;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -60,6 +61,25 @@
         });
     }
 
+
+    const pauseMessage = derived(
+        [playbackPhase, isPlaying],
+        ([$phase, $playing]) => {
+            if ($playing) return '';
+
+            if ($phase === 'track') {
+                return '⏸ Paused — Press ▶ to resume track';
+            }
+
+            if ($phase === 'intro' || $phase === 'detail' || $phase === 'artist') {
+                return '⏸ Paused — Press ▶ to restart narration';
+            }
+
+            return '';
+        }
+    );
+
+
     function setNarrationModalOpen(v: boolean): void {
         showNarrationModal.set(v);
     }
@@ -72,17 +92,36 @@
         if (!sel) return;
 
         const settings = get(playbackSettingsStore);
-        const programDecade = sel.context?.decade;
-        const decadeForPlayback =
-            programDecade === 'ALL'
-                ? trackObj.decadeSlug ?? programDecade
-                : programDecade;
 
-        const programGenre = sel.context?.genre;
-        const genreForPlayback =
-            programGenre === 'ALL'
-                ? trackObj.genreSlug ?? programGenre
-                : programGenre;
+        let decadeForPlayback: string | undefined;
+        let genreForPlayback: string | undefined;
+
+        if (sel.mode !== 'collection') {
+            const programDecade = sel.context?.decade;
+            decadeForPlayback =
+                programDecade === 'ALL'
+                    ? trackObj.decadeSlug ?? programDecade
+                    : programDecade;
+
+            const programGenre = sel.context?.genre;
+            genreForPlayback =
+                programGenre === 'ALL'
+                    ? trackObj.genreSlug ?? programGenre
+                    : programGenre;
+
+            console.log("🎯 Playback decade resolution:", {
+                programDecade,
+                trackDecade: trackObj.decadeSlug,
+                decadeForPlayback
+            });
+
+            console.log("🎯 Playback bucket:", {
+                decadeForPlayback,
+                genreForPlayback
+            });
+        }
+
+
         const payload = {
             track: {
                 track_id: trackObj.id,
@@ -93,46 +132,62 @@
                 artist_name: trackObj.artistName
             },
             selection: {
-                language: sel.language,
+                ...sel,
+
+                // 🔥 ADD THIS (critical)
+                playbackOrder: settings.playbackOrder,
+
                 voices: settings.voices,
                 voicePlayMode: settings.voicePlayMode,
                 pauseMode: settings.pauseMode,
                 continuous: settings.pauseMode === 'continuous'
             },
-            context: {
-                type: 'decade_genre',
-                decade: decadeForPlayback,
-                genre: genreForPlayback
-            }
+            context:
+                sel.mode === 'collection'
+                    ? (
+                        sel.programType === 'RADIO_COL'
+                            ? {
+                                type: 'collection_radio',
+                                collection_group_slug: sel.context?.collection_group_slug
+                            }
+                            : {
+                                type: 'collection',
+                                collection_slug: sel.context?.collection_slug
+                            }
+                    )
+                    : {
+                        type: 'decade_genre',
+                        decade: decadeForPlayback,
+                        genre: genreForPlayback
+                    }
         };
 
         console.log("🚀 PLAY TRACK REQUEST", payload);
-        console.log("🎯 Playback decade resolution:", {
-            programDecade,
-            trackDecade: trackObj.decadeSlug,
-            decadeForPlayback
-        });
-        console.log("🎯 Playback bucket:", {
-            decadeForPlayback,
-            genreForPlayback
-        });
+
 
         if (
-            sel?.programType === 'RADIO' ||
-            (
-                sel?.mode === 'decade_genre' &&
-                sel?.context?.decade === 'ALL' &&
-                sel?.context?.genre === 'ALL'
-            )
+            sel?.mode === 'decade_genre' &&
+            sel?.context?.decade === 'ALL' &&
+            trackObj.rank === 0
         ) {
             console.log('📻 Starting ALL/ALL radio station');
 
+            const settings = get(playbackSettingsStore);
+
             const params = new URLSearchParams({
                 decade: 'ALL',
-                genre: 'ALL',
-                play_intro: 'false',
-                play_detail: 'false',
-                play_artist_description: 'false'
+                genre: sel.context?.genre ?? 'ALL',
+                play_intro: String(settings.voices.includes('intro')),
+                play_detail: String(settings.voices.includes('detail')),
+                play_artist_description: String(settings.voices.includes('artist'))
+            });
+
+            console.log("🚀 FINAL SELECTION SENT:", {
+                playbackOrder: settings.playbackOrder,
+                selection: {
+                    ...sel,
+                    playbackOrder: settings.playbackOrder
+                }
             });
 
             const res = await fetch(
@@ -145,6 +200,10 @@
 
             return;
         }
+
+        console.log('🎯 CALLING BACKEND play-track for:', trackObj.trackName);
+
+        console.log('🚀 FINAL PAYLOAD:', payload);
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -172,16 +231,26 @@
     }
 
     async function nextTrack() {
+
+        console.log('⏭ NEXT BUTTON CLICKED');
+
+        if (nextTrackLock) return;
+        nextTrackLock = true;
+
         if (!$currentTrack || $tracks.length === 0) return;
 
-        await stopPlayback();
-
+        // await stopPlayback();
         const rankingId = $currentTrack.rankingId;
-        if (rankingId == null) return;
+        const rank = $currentTrack.rank;
+
+// Only block if BOTH are missing (should never happen)
+        if (rankingId == null && rank == null) return;
 
         // track played ranks using rankingId (safer for ALL mode)
-        if (!playedRanks.includes(rankingId)) {
-            playedRanks.push(rankingId);
+        const playedKey = rankingId ?? rank;
+
+        if (playedKey != null && !playedRanks.includes(playedKey)) {
+            playedRanks.push(playedKey);
         }
 
         const sel = $currentSelection;
@@ -191,8 +260,10 @@
 
             if (sel.mode === 'collection') {
                 const slug = sel.context?.collection_slug;
-                if (slug) {
-                    key = `COL|${slug}`;
+                const group = sel.context?.collection_group_slug;
+
+                if (slug && group) {
+                    key = `COL|${slug}|${group}` as ProgramKey;
                 }
             } else if (sel.mode === 'decade_genre') {
                 const decade = $currentTrack.decadeSlug;
@@ -208,21 +279,44 @@
             }
         }
 
-        const currentIndex =
-            $tracks.findIndex(t => t.rankingId === rankingId);
+        const isRadio =
+            sel?.mode === 'decade_genre' &&
+            sel?.context?.decade === 'ALL';
 
-        if (currentIndex === -1) return;
+        if (isRadio) {
+            console.log('📻 RADIO → NEXT SET');
 
-        const nextIndex = (currentIndex + 1) % $tracks.length;
+            const res = await fetch(`${API_BASE}/supabase/decade-genre/next`, {
+                method: 'POST'
+            });
 
-        const next = $tracks[nextIndex];
+            const data = await res.json().catch(() => null);
+            console.log('⏭ BACKEND NEXT RESPONSE:', data);
 
-        currentRank.set(next.rank);
-        currentTrack.set(next);
+        } else {
+            console.log('🎵 NORMAL → NEXT TRACK (local)');
 
-        await new Promise(r => setTimeout(r, 50));
+            const currentIndex =
+                rankingId != null
+                    ? $tracks.findIndex(t => t.rankingId === rankingId)
+                    : $tracks.findIndex(t => t.rank === rank);
 
-        await playTrack(next);
+            if (currentIndex === -1) return;
+
+            const nextIndex = (currentIndex + 1) % $tracks.length;
+            const next = $tracks[nextIndex];
+
+            currentRank.set(next.rank);
+            currentTrack.set(next);
+
+            await new Promise(r => setTimeout(r, 50));
+
+            await playTrack(next);
+        }
+
+        setTimeout(() => {
+            nextTrackLock = false;
+        }, 500);
     }
 
     async function prevTrack() {
@@ -265,10 +359,23 @@
             lastProgramKey = null;
             playedRanks = [];
         } else {
-            const key: ProgramKey =
-                sel.mode === 'collection'
-                    ? `COL|${sel.context?.collection_slug}`
-                    : `DG|${sel.context?.decade}|${sel.context?.genre}`;
+            let key: ProgramKey | null = null;
+
+            if (sel.mode === 'collection') {
+                const slug = sel.context?.collection_slug;
+                const group = sel.context?.collection_group_slug;
+
+                if (slug && group) {
+                    key = `COL|${slug}|${group}` as ProgramKey;
+                }
+            } else {
+                const decade = sel.context?.decade;
+                const genre = sel.context?.genre;
+
+                if (decade && genre) {
+                    key = `DG|${decade}|${genre}` as ProgramKey;
+                }
+            }
 
             if (key !== lastProgramKey) {
                 lastProgramKey = key;
@@ -279,16 +386,27 @@
         }
     }
 
+    const isRadioMode =
+        $currentSelection?.mode === 'decade_genre' &&
+        $currentSelection?.context?.decade === 'ALL';
+
     $: uiDecade =
         $currentSelection?.mode === 'decade_genre'
-            ? toTitleCase($currentSelection.context?.decade ?? '')
+            ? (
+                isRadioMode
+                    ? ($currentTrack?.decadeName ?? '')
+                    : ($currentTrack?.decadeName ?? toTitleCase($currentSelection.context?.decade ?? ''))
+            )
             : collectionNameMap[$currentSelection?.context?.collection_slug ?? ''] ??
             toTitleCase($currentSelection?.context?.collection_slug ?? '');
 
-
     $: uiGenre =
         $currentSelection?.mode === 'decade_genre'
-            ? toTitleCase($currentSelection.context?.genre ?? '')
+            ? (
+                isRadioMode
+                    ? ($currentTrack?.genreName ?? '')
+                    : ($currentTrack?.genreName ?? toTitleCase($currentSelection.context?.genre ?? ''))
+            )
             : '';
 
     $: headerMode =
@@ -328,9 +446,17 @@
             saveResumeState(resume);
         }
 
-        window.location.href = '/options-v2';
+        window.location.href = '/options-v4';
     }
 
+
+    async function handleAutoNextTrack() {
+        console.log('🎯 EVENT → nextTrack()');
+
+        await new Promise(r => setTimeout(r, 300)); // 🔥 try 300–500ms
+
+        await nextTrack();
+    }
 
     // ─────────────────────────────────────────────
     // Lifecycle
@@ -346,9 +472,11 @@
             console.warn('⚠️ Backend reset failed (continuing anyway):', err);
         }
 
-        // ⏱ Step 1: Start polling AFTER reset
+// ⏱ Step 1: Start polling AFTER reset
         startPlaybackPolling();
         console.log('⏱ Playback polling started from onMount');
+
+        window.addEventListener('ts-next-track', handleAutoNextTrack);
 
 
         const url = new URL(window.location.href);
@@ -361,6 +489,41 @@
             sel = buildSelectionFromUrl(url);
             console.log('🔥 BUILT SELECTION FROM URL (raw):', sel);
 
+            // 🔥 Normalize programType based on selection
+            if (sel.mode === 'decade_genre') {
+                const isRadio =
+                    sel.context?.decade === 'ALL';
+
+                sel.programType = isRadio ? 'RADIO_DG' : 'DG';
+            }
+
+            if (sel.mode === 'collection') {
+                const collectionGroup =
+                    sel.context?.collection_group_slug ??
+                    sel.context?.collectionGroupSlug ??
+                    sel.context?.collection_group;
+
+                const collectionSlug =
+                    sel.context?.collection_slug ??
+                    sel.context?.collectionSlug ??
+                    sel.context?.collection;
+
+                const modeParam = url.searchParams.get('mode');
+
+                const isRadio =
+                    modeParam === 'radio_collections' ||
+                    collectionGroup === 'ALL';
+
+                sel.programType = isRadio ? 'RADIO_COL' : 'COL';
+
+                console.log('🧪 COLLECTION MODE CHECK', {
+                    modeParam,
+                    collectionGroup,
+                    collectionSlug,
+                    programType: sel.programType
+                });
+            }
+
             currentSelection.set(sel);
 
             const cr = url.searchParams.get('currentRank');
@@ -369,17 +532,16 @@
             // If we got here without params, treat it as invalid navigation.
             // This prevents stale store state from causing wrong modes.
             console.warn('⚠️ Car page opened without params — redirecting to Options');
-            await goto('/options-v2');
+            await goto('/options-v4');
             return;
         }
 
 
         try {
-            const data = await fetchGroupedCatalog();
-            const normalized = normalizeCatalog(data);
+            const normalized = await loadCatalogOnce();
 
             const map: Record<string, string> = {};
-            for (const group of normalized.collectionGroups) {
+            for (const group of normalized.collectionGroups ?? []) {
                 for (const item of group.items) {
                     map[item.slug] = item.name;
                 }
@@ -408,6 +570,7 @@
 
 
     onDestroy(() => {
+        window.removeEventListener('ts-next-track', handleAutoNextTrack);
         stopPlaybackPolling();
         void clearAllPlayback();
     });
@@ -448,14 +611,68 @@
                 onPrev={prevTrack}
                 onNext={nextTrack}
                 onPlayPause={async () => {
-                if (!$currentTrack) return;
+    if (!$currentTrack) return;
 
-                markUserStartedPlayback();
+    const playing = get(isPlaying);
 
-                // currentRank.set($currentTrack.rank);
+    if (playing) {
+        console.log('⏸ PAUSE requested');
 
-               await playTrack($currentTrack);
-            }}
+        await fetch(`${API_BASE}/playback/pause`, {
+            method: 'POST'
+        });
+
+        return;
+    }
+
+    // If NOT playing → decide resume vs new play
+    const phase = get(playbackPhase);
+
+if (
+    phase === 'track' ||
+    phase === 'paused' ||
+    phase === 'intro' ||
+    phase === 'detail' ||
+    phase === 'artist'
+) {
+    console.log('▶️ RESUME requested');
+
+    const res = await fetch(`${API_BASE}/playback/resume`, {
+        method: 'POST'
+    });
+
+    const data = await res.json().catch(() => null);
+
+
+const sel = $currentSelection;
+const isRadio =
+    sel?.mode === 'decade_genre' &&
+    sel?.context?.decade === 'ALL';
+
+if (data?.restart_track && $currentTrack) {
+    if (isRadio) {
+        console.log('📻 Radio resume: backend keeps control, skipping playTrack restart');
+    } else {
+        console.log('🔁 Restarting track after narration pause');
+        markUserStartedPlayback();
+        await playTrack($currentTrack);
+    }
+}
+
+    return;
+}
+
+console.log('▶️ FRESH PLAY requested');
+
+markUserStartedPlayback();
+
+// 🚀 Always start from logical beginning, not selected track
+const firstTrack = $tracks[0];
+
+if (firstTrack) {
+    await playTrack(firstTrack);
+}
+}}
                 onBackToOptions={backToOptions}
         />
 
@@ -468,6 +685,12 @@
         <div class="debug-panel">
             <h4>Debug Params</h4>
             <pre>{JSON.stringify({urlParams: debugParams, selection: $currentSelection}, null, 2)}</pre>
+        </div>
+    {/if}
+
+    {#if $pauseMessage}
+        <div class="pause-banner">
+            {$pauseMessage}
         </div>
     {/if}
 
@@ -494,6 +717,32 @@
                 #08080a 100%
         );
         color: #fff;
+    }
+
+    .pause-banner {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+
+        padding: 10px 16px;
+        border-radius: 10px;
+
+        font-size: 14px;
+    }
+
+    .pause-banner {
+        opacity: 0;
+        animation: fadeIn 0.3s forwards;
+    }
+
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
     }
 
 </style>

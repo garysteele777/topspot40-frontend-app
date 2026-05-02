@@ -5,11 +5,14 @@ import {normalizeTrack, type LoadedTrack} from '$lib/utils/normalizeTrack';
 
 import {
     loadCollectionFromSupabase,
+    loadCollectionGroupFromSupabase,
     loadDecadeGenreFromSupabase,
+    type CollectionGroupResponse,
     type CollectionResponse,
     type DecadeGenreResponse,
     type SequenceItem
 } from '$lib/api/supabaseLoader';
+
 
 // Svelte 5 reactive Map (silences ESLint warnings)
 import {SvelteMap} from 'svelte/reactivity';
@@ -53,7 +56,7 @@ type SequenceItemExtended = SequenceItem & {
     artistArtwork?: string | null;
 };
 
-const PROGRAM_LENGTH = 40;
+// const PROGRAM_LENGTH = 40;
 
 // ------------------------------------------------------------
 // Local normalization helper
@@ -78,15 +81,12 @@ function preNormalizeRow(t: SequenceItemExtended): SequenceItemExtended {
 // ------------------------------------------------------------
 function mapItemsToTracks(
     rows: SequenceItemExtended[],
-    startRank: number,
-    endRank: number
+    sel: SelectionState
 ): LoadedTrack[] {
     const result: LoadedTrack[] = [];
 
     for (const raw of rows) {
-        const r = raw.rank ?? 0;
-
-        if (r < startRank || r > Math.min(endRank, 40)) continue;
+        // no rank filtering here
 
         const row = preNormalizeRow(raw);
         const track = normalizeTrack(row);
@@ -99,12 +99,14 @@ function mapItemsToTracks(
             row.decadeSlug ??
             row.decade_slug ??
             (row as any).decade ??
+            (sel.context?.decade as string | undefined) ??
             undefined;
 
         track.genreSlug =
             row.genreSlug ??
             row.genre_slug ??
             (row as any).genre ??
+            (sel.context?.genre as string | undefined) ??
             undefined;
 
         track.decadeName = track.decadeSlug?.toUpperCase();
@@ -123,12 +125,18 @@ const loaderCache = new SvelteMap<string, LoadedTrack[]>();
 
 function mkCacheKey(sel: SelectionState): string {
     if (sel.mode === 'collection') {
-        const slug =
+        const collectionSlug =
             sel.context?.collection_slug ??
             sel.context?.collectionId ??
             sel.context?.collection ??
             '';
-        return `c:${slug}:${sel.language}:${sel.startRank}:${sel.endRank}`;
+
+        const collectionGroupSlug =
+            sel.context?.collection_group_slug ??
+            sel.context?.collection_group ??
+            '';
+
+        return `c:${collectionSlug}:cg:${collectionGroupSlug}:${sel.language}`;
     }
 
     const decade = sel.context?.decade ?? '';
@@ -150,38 +158,68 @@ export async function loadTrackSequence(
     const ctx = sel.context as NonNullable<SelectionState['context']>;
     const key = mkCacheKey(sel);
 
+    const language = sel.language ?? 'en';
+    console.log('🌎 LOADER language:', language);
+
     // Cache hit
     if (loaderCache.has(key)) {
         return loaderCache.get(key)!;
     }
-
-    const isAllDecades =
-        sel.mode === 'decade_genre' && (sel.context as any)?.decade === 'ALL';
-
-    const startRank = sel.startRank ?? 1;
-    const endRank = isAllDecades
-        ? (sel.endRank ?? PROGRAM_LENGTH)     // allow 320 / 2560 etc
-        : PROGRAM_LENGTH;                     // normal DG stays 40
-
 
     try {
         // --------------------------------------------------------
         // COLLECTION MODE
         // --------------------------------------------------------
         if (sel.mode === 'collection') {
-            const slug =
+            const collectionSlug =
                 ctx.collection_slug ??
                 ctx.collectionId ??
                 ctx.collection ??
                 '';
 
-            if (!slug) {
-                console.warn('⚠ No slug found in collection context:', ctx);
+            const collectionGroupSlug =
+                ctx.collection_group_slug ??
+                ctx.collection_group ??
+                '';
+
+            console.log('🎯 COLLECTION INPUT:', {
+                collectionSlug,
+                collectionGroupSlug,
+                context: ctx
+            });
+
+            if (!collectionSlug && !collectionGroupSlug) {
+                console.warn('⚠ No collection slug or group found in collection context:', ctx);
                 return [];
             }
 
-            const data: CollectionResponse =
-                await loadCollectionFromSupabase({slug});
+            // Existing path: specific collection
+            if (collectionSlug) {
+                const data: CollectionResponse =
+                    await loadCollectionFromSupabase({
+                        slug: collectionSlug,
+                        language
+                    });
+
+                const rows: SequenceItemExtended[] =
+                    data.tracks ??
+                    data.rankings ??
+                    (data.rows as SequenceItemExtended[]) ??
+                    [];
+
+                if (!rows.length) return [];
+
+                const finalTracks = mapItemsToTracks(rows, sel);
+
+                loaderCache.set(key, finalTracks);
+                return finalTracks;
+            }
+
+// New path: collection group radio
+            const data: CollectionGroupResponse =
+                await loadCollectionGroupFromSupabase({
+                    collectionGroupSlug
+                });
 
             const rows: SequenceItemExtended[] =
                 data.tracks ??
@@ -189,12 +227,14 @@ export async function loadTrackSequence(
                 (data.rows as SequenceItemExtended[]) ??
                 [];
 
-            if (!rows.length) return [];
+            if (!rows.length) {
+                console.warn('⚠ No rows returned for collection group:', {
+                    collectionGroupSlug
+                });
+                return [];
+            }
 
-            const mapped = mapItemsToTracks(rows, startRank, endRank);
-
-            // Only cap normal decades to 40. ALL decades stays full length.
-            const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);
+            const finalTracks = mapItemsToTracks(rows, sel);
 
             loaderCache.set(key, finalTracks);
             return finalTracks;
@@ -211,7 +251,8 @@ export async function loadTrackSequence(
         const data: DecadeGenreResponse =
             await loadDecadeGenreFromSupabase({
                 decade,
-                genre
+                genre,
+                language
             });
 
         const rows: SequenceItemExtended[] =
@@ -221,10 +262,10 @@ export async function loadTrackSequence(
             [];
 
         if (rows.length) {
-            console.log('🎧 Raw rows received from Supabase:', rows.length);
+            // console.log('🎧 Raw rows received from Supabase:', rows.length);
 
             console.table(
-                rows.slice(0, 40).map(r => ({
+                rows.slice(0, 99).map(r => ({
                     rankingId: r.rankingId ?? r.ranking_id,
                     rank: r.rank,
                     track: r.trackName ?? r.track_name,
@@ -242,10 +283,9 @@ export async function loadTrackSequence(
 
         if (!rows.length) return [];
 
-        const mapped = mapItemsToTracks(rows, startRank, endRank);
+        const mapped = mapItemsToTracks(rows, sel);
 
-// Only cap normal decades to 40
-        const finalTracks = isAllDecades ? mapped : mapped.slice(0, PROGRAM_LENGTH);
+        const finalTracks = mapped;
 
         loaderCache.set(key, finalTracks);
         return finalTracks;
@@ -254,14 +294,4 @@ export async function loadTrackSequence(
         console.error('❌ loadTrackSequence failed:', err);
         return [];
     }
-}
-
-// ------------------------------------------------------------
-// FAST FIRST-TRACK LOADER (UI-only)
-// ------------------------------------------------------------
-export async function loadFirstTrack(
-    sel: SelectionState
-): Promise<LoadedTrack | null> {
-    const tracks = await loadTrackSequence(sel);
-    return tracks[0] ?? null;
 }
