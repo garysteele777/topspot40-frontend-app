@@ -543,25 +543,20 @@
 	}
 
 
-    .temporary-button-group {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
+.temporary-button button {
+    background-color: #1db954;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 1rem auto;
+    display: block;
+}
 
-    .temporary-button-group button {
-        background-color: #1db954;
-        color: white;
-        padding: 0.5rem 1.2rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .temporary-button-group button:hover {
-        background-color: #059669;
-    }
+.temporary-button button:hover {
+    background-color: #059669;
+}
 
 
 
