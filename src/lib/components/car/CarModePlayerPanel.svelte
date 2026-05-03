@@ -126,8 +126,8 @@
 
 
     $: isRadioMode =
-        $currentSelection?.mode === 'decade_genre' &&
-        $currentSelection?.context?.decade === 'ALL';
+        $currentSelection?.programType === 'RADIO_DG' ||
+        $currentSelection?.programType === 'RADIO_COL';
 
     $: if ($currentSelection?.programType === 'RADIO_COL' && currentTrack) {
         console.log('RADIO_COL currentTrack full:', currentTrack);
