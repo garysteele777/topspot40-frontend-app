@@ -5,6 +5,7 @@ import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {browser} from '$app/environment';
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+import {startBedUrl, stopBed} from '$lib/audio/bedPlayer';
 
 import {
     timingSource,
@@ -440,6 +441,12 @@ export function startPlaybackPolling() {
 
                     dlog('🎤 Queue:', url);
 
+                    const bedUrl = data.context?.bed_audio_url as string | undefined;
+
+                    if (bedUrl && phase === 'intro') {
+                        void startBedUrl(bedUrl);
+                    }
+
                     narrationQueue.push({url, phase});
                     void playNarrationQueue();
 
@@ -459,6 +466,8 @@ export function startPlaybackPolling() {
                ───────────────────────────── */
             if (phase === 'track' && data.context?.spotify_track_id) {
                 const spotifyId = data.context.spotify_track_id as string;
+
+                stopBed();
 
                 if (
                     lastSpotifyId !== spotifyId &&
