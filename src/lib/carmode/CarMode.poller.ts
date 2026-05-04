@@ -261,9 +261,9 @@ export function startPlaybackPolling() {
 
 
                         // 🔥 ADD THESE
-                        intro: data.intro ?? next.intro,
-                        detail: data.detail ?? next.detail,
-                        artistText: data.artist_text ?? next.artistText,
+                        intro: data.context?.intro ?? next.intro,
+                        detail: data.context?.detail ?? next.detail,
+                        artistText: data.context?.artist_text ?? next.artistText,
                         artistArtwork: ctx?.artist_artwork ?? next.artistArtwork,
 
                         decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
@@ -295,9 +295,9 @@ export function startPlaybackPolling() {
                         collection_group_name: ctx?.collection_group_name ?? null,
 
                         // 🔥 ADD THESE
-                        intro: data.intro ?? null,
-                        detail: data.detail ?? null,
-                        artistText: data.artist_text ?? null,
+                        intro: data.context?.intro ?? null,
+                        detail: data.context?.detail ?? null,
+                        artistText: data.context?.artist_text ?? null,
                         artistArtwork: ctx?.artist_artwork ?? null,
 
                         decadeSlug: ctx?.decade_slug ?? null,
