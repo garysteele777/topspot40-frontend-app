@@ -5,7 +5,7 @@ import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {browser} from '$app/environment';
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
-import {startBedUrl, stopBed} from '$lib/audio/bedPlayer';
+import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
 
 import {
     timingSource,
@@ -441,9 +441,19 @@ export function startPlaybackPolling() {
 
                     dlog('🎤 Queue:', url);
 
-                    const bedUrl = data.context?.bed_audio_url as string | undefined;
+                    const bedUrl =
+                        data.context?.bed_audio_url as string | undefined
+                        ?? (
+                            data.context?.bed_bucket && data.context?.bed_key
+                                ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${data.context.bed_bucket}/${data.context.bed_key}`
+                                : undefined
+                        );
 
-                    if (bedUrl && phase === 'intro') {
+                    console.log("🎧 BED DEBUG context:", data.context);
+                    console.log("🎧 BED DEBUG url:", bedUrl);
+
+                    if (bedUrl && !isBedPlaying()) {
+                        console.log('🎧 STARTING BED:', bedUrl);
                         void startBedUrl(bedUrl);
                     }
 
