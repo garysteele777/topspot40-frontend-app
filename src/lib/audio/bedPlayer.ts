@@ -30,8 +30,6 @@ export async function startBedUrl(url: string): Promise<void> {
         if (bedAudio.volume < targetVolume) {
             bedAudio.volume = Math.min(targetVolume, bedAudio.volume + step);
 
-                    // 👇 ADD THIS LINE HERE
-        console.log('🎧 BED VOLUME:', bedAudio.volume);
 
         } else {
             clearInterval(fadeIn);

@@ -7,7 +7,7 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
-
+console_audit_frontend.txt
 # OS
 .DS_Store
 Thumbs.db

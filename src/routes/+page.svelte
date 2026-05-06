@@ -112,13 +112,6 @@
 
     <!-- TEMPORARY BLOCK/BUTTON!-->
     <div class="temporary-button-group">
-        <button on:click={() => go('/options-v2')}>
-            Options V2
-        </button>
-
-        <button on:click={() => go('/options-v3')}>
-            Options V3
-        </button>
 
         <button on:click={() => go('/options-v4')}>
             Options V4
