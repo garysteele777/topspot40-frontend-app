@@ -76,7 +76,7 @@
 
 	// Navigate to the new player route
 	function goToPlayer() {
-		goto('/options-v2');
+		goto('/options-v4');
 	}
 
 </script>

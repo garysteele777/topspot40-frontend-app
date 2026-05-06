@@ -387,7 +387,7 @@
 
 {#if import.meta.env.DEV}
     <div style="position:fixed;top:4px;right:6px;font-size:11px;opacity:.5">
-        ROUTE: /options-v2
+        ROUTE: /options-v4
     </div>
 {/if}
 

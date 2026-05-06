@@ -1,4 +1,5 @@
 <script lang="ts">
+    // TODO: Legacy route. Candidate for removal after options-v4 fully stabilized.
     /* eslint-disable svelte/no-navigation-without-resolve */
 
     import {onMount} from 'svelte';
