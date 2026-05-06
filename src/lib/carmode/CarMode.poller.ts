@@ -539,7 +539,7 @@ export function startPlaybackPolling() {
                 durationSec > 0 ? Math.min(elapsedSecRaw, durationSec) : elapsedSecRaw;
 
 // 🔥 ONLY update timing when Spotify owns the clock
-            const justSwitched = Date.now() - trackSwitchTime < 1500;
+            const justSwitched = Date.now() - trackSwitchTime < 8000;
 
             if (get(timingSource) === 'spotify' && !justSwitched) {
                 elapsed.set(elapsedSec);
