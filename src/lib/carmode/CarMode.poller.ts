@@ -222,6 +222,7 @@ export function startPlaybackPolling() {
             if (!res.ok) return;
 
             const data = await res.json();
+
             // console.log("STATUS SNAPSHOT", data); // temporary
 
             const spotifyId = data.context?.spotify_track_id ?? null;
