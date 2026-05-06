@@ -67,11 +67,6 @@
         mode = 'intro';
     }
 
-    // 🔍 DEBUG: confirm modal receives track
-    $: if (open) {
-        console.log('🎵 Modal opened with track:', track);
-    }
-
     $: headerImage =
         track?.artistArtwork ??
         track?.albumArtwork ??

@@ -31,13 +31,6 @@ export function pickInitialTrack(
     playedRanks: Set<number> = new Set()
 ): LoadedTrack | null {
 
-    console.log("🧪 PICKER INPUT", {
-        order,
-        startRank,
-        played: Array.from(playedRanks),
-        ranks: list.map(t => t.rank)
-    });
-
     if (!list.length) return null;
 
     // 🎯 Helper: find first unplayed

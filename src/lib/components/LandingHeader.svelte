@@ -1,6 +1,5 @@
 <script>
 	// No imports, no components
-	console.log('🟢 app layout loaded');
 
 	let showContactUsModal = false;
 	let showFeedbackForm = false;

@@ -638,7 +638,7 @@ export async function skipToNextTrack(): Promise<void> {
         }).catch(() => {
         });
     } else {
-        // console.log('🛑 Single mode: skip finalized UI only, no advance');
+        //
     }
 }
 

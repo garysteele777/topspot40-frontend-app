@@ -16,7 +16,6 @@
 			error = 'Please enter both your email and a message.';
 			return;
 		}
-		console.log('Message sent!');
 		submitted = true; // switch to thank-you view
 		error = '';
 		// TODO: send message to backend here

@@ -41,7 +41,6 @@
 					showDropdown = false;
 				}}
 				onContact={() => {
-					console.log('Contact clicked!');
 					showContactModal = true;
 					showDropdown = false;
 				}}

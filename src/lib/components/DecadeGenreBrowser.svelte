@@ -42,7 +42,6 @@
 
 	function selectPlaylist(playlistId: number) {
 		// TODO: emit a custom event or navigate
-		console.log('Selected playlist', playlistId);
 	}
 </script>
 

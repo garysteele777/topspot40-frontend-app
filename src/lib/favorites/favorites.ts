@@ -91,8 +91,6 @@ export function toggleFavorite(
         return {added: false, count: 0};
     }
 
-    console.log("toggleFavorite called with:", program, group, rankingId);
-
     favoritesStore.update((data) => {
 
         const existing = data[program][group] ?? [];

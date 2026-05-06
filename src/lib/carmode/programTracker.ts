@@ -11,12 +11,6 @@ export function markCurrentTrackPlayed(): void {
     const key = buildProgramKey(track, sel);
     if (!key) return;
 
-    console.log("🎯 HISTORY WRITE", {
-        key,
-        rank: track.rank,
-        trackName: track.trackName
-    });
-
     markRankPlayed(key, track.rank);
 }
 

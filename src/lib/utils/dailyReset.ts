@@ -21,7 +21,6 @@ export function performDailyReset(ttsLanguage: string = 'en'): boolean {
     const last = localStorage.getItem(LAST_RESET_KEY);
 
     if (last !== today) {
-      console.log('🌅 Performing daily reset');
       try { sessionStorage.removeItem('ts_selection'); } catch {}
 
       // ⬇️ One line: use the same defaults everywhere

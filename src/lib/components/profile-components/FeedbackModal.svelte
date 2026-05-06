@@ -12,7 +12,6 @@
 			error = 'Please write some feedback before submitting.';
 			return;
 		}
-		console.log('Feedback submitted!');
 		submitted = true; // switch to thank-you view
 		error = '';
 		// TODO: send feedback to backend here
