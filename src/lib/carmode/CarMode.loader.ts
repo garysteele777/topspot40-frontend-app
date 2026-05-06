@@ -29,7 +29,7 @@ export async function loadForSelection(
     }
 
     status.set('Loading tracks…');
-    console.log('🚀 LOADER selection.programType =', sel.programType);
+
 
     // 🎧 RADIO MODE DETECTION (ALL / ALL)
     const decade =
@@ -44,17 +44,11 @@ export async function loadForSelection(
         sel.context?.genreName ??
         sel.context?.genreSlug;
 
-    console.log("🧪 RADIO CHECK:", {
-        decade,
-        genre,
-        raw: sel.context
-    });
 
     if (
         sel.mode === 'decade_genre' &&
         decade === 'ALL'
     ) {
-        console.log('📻 RADIO MODE detected (ALL / ANY)');
 
         // 🔥 THIS IS THE FIX
         sel.programType = 'RADIO_DG';
@@ -75,7 +69,6 @@ export async function loadForSelection(
 
         status.set('Radio ready. Press Play.');
 
-        console.log('📻 Radio mode loader finished — waiting for Play.');
         return;
     }
 
@@ -88,12 +81,6 @@ export async function loadForSelection(
         sel.context?.collection_slug ??
         sel.context?.collectionSlug;
 
-    console.log('🧪 COLLECTION RADIO CHECK:', {
-        collectionGroup,
-        collectionSlug,
-        raw: sel.context
-    });
-
     if (
         sel.mode === 'collection' &&
         collectionGroup &&
@@ -102,7 +89,6 @@ export async function loadForSelection(
         sel.programType = 'RADIO_COL';
 
         if (collectionGroup === 'ALL') {
-            console.log('📻 COLLECTIONS RADIO MODE detected (ALL GROUP)');
 
             const placeholder: CarModeTrack = {
                 id: null,
@@ -120,13 +106,9 @@ export async function loadForSelection(
 
             status.set('Collections Radio ready. Press Play.');
 
-            console.log('📻 Collections radio loader finished — waiting for Play.');
             return;
         }
 
-        console.log('📻 COLLECTIONS RADIO MODE detected (NAMED GROUP)', {
-            collectionGroup
-        });
     }
 
     tracks.set([]);
@@ -177,8 +159,6 @@ export async function loadForSelection(
 // remove duplicates
         favoriteIds = [...new Set(favoriteIds)];
 
-        console.log("⭐ FAVORITES loaded:", favoriteIds);
-
         const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/supabase/decade-genre/get-favorites`,
             {
@@ -192,8 +172,6 @@ export async function loadForSelection(
             status.set('Failed to load favorites.');
             return;
         }
-
-        console.log("⭐ FAVORITES loaded:", favoriteIds);
 
         const data: unknown = await response.json();
 
@@ -358,8 +336,6 @@ export async function loadForSelection(
             if (decade && genre) {
                 const programKey = `DG|${decade}|${genre}` as ProgramKey;
 
-                console.log('🧠 Creating program history:', programKey);
-
                 upsertProgram(
                     programKey,
                     `${decade} • ${genre}`,
@@ -374,8 +350,6 @@ export async function loadForSelection(
 
             if (slug && group) {
                 const programKey = `COL|${slug}|${group}` as ProgramKey;
-
-                console.log('🧠 Creating collection history:', programKey);
 
                 upsertProgram(
                     programKey,
@@ -425,9 +399,6 @@ export async function loadForSelection(
             const program = history.find(p => p.key === programKey);
             playedRanks = new Set(program?.playedRanks ?? []);
 
-            console.log('🧠 PROGRAM KEY:', programKey);
-            console.log('🧠 HISTORY ENTRY:', program);
-            console.log('🧠 PLAYED RANKS:', Array.from(playedRanks));
         }
 
 // 🚫 Resume removed — always start fresh
@@ -440,13 +411,6 @@ export async function loadForSelection(
             startRank = initialRank;
         }
 
-        console.log('🧪 END RANK CHECK', {
-            selEndRank: sel.endRank,
-            orderedLength: ordered.length,
-            playbackOrder: sel.playbackOrder,
-            playedRanks: Array.from(playedRanks)
-        });
-
         let first: LoadedTrack | null;
 
         if (isInlineFavorites) {
@@ -456,7 +420,6 @@ export async function loadForSelection(
             first = candidateTracks[0] ?? null;
 
         } else {
-            console.log('🚨 FINAL skipPlayed USED:', sel.skipPlayed);
             first = pickInitialTrack(
                 ordered,
                 sel.playbackOrder,
@@ -477,7 +440,6 @@ export async function loadForSelection(
         return;
     }
 
-    console.log('🧊 Loader finished. No playback started. Waiting for Play button.');
 }
 
 function toCarModeTrack(t: LoadedTrack): CarModeTrack {

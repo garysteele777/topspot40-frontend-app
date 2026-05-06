@@ -129,9 +129,6 @@
         $currentSelection?.programType === 'RADIO_DG' ||
         $currentSelection?.programType === 'RADIO_COL';
 
-    $: if ($currentSelection?.programType === 'RADIO_COL' && currentTrack) {
-        console.log('RADIO_COL currentTrack full:', currentTrack);
-    }
 
     $: collectionNameLabel =
         currentTrack?.collection_name ?? '';
@@ -152,14 +149,10 @@
                 : null;
 
         if (key !== lastTrackKey) {
-            console.log('Current track v3:', currentTrack);
             lastTrackKey = key;
         }
     }
 
-    $: {
-        console.log("SELECTION FULL", $currentSelection);
-    }
 
     $: isFavoritesProgram =
         $currentSelection?.programType === 'FAV_DG' ||
@@ -194,11 +187,7 @@
             favBurst = true;
         });
 
-        console.log(
-            added
-                ? `⭐ Saved to ${programGroup} favorites`
-                : `❌ Removed from ${programGroup} favorites`
-        );
+
     }
 </script>
 

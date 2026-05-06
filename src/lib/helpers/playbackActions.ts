@@ -217,7 +217,6 @@ export async function startPlayback(opts: StartPlaybackOptions) {
             randomAllCategories
         });
 
-        console.log('🚗 Redirecting to Car Mode with URL:', url);
 
         const href = Array.isArray(url) ? url[0] : url;
 

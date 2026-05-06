@@ -159,7 +159,6 @@ export async function loadTrackSequence(
     const key = mkCacheKey(sel);
 
     const language = sel.language ?? 'en';
-    console.log('🌎 LOADER language:', language);
 
     // Cache hit
     if (loaderCache.has(key)) {
@@ -181,12 +180,6 @@ export async function loadTrackSequence(
                 ctx.collection_group_slug ??
                 ctx.collection_group ??
                 '';
-
-            console.log('🎯 COLLECTION INPUT:', {
-                collectionSlug,
-                collectionGroupSlug,
-                context: ctx
-            });
 
             if (!collectionSlug && !collectionGroupSlug) {
                 console.warn('⚠ No collection slug or group found in collection context:', ctx);
@@ -262,7 +255,6 @@ export async function loadTrackSequence(
             [];
 
         if (rows.length) {
-            // console.log('🎧 Raw rows received from Supabase:', rows.length);
 
             console.table(
                 rows.slice(0, 99).map(r => ({

@@ -20,7 +20,6 @@ export async function startPlayback() {
 
     // ✅ Favorites: single-track playback for Step 1
     if (sel.programType === 'FAV_DG') {
-        console.log('⭐ FAV_DG → backend single-track sequence (by rankingId)');
 
         if (track.rankingId == null) {
             console.warn('❌ Favorites playback requires track.rankingId but it is null');
@@ -52,7 +51,6 @@ export async function startPlayback() {
             }
         };
 
-        console.log('🎯 PLAY_TRACK PAYLOAD:', payload);
 
         await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -94,13 +92,6 @@ export async function startPlayback() {
 
         params.set('decade', decadeForPlayback);
         params.set('genre', sel.context?.genre ?? '');
-
-        console.log('🎯 PLAYBACK DECADE:', {
-            programDecade,
-            decadeForPlayback,
-            trackDecade: track.decadeSlug,
-            rank: track.rank
-        });
 
         await fetch(
             `${API_BASE}/supabase/decade-genre/play-first?${params.toString()}`

@@ -86,7 +86,6 @@
 
     async function playTrack(trackObj: CarModeTrack) {
 
-        console.log("▶️ playTrack called for:", trackObj.trackName, trackObj.artistName);
 
         const sel = $currentSelection;
         if (!sel) return;
@@ -109,16 +108,7 @@
                     ? trackObj.genreSlug ?? programGenre
                     : programGenre;
 
-            console.log("🎯 Playback decade resolution:", {
-                programDecade,
-                trackDecade: trackObj.decadeSlug,
-                decadeForPlayback
-            });
 
-            console.log("🎯 Playback bucket:", {
-                decadeForPlayback,
-                genreForPlayback
-            });
         }
 
 
@@ -162,15 +152,12 @@
                     }
         };
 
-        console.log("🚀 PLAY TRACK REQUEST", payload);
-
 
         if (
             sel?.mode === 'decade_genre' &&
             sel?.context?.decade === 'ALL' &&
             trackObj.rank === 0
         ) {
-            console.log('📻 Starting ALL/ALL radio station');
 
             const settings = get(playbackSettingsStore);
 
@@ -183,15 +170,6 @@
                 play_artist_description: String(settings.voices.includes('artist'))
             });
 
-            console.log('🌎 RADIO PARAM STRING:', params.toString());
-
-            console.log("🚀 FINAL SELECTION SENT:", {
-                playbackOrder: settings.playbackOrder,
-                selection: {
-                    ...sel,
-                    playbackOrder: settings.playbackOrder
-                }
-            });
 
             const res = await fetch(
                 `${API_BASE}/supabase/decade-genre/play-sequence?${params.toString()}`,
@@ -199,14 +177,11 @@
             );
 
             const data = await res.json();
-            console.log('📻 radio response:', data);
 
             return;
         }
 
-        console.log('🎯 CALLING BACKEND play-track for:', trackObj.trackName);
 
-        console.log('🚀 FINAL PAYLOAD:', payload);
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -215,7 +190,6 @@
         });
 
         const result = await res.json().catch(() => null);
-        console.log("🎬 play-track response:", result);
     }
 
 
@@ -234,8 +208,6 @@
     }
 
     async function nextTrack() {
-
-        console.log('⏭ NEXT BUTTON CLICKED');
 
         if (nextTrackLock) return;
         nextTrackLock = true;
@@ -287,17 +259,14 @@
             sel?.context?.decade === 'ALL';
 
         if (isRadio) {
-            console.log('📻 RADIO → NEXT SET');
 
             const res = await fetch(`${API_BASE}/supabase/decade-genre/next`, {
                 method: 'POST'
             });
 
             const data = await res.json().catch(() => null);
-            console.log('⏭ BACKEND NEXT RESPONSE:', data);
 
         } else {
-            console.log('🎵 NORMAL → NEXT TRACK (local)');
 
             const currentIndex =
                 rankingId != null
@@ -454,7 +423,6 @@
 
 
     async function handleAutoNextTrack() {
-        console.log('🎯 EVENT → nextTrack()');
 
         await new Promise(r => setTimeout(r, 300)); // 🔥 try 300–500ms
 
@@ -470,14 +438,12 @@
         try {
             const res = await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
             const data = await res.json();
-            console.log('🧹 Backend playback reset:', data);
         } catch (err) {
             console.warn('⚠️ Backend reset failed (continuing anyway):', err);
         }
 
 // ⏱ Step 1: Start polling AFTER reset
         startPlaybackPolling();
-        console.log('⏱ Playback polling started from onMount');
 
         window.addEventListener('ts-next-track', handleAutoNextTrack);
 
@@ -490,7 +456,6 @@
 
         if (hasParams) {
             sel = buildSelectionFromUrl(url);
-            console.log('🔥 BUILT SELECTION FROM URL (raw):', sel);
 
             // 🔥 Normalize programType based on selection
             if (sel.mode === 'decade_genre') {
@@ -519,12 +484,6 @@
 
                 sel.programType = isRadio ? 'RADIO_COL' : 'COL';
 
-                console.log('🧪 COLLECTION MODE CHECK', {
-                    modeParam,
-                    collectionGroup,
-                    collectionSlug,
-                    programType: sel.programType
-                });
             }
 
             currentSelection.set(sel);
@@ -619,7 +578,6 @@
     const playing = get(isPlaying);
 
     if (playing) {
-        console.log('⏸ PAUSE requested');
 
         await fetch(`${API_BASE}/playback/pause`, {
             method: 'POST'
@@ -638,7 +596,6 @@ if (
     phase === 'detail' ||
     phase === 'artist'
 ) {
-    console.log('▶️ RESUME requested');
 
     const res = await fetch(`${API_BASE}/playback/resume`, {
         method: 'POST'
@@ -654,9 +611,8 @@ const isRadio =
 
 if (data?.restart_track && $currentTrack) {
     if (isRadio) {
-        console.log('📻 Radio resume: backend keeps control, skipping playTrack restart');
+        //'📻 Radio resume: backend keeps control, skipping playTrack restart');
     } else {
-        console.log('🔁 Restarting track after narration pause');
         markUserStartedPlayback();
         await playTrack($currentTrack);
     }
@@ -664,8 +620,6 @@ if (data?.restart_track && $currentTrack) {
 
     return;
 }
-
-console.log('▶️ FRESH PLAY requested');
 
 markUserStartedPlayback();
 

@@ -138,7 +138,6 @@
             ? group.split('|')
             : [group, 'ALL'];
 
-        console.log('▶ Shuffle Favorites for', group);
 
         currentSelection.update((s) => ({
             ...s,
@@ -177,55 +176,12 @@
         if (url) goto(url);
     }
 
-    // function playShuffleAllDecadeFavorites() {
-    //     console.log('▶ Shuffle ALL Decade Favorites');
-    //
-    //     currentSelection.update((s) => ({
-    //         ...s,
-    //
-    //         mode: 'decade_genre',       // keep consistent with header
-    //         programType: 'FAV_DG',
-    //
-    //         decade: 'ALL',              // 🔥 THIS is the key
-    //         genre: 'favorites',         // 🔥 force favorites label
-    //
-    //         context: {
-    //             favoritesType: 'DG',
-    //             favoritesGroup: 'ALL'
-    //         },
-    //
-    //         playbackOrder: 'shuffle'
-    //     }));
-    //
-    //     const s = get(currentSelection);
-    //
-    //     const url = buildLaunchUrl({
-    //         layoutMode: 'car',
-    //         programType: s.programType,
-    //         language: s.language,
-    //         voices: s.voices,
-    //         playbackOrder: 'shuffle',
-    //         voicePlayMode: 'before',
-    //         pauseMode: s.pauseMode,
-    //         skipPlayed: s.skipPlayed,
-    //         decade: 'ALL',
-    //         genre: 'ALL'
-    //     });
-    //
-    //     goto(url);
-    // }
-
-
     function clearDecadeFavorites(decade: string) {
         for (const genre of catalogGenres) {
             clearFavorites('DG', `${decade}|${genre}`);
         }
     }
 
-    // function totalPlayedAcrossAll(): number {
-    //     return Object.values(playedCountByProgram)
-    //         .reduce((sum, n) => sum + n, 0);
-    // }
 
     onMount(async () => {
         try {
@@ -251,10 +207,6 @@
             collectionNameMap = nameMap;
             collectionSlugToGroupSlug = slugToGroup;
 
-            console.log('📦 Collection name maps loaded', {
-                collectionGroupNameMap,
-                collectionNameMap
-            });
         } catch (err) {
             console.error('Failed to load collection catalog:', err);
         }
@@ -486,9 +438,6 @@
 
         const startRank = determineStartRank(p);
 
-        console.log("START RANK CALCULATED:", startRank);
-        console.log("SKIP PLAYED:", settings.skipPlayed);
-        console.log("PLAYED RANKS:", p.playedRanks);
 
         resumeByKey(p.key, startRank, p.total);
     }
@@ -511,7 +460,6 @@
 
         let url: string;
 
-        console.log("PLAYBACK SETTINGS AT LAUNCH:", settings);
 
         if (type === 'DG') {
             const decade = parts[1];
@@ -537,7 +485,6 @@
                 skipPlayed: settings.skipPlayed
             });
 
-            console.log("🚀 Launch URL:", url);
 
         } else if (type === 'COL') {
             const collection = parts[1];
@@ -570,7 +517,6 @@
         // append resume rank
         const finalUrl = `${url}&startRank=${startRank}&endRank=${total}`;
 
-        console.log("🚀 Final URL:", finalUrl);
 
         goto(finalUrl);
     }

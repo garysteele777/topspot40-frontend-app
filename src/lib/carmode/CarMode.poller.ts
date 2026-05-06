@@ -78,7 +78,6 @@ function isSingleMode(): boolean {
    ───────────────────────────────────────────── */
 
 function finalizeTrackUI(): void {
-    console.log('🏁 Track finished → finalizing UI');
 
     isPlaying.set(false);
 
@@ -222,8 +221,6 @@ export function startPlaybackPolling() {
             if (!res.ok) return;
 
             const data = await res.json();
-
-            // console.log("STATUS SNAPSHOT", data); // temporary
 
             const spotifyId = data.context?.spotify_track_id ?? null;
             const phase = data.phase as PlaybackPhase;
@@ -453,11 +450,7 @@ export function startPlaybackPolling() {
                                 : undefined
                         );
 
-                    console.log("🎧 BED DEBUG context:", data.context);
-                    console.log("🎧 BED DEBUG url:", bedUrl);
-
                     if (bedUrl && !isBedPlaying()) {
-                        console.log('🎧 STARTING BED:', bedUrl);
                         void startBedUrl(bedUrl);
                     }
 
@@ -566,12 +559,6 @@ export function startPlaybackPolling() {
                 finishedTrackId = spotifyId;   // ⭐ important
                 trackFinalized = true;
 
-                console.log('🏁 Track reached end (single fire), finalizing UI', {
-                    elapsedSec,
-                    durationSec,
-                    track: data.track_name
-                });
-
                 finalizeTrackUI();
                 markCurrentTrackPlayed();
 
@@ -580,17 +567,9 @@ export function startPlaybackPolling() {
 
                 const isContinuous = settings.pauseMode === 'continuous';
 
-                console.log('🧪 MODE CHECK', {
-                    isContinuous,
-                    pauseMode: settings.pauseMode,
-                    selection: sel
-                });
-
                 if (!isContinuous) {
-                    console.log('🛑 Pause mode: not advancing after track end');
+                    //
                 } else {
-                    console.log('▶️ Continuous mode → advancing to next track');
-
                     window.dispatchEvent(new CustomEvent('ts-next-track'));
 
                     try {
@@ -607,25 +586,14 @@ export function startPlaybackPolling() {
             if (false && lastPhase === 'track' && phase !== 'track') {
                 trackFinalized = true;
 
-                console.log('🏁 Track ended via phase transition', {
-                    elapsedSec,
-                    durationSec,
-                    from: lastPhase,
-                    to: phase,
-                    track: data.track_name
-                });
 
                 finalizeTrackUI();
                 markCurrentTrackPlayed();
 
                 if (!isSingleMode()) {
-                    try {
-                        console.log('🚫 Fallback track-finished disabled');
-                    } catch (err) {
-                        console.error('❌ Failed to signal track-finished', err);
-                    }
+                    // fallback track-finished intentionally disabled
                 } else {
-                    console.log('🛑 Single mode: not advancing after phase transition');
+                    // single mode → do not auto-advance
                 }
             }
 
@@ -642,7 +610,6 @@ export function startPlaybackPolling() {
    ───────────────────────────────────────────── */
 
 export async function skipToNextTrack(): Promise<void> {
-    console.log('⏭ Manual skip requested');
 
     // 1️⃣ Stop Spotify immediately
     await fetch(`${API_BASE}/playback/stop`, {
@@ -671,15 +638,13 @@ export async function skipToNextTrack(): Promise<void> {
         }).catch(() => {
         });
     } else {
-        console.log('🛑 Single mode: skip finalized UI only, no advance');
+        // console.log('🛑 Single mode: skip finalized UI only, no advance');
     }
 }
 
 
 export function stopPlaybackPolling() {
     if (!pollTimer) return;
-
-    console.log('⏹ Playback polling stopped');
 
     clearInterval(pollTimer);
     pollTimer = null;
@@ -699,5 +664,4 @@ export function stopPlaybackPolling() {
 
 // Compatibility export
 export function markUserStartedPlayback() {
-    console.log('🧠 Manual playback started');
 }

@@ -10,14 +10,11 @@ export async function loadCatalogOnce(): Promise<CatalogData> {
     // ✅ 1. Check sessionStorage FIRST
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
-        console.log('⏭ Using catalog from sessionStorage');
-
         const parsed = JSON.parse(stored);
         catalog.set(parsed);
         return parsed;
     }
 
-    console.log('📚 Loading catalog (API)');
 
     const data = await fetchGroupedCatalog();
     const normalized = normalizeCatalog(data);

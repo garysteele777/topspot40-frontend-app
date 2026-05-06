@@ -54,7 +54,6 @@ const API_BASE =
 // Shared GET helper
 // ------------------------------------------------------------
 async function getJson<T>(url: string): Promise<T> {
-    console.log('🔗 FETCH:', url);
 
     const res = await fetch(url);
     if (!res.ok) {

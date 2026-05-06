@@ -143,7 +143,6 @@ export async function loadSelection(
         }
 
         const url = `/car-page?${params.toString()}`;
-        console.log('🚗 Redirecting to Car Mode with URL:', url);
 
         // ───────── Navigation (Lint Safe) ─────────
         // eslint-disable-next-line svelte/no-navigation-without-resolve

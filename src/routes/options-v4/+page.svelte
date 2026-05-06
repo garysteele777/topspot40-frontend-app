@@ -32,7 +32,6 @@
         Language
     } from '$lib/types/playback';
 
-    console.log('📦 OPTIONS PAGE MOUNTED');
 
     type OptionItem = { id: string; label: string; mp3?: string };
 
@@ -97,7 +96,6 @@
     }
 
     function startRadio(mode: 'nostalgia' | 'collections') {
-        console.log('📻 RADIO MODE SELECTED:', mode);
 
         radioMode = mode;
 
@@ -120,7 +118,6 @@
             skipPlayed
         };
 
-        console.log('🚀 LAUNCHING NOSTALGIA RADIO:', selection);
 
         saveResumeFromLocal(selection);
 
@@ -143,7 +140,6 @@
             skipPlayed
         };
 
-        console.log('🎯 LAUNCHING NOSTALGIA GENRE:', selection);
 
         saveResumeFromLocal(selection);
 
@@ -165,7 +161,6 @@
             skipPlayed
         };
 
-        console.log('🚀 LAUNCHING COLLECTIONS RADIO:', selection);
 
         saveResumeFromLocal(selection);
 
@@ -192,7 +187,6 @@
             skipPlayed
         };
 
-        console.log('🎯 LAUNCHING COLLECTION GROUP:', selection);
 
         saveResumeFromLocal(selection);
 
@@ -302,8 +296,6 @@
         const historyList = get(programHistoryStore);
         const entry = historyList.find(p => p.key === programKey);
 
-        console.log('🧠 PROGRAM KEY:', programKey);
-        console.log('🧠 HISTORY ENTRY:', entry);
 
         return entry?.total ?? 0;
     }
@@ -314,7 +306,6 @@
     // ─────────────────────────────────────────────
     onMount(async () => {
         pendingSelection = buildSelectionFromResume(loadResumeState());
-        console.log('📍 OPTIONS PAGE MOUNTED');
 
         try {
 
