@@ -18,7 +18,8 @@ export type PlaybackPhase =
     | 'paused'
     | 'stopped'
     | 'ended'
-    | 'music';
+    | 'music'
+    | 'collection_intro';
 
 
 /**

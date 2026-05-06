@@ -48,7 +48,7 @@ let finishedTrackId: string | null = null;
 let narrationLock = false;
 type NarrationItem = {
     url: string;
-    phase: 'set_intro' | 'liner' | 'intro' | 'detail' | 'artist';
+    phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist';
 };
 
 let narrationQueue: NarrationItem[] = [];
@@ -98,7 +98,7 @@ function finalizeTrackUI(): void {
 
 function playOneAudio(
     url: string,
-    phase: 'set_intro' | 'liner' | 'intro' | 'detail' | 'artist'
+    phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist'
 ): Promise<void> {
     // ✅ SSR safety: Audio + window don't exist on the server
     if (!browser) return Promise.resolve();
@@ -229,6 +229,7 @@ export function startPlaybackPolling() {
 
 
             const hasPlaybackStarted =
+                phase === 'collection_intro' ||
                 phase === 'intro' ||
                 phase === 'detail' ||
                 phase === 'artist' ||
@@ -396,6 +397,7 @@ export function startPlaybackPolling() {
             // 🛑 FRONTEND owns timing during narration — do NOT overwrite UI clock
             const isNarrationPhase =
                 phase === 'set_intro' ||
+                phase === 'collection_intro' ||
                 phase === 'liner' ||
                 phase === 'intro' ||
                 phase === 'detail' ||
@@ -424,6 +426,7 @@ export function startPlaybackPolling() {
             if (
                 (
                     phase === 'set_intro' ||
+                    phase === 'collection_intro' ||
                     phase === 'liner' ||
                     phase === 'intro' ||
                     phase === 'detail' ||
