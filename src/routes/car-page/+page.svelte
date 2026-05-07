@@ -19,7 +19,8 @@
     import {
         startPlaybackPolling,
         stopPlaybackPolling,
-        markUserStartedPlayback
+        markUserStartedPlayback,
+        stopCurrentNarrationPhase
     } from '$lib/carmode/CarMode.poller';
 
 
@@ -182,7 +183,6 @@
         }
 
 
-
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -211,6 +211,8 @@
 
         if (nextTrackLock) return;
         nextTrackLock = true;
+
+        stopCurrentNarrationPhase();
 
         if (!$currentTrack || $tracks.length === 0) return;
 

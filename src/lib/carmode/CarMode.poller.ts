@@ -60,9 +60,41 @@ let narrationSignaled = false;
 
 let activeSpotifyTrackId: string | null = null;
 let trackSwitchTime = 0;
+let activeNarrationAudio: HTMLAudioElement | null = null;
+let activeNarrationTimer: number | null = null;
+let activeNarrationResolve: (() => void) | null = null;
+let narrationInterrupting = false;
 
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
+
+export function stopCurrentNarrationPhase(options: { resolvePhase?: boolean } = {}): void {
+    if (activeNarrationTimer !== null) {
+        clearInterval(activeNarrationTimer);
+        activeNarrationTimer = null;
+    }
+
+    if (activeNarrationAudio) {
+        narrationInterrupting = true;
+        activeNarrationAudio.pause();
+        activeNarrationAudio.currentTime = 0;
+        activeNarrationAudio.src = '';
+        activeNarrationAudio = null;
+    }
+
+    elapsed.set(0);
+    duration.set(0);
+    progress.set(0);
+    timingSource.set('spotify');
+
+    if (options.resolvePhase !== false && activeNarrationResolve) {
+        const resolve = activeNarrationResolve;
+        activeNarrationResolve = null;
+        resolve();
+    } else {
+        activeNarrationResolve = null;
+    }
+}
 
 function isSingleMode(): boolean {
     const sel = get(currentSelection);
@@ -105,7 +137,11 @@ function playOneAudio(
 
     return new Promise<void>((resolve) => {
 
+        stopCurrentNarrationPhase({resolvePhase: false});
+
         const audio = new Audio(url);
+        activeNarrationAudio = audio;
+        activeNarrationResolve = resolve;
 
         // 🧠 narration owns the clock
         timingSource.set('narration');
@@ -117,7 +153,7 @@ function playOneAudio(
             progress.set(0);
         };
 
-        const timer = window.setInterval(() => {
+        activeNarrationTimer = window.setInterval(() => {
             elapsed.set(audio.currentTime);
 
             if (audio.duration > 0) {
@@ -129,7 +165,13 @@ function playOneAudio(
         }, 100);
 
         audio.onended = () => {
-            clearInterval(timer);
+            narrationInterrupting = false;
+            if (activeNarrationTimer !== null) {
+                clearInterval(activeNarrationTimer);
+                activeNarrationTimer = null;
+            }
+            activeNarrationAudio = null;
+            activeNarrationResolve = null;
 
             elapsed.set(0);
             duration.set(0);
@@ -140,22 +182,38 @@ function playOneAudio(
         };
 
         audio.onerror = () => {
+            if (narrationInterrupting) {
+                narrationInterrupting = false;
+                return;
+            }
+
             console.warn('🔇 Narration missing or failed, skipping:', url);
 
-            clearInterval(timer);
+            if (activeNarrationTimer !== null) {
+                clearInterval(activeNarrationTimer);
+                activeNarrationTimer = null;
+            }
+
+            activeNarrationAudio = null;
+            activeNarrationResolve = null;
 
             elapsed.set(0);
             duration.set(0);
             progress.set(0);
 
             timingSource.set('spotify');
-            resolve(); // ✅ skip narration, continue sequence
+            resolve();
         };
 
         audio.play().catch(() => {
             console.warn('🔇 Narration could not play, skipping:', url);
 
-            clearInterval(timer);
+            if (activeNarrationTimer !== null) {
+                clearInterval(activeNarrationTimer);
+                activeNarrationTimer = null;
+            }
+            activeNarrationAudio = null;
+            activeNarrationResolve = null;
 
             elapsed.set(0);
             duration.set(0);
@@ -625,6 +683,8 @@ export async function skipToNextTrack(): Promise<void> {
     markCurrentTrackPlayed();
 
     // 3️⃣ Stop any narration immediately
+    stopCurrentNarrationPhase();
+    stopBed();
     narrationQueue = [];
     narrationLock = false;
 
