@@ -68,7 +68,16 @@ let narrationInterrupting = false;
 
 import {currentSelection} from '$lib/carmode/CarMode.store';
 
-export function stopCurrentNarrationPhase(options: { resolvePhase?: boolean } = {}): void {
+let narrationPausedAtBoundary = false;
+
+export function stopCurrentNarrationPhase(
+    options: { resolvePhase?: boolean; preserveResolve?: boolean } = {}
+): void {
+
+    if (options.preserveResolve) {
+        narrationPausedAtBoundary = true;
+    }
+
     if (activeNarrationTimer !== null) {
         clearInterval(activeNarrationTimer);
         activeNarrationTimer = null;
@@ -91,7 +100,7 @@ export function stopCurrentNarrationPhase(options: { resolvePhase?: boolean } = 
         const resolve = activeNarrationResolve;
         activeNarrationResolve = null;
         resolve();
-    } else {
+    } else if (!options.preserveResolve) {
         activeNarrationResolve = null;
     }
 }
@@ -226,7 +235,17 @@ function playOneAudio(
     });
 }
 
-async function signalNarrationFinished() {
+export function continueStoppedNarrationPhase(): void {
+    narrationPausedAtBoundary = false;
+
+    if (activeNarrationResolve) {
+        const resolve = activeNarrationResolve;
+        activeNarrationResolve = null;
+        resolve();
+    }
+}
+
+export async function signalNarrationFinished() {
     if (narrationSignaled) return;
     narrationSignaled = true;
 
@@ -279,6 +298,12 @@ export function startPlaybackPolling() {
             if (!res.ok) return;
 
             const data = await res.json();
+
+            if (narrationPausedAtBoundary) {
+                isPlaying.set(false);
+                playbackPhase.set('paused');
+                return;
+            }
 
             const spotifyId = data.context?.spotify_track_id ?? null;
             const phase = data.phase as PlaybackPhase;

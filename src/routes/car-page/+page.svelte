@@ -20,8 +20,11 @@
         startPlaybackPolling,
         stopPlaybackPolling,
         markUserStartedPlayback,
-        stopCurrentNarrationPhase
+        stopCurrentNarrationPhase,
+        continueStoppedNarrationPhase
     } from '$lib/carmode/CarMode.poller';
+
+    import {stopBed} from '$lib/audio/bedPlayer';
 
 
     import {
@@ -579,21 +582,49 @@
 
     const playing = get(isPlaying);
 
-    if (playing) {
+if (playing) {
 
-        await fetch(`${API_BASE}/playback/pause`, {
-            method: 'POST'
+    const phase = get(playbackPhase);
+
+    if (
+        phase === 'intro' ||
+        phase === 'detail' ||
+        phase === 'artist'
+    ) {
+
+        stopNarrationAudio();
+
+        stopCurrentNarrationPhase({
+            resolvePhase: false,
+            preserveResolve: true
         });
+
+        stopBed();
+
+        isPlaying.set(false);
+
+        playbackPhase.set('paused');
 
         return;
     }
 
+    await fetch(`${API_BASE}/playback/pause`, {
+        method: 'POST'
+    });
+
+    return;
+}
+
     // If NOT playing → decide resume vs new play
     const phase = get(playbackPhase);
 
+if (phase === 'paused') {
+    continueStoppedNarrationPhase();
+    return;
+}
+
 if (
     phase === 'track' ||
-    phase === 'paused' ||
     phase === 'intro' ||
     phase === 'detail' ||
     phase === 'artist'
