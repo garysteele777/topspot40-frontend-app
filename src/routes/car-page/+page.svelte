@@ -296,10 +296,14 @@
         }, 500);
     }
 
-    async function prevTrack() {
-        if (!$currentTrack || $tracks.length === 0) return;
+async function prevTrack() {
+    if (!$currentTrack || $tracks.length === 0) return;
 
-        await stopPlayback();
+    stopNarrationAudio();
+    stopCurrentNarrationPhase();
+    stopBed();
+
+    await stopPlayback();
 
         const rankingId = $currentTrack.rankingId;
         if (rankingId == null) return;
