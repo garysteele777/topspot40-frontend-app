@@ -25,14 +25,23 @@ function buildProgramKey(track: any, sel: any): ProgramKey | null {
         return `DG|${decade}|${genre}`;
     }
 
-    if (sel.mode === 'collection') {
-        const collection = sel.context?.collection_slug;
-        const group = sel.context?.collection_group_slug;
+if (sel.mode === 'collection') {
+    const collection =
+        track.collectionSlug ??
+        track.collection_slug ??
+        sel.context?.collection_slug;
 
-        if (!collection || !group) return null;
+    const group =
+        track.collectionGroupSlug ??
+        track.collection_group_slug ??
+        sel.context?.collection_group_slug;
 
-        return `COL|${collection}|${group}`;
+    if (!collection || !group || collection === 'ALL' || group === 'ALL') {
+        return null;
     }
+
+    return `COL|${collection}|${group}`;
+}
 
     return null;
 }

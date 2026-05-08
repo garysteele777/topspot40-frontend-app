@@ -214,8 +214,8 @@ function playOneAudio(
             resolve();
         };
 
-        audio.play().catch(() => {
-            console.warn('🔇 Narration could not play, skipping:', url);
+        audio.play().catch((err: unknown) => {
+            console.warn('🔇 Narration could not play, skipping:', url, err);
 
             if (activeNarrationTimer !== null) {
                 clearInterval(activeNarrationTimer);
@@ -342,6 +342,9 @@ export function startPlaybackPolling() {
                         collection_name: ctx?.collection_name ?? next.collection_name,
                         collection_group_name: ctx?.collection_group_name ?? next.collection_group_name,
 
+                        collection_slug: ctx?.collection_slug,
+                        collection_group_slug: ctx?.collection_group_slug,
+
 
                         // 🔥 ADD THESE
                         intro: data.context?.intro ?? next.intro,
@@ -376,6 +379,9 @@ export function startPlaybackPolling() {
                         // 🔥 ADD THESE
                         collection_name: ctx?.collection_name ?? null,
                         collection_group_name: ctx?.collection_group_name ?? null,
+
+                        collection_slug: ctx?.collection_slug ?? null,
+                        collection_group_slug: ctx?.collection_group_slug ?? null,
 
                         // 🔥 ADD THESE
                         intro: data.context?.intro ?? null,
