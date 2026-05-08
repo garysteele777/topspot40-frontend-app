@@ -47,7 +47,6 @@
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
     import {saveResumeState} from '$lib/utils/smartResume';
 
-    let debugParams: Record<string, string> | null = null;
     let collectionNameMap: Record<string, string> = {};
     let lastProgramKey: string | null = null;
     let nextTrackLock = false;
@@ -446,7 +445,6 @@ async function prevTrack() {
         // 🧹 Step 0: Reset backend transport safely
         try {
             const res = await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
-            const data = await res.json();
         } catch (err) {
             console.warn('⚠️ Backend reset failed (continuing anyway):', err);
         }
@@ -533,10 +531,6 @@ async function prevTrack() {
         // Prepare Spotify playback (warmup)
         // ─────────────────────────────────────────────
 
-
-        if (url.searchParams.get('debug') === '1') {
-            debugParams = Object.fromEntries(url.searchParams.entries());
-        }
     });
 
 
@@ -673,13 +667,6 @@ if (firstTrack) {
 
     {:else}
         <p class="text-gray-400 italic text-center mt-10">{$status}</p>
-    {/if}
-
-    {#if debugParams}
-        <div class="debug-panel">
-            <h4>Debug Params</h4>
-            <pre>{JSON.stringify({urlParams: debugParams, selection: $currentSelection}, null, 2)}</pre>
-        </div>
     {/if}
 
     {#if $pauseMessage}

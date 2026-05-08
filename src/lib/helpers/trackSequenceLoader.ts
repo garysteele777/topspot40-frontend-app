@@ -254,24 +254,6 @@ export async function loadTrackSequence(
             (data.rows as SequenceItemExtended[]) ??
             [];
 
-        if (rows.length) {
-
-            console.table(
-                rows.slice(0, 99).map(r => ({
-                    rankingId: r.rankingId ?? r.ranking_id,
-                    rank: r.rank,
-                    track: r.trackName ?? r.track_name,
-                    artist: r.artistName ?? r.artist_name,
-                    spotifyTrackId: r.spotifyTrackId ?? r.spotify_track_id,
-                    decade: r.decadeSlug ?? r.decade_slug,
-                    genre: r.genreSlug ?? r.genre_slug
-                }))
-            );
-
-            // optional — expose full array for inspection
-            // @ts-ignore debug
-            window.__TS40_ROWS__ = rows;
-        }
 
         if (!rows.length) return [];
 
