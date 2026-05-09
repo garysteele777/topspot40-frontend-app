@@ -175,7 +175,7 @@
 .pwa-bar {
     display: flex;
     justify-content: flex-end;
-    padding: 0.5rem 2rem 0 2rem;
+    padding: 0.75rem 2rem 0 2rem;
 }
 
 .pwa-bar button {
