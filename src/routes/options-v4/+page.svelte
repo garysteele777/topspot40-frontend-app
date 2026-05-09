@@ -41,6 +41,7 @@
     // ─────────────────────────────────────────────
     let activeGroup: ModeType = 'decade_genre';
     let language: Language = 'en';
+    let languages: Language[] = ['en'];
 
     let startRank = 1;
     let endRank = 1; // or undefined
@@ -121,7 +122,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}&voices=${buildVoiceQuery()}`);
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
     }
 
     function launchNostalgiaGenre(genre: string) {
@@ -143,7 +144,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}&voices=${buildVoiceQuery()}`);
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
     }
 
     function launchCollectionsAll() {
@@ -164,7 +165,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=radio_collections&collection_group=ALL&language=${language}&voices=${buildVoiceQuery()}`);
+        goto(`/car-page?mode=radio_collections&collection_group=ALL&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
     }
 
     function buildVoiceQuery(): string {
@@ -190,7 +191,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}&voices=${buildVoiceQuery()}`);
+        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
     }
 
 
@@ -334,10 +335,10 @@
     // ─────────────────────────────────────────────
     $: if (browser && hydrated) {
         currentSelection.update(s => {
-            if (s.language === language) return s;
             return {
                 ...s,
-                language
+                language,
+                languages
             };
         });
     }
@@ -489,7 +490,7 @@
                 <h3 class="section-title">Settings</h3>
 
                 <div class="compact-block compact-block--content">
-                    <LanguageSelector bind:language/>
+                    <LanguageSelector bind:language bind:languages/>
                     <VoiceContentSelector bind:selectedVoices/>
                 </div>
 

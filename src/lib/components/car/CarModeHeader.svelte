@@ -19,6 +19,7 @@
 
 
     export let language = 'en';
+    export let languages: string[] = ['en'];
     export let voices: string[] = ['intro'];
 
     export let playbackOrder: import('./CarModeHeader.svelte').PlaybackOrder = 'up';
@@ -44,6 +45,9 @@
         p === 'continuous' ? 'Continuous' : 'Pause Between Tracks';
 
     const voiceText = (vs: string[]) => (vs.length ? vs.join(', ') : 'None');
+
+    const languageText = (langs: string[]) =>
+        langs.map(l => l.toUpperCase()).join(' • ');
 </script>
 
 <div class="cm-panel">
@@ -103,7 +107,10 @@
             <span>•</span>
             <span>Category: {categoryLabel(categoryMode)}</span>
             <span>•</span>
-            <span>Lang: {language.toUpperCase()}</span>
+            <span>
+                {languages.length > 1 ? 'Langs:' : 'Lang:'}
+                {languageText(languages)}
+            </span>
         </div>
 
         <div class="cm-row cm-row--secondary">

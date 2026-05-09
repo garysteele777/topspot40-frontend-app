@@ -1,25 +1,59 @@
 <script lang="ts">
     type Language = 'en' | 'es' | 'ptbr';
+
     export let language: Language = 'en';
+    export let languages: Language[] = ['en'];
+
+    const order: Language[] = ['en', 'es', 'ptbr'];
+
+    function toggleLanguage(lang: Language): void {
+        const selected = new Set(languages);
+
+        if (selected.has(lang)) {
+            if (selected.size === 1) return;
+            selected.delete(lang);
+        } else {
+            selected.add(lang);
+        }
+
+        languages = order.filter(l => selected.has(l));
+        language = languages[0] ?? 'en';
+    }
+
+    function isSelected(lang: Language): boolean {
+        return languages.includes(lang);
+    }
 </script>
 
 <div class="card">
-    <h3>Preview Language</h3>
-    <p class="hint">Choose narration language.</p>
+    <h3>Narration Languages</h3>
+    <p class="hint">Select one or more narration languages.</p>
 
-    <div class="grid">
-        <button class:selected={language === 'en'} on:click={() => (language = 'en')}>
-            English
-        </button>
+<div class="grid">
+    <button
+        type="button"
+        class:selected={isSelected('en')}
+        on:click={() => toggleLanguage('en')}
+    >
+        English
+    </button>
 
-        <button class:selected={language === 'es'} on:click={() => (language = 'es')}>
-            Español
-        </button>
+    <button
+        type="button"
+        class:selected={isSelected('es')}
+        on:click={() => toggleLanguage('es')}
+    >
+        Español
+    </button>
 
-        <button class:selected={language === 'ptbr'} on:click={() => (language = 'ptbr')}>
-            Português
-        </button>
-    </div>
+    <button
+        type="button"
+        class:selected={isSelected('ptbr')}
+        on:click={() => toggleLanguage('ptbr')}
+    >
+        Português
+    </button>
+</div>
 </div>
 
 <style>
@@ -63,5 +97,4 @@
         color: #000;
         font-weight: 600;
     }
-
 </style>

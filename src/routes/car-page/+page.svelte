@@ -511,6 +511,7 @@
 
             }
 
+            console.log('🎯 URL selection before currentSelection.set:', sel);
             currentSelection.set(sel);
 
             const cr = url.searchParams.get('currentRank');
@@ -570,6 +571,7 @@
                 mode={headerMode}
                 programType={$currentSelection.programType}
                 language={$currentSelection.language}
+                languages={$currentSelection.languages ?? [$currentSelection.language]}
                 voices={settings.voices}
                 playbackOrder={$currentSelection.playbackOrder}
                 voicePlayMode={settings.voicePlayMode}

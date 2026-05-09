@@ -20,6 +20,7 @@ export interface SelectionState {
     mode: ModeType;
     programType: PlaybackProgramType;
     language: Language;
+    languages?: Language[];
     context: Record<string, string> | null;
 
     startRank: number;
@@ -51,6 +52,7 @@ const defaultSelection: SelectionState = {
     mode: 'decade_genre',
     programType: 'DG',
     language: 'en',
+    languages: ['en'],
     context: null,
 
     startRank: 1,

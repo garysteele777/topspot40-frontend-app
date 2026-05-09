@@ -17,6 +17,10 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const favoritesGroup = sp.get('favoritesGroup') ?? '';
 
     const language = normalizeLanguage(sp.get('language'));
+    const languages = (sp.get('languages') ?? language)
+        .split(',')
+        .map(normalizeLanguage)
+        .filter((lang, index, arr) => arr.indexOf(lang) === index);
 
     const startRank = Number(sp.get('startRank') ?? 1);
 
@@ -45,6 +49,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             programType: 'RADIO_COL',
             mode: 'collection',
             language,
+            languages,
             context: {
                 collection_group_slug: group
             },
@@ -74,6 +79,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 programType: 'DG',
                 mode: 'decade_genre',
                 language,
+                languages,
                 context: {
                     decade: parts[1] ?? '',
                     genre: parts[2] ?? ''
@@ -101,6 +107,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 programType: 'COL',
                 mode: 'collection',
                 language,
+                languages,
                 context: {
                     collection_slug: parts[1] ?? '',
                     collection_group_slug: collectionCategory
@@ -129,6 +136,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             programType: 'COL',
             mode: 'collection',
             language,
+            languages,
             context: {
                 collection_slug: collection,
                 collection_group_slug: collectionCategory
@@ -155,6 +163,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         programType,
         mode: 'decade_genre',
         language,
+        languages,
         context: {
             decade,
             genre,
