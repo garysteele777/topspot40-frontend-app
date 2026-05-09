@@ -7,7 +7,7 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
     console.log('🔥 DASHBOARD LAYOUT HIT');
     const backend = getBackendUrl();
 
-    const res = await fetch(`${backend}/api/stripe/subscription-status`, {
+    const res = await fetch(`${backend}/api/subscription-status`, {
         credentials: 'include'
     });
 
@@ -16,7 +16,10 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
         throw redirect(302, '/');
     }
 
+    console.log('📡 subscription-status HTTP status:', res.status);
+
     const data = await res.json();
+    console.log('📦 subscription-status JSON:', data);
 
     // ❌ Not subscribed
     if (!data.is_subscribed) {
@@ -27,8 +30,11 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
         credentials: 'include'
     });
 
+    console.log('📡 /me HTTP status:', userRes.status);
+
     const user = userRes.ok ? await userRes.json() : null;
 
+    console.log('👤 USER JSON:', user);
 
     return {
         user
