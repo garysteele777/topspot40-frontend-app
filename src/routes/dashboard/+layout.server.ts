@@ -26,7 +26,7 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
         throw redirect(302, '/create-account');
     }
 
-    const userRes = await fetch(`${backend}/api/me`, {
+    const userRes = await fetch(`${backend}/api/auth/me`, {
         credentials: 'include'
     });
 
