@@ -105,7 +105,7 @@
 
 </script>
 
-<Header />
+<!-- <Header /> -->
 
 {#if canInstall}
 	<div class="pwa-bar">

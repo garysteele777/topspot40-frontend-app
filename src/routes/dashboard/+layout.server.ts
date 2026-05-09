@@ -23,7 +23,7 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
 
     // ❌ Not subscribed
     if (!data.is_subscribed) {
-        throw redirect(302, '/signup-official');
+        throw redirect(302, '/create-account');
     }
 
     const userRes = await fetch(`${backend}/api/me`, {
