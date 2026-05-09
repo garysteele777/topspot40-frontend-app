@@ -173,10 +173,9 @@
 
 
 .pwa-bar {
-    position: absolute;
-    top: 1rem;
-    right: 5rem;  
-    z-index: 100;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 2rem 0 2rem;
 }
 
 .pwa-bar button {
