@@ -272,15 +272,33 @@
 
         } else {
 
+            const settings = get(playbackSettingsStore);
+
+            let orderedTracks = [...$tracks];
+
+            if (settings.playbackOrder === 'down') {
+                orderedTracks.sort((a, b) => b.rank - a.rank);
+            } else if (settings.playbackOrder === 'up') {
+                orderedTracks.sort((a, b) => a.rank - b.rank);
+            }
+
             const currentIndex =
                 rankingId != null
-                    ? $tracks.findIndex(t => t.rankingId === rankingId)
-                    : $tracks.findIndex(t => t.rank === rank);
+                    ? orderedTracks.findIndex(t => t.rankingId === rankingId)
+                    : orderedTracks.findIndex(t => t.rank === rank);
 
             if (currentIndex === -1) return;
 
-            const nextIndex = (currentIndex + 1) % $tracks.length;
-            const next = $tracks[nextIndex];
+            let next =
+                settings.skipPlayed
+                    ? orderedTracks
+                        .slice(currentIndex + 1)
+                        .find(t => !playedRanks.includes(t.rank))
+                    : null;
+
+            if (!next) {
+                next = orderedTracks[(currentIndex + 1) % orderedTracks.length];
+            }
 
             currentRank.set(next.rank);
             currentTrack.set(next);
@@ -295,14 +313,14 @@
         }, 500);
     }
 
-async function prevTrack() {
-    if (!$currentTrack || $tracks.length === 0) return;
+    async function prevTrack() {
+        if (!$currentTrack || $tracks.length === 0) return;
 
-    stopNarrationAudio();
-    stopCurrentNarrationPhase();
-    stopBed();
+        stopNarrationAudio();
+        stopCurrentNarrationPhase();
+        stopBed();
 
-    await stopPlayback();
+        await stopPlayback();
 
         const rankingId = $currentTrack.rankingId;
         if (rankingId == null) return;
@@ -654,11 +672,11 @@ if (data?.restart_track && $currentTrack) {
 
 markUserStartedPlayback();
 
-// 🚀 Always start from logical beginning, not selected track
-const firstTrack = $tracks[0];
+// 🚀 Start from the loader-selected track, not always $tracks[0]
+const trackToPlay = $currentTrack ?? $tracks[0];
 
-if (firstTrack) {
-    await playTrack(firstTrack);
+if (trackToPlay) {
+    await playTrack(trackToPlay);
 }
 }}
                 onBackToOptions={backToOptions}

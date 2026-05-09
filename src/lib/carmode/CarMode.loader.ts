@@ -402,7 +402,10 @@ export async function loadForSelection(
         }
 
 // 🚫 Resume removed — always start fresh
-        let startRank = 1;
+        let startRank =
+            sel.playbackOrder === 'down'
+                ? ordered.length
+                : 1;
 
 // Only resume IF explicitly intended (future feature)
         const isResume = false;

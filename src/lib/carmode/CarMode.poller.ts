@@ -149,6 +149,7 @@ function playOneAudio(
         stopCurrentNarrationPhase({resolvePhase: false});
 
         const audio = new Audio(url);
+        audio.volume = 0.60;
         activeNarrationAudio = audio;
         activeNarrationResolve = resolve;
 
