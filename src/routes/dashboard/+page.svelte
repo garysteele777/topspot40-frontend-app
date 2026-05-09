@@ -107,13 +107,14 @@
 
 <!-- <Header /> -->
 
-{#if canInstall}
-	<div class="pwa-bar">
-		<button on:click={install}>Install App</button>
-	</div>
-{/if}
+
 
 <div class="dashboard-wrapper">
+	{#if canInstall}
+		<div class="pwa-bar">
+			<button on:click={install}>Install App</button>
+		</div>
+	{/if}
 	<main class="dashboard">
 		<section class="decade-genre-browser">
 			<h2>Get Started with TopSpot40</h2>
@@ -175,6 +176,7 @@
 	display: flex;
 	justify-content: flex-end;
 	margin: 1rem 2rem 0 2rem;
+	right: 5rem;
 }
 
 .pwa-bar button {
