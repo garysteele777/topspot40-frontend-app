@@ -520,7 +520,7 @@ export function startPlaybackPolling() {
                     phase === 'detail' ||
                     phase === 'artist'
                 ) &&
-                data.context?.audio_url
+                (data.context?.audio_url || data.context?.audio_queue)
             ) {
                 if (phase !== lastNarrationPhase) {
                     dlog(`🎤 Narration phase: ${phase}`);
@@ -528,9 +528,14 @@ export function startPlaybackPolling() {
                     lastNarrationPhase = phase;
 
 
-                    const url = data.context.audio_url as string;
+                    const audioQueue =
+                        Array.isArray(data.context?.audio_queue)
+                            ? data.context.audio_queue
+                                .map((item: { url?: unknown }) => item.url)
+                                .filter((url: unknown): url is string => typeof url === 'string' && url.length > 0)
+                            : [data.context.audio_url as string];
 
-                    dlog('🎤 Queue:', url);
+                    dlog('🎤 Queue:', audioQueue);
 
                     const bedUrl =
                         data.context?.bed_audio_url as string | undefined
@@ -544,7 +549,9 @@ export function startPlaybackPolling() {
                         void startBedUrl(bedUrl);
                     }
 
-                    narrationQueue.push({url, phase});
+                    for (const url of audioQueue) {
+                        narrationQueue.push({url, phase});
+                    }
                     void playNarrationQueue();
 
                 }
