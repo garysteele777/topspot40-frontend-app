@@ -72,6 +72,16 @@
 	}
 
 	.user-profile {
+		position: relative;
+		cursor: pointer;
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		object-fit: cover;
+		border: 2px solid #1db954;
+	}
+
+	.user-profile img {
 		width: 40px;
 		height: 40px;
 		border-radius: 50%;
