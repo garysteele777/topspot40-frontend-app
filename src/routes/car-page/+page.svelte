@@ -126,8 +126,8 @@
             },
             selection: {
                 ...sel,
+                languages: sel.languages ?? [sel.language],
 
-                // 🔥 ADD THIS (critical)
                 playbackOrder: settings.playbackOrder,
 
                 voices: settings.voices,
@@ -168,6 +168,7 @@
                 decade: 'ALL',
                 genre: sel.context?.genre ?? 'ALL',
                 tts_language: sel.language ?? 'en',
+                languages: (sel.languages ?? [sel.language]).join(','),
                 play_intro: String(settings.voices.includes('intro')),
                 play_detail: String(settings.voices.includes('detail')),
                 play_artist_description: String(settings.voices.includes('artist'))
