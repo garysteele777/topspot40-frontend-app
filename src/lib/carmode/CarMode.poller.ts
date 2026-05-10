@@ -281,6 +281,19 @@ async function playNarrationQueue() {
     }
 }
 
+function ctxHasFreshText(ctx: unknown): boolean {
+    if (!ctx || typeof ctx !== 'object') return false;
+
+    const c = ctx as {
+        intro?: unknown;
+        detail?: unknown;
+        artistText?: unknown;
+        artist_text?: unknown;
+    };
+
+    return Boolean(c.intro || c.detail || c.artistText || c.artist_text);
+}
+
 /* ─────────────────────────────────────────────
    Poller
    ───────────────────────────────────────────── */
@@ -322,9 +335,11 @@ export function startPlaybackPolling() {
             if (
                 hasPlaybackStarted &&
                 spotifyId &&
-                !justSwitchedRecently &&
-                !data.isPaused &&   // 🧠 ADD THIS
-                (spotifyId !== activeSpotifyTrackId)
+                !data.isPaused &&
+                (
+                    spotifyId !== activeSpotifyTrackId ||
+                    ctxHasFreshText(data.context)
+                )
             ) {
                 activeSpotifyTrackId = spotifyId;
                 trackSwitchTime = Date.now();   // 🔥 ADD THIS
@@ -333,9 +348,9 @@ export function startPlaybackPolling() {
                 const list = get(tracks);
                 const next = list.find(t => t.spotifyTrackId === spotifyId);
 
-                if (next) {
-                    const ctx = data.context ?? {};
+                const ctx = data.context ?? {};
 
+                if (next) {
                     const enriched = {
                         ...next,
 
@@ -348,9 +363,9 @@ export function startPlaybackPolling() {
 
 
                         // 🔥 ADD THESE
-                        intro: data.context?.intro ?? next.intro,
-                        detail: data.context?.detail ?? next.detail,
-                        artistText: data.context?.artist_text ?? next.artistText,
+                        intro: ctx?.intro ?? next.intro,
+                        detail: ctx?.detail ?? next.detail,
+                        artistText: ctx?.artistText ?? ctx?.artist_text ?? next.artistText,
                         artistArtwork: ctx?.artist_artwork ?? next.artistArtwork,
 
                         decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
@@ -363,7 +378,9 @@ export function startPlaybackPolling() {
                         blockSize: ctx?.block_size ?? next.blockSize,
                     };
 
-                    currentTrack.set(enriched);
+                    currentTrack.set({
+                        ...enriched
+                    });
                     currentRank.set(enriched.rank);
                 } else {
                     // radio fallback
@@ -402,7 +419,9 @@ export function startPlaybackPolling() {
                         blockPosition: ctx.block_position,
                         blockSize: ctx.block_size,
                     };
-                    currentTrack.set(fallbackTrack);
+                    currentTrack.set({
+                        ...fallbackTrack
+                    });
                     currentRank.set(fallbackTrack.rank);
 
                     dlog('📻 Radio fallback track created:', fallbackTrack.trackName);
