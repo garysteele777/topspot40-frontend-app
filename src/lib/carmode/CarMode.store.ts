@@ -17,6 +17,15 @@ export type CarModeTrack = LoadedTrack & {
     detail?: string | null;
     artistText?: string | null;
 
+    textsByLanguage?: Record<
+        string,
+        {
+            intro?: string | null;
+            detail?: string | null;
+            artist?: string | null;
+        }
+    > | null;
+
     // ⭐ Favorites metadata
     sourceRank?: number | null;
 

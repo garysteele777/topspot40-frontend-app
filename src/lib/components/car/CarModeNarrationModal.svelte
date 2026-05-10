@@ -60,6 +60,13 @@
        Info navigation (Intro / Detail / Artist)
        ────────────────────────────── */
     type InfoMode = 'intro' | 'detail' | 'artist';
+    type LanguageTexts = {
+        intro?: string | null;
+        detail?: string | null;
+        artist?: string | null;
+    };
+
+    type TextsByLanguage = Record<string, LanguageTexts>;
     let mode: InfoMode = 'intro';
 
     // Reset whenever modal opens
@@ -96,10 +103,28 @@
             mode === 'detail' ? 'Detail' :
                 'Artist';
 
-    $: bodyText =
-        mode === 'intro' ? (track?.intro ?? '—') :
-            mode === 'detail' ? (track?.detail ?? '—') :
-                (track?.artistText ?? '—');
+    $: textsByLanguage =
+        ((track as typeof track & {
+            textsByLanguage?: TextsByLanguage;
+        })?.textsByLanguage) ?? {};
+
+    $: languageEntries = Object.entries(textsByLanguage);
+
+    function getModeText(
+        texts: LanguageTexts,
+        mode: InfoMode
+    ): string | null | undefined {
+        if (mode === 'intro') return texts.intro;
+        if (mode === 'detail') return texts.detail;
+        return texts.artist;
+    }
+
+    function languageLabel(lang: string): string {
+        if (lang === 'en') return '🇺🇸 English';
+        if (lang === 'es') return '🇪🇸 Español';
+        if (lang === 'ptbr') return '🇧🇷 Português';
+        return lang;
+    }
 
 
 </script>
@@ -151,9 +176,27 @@
                 <button class="nav-btn" on:click|stopPropagation={nextMode}>›</button>
             </div>
 
-            <p transition:fade>
-                {bodyText === '—' ? 'No narration available for this track.' : bodyText}
-            </p>
+            {#if languageEntries.length > 0}
+                <div class="language-texts" transition:fade>
+                    {#each languageEntries as [lang, texts]}
+                        {@const text = getModeText(texts, mode)}
+                        {#if text}
+                            <section class="language-block">
+                                <h4>{languageLabel(lang)}</h4>
+                                <p>{text}</p>
+                            </section>
+                        {/if}
+                    {/each}
+                </div>
+            {:else}
+                <p transition:fade>
+                    {mode === 'intro'
+                        ? (track?.intro ?? 'No narration available for this track.')
+                        : mode === 'detail'
+                            ? (track?.detail ?? 'No narration available for this track.')
+                            : (track?.artistText ?? 'No narration available for this track.')}
+                </p>
+            {/if}
 
         </div>
 
@@ -252,6 +295,16 @@
         margin-top: 0.6rem;
         line-height: 1.45;
         opacity: 0.92;
+    }
+
+    .language-block {
+        margin-top: 0.9rem;
+    }
+
+    .language-block h4 {
+        margin: 0 0 0.35rem;
+        font-size: 0.8rem;
+        opacity: 0.75;
     }
 
     .close-btn {

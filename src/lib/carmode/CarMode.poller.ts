@@ -367,6 +367,7 @@ export function startPlaybackPolling() {
                         detail: ctx?.detail ?? next.detail,
                         artistText: ctx?.artistText ?? ctx?.artist_text ?? next.artistText,
                         artistArtwork: ctx?.artist_artwork ?? next.artistArtwork,
+                        textsByLanguage: ctx?.textsByLanguage ?? next.textsByLanguage,
 
                         decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
                         decadeName: ctx?.decade_name ?? next.decadeName,
@@ -406,6 +407,7 @@ export function startPlaybackPolling() {
                         detail: data.context?.detail ?? null,
                         artistText: data.context?.artist_text ?? null,
                         artistArtwork: ctx?.artist_artwork ?? null,
+                        textsByLanguage: ctx?.textsByLanguage ?? null,
 
                         decadeSlug: ctx?.decade_slug ?? null,
                         decadeName: ctx?.decade_name ?? null,
