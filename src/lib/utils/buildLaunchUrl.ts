@@ -20,6 +20,7 @@ export type BuildParams = {
 
     // playback
     language: string;
+    languages?: string[];
     voices: string[];
     playbackOrder: PlaybackOrder;
     voicePlayMode: VoicePlayMode;
@@ -73,6 +74,7 @@ export function buildLaunchUrl(p: BuildParams): string {
 
     // main params (same keys you already use)
     addParam(qs, 'language', p.language);
+    addParam(qs, 'languages', p.languages?.join(','));
     addParam(qs, 'voices', p.voices.join(','));
     addParam(qs, 'playbackOrder', p.playbackOrder);
     addParam(qs, 'voicePlayMode', p.voicePlayMode);
