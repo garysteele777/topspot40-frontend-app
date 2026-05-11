@@ -1,15 +1,16 @@
 // src/lib/carmode/CarMode.poller.ts
 
-import { browser } from '$app/environment';
-import { get } from 'svelte/store';
+import {browser} from '$app/environment';
+import {get} from 'svelte/store';
 
-import type { PlaybackPhase } from '$lib/helpers/car/types';
+import type {PlaybackPhase} from '$lib/helpers/car/types';
 
-import { markCurrentTrackPlayed } from '$lib/carmode/programTracker';
-import { playbackSettingsStore } from '$lib/stores/playbackSettings.store';
-import { startBedUrl, stopBed, isBedPlaying } from '$lib/audio/bedPlayer';
+import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
+import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
+import {calculatePlaybackTiming} from '$lib/utils/calculatePlaybackTiming';
 
-import { normalizePlaybackContext } from '$lib/utils/normalizePlaybackContext';
+import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
 import {
     buildFallbackPlaybackTrack,
     buildEnrichedPlaybackTrack
@@ -139,7 +140,7 @@ function playOneAudio(
     if (!browser) return Promise.resolve();
 
     return new Promise<void>((resolve) => {
-        stopCurrentNarrationPhase({ resolvePhase: false });
+        stopCurrentNarrationPhase({resolvePhase: false});
 
         const audio = new Audio(url);
         audio.volume = 0.60;
@@ -446,7 +447,7 @@ export function startPlaybackPolling() {
                     }
 
                     for (const url of audioQueue) {
-                        narrationQueue.push({ url, phase });
+                        narrationQueue.push({url, phase});
                     }
 
                     void playNarrationQueue();
@@ -477,7 +478,7 @@ export function startPlaybackPolling() {
                     try {
                         await fetch(`${API_BASE}/playback/play-spotify`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
                                 spotify_track_id: spotifyTrackId
                             })
@@ -497,20 +498,11 @@ export function startPlaybackPolling() {
                         ? Math.round(data.context.elapsed_seconds * 1000)
                         : 0;
 
-            const durationMs =
-                typeof data.durationMs === 'number'
-                    ? data.durationMs
-                    : typeof data.context?.duration_seconds === 'number'
-                        ? Math.round(data.context.duration_seconds * 1000)
-                        : 0;
-
-            const elapsedSecRaw = elapsedMs / 1000;
-            const durationSec = durationMs / 1000;
-
-            const elapsedSec =
-                durationSec > 0
-                    ? Math.min(elapsedSecRaw, durationSec)
-                    : elapsedSecRaw;
+            const {
+                elapsedSec,
+                durationSec,
+                progressPercent
+            } = calculatePlaybackTiming(data);
 
             const justSwitched = Date.now() - trackSwitchTime < 8000;
 
@@ -518,10 +510,7 @@ export function startPlaybackPolling() {
                 elapsed.set(elapsedSec);
                 duration.set(durationSec);
 
-                const pct =
-                    durationSec > 0 ? (elapsedSec / durationSec) * 100 : 0;
-
-                progress.set(Math.min(100, Math.max(0, pct)));
+                progress.set(progressPercent);
             }
 
             if (
