@@ -4,6 +4,7 @@ import {browser} from '$app/environment';
 import {get} from 'svelte/store';
 
 import type {PlaybackPhase} from '$lib/helpers/car/types';
+import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
 
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
@@ -61,11 +62,6 @@ let finishedTrackId: string | null = null;
 
 let narrationLock = false;
 
-type NarrationItem = {
-    url: string;
-    phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist';
-};
-
 let narrationQueue: NarrationQueueItem[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
@@ -102,9 +98,7 @@ export function stopCurrentNarrationPhase(
         activeNarrationAudio = null;
     }
 
-    elapsed.set(0);
-    duration.set(0);
-    progress.set(0);
+    resetPlaybackProgress();
     timingSource.set('spotify');
 
     if (options.resolvePhase !== false && activeNarrationResolve) {
@@ -157,9 +151,7 @@ function playOneAudio(
         playbackPhase.set(phase);
 
         audio.onloadedmetadata = () => {
-            duration.set(audio.duration);
-            elapsed.set(0);
-            progress.set(0);
+            resetPlaybackProgress();
         };
 
         activeNarrationTimer = window.setInterval(() => {
@@ -183,9 +175,7 @@ function playOneAudio(
             activeNarrationAudio = null;
             activeNarrationResolve = null;
 
-            elapsed.set(0);
-            duration.set(0);
-            progress.set(0);
+            resetPlaybackProgress();
 
             timingSource.set('spotify');
             resolve();
@@ -207,9 +197,7 @@ function playOneAudio(
             activeNarrationAudio = null;
             activeNarrationResolve = null;
 
-            elapsed.set(0);
-            duration.set(0);
-            progress.set(0);
+            resetPlaybackProgress();
 
             timingSource.set('spotify');
             resolve();
@@ -226,9 +214,7 @@ function playOneAudio(
             activeNarrationAudio = null;
             activeNarrationResolve = null;
 
-            elapsed.set(0);
-            duration.set(0);
-            progress.set(0);
+            resetPlaybackProgress();
 
             timingSource.set('spotify');
             resolve();
@@ -368,9 +354,7 @@ export function startPlaybackPolling() {
                     dlog('📻 Radio fallback track created:', fallbackTrack.trackName);
                 }
 
-                elapsed.set(0);
-                duration.set(0);
-                progress.set(0);
+                resetPlaybackProgress();
 
                 trackFinalized = false;
 
@@ -413,9 +397,7 @@ export function startPlaybackPolling() {
             if (phase !== prevPhase) {
                 dlog(`🔁 Phase transition: ${prevPhase} → ${phase}`);
 
-                elapsed.set(0);
-                duration.set(0);
-                progress.set(0);
+                resetPlaybackProgress();
             }
 
             if (
@@ -480,13 +462,6 @@ export function startPlaybackPolling() {
                     }
                 }
             }
-
-            const elapsedMs =
-                typeof data.elapsedMs === 'number'
-                    ? data.elapsedMs
-                    : typeof data.context?.elapsed_seconds === 'number'
-                        ? Math.round(data.context.elapsed_seconds * 1000)
-                        : 0;
 
             const {
                 elapsedSec,
