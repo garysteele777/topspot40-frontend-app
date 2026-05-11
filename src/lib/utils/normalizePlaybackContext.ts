@@ -115,3 +115,15 @@ export function normalizePlaybackContext(
                 : null,
     };
 }
+
+export function playbackContextHasFreshText(
+    ctx: Record<string, unknown> | null | undefined
+): boolean {
+    const normalized = normalizePlaybackContext(ctx);
+
+    return Boolean(
+        normalized.intro ||
+        normalized.detail ||
+        normalized.artistText
+    );
+}

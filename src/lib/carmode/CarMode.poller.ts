@@ -6,6 +6,7 @@ import {get} from 'svelte/store';
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
 
+
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
@@ -16,7 +17,10 @@ import {
     type NarrationQueueItem
 } from '$lib/utils/buildNarrationQueue';
 
-import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
+import {
+    normalizePlaybackContext,
+    playbackContextHasFreshText
+} from '$lib/utils/normalizePlaybackContext';
 import {
     buildFallbackPlaybackTrack,
     buildEnrichedPlaybackTrack
@@ -268,19 +272,6 @@ async function playNarrationQueue() {
     }
 }
 
-function ctxHasFreshText(ctx: unknown): boolean {
-    if (!ctx || typeof ctx !== 'object') return false;
-
-    const c = ctx as {
-        intro?: unknown;
-        detail?: unknown;
-        artistText?: unknown;
-        artist_text?: unknown;
-    };
-
-    return Boolean(c.intro || c.detail || c.artistText || c.artist_text);
-}
-
 export function startPlaybackPolling() {
     if (!browser) return;
     if (pollTimer) return;
@@ -310,7 +301,9 @@ export function startPlaybackPolling() {
                 !data.isPaused &&
                 (
                     spotifyId !== activeSpotifyTrackId ||
-                    ctxHasFreshText(data.context)
+                    playbackContextHasFreshText(
+                        data.context as Record<string, unknown> | null | undefined
+                    )
                 )
             ) {
                 activeSpotifyTrackId = spotifyId;
