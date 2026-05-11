@@ -7,6 +7,7 @@ import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
 import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
+import {buildFallbackPlaybackTrack} from '$lib/utils/buildPlaybackTrack';
 import {
     hasPlaybackStarted
 } from '$lib/utils/playbackPhaseHelpers';
@@ -404,40 +405,17 @@ export function startPlaybackPolling() {
                 } else {
                     // radio fallback
 
-                    const fallbackTrack = {
-                        id: null,
-                        rankingId: ctx?.ranking_id ?? null,
-                        rank: data.current_rank ?? 0,
+                    const fallbackTrack = buildFallbackPlaybackTrack({
+                        spotifyId,
+
+                        currentRank: data.current_rank ?? 0,
+
                         trackName: data.track_name ?? '',
+
                         artistName: data.artist_name ?? '',
-                        spotifyTrackId: spotifyId,
 
-                        // 🔥 ADD THESE
-                        collection_name: normalizedCtx.collection_name ?? null,
-                        collection_group_name: normalizedCtx.collection_group_name ?? null,
-
-                        collection_slug: normalizedCtx.collection_slug ?? null,
-                        collection_group_slug: normalizedCtx.collection_group_slug ?? null,
-
-                        // 🔥 ADD THESE
-                        intro: normalizedCtx.intro ?? null,
-                        detail: normalizedCtx.detail ?? null,
-                        artistText: normalizedCtx.artistText ?? null,
-                        artistArtwork: normalizedCtx.artist_artwork ?? null,
-                        textsByLanguage: normalizedCtx.textsByLanguage ?? null,
-
-                        decadeSlug: normalizedCtx.decade_slug ?? null,
-                        decadeName: normalizedCtx.decade_name ?? null,
-                        genreSlug: normalizedCtx.genre_slug ?? null,
-                        genreName: normalizedCtx.genre_name ?? null,
-
-                        yearReleased: null,
-                        albumArtwork: normalizedCtx.album_artwork ?? null,
-
-                        setNumber: normalizedCtx.setNumber,
-                        blockPosition: normalizedCtx.blockPosition,
-                        blockSize: normalizedCtx.blockSize,
-                    };
+                        normalizedCtx
+                    });
                     currentTrack.set(fallbackTrack as Parameters<typeof currentTrack.set>[0]);
                     currentRank.set(fallbackTrack.rank);
 
