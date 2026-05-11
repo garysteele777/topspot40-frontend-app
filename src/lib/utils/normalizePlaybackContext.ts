@@ -30,6 +30,10 @@ export type NormalizedPlaybackContext = {
 
     album_artwork?: string | null;
     artist_artwork?: string | null;
+
+    setNumber?: number | null;
+    blockPosition?: number | null;
+    blockSize?: number | null;
 };
 
 export function normalizePlaybackContext(
@@ -94,5 +98,20 @@ export function normalizePlaybackContext(
 
         artist_artwork:
             (ctx.artist_artwork as string | null) ?? null,
+
+        setNumber:
+            typeof ctx.set_number === 'number'
+                ? ctx.set_number
+                : null,
+
+        blockPosition:
+            typeof ctx.block_position === 'number'
+                ? ctx.block_position
+                : null,
+
+        blockSize:
+            typeof ctx.block_size === 'number'
+                ? ctx.block_size
+                : null,
     };
 }

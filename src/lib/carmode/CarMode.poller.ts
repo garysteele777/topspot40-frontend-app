@@ -8,8 +8,7 @@ import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
 import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
 import {
-    hasPlaybackStarted,
-    isNarrationPhase
+    hasPlaybackStarted
 } from '$lib/utils/playbackPhaseHelpers';
 
 import {
@@ -330,8 +329,6 @@ export function startPlaybackPolling() {
 
             const playbackStarted = hasPlaybackStarted(phase);
 
-            const justSwitchedRecently = Date.now() - trackSwitchTime < 1500;
-
             if (
                 playbackStarted &&
                 spotifyId &&
@@ -358,11 +355,17 @@ export function startPlaybackPolling() {
                         ...next,
 
                         // 🔥 ADD THESE
-                        collection_name: ctx?.collection_name ?? next.collection_name,
-                        collection_group_name: ctx?.collection_group_name ?? next.collection_group_name,
+                        collection_name:
+                            normalizedCtx.collection_name ?? next.collection_name,
 
-                        collection_slug: ctx?.collection_slug,
-                        collection_group_slug: ctx?.collection_group_slug,
+                        collection_group_name:
+                            normalizedCtx.collection_group_name ?? next.collection_group_name,
+
+                        collection_slug:
+                            normalizedCtx.collection_slug ?? null,
+
+                        collection_group_slug:
+                            normalizedCtx.collection_group_slug ?? null,
 
 
                         // 🔥 ADD THESE
@@ -372,14 +375,26 @@ export function startPlaybackPolling() {
                         artistArtwork: normalizedCtx.artist_artwork ?? next.artistArtwork,
                         textsByLanguage: normalizedCtx.textsByLanguage ?? next.textsByLanguage,
 
-                        decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
-                        decadeName: ctx?.decade_name ?? next.decadeName,
-                        genreSlug: ctx?.genre_slug ?? next.genreSlug,
-                        genreName: ctx?.genre_name ?? next.genreName,
+                        decadeSlug:
+                            normalizedCtx.decade_slug ?? next.decadeSlug,
 
-                        setNumber: ctx?.set_number ?? next.setNumber,
-                        blockPosition: ctx?.block_position ?? next.blockPosition,
-                        blockSize: ctx?.block_size ?? next.blockSize,
+                        decadeName:
+                            normalizedCtx.decade_name ?? next.decadeName,
+
+                        genreSlug:
+                            normalizedCtx.genre_slug ?? next.genreSlug,
+
+                        genreName:
+                            normalizedCtx.genre_name ?? next.genreName,
+
+                        setNumber:
+                            normalizedCtx.setNumber ?? next.setNumber,
+
+                        blockPosition:
+                            normalizedCtx.blockPosition ?? next.blockPosition,
+
+                        blockSize:
+                            normalizedCtx.blockSize ?? next.blockSize,
                     };
 
                     currentTrack.set({
@@ -398,11 +413,11 @@ export function startPlaybackPolling() {
                         spotifyTrackId: spotifyId,
 
                         // 🔥 ADD THESE
-                        collection_name: ctx?.collection_name ?? null,
-                        collection_group_name: ctx?.collection_group_name ?? null,
+                        collection_name: normalizedCtx.collection_name ?? null,
+                        collection_group_name: normalizedCtx.collection_group_name ?? null,
 
-                        collection_slug: ctx?.collection_slug ?? null,
-                        collection_group_slug: ctx?.collection_group_slug ?? null,
+                        collection_slug: normalizedCtx.collection_slug ?? null,
+                        collection_group_slug: normalizedCtx.collection_group_slug ?? null,
 
                         // 🔥 ADD THESE
                         intro: normalizedCtx.intro ?? null,
@@ -411,21 +426,19 @@ export function startPlaybackPolling() {
                         artistArtwork: normalizedCtx.artist_artwork ?? null,
                         textsByLanguage: normalizedCtx.textsByLanguage ?? null,
 
-                        decadeSlug: ctx?.decade_slug ?? null,
-                        decadeName: ctx?.decade_name ?? null,
-                        genreSlug: ctx?.genre_slug ?? null,
-                        genreName: ctx?.genre_name ?? null,
+                        decadeSlug: normalizedCtx.decade_slug ?? null,
+                        decadeName: normalizedCtx.decade_name ?? null,
+                        genreSlug: normalizedCtx.genre_slug ?? null,
+                        genreName: normalizedCtx.genre_name ?? null,
 
                         yearReleased: null,
                         albumArtwork: normalizedCtx.album_artwork ?? null,
 
-                        setNumber: ctx?.set_number,
-                        blockPosition: ctx?.block_position,
-                        blockSize: ctx?.block_size,
+                        setNumber: normalizedCtx.setNumber,
+                        blockPosition: normalizedCtx.blockPosition,
+                        blockSize: normalizedCtx.blockSize,
                     };
-                    currentTrack.set({
-                        ...fallbackTrack
-                    });
+                    currentTrack.set(fallbackTrack as Parameters<typeof currentTrack.set>[0]);
                     currentRank.set(fallbackTrack.rank);
 
                     dlog('📻 Radio fallback track created:', fallbackTrack.trackName);
