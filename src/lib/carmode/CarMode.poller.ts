@@ -5,6 +5,13 @@ import {get} from 'svelte/store';
 
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
+import {
+    fetchPlaybackStatus,
+    signalNarrationFinishedApi,
+    playSpotifyTrackApi,
+    signalTrackFinishedApi,
+    stopPlaybackApi
+} from '$lib/api/playbackApi';
 
 
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
@@ -42,9 +49,6 @@ import {
     tracks,
     currentSelection
 } from '$lib/carmode/CarMode.store';
-
-const API_BASE =
-    import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 const DEBUG =
     browser && localStorage.getItem('ts-debug') === '1';
@@ -243,11 +247,7 @@ export async function signalNarrationFinished() {
 
     dlog('📡 track-finished');
 
-    await fetch(`${API_BASE}/playback/narration-finished`, {
-        method: 'POST'
-    }).catch(() => {
-        // ignore signal failure
-    });
+    await signalNarrationFinishedApi();
 }
 
 async function playNarrationQueue() {
@@ -280,7 +280,7 @@ export function startPlaybackPolling() {
 
     pollTimer = window.setInterval(async () => {
         try {
-            const res = await fetch(`${API_BASE}/playback/status`);
+            const res = await fetchPlaybackStatus();
             if (!res.ok) return;
 
             const data = await res.json();
@@ -441,13 +441,7 @@ export function startPlaybackPolling() {
                     trackFinalized = false;
 
                     try {
-                        await fetch(`${API_BASE}/playback/play-spotify`, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                spotify_track_id: spotifyTrackId
-                            })
-                        });
+                        await playSpotifyTrackApi(spotifyTrackId);
                     } catch (err) {
                         console.error('❌ Spotify start failed', err);
                     } finally {
@@ -494,9 +488,7 @@ export function startPlaybackPolling() {
                     window.dispatchEvent(new CustomEvent('ts-next-track'));
 
                     try {
-                        await fetch(`${API_BASE}/playback/track-finished`, {
-                            method: 'POST'
-                        });
+                        await signalTrackFinishedApi();
                     } catch (err) {
                         console.error('❌ Failed to signal track-finished', err);
                     }
@@ -524,11 +516,7 @@ export function startPlaybackPolling() {
 }
 
 export async function skipToNextTrack(): Promise<void> {
-    await fetch(`${API_BASE}/playback/stop`, {
-        method: 'POST'
-    }).catch(() => {
-        // ignore stop failure
-    });
+    await stopPlaybackApi();
 
     const AUDIO_PIPELINE_CLEAR_DELAY_MS = 1200;
     await new Promise(resolve => setTimeout(resolve, AUDIO_PIPELINE_CLEAR_DELAY_MS));
@@ -544,9 +532,7 @@ export async function skipToNextTrack(): Promise<void> {
     finalizeTrackUI();
 
     if (!isSingleMode()) {
-        await fetch(`${API_BASE}/playback/track-finished`, {
-            method: 'POST'
-        }).catch(() => {
+        await signalTrackFinishedApi().catch(() => {
             // ignore signal failure
         });
     }
