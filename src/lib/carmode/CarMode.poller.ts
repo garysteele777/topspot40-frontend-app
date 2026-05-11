@@ -7,6 +7,10 @@ import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
 import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
+import {
+    hasPlaybackStarted,
+    isNarrationPhase
+} from '$lib/utils/playbackPhaseHelpers';
 
 import {
     timingSource,
@@ -324,17 +328,12 @@ export function startPlaybackPolling() {
             const phase = data.phase as PlaybackPhase;
 
 
-            const hasPlaybackStarted =
-                phase === 'collection_intro' ||
-                phase === 'intro' ||
-                phase === 'detail' ||
-                phase === 'artist' ||
-                phase === 'track';
+            const playbackStarted = hasPlaybackStarted(phase);
 
             const justSwitchedRecently = Date.now() - trackSwitchTime < 1500;
 
             if (
-                hasPlaybackStarted &&
+                playbackStarted &&
                 spotifyId &&
                 !data.isPaused &&
                 (
