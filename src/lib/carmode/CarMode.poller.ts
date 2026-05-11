@@ -388,10 +388,6 @@ export function startPlaybackPolling() {
                     currentRank.set(enriched.rank);
                 } else {
                     // radio fallback
-                    const ctx = data.context ?? {};
-                    const normalizedCtx = normalizePlaybackContext(
-                        ctx as Record<string, unknown>
-                    );
 
                     const fallbackTrack = {
                         id: null,
@@ -421,11 +417,11 @@ export function startPlaybackPolling() {
                         genreName: ctx?.genre_name ?? null,
 
                         yearReleased: null,
-                        albumArtwork: ctx?.album_artwork ?? null,
+                        albumArtwork: normalizedCtx.album_artwork ?? null,
 
-                        setNumber: ctx.set_number,
-                        blockPosition: ctx.block_position,
-                        blockSize: ctx.block_size,
+                        setNumber: ctx?.set_number,
+                        blockPosition: ctx?.block_position,
+                        blockSize: ctx?.block_size,
                     };
                     currentTrack.set({
                         ...fallbackTrack
