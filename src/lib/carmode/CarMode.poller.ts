@@ -1,18 +1,22 @@
 // src/lib/carmode/CarMode.poller.ts
 
-import {get} from 'svelte/store';
-import type {PlaybackPhase} from '$lib/helpers/car/types';
-import {browser} from '$app/environment';
-import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
-import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
-import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
-import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
+import { browser } from '$app/environment';
+import { get } from 'svelte/store';
+
+import type { PlaybackPhase } from '$lib/helpers/car/types';
+
+import { markCurrentTrackPlayed } from '$lib/carmode/programTracker';
+import { playbackSettingsStore } from '$lib/stores/playbackSettings.store';
+import { startBedUrl, stopBed, isBedPlaying } from '$lib/audio/bedPlayer';
+
+import { normalizePlaybackContext } from '$lib/utils/normalizePlaybackContext';
 import {
     buildFallbackPlaybackTrack,
     buildEnrichedPlaybackTrack
 } from '$lib/utils/buildPlaybackTrack';
 import {
-    hasPlaybackStarted
+    hasPlaybackStarted,
+    isNarrationPhase
 } from '$lib/utils/playbackPhaseHelpers';
 
 import {
@@ -24,9 +28,9 @@ import {
     progress,
     currentRank,
     currentTrack,
-    tracks
+    tracks,
+    currentSelection
 } from '$lib/carmode/CarMode.store';
-
 
 const API_BASE =
     import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
@@ -34,16 +38,13 @@ const API_BASE =
 const DEBUG =
     browser && localStorage.getItem('ts-debug') === '1';
 
-
 const dlog = (...args: unknown[]) => {
     if (DEBUG) console.log(...args);
 };
 
-
 const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
 );
-
 
 let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
@@ -52,8 +53,8 @@ let lastSpotifyId: string | null = null;
 let spotifyStartLock = false;
 let finishedTrackId: string | null = null;
 
-// Narration queue + lock
 let narrationLock = false;
+
 type NarrationItem = {
     url: string;
     phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist';
@@ -61,27 +62,23 @@ type NarrationItem = {
 
 let narrationQueue: NarrationItem[] = [];
 
-
 let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
 let narrationSignaled = false;
 
 let activeSpotifyTrackId: string | null = null;
 let trackSwitchTime = 0;
+
 let activeNarrationAudio: HTMLAudioElement | null = null;
 let activeNarrationTimer: number | null = null;
 let activeNarrationResolve: (() => void) | null = null;
 let narrationInterrupting = false;
-
-
-import {currentSelection} from '$lib/carmode/CarMode.store';
 
 let narrationPausedAtBoundary = false;
 
 export function stopCurrentNarrationPhase(
     options: { resolvePhase?: boolean; preserveResolve?: boolean } = {}
 ): void {
-
     if (options.preserveResolve) {
         narrationPausedAtBoundary = true;
     }
@@ -122,15 +119,11 @@ function isSingleMode(): boolean {
     );
 }
 
-/* ─────────────────────────────────────────────
-   Finalize UI when a track ends
-   ───────────────────────────────────────────── */
-
 function finalizeTrackUI(): void {
-
     isPlaying.set(false);
 
     const d = Number(get(duration) ?? 0);
+
     if (d > 0) {
         elapsed.set(d);
         progress.set(100);
@@ -139,29 +132,21 @@ function finalizeTrackUI(): void {
     }
 }
 
-/* ─────────────────────────────────────────────
-   Low-level narration player
-   ───────────────────────────────────────────── */
-
-
 function playOneAudio(
     url: string,
     phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist'
 ): Promise<void> {
-    // ✅ SSR safety: Audio + window don't exist on the server
     if (!browser) return Promise.resolve();
 
-
     return new Promise<void>((resolve) => {
-
-        stopCurrentNarrationPhase({resolvePhase: false});
+        stopCurrentNarrationPhase({ resolvePhase: false });
 
         const audio = new Audio(url);
         audio.volume = 0.60;
+
         activeNarrationAudio = audio;
         activeNarrationResolve = resolve;
 
-        // 🧠 narration owns the clock
         timingSource.set('narration');
         playbackPhase.set(phase);
 
@@ -176,7 +161,6 @@ function playOneAudio(
 
             if (audio.duration > 0) {
                 progress.set((audio.currentTime / audio.duration) * 100);
-
             } else {
                 progress.set(0);
             }
@@ -184,10 +168,12 @@ function playOneAudio(
 
         audio.onended = () => {
             narrationInterrupting = false;
+
             if (activeNarrationTimer !== null) {
                 clearInterval(activeNarrationTimer);
                 activeNarrationTimer = null;
             }
+
             activeNarrationAudio = null;
             activeNarrationResolve = null;
 
@@ -230,6 +216,7 @@ function playOneAudio(
                 clearInterval(activeNarrationTimer);
                 activeNarrationTimer = null;
             }
+
             activeNarrationAudio = null;
             activeNarrationResolve = null;
 
@@ -238,9 +225,8 @@ function playOneAudio(
             progress.set(0);
 
             timingSource.set('spotify');
-            resolve(); // ✅ skip narration, continue sequence
+            resolve();
         });
-
     });
 }
 
@@ -256,6 +242,7 @@ export function continueStoppedNarrationPhase(): void {
 
 export async function signalNarrationFinished() {
     if (narrationSignaled) return;
+
     narrationSignaled = true;
 
     dlog('📡 track-finished');
@@ -263,12 +250,13 @@ export async function signalNarrationFinished() {
     await fetch(`${API_BASE}/playback/narration-finished`, {
         method: 'POST'
     }).catch(() => {
+        // ignore signal failure
     });
 }
 
-
 async function playNarrationQueue() {
     if (narrationLock) return;
+
     narrationLock = true;
 
     try {
@@ -276,7 +264,6 @@ async function playNarrationQueue() {
             const item = narrationQueue.shift()!;
             dlog('🎤 Playing:', item.phase);
             await playOneAudio(item.url, item.phase);
-
         }
 
         dlog('🔔 Narration finished');
@@ -302,17 +289,11 @@ function ctxHasFreshText(ctx: unknown): boolean {
     return Boolean(c.intro || c.detail || c.artistText || c.artist_text);
 }
 
-/* ─────────────────────────────────────────────
-   Poller
-   ───────────────────────────────────────────── */
-
 export function startPlaybackPolling() {
-    if (!browser) return;   // 👈 ADD THIS GUARD
+    if (!browser) return;
     if (pollTimer) return;
 
-
     dlog('▶️ Playback polling started');
-
 
     pollTimer = window.setInterval(async () => {
         try {
@@ -329,8 +310,6 @@ export function startPlaybackPolling() {
 
             const spotifyId = data.context?.spotify_track_id ?? null;
             const phase = data.phase as PlaybackPhase;
-
-
             const playbackStarted = hasPlaybackStarted(phase);
 
             if (
@@ -343,7 +322,7 @@ export function startPlaybackPolling() {
                 )
             ) {
                 activeSpotifyTrackId = spotifyId;
-                trackSwitchTime = Date.now();   // 🔥 ADD THIS
+                trackSwitchTime = Date.now();
                 finishedTrackId = null;
 
                 const list = get(tracks);
@@ -363,22 +342,21 @@ export function startPlaybackPolling() {
                     currentTrack.set(
                         enriched as unknown as Parameters<typeof currentTrack.set>[0]
                     );
+
                     currentRank.set(enriched.rank);
                 } else {
-                    // radio fallback
-
                     const fallbackTrack = buildFallbackPlaybackTrack({
                         spotifyId,
-
                         currentRank: data.current_rank ?? 0,
-
                         trackName: data.track_name ?? '',
-
                         artistName: data.artist_name ?? '',
-
                         normalizedCtx
                     });
-                    currentTrack.set(fallbackTrack as Parameters<typeof currentTrack.set>[0]);
+
+                    currentTrack.set(
+                        fallbackTrack as Parameters<typeof currentTrack.set>[0]
+                    );
+
                     currentRank.set(fallbackTrack.rank);
 
                     dlog('📻 Radio fallback track created:', fallbackTrack.trackName);
@@ -393,12 +371,8 @@ export function startPlaybackPolling() {
                 dlog('🎯 UI track switch:', next?.trackName ?? data.track_name);
             }
 
-
             dlog('⏱ Poll data:', data);
 
-            // ─────────────────────────────
-            // Extract rankingId every poll
-            // ─────────────────────────────
             const rankingId =
                 data.context?.ranking_id != null
                     ? Number(data.context.ranking_id)
@@ -409,40 +383,6 @@ export function startPlaybackPolling() {
                             : null;
 
             dlog('🎯 rankingId:', rankingId);
-
-            // ─────────────────────────────
-// Rank change → update UI track card (radio-safe)
-// ─────────────────────────────
-            /*
-            if (
-                rankingId != null &&
-                rankingId !== get(currentTrack)?.rankingId &&
-                !spotifyId &&
-                !hasPlaybackStarted   // 🔥 ADD THIS LINE
-            ) {
-                const list = get(tracks);
-                const next = list.find(t => t.rankingId === rankingId);
-
-                dlog('🎯 Rank-based UI update', {
-                    rankingId,
-                    previous: get(currentTrack)?.trackName,
-                    next: next?.trackName
-                });
-
-                if (next) {
-                    currentTrack.set(next);
-                    currentRank.set(next.rank);
-
-                    // reset UI timing
-                    elapsed.set(0);
-                    duration.set(0);
-                    progress.set(0);
-
-                    trackFinalized = false;
-                }
-            }
-            */
-
 
             playbackPhase.set(phase);
 
@@ -458,24 +398,12 @@ export function startPlaybackPolling() {
 
             isPlaying.set(playing);
 
-            // 🛑 FRONTEND owns timing during narration — do NOT overwrite UI clock
-            const isNarrationPhase =
-                phase === 'set_intro' ||
-                phase === 'collection_intro' ||
-                phase === 'liner' ||
-                phase === 'intro' ||
-                phase === 'detail' ||
-                phase === 'artist';
+            const narrationPhase = isNarrationPhase(phase);
 
-            if (get(timingSource) === 'narration' && isNarrationPhase) {
+            if (get(timingSource) === 'narration' && narrationPhase) {
                 lastPhase = phase;
-                // 🔥 DO NOT return — just skip clock updates
             }
 
-
-            // ─────────────────────────────
-            // Phase transition reset
-            // ─────────────────────────────
             if (phase !== prevPhase) {
                 dlog(`🔁 Phase transition: ${prevPhase} → ${phase}`);
 
@@ -484,31 +412,23 @@ export function startPlaybackPolling() {
                 progress.set(0);
             }
 
-            /* ─────────────────────────────
-               🎤 Narration handling
-               ───────────────────────────── */
             if (
-                (
-                    phase === 'set_intro' ||
-                    phase === 'collection_intro' ||
-                    phase === 'liner' ||
-                    phase === 'intro' ||
-                    phase === 'detail' ||
-                    phase === 'artist'
-                ) &&
+                narrationPhase &&
                 (data.context?.audio_url || data.context?.audio_queue)
             ) {
                 if (phase !== lastNarrationPhase) {
                     dlog(`🎤 Narration phase: ${phase}`);
-                    narrationSignaled = false;   // ✅ reset per phase
-                    lastNarrationPhase = phase;
 
+                    narrationSignaled = false;
+                    lastNarrationPhase = phase;
 
                     const audioQueue =
                         Array.isArray(data.context?.audio_queue)
                             ? data.context.audio_queue
                                 .map((item: { url?: unknown }) => item.url)
-                                .filter((url: unknown): url is string => typeof url === 'string' && url.length > 0)
+                                .filter((url: unknown): url is string =>
+                                    typeof url === 'string' && url.length > 0
+                                )
                             : [data.context.audio_url as string];
 
                     dlog('🎤 Queue:', audioQueue);
@@ -526,49 +446,41 @@ export function startPlaybackPolling() {
                     }
 
                     for (const url of audioQueue) {
-                        narrationQueue.push({url, phase});
+                        narrationQueue.push({ url, phase });
                     }
-                    void playNarrationQueue();
 
+                    void playNarrationQueue();
                 }
-            } else if (
-                phase !== 'set_intro' &&
-                phase !== 'liner' &&
-                phase !== 'intro' &&
-                phase !== 'detail' &&
-                phase !== 'artist'
-            ) {
+            } else if (!narrationPhase) {
                 lastNarrationPhase = null;
             }
 
-            /* ─────────────────────────────
-               🎵 Track handling (Spotify)
-               ───────────────────────────── */
             if (phase === 'track' && data.context?.spotify_track_id) {
-                const spotifyId = data.context.spotify_track_id as string;
+                const spotifyTrackId = data.context.spotify_track_id as string;
 
                 stopBed();
 
                 if (
-                    lastSpotifyId !== spotifyId &&
+                    lastSpotifyId !== spotifyTrackId &&
                     !spotifyStartLock &&
-                    !data.isPaused   // 🧠 THIS IS THE KEY
+                    !data.isPaused
                 ) {
-
                     spotifyStartLock = true;
 
-                    dlog('🎵 TRACK start:', spotifyId);
+                    dlog('🎵 TRACK start:', spotifyTrackId);
 
-                    lastSpotifyId = spotifyId;
-                    activeSpotifyTrackId = spotifyId;
+                    lastSpotifyId = spotifyTrackId;
+                    activeSpotifyTrackId = spotifyTrackId;
                     trackSwitchTime = Date.now();
                     trackFinalized = false;
 
                     try {
                         await fetch(`${API_BASE}/playback/play-spotify`, {
                             method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({spotify_track_id: spotifyId})
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                spotify_track_id: spotifyTrackId
+                            })
                         });
                     } catch (err) {
                         console.error('❌ Spotify start failed', err);
@@ -577,11 +489,6 @@ export function startPlaybackPolling() {
                     }
                 }
             }
-
-
-            /* ─────────────────────────────
-               Timing + progress (clamped + finalize)
-               ───────────────────────────── */
 
             const elapsedMs =
                 typeof data.elapsedMs === 'number'
@@ -597,15 +504,14 @@ export function startPlaybackPolling() {
                         ? Math.round(data.context.duration_seconds * 1000)
                         : 0;
 
-// Convert ms → seconds
             const elapsedSecRaw = elapsedMs / 1000;
             const durationSec = durationMs / 1000;
 
-// Clamp elapsed so it never runs past duration
             const elapsedSec =
-                durationSec > 0 ? Math.min(elapsedSecRaw, durationSec) : elapsedSecRaw;
+                durationSec > 0
+                    ? Math.min(elapsedSecRaw, durationSec)
+                    : elapsedSecRaw;
 
-// 🔥 ONLY update timing when Spotify owns the clock
             const justSwitched = Date.now() - trackSwitchTime < 8000;
 
             if (get(timingSource) === 'spotify' && !justSwitched) {
@@ -618,31 +524,26 @@ export function startPlaybackPolling() {
                 progress.set(Math.min(100, Math.max(0, pct)));
             }
 
-
             if (
                 phase === 'track' &&
                 spotifyId &&
-                finishedTrackId !== spotifyId &&   // 🔥 FIRST LINE OF DEFENSE
+                finishedTrackId !== spotifyId &&
                 !trackFinalized &&
                 durationSec > 1 &&
                 elapsedSec >= durationSec &&
                 elapsedSec > 2 &&
                 !justSwitched
             ) {
-                finishedTrackId = spotifyId;   // ⭐ important
+                finishedTrackId = spotifyId;
                 trackFinalized = true;
 
                 finalizeTrackUI();
                 markCurrentTrackPlayed();
 
-                const sel = get(currentSelection);
                 const settings = get(playbackSettingsStore);
-
                 const isContinuous = settings.pauseMode === 'continuous';
 
-                if (!isContinuous) {
-                    //
-                } else {
+                if (isContinuous) {
                     window.dispatchEvent(new CustomEvent('ts-next-track'));
 
                     try {
@@ -653,12 +554,10 @@ export function startPlaybackPolling() {
                         console.error('❌ Failed to signal track-finished', err);
                     }
                 }
-
             }
-            // Fallback: detect leaving track phase
+
             if (false && lastPhase === 'track' && phase !== 'track') {
                 trackFinalized = true;
-
 
                 finalizeTrackUI();
                 markCurrentTrackPlayed();
@@ -671,52 +570,40 @@ export function startPlaybackPolling() {
             }
 
             lastPhase = phase;
-
         } catch (err) {
             console.warn('⚠️ Playback poll error', err);
         }
     }, POLL_INTERVAL_MS);
 }
 
-/* ─────────────────────────────────────────────
-   ⏭ Manual Skip → count as played + advance
-   ───────────────────────────────────────────── */
-
 export async function skipToNextTrack(): Promise<void> {
-
-    // 1️⃣ Stop Spotify immediately
     await fetch(`${API_BASE}/playback/stop`, {
         method: 'POST'
     }).catch(() => {
+        // ignore stop failure
     });
 
-    // small buffer to clear audio pipeline
     const AUDIO_PIPELINE_CLEAR_DELAY_MS = 1200;
     await new Promise(resolve => setTimeout(resolve, AUDIO_PIPELINE_CLEAR_DELAY_MS));
 
-    // 2️⃣ Count current track as played
     markCurrentTrackPlayed();
 
-    // 3️⃣ Stop any narration immediately
     stopCurrentNarrationPhase();
     stopBed();
+
     narrationQueue = [];
     narrationLock = false;
 
-    // 4️⃣ Snap UI to finished
     finalizeTrackUI();
 
-    // 5️⃣ Tell backend to advance only when not in Single mode
     if (!isSingleMode()) {
         await fetch(`${API_BASE}/playback/track-finished`, {
             method: 'POST'
         }).catch(() => {
+            // ignore signal failure
         });
-    } else {
-        //
     }
 }
-
 
 export function stopPlaybackPolling() {
     if (!pollTimer) return;
@@ -725,10 +612,6 @@ export function stopPlaybackPolling() {
     pollTimer = null;
 
     lastPhase = null;
-
-    // 🚫 DO NOT reset lastSpotifyId
-    // lastSpotifyId = null;
-
     trackFinalized = false;
 
     narrationQueue = [];
@@ -736,7 +619,6 @@ export function stopPlaybackPolling() {
     lastNarrationPhase = null;
 }
 
-
-// Compatibility export
 export function markUserStartedPlayback() {
+    // compatibility export
 }
