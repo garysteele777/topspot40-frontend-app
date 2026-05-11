@@ -7,7 +7,10 @@ import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
 import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
-import {buildFallbackPlaybackTrack} from '$lib/utils/buildPlaybackTrack';
+import {
+    buildFallbackPlaybackTrack,
+    buildEnrichedPlaybackTrack
+} from '$lib/utils/buildPlaybackTrack';
 import {
     hasPlaybackStarted
 } from '$lib/utils/playbackPhaseHelpers';
@@ -352,55 +355,14 @@ export function startPlaybackPolling() {
                 );
 
                 if (next) {
-                    const enriched = {
-                        ...next,
-
-                        // 🔥 ADD THESE
-                        collection_name:
-                            normalizedCtx.collection_name ?? next.collection_name,
-
-                        collection_group_name:
-                            normalizedCtx.collection_group_name ?? next.collection_group_name,
-
-                        collection_slug:
-                            normalizedCtx.collection_slug ?? null,
-
-                        collection_group_slug:
-                            normalizedCtx.collection_group_slug ?? null,
-
-
-                        // 🔥 ADD THESE
-                        intro: normalizedCtx.intro ?? next.intro,
-                        detail: normalizedCtx.detail ?? next.detail,
-                        artistText: normalizedCtx.artistText ?? next.artistText,
-                        artistArtwork: normalizedCtx.artist_artwork ?? next.artistArtwork,
-                        textsByLanguage: normalizedCtx.textsByLanguage ?? next.textsByLanguage,
-
-                        decadeSlug:
-                            normalizedCtx.decade_slug ?? next.decadeSlug,
-
-                        decadeName:
-                            normalizedCtx.decade_name ?? next.decadeName,
-
-                        genreSlug:
-                            normalizedCtx.genre_slug ?? next.genreSlug,
-
-                        genreName:
-                            normalizedCtx.genre_name ?? next.genreName,
-
-                        setNumber:
-                            normalizedCtx.setNumber ?? next.setNumber,
-
-                        blockPosition:
-                            normalizedCtx.blockPosition ?? next.blockPosition,
-
-                        blockSize:
-                            normalizedCtx.blockSize ?? next.blockSize,
-                    };
-
-                    currentTrack.set({
-                        ...enriched
+                    const enriched = buildEnrichedPlaybackTrack({
+                        baseTrack: next,
+                        normalizedCtx
                     });
+
+                    currentTrack.set(
+                        enriched as unknown as Parameters<typeof currentTrack.set>[0]
+                    );
                     currentRank.set(enriched.rank);
                 } else {
                     // radio fallback

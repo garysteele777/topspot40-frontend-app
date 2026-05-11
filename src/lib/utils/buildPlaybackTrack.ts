@@ -2,6 +2,24 @@
 
 import type {NormalizedPlaybackContext} from '$lib/utils/normalizePlaybackContext';
 
+type PlaybackBaseTrack = Record<string, unknown> & {
+    rank: number;
+    collection_name?: string | null;
+    collection_group_name?: string | null;
+    intro?: string | null;
+    detail?: string | null;
+    artistText?: string | null;
+    artistArtwork?: string | null;
+    textsByLanguage?: NormalizedPlaybackContext['textsByLanguage'] | null;
+    decadeSlug?: string | null;
+    decadeName?: string | null;
+    genreSlug?: string | null;
+    genreName?: string | null;
+    setNumber?: number | null;
+    blockPosition?: number | null;
+    blockSize?: number | null;
+};
+
 type FallbackTrackInput = {
     spotifyId: string;
     currentRank: number;
@@ -12,12 +30,12 @@ type FallbackTrackInput = {
 };
 
 export function buildFallbackPlaybackTrack({
-    spotifyId,
-    currentRank,
-    trackName,
-    artistName,
-    normalizedCtx
-}: FallbackTrackInput) {
+                                               spotifyId,
+                                               currentRank,
+                                               trackName,
+                                               artistName,
+                                               normalizedCtx
+                                           }: FallbackTrackInput) {
 
     return {
         id: null,
@@ -76,12 +94,72 @@ export function buildFallbackPlaybackTrack({
             normalizedCtx.album_artwork ?? null,
 
         setNumber:
-            normalizedCtx.setNumber,
+        normalizedCtx.setNumber,
 
         blockPosition:
-            normalizedCtx.blockPosition,
+        normalizedCtx.blockPosition,
 
         blockSize:
-            normalizedCtx.blockSize,
+        normalizedCtx.blockSize,
+    };
+}
+
+export function buildEnrichedPlaybackTrack({
+                                               baseTrack,
+                                               normalizedCtx
+                                           }: {
+    baseTrack: PlaybackBaseTrack;
+    normalizedCtx: NormalizedPlaybackContext;
+}) {
+    return {
+        ...baseTrack,
+
+        collection_name:
+            normalizedCtx.collection_name ?? baseTrack.collection_name,
+
+        collection_group_name:
+            normalizedCtx.collection_group_name ?? baseTrack.collection_group_name,
+
+        collection_slug:
+            normalizedCtx.collection_slug ?? null,
+
+        collection_group_slug:
+            normalizedCtx.collection_group_slug ?? null,
+
+        intro:
+            normalizedCtx.intro ?? baseTrack.intro,
+
+        detail:
+            normalizedCtx.detail ?? baseTrack.detail,
+
+        artistText:
+            normalizedCtx.artistText ?? baseTrack.artistText,
+
+        artistArtwork:
+            normalizedCtx.artist_artwork ?? baseTrack.artistArtwork,
+
+        textsByLanguage:
+            normalizedCtx.textsByLanguage ?? baseTrack.textsByLanguage,
+
+        decadeSlug:
+            normalizedCtx.decade_slug ?? baseTrack.decadeSlug,
+
+        decadeName:
+            normalizedCtx.decade_name ?? baseTrack.decadeName,
+
+        genreSlug:
+            normalizedCtx.genre_slug ?? baseTrack.genreSlug,
+
+        genreName:
+            normalizedCtx.genre_name ?? baseTrack.genreName,
+
+        setNumber:
+            normalizedCtx.setNumber ?? baseTrack.setNumber,
+
+        blockPosition:
+            normalizedCtx.blockPosition ?? baseTrack.blockPosition,
+
+        blockSize:
+            normalizedCtx.blockSize ?? baseTrack.blockSize,
     };
 }
