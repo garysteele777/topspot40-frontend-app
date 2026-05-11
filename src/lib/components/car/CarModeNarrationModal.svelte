@@ -74,9 +74,9 @@
         mode = 'intro';
     }
 
-    $: if (open && track) {
-        console.log("🎭 MODAL TRACK:", track);
-    }
+    // $: if (open && track) {
+    //     console.log("🎭 MODAL TRACK:", track);
+    // }
 
     $: headerImage =
         track?.artistArtwork ??
