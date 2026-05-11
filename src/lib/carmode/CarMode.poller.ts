@@ -9,6 +9,10 @@ import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
 import {calculatePlaybackTiming} from '$lib/utils/calculatePlaybackTiming';
+import {
+    buildNarrationQueue,
+    type NarrationQueueItem
+} from '$lib/utils/buildNarrationQueue';
 
 import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
 import {
@@ -61,7 +65,7 @@ type NarrationItem = {
     phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist';
 };
 
-let narrationQueue: NarrationItem[] = [];
+let narrationQueue: NarrationQueueItem[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
 let trackFinalized = false;
@@ -423,32 +427,17 @@ export function startPlaybackPolling() {
                     narrationSignaled = false;
                     lastNarrationPhase = phase;
 
-                    const audioQueue =
-                        Array.isArray(data.context?.audio_queue)
-                            ? data.context.audio_queue
-                                .map((item: { url?: unknown }) => item.url)
-                                .filter((url: unknown): url is string =>
-                                    typeof url === 'string' && url.length > 0
-                                )
-                            : [data.context.audio_url as string];
+                    const narrationItems = buildNarrationQueue(
+                        phase,
+                        data.context
+                    );
 
-                    dlog('🎤 Queue:', audioQueue);
+                    dlog(
+                        '🎤 Queue:',
+                        narrationItems.map(item => item.url)
+                    );
 
-                    const bedUrl =
-                        data.context?.bed_audio_url as string | undefined
-                        ?? (
-                            data.context?.bed_bucket && data.context?.bed_key
-                                ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${data.context.bed_bucket}/${data.context.bed_key}`
-                                : undefined
-                        );
-
-                    if (bedUrl && !isBedPlaying()) {
-                        void startBedUrl(bedUrl);
-                    }
-
-                    for (const url of audioQueue) {
-                        narrationQueue.push({url, phase});
-                    }
+                    narrationQueue.push(...narrationItems);
 
                     void playNarrationQueue();
                 }
