@@ -6,6 +6,7 @@ import {browser} from '$app/environment';
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
+import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
 
 import {
     timingSource,
@@ -349,6 +350,9 @@ export function startPlaybackPolling() {
                 const next = list.find(t => t.spotifyTrackId === spotifyId);
 
                 const ctx = data.context ?? {};
+                const normalizedCtx = normalizePlaybackContext(
+                    ctx as Record<string, unknown>
+                );
 
                 if (next) {
                     const enriched = {
@@ -363,11 +367,11 @@ export function startPlaybackPolling() {
 
 
                         // 🔥 ADD THESE
-                        intro: ctx?.intro ?? next.intro,
-                        detail: ctx?.detail ?? next.detail,
-                        artistText: ctx?.artistText ?? ctx?.artist_text ?? next.artistText,
-                        artistArtwork: ctx?.artist_artwork ?? next.artistArtwork,
-                        textsByLanguage: ctx?.textsByLanguage ?? next.textsByLanguage,
+                        intro: normalizedCtx.intro ?? next.intro,
+                        detail: normalizedCtx.detail ?? next.detail,
+                        artistText: normalizedCtx.artistText ?? next.artistText,
+                        artistArtwork: normalizedCtx.artist_artwork ?? next.artistArtwork,
+                        textsByLanguage: normalizedCtx.textsByLanguage ?? next.textsByLanguage,
 
                         decadeSlug: ctx?.decade_slug ?? next.decadeSlug,
                         decadeName: ctx?.decade_name ?? next.decadeName,
@@ -386,6 +390,9 @@ export function startPlaybackPolling() {
                 } else {
                     // radio fallback
                     const ctx = data.context ?? {};
+                    const normalizedCtx = normalizePlaybackContext(
+                        ctx as Record<string, unknown>
+                    );
 
                     const fallbackTrack = {
                         id: null,
@@ -403,11 +410,11 @@ export function startPlaybackPolling() {
                         collection_group_slug: ctx?.collection_group_slug ?? null,
 
                         // 🔥 ADD THESE
-                        intro: data.context?.intro ?? null,
-                        detail: data.context?.detail ?? null,
-                        artistText: data.context?.artist_text ?? null,
-                        artistArtwork: ctx?.artist_artwork ?? null,
-                        textsByLanguage: ctx?.textsByLanguage ?? null,
+                        intro: normalizedCtx.intro ?? null,
+                        detail: normalizedCtx.detail ?? null,
+                        artistText: normalizedCtx.artistText ?? null,
+                        artistArtwork: normalizedCtx.artist_artwork ?? null,
+                        textsByLanguage: normalizedCtx.textsByLanguage ?? null,
 
                         decadeSlug: ctx?.decade_slug ?? null,
                         decadeName: ctx?.decade_name ?? null,
