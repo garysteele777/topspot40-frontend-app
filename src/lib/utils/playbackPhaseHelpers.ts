@@ -28,3 +28,12 @@ export function hasPlaybackStarted(
 ): boolean {
     return isNarrationPhase(phase) || phase === 'track';
 }
+
+export function isPhasePlaying(
+    phase: PlaybackPhase | null | undefined
+): boolean {
+    return (
+        isNarrationPhase(phase) ||
+        phase === 'track'
+    );
+}

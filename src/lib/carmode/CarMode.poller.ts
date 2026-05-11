@@ -35,7 +35,8 @@ import {
 } from '$lib/utils/buildPlaybackTrack';
 import {
     hasPlaybackStarted,
-    isNarrationPhase
+    isNarrationPhase,
+    isPhasePlaying
 } from '$lib/utils/playbackPhaseHelpers';
 
 import {
@@ -375,10 +376,7 @@ export function startPlaybackPolling() {
             const playing =
                 typeof data.isPlaying === 'boolean'
                     ? data.isPlaying
-                    : phase === 'intro' ||
-                    phase === 'detail' ||
-                    phase === 'artist' ||
-                    phase === 'track';
+                    : isPhasePlaying(phase);
 
             isPlaying.set(playing);
 
