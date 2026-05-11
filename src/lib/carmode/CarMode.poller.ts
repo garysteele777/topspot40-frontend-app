@@ -5,6 +5,7 @@ import {get} from 'svelte/store';
 
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
+import {cleanupNarrationAudio} from '$lib/audio/narrationAudioCleanup';
 import {
     fetchPlaybackStatus,
     signalNarrationFinishedApi,
@@ -93,21 +94,18 @@ export function stopCurrentNarrationPhase(
         narrationPausedAtBoundary = true;
     }
 
-    if (activeNarrationTimer !== null) {
-        clearInterval(activeNarrationTimer);
-        activeNarrationTimer = null;
-    }
-
-    if (activeNarrationAudio) {
-        narrationInterrupting = true;
-        activeNarrationAudio.pause();
-        activeNarrationAudio.currentTime = 0;
-        activeNarrationAudio.src = '';
-        activeNarrationAudio = null;
-    }
-
-    resetPlaybackProgress();
-    timingSource.set('spotify');
+    cleanupNarrationAudio({
+        timer: activeNarrationTimer,
+        setTimer: value => {
+            activeNarrationTimer = value;
+        },
+        setAudio: value => {
+            activeNarrationAudio = value;
+        },
+        setResolve: value => {
+            activeNarrationResolve = value;
+        }
+    });
 
     if (options.resolvePhase !== false && activeNarrationResolve) {
         const resolve = activeNarrationResolve;
@@ -175,17 +173,18 @@ function playOneAudio(
         audio.onended = () => {
             narrationInterrupting = false;
 
-            if (activeNarrationTimer !== null) {
-                clearInterval(activeNarrationTimer);
-                activeNarrationTimer = null;
-            }
-
-            activeNarrationAudio = null;
-            activeNarrationResolve = null;
-
-            resetPlaybackProgress();
-
-            timingSource.set('spotify');
+            cleanupNarrationAudio({
+                timer: activeNarrationTimer,
+                setTimer: value => {
+                    activeNarrationTimer = value;
+                },
+                setAudio: value => {
+                    activeNarrationAudio = value;
+                },
+                setResolve: value => {
+                    activeNarrationResolve = value;
+                }
+            });
             resolve();
         };
 
@@ -197,34 +196,36 @@ function playOneAudio(
 
             console.warn('🔇 Narration missing or failed, skipping:', url);
 
-            if (activeNarrationTimer !== null) {
-                clearInterval(activeNarrationTimer);
-                activeNarrationTimer = null;
-            }
-
-            activeNarrationAudio = null;
-            activeNarrationResolve = null;
-
-            resetPlaybackProgress();
-
-            timingSource.set('spotify');
+            cleanupNarrationAudio({
+                timer: activeNarrationTimer,
+                setTimer: value => {
+                    activeNarrationTimer = value;
+                },
+                setAudio: value => {
+                    activeNarrationAudio = value;
+                },
+                setResolve: value => {
+                    activeNarrationResolve = value;
+                }
+            });
             resolve();
         };
 
         audio.play().catch((err: unknown) => {
             console.warn('🔇 Narration could not play, skipping:', url, err);
 
-            if (activeNarrationTimer !== null) {
-                clearInterval(activeNarrationTimer);
-                activeNarrationTimer = null;
-            }
-
-            activeNarrationAudio = null;
-            activeNarrationResolve = null;
-
-            resetPlaybackProgress();
-
-            timingSource.set('spotify');
+            cleanupNarrationAudio({
+                timer: activeNarrationTimer,
+                setTimer: value => {
+                    activeNarrationTimer = value;
+                },
+                setAudio: value => {
+                    activeNarrationAudio = value;
+                },
+                setResolve: value => {
+                    activeNarrationResolve = value;
+                }
+            });
             resolve();
         });
     });
