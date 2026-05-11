@@ -9,6 +9,7 @@ import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
 import {calculatePlaybackTiming} from '$lib/utils/calculatePlaybackTiming';
+import {isWithinTrackSwitchProtectionWindow} from '$lib/utils/playbackSwitchTiming';
 import {
     buildNarrationQueue,
     type NarrationQueueItem
@@ -493,7 +494,7 @@ export function startPlaybackPolling() {
                 progressPercent
             } = calculatePlaybackTiming(data);
 
-            const justSwitched = Date.now() - trackSwitchTime < 8000;
+            const justSwitched = isWithinTrackSwitchProtectionWindow(trackSwitchTime);
 
             if (get(timingSource) === 'spotify' && !justSwitched) {
                 elapsed.set(elapsedSec);
