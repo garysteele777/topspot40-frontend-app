@@ -65,7 +65,6 @@
     let genreOptions: OptionItem[] = [];
 
 
-
     let collectionGroups: {
         name: string;
         slug: string;
@@ -126,7 +125,18 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
+        goto(
+            `/car-page?mode=nostalgia` +
+            `&decade=ALL` +
+            `&genre=ALL` +
+            `&language=${language}` +
+            `&languages=${languages.join(',')}` +
+            `&voices=${buildVoiceQuery()}` +
+            `&playbackOrder=${playbackOrder}` +
+            `&voicePlayMode=before` +
+            `&pauseMode=${pauseMode}` +
+            `&skipPlayed=${skipPlayed}`
+        );
     }
 
     function launchNostalgiaGenre(genre: string) {
@@ -149,7 +159,18 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
+        goto(
+            `/car-page?mode=nostalgia` +
+            `&decade=ALL` +
+            `&genre=${genre}` +
+            `&language=${language}` +
+            `&languages=${languages.join(',')}` +
+            `&voices=${buildVoiceQuery()}` +
+            `&playbackOrder=${playbackOrder}` +
+            `&voicePlayMode=before` +
+            `&pauseMode=${pauseMode}` +
+            `&skipPlayed=${skipPlayed}`
+        );
     }
 
     function launchCollectionsAll() {
@@ -172,7 +193,17 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=radio_collections&collection_group=ALL&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
+        goto(
+            `/car-page?mode=radio_collections` +
+            `&collection_group=ALL` +
+            `&language=${language}` +
+            `&languages=${languages.join(',')}` +
+            `&voices=${buildVoiceQuery()}` +
+            `&playbackOrder=${playbackOrder}` +
+            `&voicePlayMode=before` +
+            `&pauseMode=${pauseMode}` +
+            `&skipPlayed=${skipPlayed}`
+        );
     }
 
     function buildVoiceQuery(): string {
@@ -199,7 +230,17 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
+        goto(
+            `/car-page?mode=radio_collections` +
+            `&collection_group=${groupSlug}` +
+            `&language=${language}` +
+            `&languages=${languages.join(',')}` +
+            `&voices=${buildVoiceQuery()}` +
+            `&playbackOrder=${playbackOrder}` +
+            `&voicePlayMode=before` +
+            `&pauseMode=${pauseMode}` +
+            `&skipPlayed=${skipPlayed}`
+        );
     }
 
 
@@ -335,6 +376,7 @@
             }
 
             hydrated = true;
+            resumeApplied = true;
         } catch {
             console.error('❌ Error loading catalog.');
         }
