@@ -158,13 +158,22 @@ function playOneAudio(
         playbackPhase.set(phase);
 
         audio.onloadedmetadata = () => {
-            resetPlaybackProgress();
+            console.log('🎧 narration metadata', {
+                duration: audio.duration,
+                phase,
+                url
+            });
+
+            duration.set(audio.duration);
+            elapsed.set(0);
+            progress.set(0);
         };
 
         activeNarrationTimer = window.setInterval(() => {
             elapsed.set(audio.currentTime);
 
-            if (audio.duration > 0) {
+            if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                duration.set(audio.duration);
                 progress.set((audio.currentTime / audio.duration) * 100);
             } else {
                 progress.set(0);
@@ -297,6 +306,8 @@ export function startPlaybackPolling() {
             const phase = data.phase as PlaybackPhase;
             const playbackStarted = hasPlaybackStarted(phase);
 
+            const narrationPhase = isNarrationPhase(phase);
+
             if (
                 playbackStarted &&
                 spotifyId &&
@@ -349,7 +360,9 @@ export function startPlaybackPolling() {
                     dlog('📻 Radio fallback track created:', fallbackTrack.trackName);
                 }
 
-                resetPlaybackProgress();
+                if (!narrationPhase) {
+                    resetPlaybackProgress();
+                }
 
                 trackFinalized = false;
 
@@ -380,13 +393,18 @@ export function startPlaybackPolling() {
 
             isPlaying.set(playing);
 
-            const narrationPhase = isNarrationPhase(phase);
 
-            if (get(timingSource) === 'narration' && narrationPhase) {
+            const frontendNarrationOwnsClock =
+                get(timingSource) === 'narration' && narrationPhase;
+
+            if (frontendNarrationOwnsClock) {
                 lastPhase = phase;
             }
 
-            if (phase !== prevPhase) {
+            if (
+                phase !== prevPhase &&
+                !narrationPhase
+            ) {
                 dlog(`🔁 Phase transition: ${prevPhase} → ${phase}`);
 
                 resetPlaybackProgress();
@@ -396,6 +414,7 @@ export function startPlaybackPolling() {
                 narrationPhase &&
                 (data.context?.audio_url || data.context?.audio_queue)
             ) {
+
                 if (phase !== lastNarrationPhase) {
                     dlog(`🎤 Narration phase: ${phase}`);
 
@@ -457,10 +476,13 @@ export function startPlaybackPolling() {
 
             const justSwitched = isWithinTrackSwitchProtectionWindow(trackSwitchTime);
 
-            if (get(timingSource) === 'spotify' && !justSwitched) {
+            const spotifyOwnsClock =
+                get(timingSource) === 'spotify' &&
+                phase === 'track';
+
+            if (spotifyOwnsClock) {
                 elapsed.set(elapsedSec);
                 duration.set(durationSec);
-
                 progress.set(progressPercent);
             }
 
