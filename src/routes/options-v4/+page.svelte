@@ -64,6 +64,8 @@
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
 
+
+
     let collectionGroups: {
         name: string;
         slug: string;
@@ -72,6 +74,7 @@
 
     // Resume lifecycle guard
     let hydrated = false;
+    let resumeApplied = false;
     let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
     let selectedGenre: string | null = null;
 
@@ -111,6 +114,7 @@
                 genre: 'ALL'
             },
             language,
+            languages,
             startRank: 1,
             endRank: 9999,
             playbackOrder,
@@ -133,6 +137,7 @@
                 genre
             },
             language,
+            languages,
             startRank: 1,
             endRank: 9999,
             playbackOrder,
@@ -182,6 +187,7 @@
                 collection_group_slug: groupSlug
             },
             language,
+            languages,
             startRank: 1,
             endRank: 9999,
             playbackOrder,
@@ -363,7 +369,7 @@
                             : {})
                     },
             language,
-            languages,
+            languages: languages.length > 0 ? languages : [language],
             startRank,
             endRank,
             playbackOrder,
@@ -376,7 +382,8 @@
     // ─────────────────────────────────────────────
     // Sync playback settings into store
     // ─────────────────────────────────────────────
-    $: if (browser && hydrated) {
+    // Auto-save (guarded)
+    $: if (browser && hydrated && resumeApplied) {
         playbackSettingsStore.set({
             voices: selectedVoices,
             playbackOrder,

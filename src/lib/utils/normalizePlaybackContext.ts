@@ -58,6 +58,7 @@ export function normalizePlaybackContext(
 
         textsByLanguage:
             (ctx.textsByLanguage as NormalizedPlaybackContext['textsByLanguage']) ??
+            (ctx.texts_by_language as NormalizedPlaybackContext['textsByLanguage']) ??
             {},
 
         durationMs:
