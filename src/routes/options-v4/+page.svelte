@@ -154,7 +154,7 @@
 
     function launchCollectionsAll() {
         const selection = {
-            activeGroup: 'decade_genre' as ModeType,
+            activeGroup: 'collection' as ModeType,
             context: {
                 decade: 'ALL',
                 genre: 'ALL'
@@ -250,6 +250,7 @@
         if (!selection) return;
 
         activeGroup = selection.mode;
+        radioMode = selection.mode === 'collection' ? 'collections' : 'nostalgia';
         language = selection.language;
         languages = selection.languages ?? [selection.language];
 

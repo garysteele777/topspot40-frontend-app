@@ -1,18 +1,16 @@
 // src/lib/utils/normalizePlaybackContext.ts
 
+import {
+    normalizeMoreInfoTexts,
+    type MoreInfoTextsByLanguage
+} from '$lib/utils/normalizeMoreInfoTexts';
+
 export type NormalizedPlaybackContext = {
     intro?: string | null;
     detail?: string | null;
     artistText?: string | null;
 
-    textsByLanguage?: Record<
-        string,
-        {
-            intro?: string | null;
-            detail?: string | null;
-            artist?: string | null;
-        }
-    >;
+    textsByLanguage?: MoreInfoTextsByLanguage;
 
     durationMs?: number | null;
 
@@ -56,10 +54,7 @@ export function normalizePlaybackContext(
             (ctx.artist_text as string | null) ??
             null,
 
-        textsByLanguage:
-            (ctx.textsByLanguage as NormalizedPlaybackContext['textsByLanguage']) ??
-            (ctx.texts_by_language as NormalizedPlaybackContext['textsByLanguage']) ??
-            {},
+        textsByLanguage: normalizeMoreInfoTexts(ctx),
 
         durationMs:
             typeof ctx.durationMs === 'number'
