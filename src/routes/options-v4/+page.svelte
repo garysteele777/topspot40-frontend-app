@@ -149,11 +149,13 @@
 
     function launchCollectionsAll() {
         const selection = {
-            activeGroup: 'collection' as ModeType,
+            activeGroup: 'decade_genre' as ModeType,
             context: {
-                collection_group_slug: 'ALL'
+                decade: 'ALL',
+                genre: 'ALL'
             },
             language,
+            languages,
             startRank: 1,
             endRank: 9999,
             playbackOrder,
@@ -243,6 +245,7 @@
 
         activeGroup = selection.mode;
         language = selection.language;
+        languages = selection.languages ?? [selection.language];
 
         selectedVoices = (selection.voices ?? ['intro']) as VoicePart[];
         startRank = selection.startRank ?? 1;
@@ -360,6 +363,7 @@
                             : {})
                     },
             language,
+            languages,
             startRank,
             endRank,
             playbackOrder,

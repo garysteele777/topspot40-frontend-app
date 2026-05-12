@@ -11,6 +11,7 @@ export interface ResumeState {
     mode: ModeType;
     context: Record<string, string>;
     language: Language;
+    languages?: Language[];
     startRank: number;
     endRank: number;
     currentRank: number;
