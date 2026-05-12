@@ -440,6 +440,9 @@ export function startPlaybackPolling() {
             }
 
             if (phase === 'track' && data.context?.spotify_track_id) {
+
+                timingSource.set('spotify');
+
                 const spotifyTrackId = data.context.spotify_track_id as string;
 
                 stopBed();
@@ -492,9 +495,8 @@ export function startPlaybackPolling() {
                 finishedTrackId !== spotifyId &&
                 !trackFinalized &&
                 durationSec > 1 &&
-                elapsedSec >= durationSec &&
-                elapsedSec > 2 &&
-                !justSwitched
+                elapsedSec >= durationSec - 1 &&
+                elapsedSec > 2
             ) {
                 finishedTrackId = spotifyId;
                 trackFinalized = true;
