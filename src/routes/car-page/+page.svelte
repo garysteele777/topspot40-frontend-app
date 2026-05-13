@@ -424,8 +424,8 @@
                 // program identity (from selection)
                 mode: $currentSelection.mode,
                 context: $currentSelection.context ?? {},
-                language: $currentSelection.language, // keep language with the program for now
-
+                language: $currentSelection.language,
+                languages: $currentSelection.languages ?? [$currentSelection.language],
                 // progress (from selection)
                 startRank: $currentSelection.startRank,
                 endRank: $currentSelection.endRank,
