@@ -298,10 +298,6 @@
     }
     />
 
-    <!--    <p style="color: yellow;">-->
-    <!--        DEBUG → {$currentSelection?.programType} | radio={isRadioMode ? 'YES' : 'NO'}-->
-    <!--    </p>-->
-
 
     {#if !isRadioMode}
         <div class="progress-line">
@@ -322,7 +318,7 @@
                 track={currentTrack}
                 onBackToOptions={onBackToOptions}
                 onOpenModal={() => setShowNarrationModal(true)}
-                onOpenTrackList={() => showTrackList = true}
+                onOpenTrackList={!isRadioMode ? (() => showTrackList = true) : undefined}
         />
     </div>
 
@@ -337,7 +333,12 @@
             <div class="tracklist-panel">
 
                 <div class="tracklist-header">
-                    <h3>Track List</h3>
+                    <div>
+                        <h3>Track List</h3>
+                        <div class="tracklist-subtitle">
+                            Click ★ to add favorites • Click Track Title to Jump to that Track
+                        </div>
+                    </div>
 
                     <button
                             class="close-btn"
@@ -363,7 +364,10 @@
                                 type="button"
                                 class="track-row"
                                 class:active={currentTrack?.rankingId === t.rankingId}
-                                on:click={() => onJumpToTrack?.(t)}
+                                on:click={() => {
+    onJumpToTrack?.(t);
+    showTrackList = false;
+}}
                         >
     <span class="played-col">
         {#if isPlayed(t.rank)}
@@ -656,6 +660,13 @@
 
     .fav-col.active {
         color: #cfb87c;
+    }
+
+    .tracklist-subtitle {
+        margin-top: 2px;
+        font-size: 0.72rem;
+        color: #d1d5db;
+        opacity: 0.72;
     }
 
 </style>

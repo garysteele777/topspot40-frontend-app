@@ -210,6 +210,15 @@
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
     }
 
+    async function handleJumpToTrack(track: CarModeTrack) {
+    await stopPlayback();
+
+    currentTrack.set(track);
+    currentRank.set(track.rank);
+
+    await playTrack(track);
+}
+
     async function nextTrack() {
 
         if (nextTrackLock) return;
@@ -596,6 +605,7 @@
                 setShowNarrationModal={setNarrationModalOpen}
                 onPrev={prevTrack}
                 onNext={nextTrack}
+                onJumpToTrack={handleJumpToTrack}
                 onPlayPause={async () => {
     if (!$currentTrack) return;
 
