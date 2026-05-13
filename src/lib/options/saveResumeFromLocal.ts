@@ -10,6 +10,7 @@ export function saveResumeFromLocal(params: {
   activeGroup: ModeType;
   context: Record<string, string>;
   language: Language;
+  languages?: Language[];
   startRank: number;
   endRank: number;
   playbackOrder: PlaybackOrder;
@@ -17,10 +18,11 @@ export function saveResumeFromLocal(params: {
   voices: VoicePart[];
   skipPlayed: boolean;
 }): void {
-  const state: ResumeState = {
+const state: ResumeState = {
     mode: params.activeGroup,
     context: params.context,
     language: params.language,
+    languages: params.languages ?? [params.language],
     startRank: params.startRank,
     endRank: params.endRank,
     currentRank: params.startRank,

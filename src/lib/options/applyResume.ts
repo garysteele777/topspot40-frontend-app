@@ -27,6 +27,7 @@ export function buildSelectionFromResume(
 
         voices,
         language: resumed.language,
+        languages: resumed.languages ?? [resumed.language],
         playbackOrder: resumed.playbackOrder,
 
         startRank: resumed.startRank,

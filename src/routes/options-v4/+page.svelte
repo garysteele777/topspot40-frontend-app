@@ -111,6 +111,7 @@
                 genre: 'ALL'
             },
             language,
+            languages,
             startRank: 1,
             endRank: 9999,
             playbackOrder,
@@ -133,6 +134,7 @@
                 genre
             },
             language,
+            languages,
             startRank: 1,
             endRank: 9999,
             playbackOrder,
@@ -154,6 +156,7 @@
                 collection_group_slug: 'ALL'
             },
             language,
+            languages,
             startRank: 1,
             endRank: 9999,
             playbackOrder,
@@ -180,6 +183,7 @@
                 collection_group_slug: groupSlug
             },
             language,
+            languages,
             startRank: 1,
             endRank: 9999,
             playbackOrder,
@@ -243,6 +247,7 @@
 
         activeGroup = selection.mode;
         language = selection.language;
+        languages = selection.languages ?? [selection.language];
 
         selectedVoices = (selection.voices ?? ['intro']) as VoicePart[];
         startRank = selection.startRank ?? 1;
@@ -331,21 +336,10 @@
     });
 
     // ─────────────────────────────────────────────
-    // Sync selected language into currentSelection
-    // ─────────────────────────────────────────────
-    $: if (browser && hydrated) {
-        currentSelection.update(s => {
-            return {
-                ...s,
-                language,
-                languages
-            };
-        });
-    }
-    // ─────────────────────────────────────────────
     // Auto-save (guarded)
     // ─────────────────────────────────────────────
     $: if (browser && hydrated) {
+        // console.log('OPTIONS AUTOSAVE languages:', languages);
         saveResumeFromLocal({
             activeGroup,
             context:
@@ -360,6 +354,7 @@
                             : {})
                     },
             language,
+            languages,
             startRank,
             endRank,
             playbackOrder,
@@ -479,7 +474,7 @@
         </div>
 
         <!-- ✅ Playback History now at top -->
-        <PlaybackHistoryPanel/>
+        <PlaybackHistoryPanel {language} {languages}/>
 
 
         <!-- TOP CONFIG GRID (4 + 4) -->
