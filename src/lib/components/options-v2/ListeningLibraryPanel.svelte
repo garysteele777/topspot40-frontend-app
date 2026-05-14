@@ -18,6 +18,18 @@
         }[];
     };
 
+    type ArtistSpotlightItem = {
+        artist_id: number;
+        artist_name: string;
+        track_count: number;
+    };
+
+    let artistSpotlightItems: ArtistSpotlightItem[] = [];
+    let artistSpotlightLoading = false;
+    let artistSpotlightError: string | null = null;
+
+    const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
     export let decadeOptions: OptionItem[] = [];
     export let genreOptions: OptionItem[] = [];
     export let collectionGroups: CollectionGroup[] = [];
@@ -26,6 +38,35 @@
 
     let selectedDecade: string | null = null;
     let selectedCollectionGroup: string | null = null;
+    let selectedArtistGenre: string | null = null;
+
+    function titleCaseName(name: string): string {
+        return name.replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    async function loadArtistSpotlights(genreId: string) {
+        selectedArtistGenre = genreId;
+        artistSpotlightItems = [];
+        artistSpotlightError = null;
+        artistSpotlightLoading = true;
+
+        try {
+            const res = await fetch(
+                `${API_BASE}/artist-spotlight/artists-by-genre?genre=${genreId}&min_tracks=3`
+            );
+
+            if (!res.ok) {
+                throw new Error(`Request failed: ${res.status}`);
+            }
+
+            artistSpotlightItems = await res.json();
+        } catch (err) {
+            artistSpotlightError = err instanceof Error ? err.message : 'Failed to load artists.';
+        } finally {
+            artistSpotlightLoading = false;
+        }
+    }
+
 </script>
 
 <div class="library-card">
@@ -182,7 +223,66 @@
 
         {:else}
 
-            Artist Spotlight will show artist buttons here.
+            <div class="genre-title">
+                Pick a Genre Below to See Artist Spotlights
+            </div>
+
+            <div class="genre-grid">
+                {#each genreOptions.filter(g => g.id !== 'tv_themes') as genre}
+
+                    <button
+                            class="genre-btn"
+                            class:selected={selectedArtistGenre === genre.id}
+                            on:click={() => loadArtistSpotlights(genre.id)}
+                    >
+                        {genre.label}
+                    </button>
+
+                {/each}
+            </div>
+
+            {#if selectedArtistGenre}
+
+                <div class="genre-section">
+
+                    <div class="genre-title">
+                        {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
+                        Artists • Select an Artist to Start Listening
+                    </div>
+
+                    {#if artistSpotlightLoading}
+
+                        <div class="library-description">
+                            Loading artists...
+                        </div>
+
+                    {:else if artistSpotlightError}
+
+                        <div class="library-description">
+                            {artistSpotlightError}
+                        </div>
+
+                    {:else}
+
+                        <div class="genre-grid">
+
+                            {#each artistSpotlightItems as artist}
+
+                                <button class="genre-btn">
+                                    {titleCaseName(artist.artist_name)}
+                                    •
+                                    {artist.track_count} Tracks
+                                </button>
+
+                            {/each}
+
+                        </div>
+
+                    {/if}
+
+                </div>
+
+            {/if}
 
         {/if}
     </div>
