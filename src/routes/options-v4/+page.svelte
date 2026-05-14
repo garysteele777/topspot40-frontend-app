@@ -20,6 +20,7 @@
     import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
+    import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
 
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     // ─────────────────────────────────────────────
@@ -472,6 +473,10 @@
             {/if}
 
         </div>
+
+
+        <ListeningLibraryPanel {decadeOptions} {genreOptions} />
+
 
         <!-- ✅ Playback History now at top -->
         <PlaybackHistoryPanel {language} {languages}/>
