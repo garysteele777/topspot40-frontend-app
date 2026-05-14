@@ -10,8 +10,6 @@
     import {get} from 'svelte/store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
-    import {currentSelection} from '$lib/carmode/CarMode.store';
-
 
     // ─────────────────────────────────────────────
     // UI Components
@@ -483,12 +481,14 @@
         </div>
 
 
-        <ListeningLibraryPanel {decadeOptions} {genreOptions}/>
-
+        <ListeningLibraryPanel
+                {decadeOptions}
+                {genreOptions}
+                {collectionGroups}
+        />
 
         <!-- ✅ Playback History now at top -->
         <PlaybackHistoryPanel {language} {languages}/>
-
 
         <!-- TOP CONFIG GRID (4 + 4) -->
         <section class="options-grid options-grid--compact">

@@ -9,11 +9,23 @@
         label: string;
     };
 
+    type CollectionGroup = {
+        slug: string;
+        name: string;
+        items: {
+            slug: string;
+            name: string;
+        }[];
+    };
+
     export let decadeOptions: OptionItem[] = [];
     export let genreOptions: OptionItem[] = [];
+    export let collectionGroups: CollectionGroup[] = [];
 
     let libraryMode: LibraryMode = 'nostalgia';
+
     let selectedDecade: string | null = null;
+    let selectedCollectionGroup: string | null = null;
 </script>
 
 <div class="library-card">
@@ -33,7 +45,7 @@
         </button>
 
         <button class:active={libraryMode === 'collections'} on:click={() => libraryMode = 'collections'}>
-            Special Collections
+            Collections Programs
         </button>
 
         <button class:active={libraryMode === 'artists'} on:click={() => libraryMode = 'artists'}>
@@ -113,7 +125,60 @@
 
         {:else if libraryMode === 'collections'}
 
-            Special Collections will show collection groups here.
+            <div class="decade-grid">
+
+                <button
+                        class="all-decades-btn"
+                        class:selected={selectedCollectionGroup === 'ALL'}
+                        on:click={() => selectedCollectionGroup = 'ALL'}
+                >
+                    📀 All Collection Groups
+                </button>
+
+                {#each collectionGroups as group}
+                    <button
+                            class:selected={selectedCollectionGroup === group.slug}
+                            on:click={() => selectedCollectionGroup = group.slug}
+                    >
+                        {group.name}
+                    </button>
+                {/each}
+
+            </div>
+            {#if selectedCollectionGroup && selectedCollectionGroup !== 'ALL'}
+
+                <div class="genre-section">
+
+                    <div class="genre-title">
+                        {collectionGroups.find(g => g.slug === selectedCollectionGroup)?.name}
+                        Collections • Select a Collection to Start Listening
+                    </div>
+
+                    <div class="genre-grid">
+
+                        {#each collectionGroups.find(g => g.slug === selectedCollectionGroup)?.items ?? [] as collection}
+
+                            <button
+                                    class="genre-btn"
+                                    on:click={() => {
+                                    goto(
+                                        `/car-page?mode=collection` +
+                                        `&collection=${collection.slug}` +
+                                        `&collection_group=${selectedCollectionGroup}`
+                                    );
+                                    }}
+                            >
+                                {collection.name}
+                            </button>
+
+                        {/each}
+
+                    </div>
+
+                </div>
+
+            {/if}
+
 
         {:else}
 
