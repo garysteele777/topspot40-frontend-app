@@ -53,6 +53,9 @@
     let collections: string[] = [];
 
     let radioMode: 'nostalgia' | 'collections' | null = 'nostalgia';
+    type OpenSection = 'radio' | 'library' | 'history' | 'settings';
+
+    let openSection: OpenSection = 'radio';
 
     const playbackSettings = playbackSettingsStore;
 
@@ -394,88 +397,93 @@
     <div class="page">
 
         <!-- 🔥 RADIO (NEW) -->
-        <div class="opt-cell opt-cell--radio">
-            <h3 class="section-title">📻🐕 TopSpot40 Radio 📻🐕 </h3>
-
-            <div class="radio-description">
-                Nostalgia mixes decades and genres. Collections plays themed playlists.
+        <div
+                class="opt-cell opt-cell--radio"
+                on:click={() => openSection = 'radio'}
+        >
+            <div class="section-header-row">
+                <h3 class="section-title">📻🐕 TopSpot40 Interactive Radio 📻🐕</h3>
+                <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
             </div>
 
-            <div class="radio-description">
-                DJ Mode • Shuffle • Favor New • Continuous
-            </div>
+            {#if openSection === 'radio'}
+                <div class="radio-description">
+                    Nostalgia mixes decades and genres. Collections plays themed playlists.
+                </div>
 
-            <div class="radio-buttons">
-                <button
-                        class:active={radioMode === 'nostalgia'}
-                        on:click={() => startRadio('nostalgia')}
-                >
-                    Nostalgia Radio
-                </button>
+                <div class="radio-description">
+                    DJ Mode • Shuffle • Favor New • Continuous
+                </div>
 
-                <button
-                        class:active={radioMode === 'collections'}
-                        on:click={() => startRadio('collections')}
-                >
-                    Collections Radio
-                </button>
-            </div>
+                <div class="radio-buttons">
+                    <button
+                            class:active={radioMode === 'nostalgia'}
+                            on:click|stopPropagation={() => startRadio('nostalgia')}
+                    >
+                        Nostalgia Radio
+                    </button>
 
-            <div class="radio-separator">
-                <span>Stations</span>
-            </div>
-
-
-            {#if radioMode === 'nostalgia'}
-                <div style="margin-top: 10px;">
-                    <button class="start-all-btn" on:click={launchNostalgiaAll}>
-                        <span class="icon">📻</span>
-                        <span>Start All Genres: 1950s to the Present</span>
+                    <button
+                            class:active={radioMode === 'collections'}
+                            on:click|stopPropagation={() => startRadio('collections')}
+                    >
+                        Collections Radio
                     </button>
                 </div>
 
-                <div class="radio-genres">
-                    {#each genreOptions as g}
-                        <button
-                                class="genre-btn"
-                                class:selected={selectedGenre === g.id}
-                                on:click={() => {
-                                            launchNostalgiaGenre(g.id);
-                                        }}
-                        >
-                            <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
-                            <span>{g.label}</span>
+                <div class="radio-separator">
+                    <span>Stations</span>
+                </div>
+
+                {#if radioMode === 'nostalgia'}
+                    <div style="margin-top: 10px;">
+                        <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
+                            <span class="icon">📻</span>
+                            <span>Start All Genres: 1950s to the Present</span>
                         </button>
-                    {/each}
-                </div>
-            {/if}
+                    </div>
 
-            {#if radioMode === 'collections'}
-                <div style="margin-top: 10px;">
-                    <button class="start-all-btn" on:click={launchCollectionsAll}>
-                        <span class="icon">📻</span>
-                        <span>Start All Collections</span>
-                    </button>
-                </div>
+                    <div class="radio-genres">
+                        {#each genreOptions as g}
+                            <button
+                                    class="genre-btn"
+                                    class:selected={selectedGenre === g.id}
+                                    on:click|stopPropagation={() => {
+                                launchNostalgiaGenre(g.id);
+                            }}
+                            >
+                                <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
+                                <span>{g.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
 
-                <!-- 🔥 NEW: Collection Group Buttons -->
-                <div class="radio-genres">
-                    {#each collectionGroups as group}
-                        <button
-                                class="genre-btn"
-                                on:click={() => launchCollectionGroup(group.slug)}
-                        >
-                            <span class="icon">📀</span>
-                            <span>{group.name}</span>
+                {#if radioMode === 'collections'}
+                    <div style="margin-top: 10px;">
+                        <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
+                            <span class="icon">📻</span>
+                            <span>Start All Collections</span>
                         </button>
-                    {/each}
-                </div>
-            {/if}
+                    </div>
 
+                    <div class="radio-genres">
+                        {#each collectionGroups as group}
+                            <button
+                                    class="genre-btn"
+                                    on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
+                            >
+                                <span class="icon">📀</span>
+                                <span>{group.name}</span>
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
+            {/if}
         </div>
 
 
-        <ListeningLibraryPanel {decadeOptions} {genreOptions} />
+        <ListeningLibraryPanel {decadeOptions} {genreOptions}/>
 
 
         <!-- ✅ Playback History now at top -->
@@ -866,5 +874,18 @@
         color: rgba(207, 184, 124, 0.7);
         letter-spacing: 0.08em;
         text-transform: uppercase;
+    }
+
+    .section-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .section-toggle {
+        color: #cfb87c;
+        font-size: 0.8rem;
+        opacity: 0.85;
     }
 </style>
