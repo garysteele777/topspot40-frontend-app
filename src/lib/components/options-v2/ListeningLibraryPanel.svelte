@@ -264,14 +264,20 @@
 
                     {:else}
 
-                        <div class="genre-grid">
+                        <div class="artist-grid">
 
                             {#each artistSpotlightItems as artist}
 
-                                <button class="genre-btn">
-                                    {titleCaseName(artist.artist_name)}
-                                    •
-                                    {artist.track_count} Tracks
+                                <button class="artist-btn">
+
+                                    <div class="artist-name">
+                                        {titleCaseName(artist.artist_name)}
+                                    </div>
+
+                                    <div class="artist-count">
+                                        {artist.track_count} Tracks
+                                    </div>
+
                                 </button>
 
                             {/each}
@@ -431,5 +437,39 @@
         border-color: #cfb87c;
         color: #fff;
         background: #333;
+    }
+
+    .artist-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .artist-btn {
+        background: #2b2b2b;
+        border: 1px solid #444;
+        border-radius: 12px;
+        padding: 14px 18px;
+        text-align: left;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .artist-btn:hover {
+        border-color: #d4b870;
+        background: #333;
+    }
+
+    .artist-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #f5f5f5;
+    }
+
+    .artist-count {
+        margin-top: 4px;
+        font-size: 0.85rem;
+        color: #c9b26d;
     }
 </style>
