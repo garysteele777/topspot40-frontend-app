@@ -146,10 +146,23 @@ export async function loadForSelection(
             id: track.track_id,
             rankingId: null,
             rank: index + 1,
+
             trackName: track.track_name,
             artistName: track.artist_name,
+
             spotifyTrackId: track.spotify_track_id,
-            albumArtwork: null,
+
+            albumArtwork: track.album_artwork ?? null,
+            albumName: track.album_name ?? null,
+
+            year: track.year_released ?? null,
+
+            detail: track.detail ?? null,
+
+            artistText:
+                track.artist_description ??
+                null,
+
             durationSeconds: Math.floor((track.duration_ms ?? 0) / 1000)
         }));
 
