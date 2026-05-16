@@ -21,8 +21,23 @@
     type ArtistSpotlightItem = {
         artist_id: number;
         artist_name: string;
-        track_count: number;
+        dg_track_count: number;
+        collection_track_count: number;
     };
+
+    type ArtistTrackItem = {
+        track_id: number;
+        track_name: string;
+        spotify_track_id: string;
+        duration_ms: number;
+        artist_id: number;
+        artist_name: string;
+    };
+
+    let selectedArtist: ArtistSpotlightItem | null = null;
+    let artistTracks: ArtistTrackItem[] = [];
+    let artistTracksLoading = false;
+    let artistTracksError: string | null = null;
 
     let artistSpotlightItems: ArtistSpotlightItem[] = [];
     let artistSpotlightLoading = false;
@@ -40,6 +55,29 @@
     let selectedCollectionGroup: string | null = null;
     let selectedArtistGenre: string | null = null;
 
+    async function loadArtistTracks(artist: ArtistSpotlightItem) {
+        selectedArtist = artist;
+        artistTracks = [];
+        artistTracksError = null;
+        artistTracksLoading = true;
+
+        try {
+            const res = await fetch(
+                `${API_BASE}/artist-spotlight/artist-tracks?artist_id=${artist.artist_id}`
+            );
+
+            if (!res.ok) {
+                throw new Error(`Request failed: ${res.status}`);
+            }
+
+            artistTracks = await res.json();
+        } catch (err) {
+            artistTracksError = err instanceof Error ? err.message : 'Failed to load artist tracks.';
+        } finally {
+            artistTracksLoading = false;
+        }
+    }
+
     function titleCaseName(name: string): string {
         return name.replace(/\b\w/g, c => c.toUpperCase());
     }
@@ -52,7 +90,7 @@
 
         try {
             const res = await fetch(
-                `${API_BASE}/artist-spotlight/artists-by-genre?genre=${genreId}&min_tracks=3`
+                `${API_BASE}/artist-spotlight/artists-by-genre?genre=${genreId}&min_tracks=2`
             );
 
             if (!res.ok) {
@@ -268,14 +306,18 @@
 
                             {#each artistSpotlightItems as artist}
 
-                                <button class="artist-btn">
+                                <button
+                                        class="artist-btn"
+                                        class:selected={selectedArtist?.artist_id === artist.artist_id}
+                                        on:click={() => loadArtistTracks(artist)}
+                                >
 
                                     <div class="artist-name">
                                         {titleCaseName(artist.artist_name)}
                                     </div>
 
                                     <div class="artist-count">
-                                        {artist.track_count} Tracks
+                                        {artist.dg_track_count} DG • {artist.collection_track_count} COL
                                     </div>
 
                                 </button>
@@ -283,6 +325,51 @@
                             {/each}
 
                         </div>
+
+                        {#if selectedArtist}
+
+                            <div class="genre-section">
+
+                                <div class="genre-title">
+                                    {titleCaseName(selectedArtist.artist_name)}
+                                    • Artist Spotlight Tracks
+                                </div>
+
+                                {#if artistTracksLoading}
+
+                                    <div class="library-description">
+                                        Loading tracks...
+                                    </div>
+
+                                {:else if artistTracksError}
+
+                                    <div class="library-description">
+                                        {artistTracksError}
+                                    </div>
+
+                                {:else}
+
+                                    <div class="track-grid">
+
+                                        {#each artistTracks as track}
+
+                                            <button class="track-btn">
+
+                                                <div class="track-name">
+                                                    {titleCaseName(track.track_name)}
+                                                </div>
+
+                                            </button>
+
+                                        {/each}
+
+                                    </div>
+
+                                {/if}
+
+                            </div>
+
+                        {/if}
 
                     {/if}
 
@@ -439,6 +526,13 @@
         background: #333;
     }
 
+    .genre-btn.selected {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 700;
+    }
+
     .artist-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -472,4 +566,33 @@
         font-size: 0.85rem;
         color: #c9b26d;
     }
+
+    .track-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .track-btn {
+        background: #252525;
+        border: 1px solid #3f3f3f;
+        border-radius: 10px;
+        padding: 10px 14px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+
+    .track-btn:hover {
+        border-color: #cfb87c;
+        background: #303030;
+    }
+
+    .track-name {
+        font-size: 0.9rem;
+        color: #eee;
+    }
+
+
 </style>
