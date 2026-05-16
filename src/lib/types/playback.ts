@@ -6,7 +6,8 @@
 
 export type ModeType =
   | 'decade_genre'
-  | 'collection';
+  | 'collection'
+  | 'artist_spotlight';
 
 
 export type Language = 'en' | 'es' | 'ptbr';

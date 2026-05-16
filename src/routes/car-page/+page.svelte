@@ -136,23 +136,29 @@
                 continuous: settings.pauseMode === 'continuous'
             },
             context:
-                sel.mode === 'collection'
-                    ? (
-                        sel.programType === 'RADIO_COL'
-                            ? {
-                                type: 'collection_radio',
-                                collection_group_slug: sel.context?.collection_group_slug
-                            }
-                            : {
-                                type: 'collection',
-                                collection_slug: sel.context?.collection_slug
-                            }
-                    )
-                    : {
-                        type: 'decade_genre',
-                        decade: decadeForPlayback,
-                        genre: genreForPlayback
+                sel.mode === 'artist_spotlight'
+                    ? {
+                        type: 'artist_spotlight',
+                        artist_id: sel.context?.artist_id,
+                        artist_name: sel.context?.artist_name
                     }
+                    : sel.mode === 'collection'
+                        ? (
+                            sel.programType === 'RADIO_COL'
+                                ? {
+                                    type: 'collection_radio',
+                                    collection_group_slug: sel.context?.collection_group_slug
+                                }
+                                : {
+                                    type: 'collection',
+                                    collection_slug: sel.context?.collection_slug
+                                }
+                        )
+                        : {
+                            type: 'decade_genre',
+                            decade: decadeForPlayback,
+                            genre: genreForPlayback
+                        }
         };
 
 
@@ -211,13 +217,13 @@
     }
 
     async function handleJumpToTrack(track: CarModeTrack) {
-    await stopPlayback();
+        await stopPlayback();
 
-    currentTrack.set(track);
-    currentRank.set(track.rank);
+        currentTrack.set(track);
+        currentRank.set(track.rank);
 
-    await playTrack(track);
-}
+        await playTrack(track);
+    }
 
     async function nextTrack() {
 
