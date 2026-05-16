@@ -159,6 +159,37 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         };
     }
 
+    if (modeParam === 'artist_spotlight') {
+        const artistId = sp.get('artist_id') ?? '';
+        const artistName = sp.get('artist') ?? '';
+
+        return {
+            programType: 'ARTIST',
+            mode: 'artist_spotlight',
+            language,
+            languages,
+            context: {
+                artist_id: artistId,
+                artist_name: artistName
+            },
+            startRank: finalStartRank,
+            endRank: 9999,
+            currentRank,
+            playIntro: false,
+            playDetail: voices.includes('detail'),
+            playArtistDescription: voices.includes('artist'),
+            textIntro: false,
+            textDetail: false,
+            textArtistDescription: false,
+            voices,
+            playbackOrder,
+            voicePlayMode,
+            pauseMode,
+            categoryMode: 'single',
+            skipPlayed
+        };
+    }
+
     return {
         programType,
         mode: 'decade_genre',

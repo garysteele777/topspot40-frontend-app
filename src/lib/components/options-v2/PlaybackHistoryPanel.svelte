@@ -18,8 +18,12 @@
     import {onMount} from 'svelte';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {goto} from '$app/navigation';
-    import {currentSelection} from '$lib/carmode/CarMode.store';
     import {favoritesStore} from '$lib/favorites/favorites';
+
+    type Language = 'en' | 'es' | 'ptbr';
+
+    export let language: Language = 'en';
+    export let languages: Language[] = ['en'];
 
     let catalogDecades: string[] = [];
     let catalogGenres: string[] = [];
@@ -27,28 +31,6 @@
     let collectionGroupNameMap: Record<string, string> = {};
     let collectionNameMap: Record<string, string> = {};
     let collectionSlugToGroupSlug: Record<string, string> = {};
-
-    // function parseProgramKey(key: string) {
-    //     const parts = key.split('|');
-    //
-    //     if (parts[0] === 'DG') {
-    //         return {
-    //             type: 'decade_genre' as const,
-    //             decade: parts[1],
-    //             genre: parts[2]
-    //         };
-    //     }
-    //
-    //     if (parts[0] === 'COL') {
-    //         return {
-    //             type: 'collection' as const,
-    //             collection: parts[1],
-    //             collectionCategory: parts[2]
-    //         };
-    //     }
-    //
-    //     return null;
-    // }
 
 
     const genreIconMap: Record<string, string> = {
@@ -94,27 +76,6 @@
         return m ? Number(m[0]) : Number.POSITIVE_INFINITY;
     }
 
-    // function getAllDecadeFavorites(): number[] {
-    //     const all: number[] = [];
-    //
-    //     for (const decade of catalogDecades) {
-    //         for (const genre of catalogGenres) {
-    //             const ids = getFavorites('DG', `${decade}|${genre}`);
-    //             all.push(...ids);
-    //         }
-    //     }
-    //
-    //     return [...new Set(all)];
-    // }
-
-    // function getGenreFavorites(decade: string, genre: string): number[] {
-    //     return getFavorites('DG', `${decade}|${genre}`);
-    // }
-
-    // ─────────────────────────────────────────────
-    // Launch helpers (avoid URL parsing crashes)
-    // ─────────────────────────────────────────────
-
     const TRACKS_PER_PROGRAM = 40;
 
     function allDecadesAllGenresTotal(): number {
@@ -139,34 +100,18 @@
             : [group, 'ALL'];
 
 
-        currentSelection.update((s) => ({
-            ...s,
-
-            mode: 'decade_genre',
-            programType: 'FAV_DG',
-
-            context: {
-                ...(s.context ?? {}),
-                favoritesType: 'DG',
-                favoritesGroup: group,
-                decade,
-                genre
-            },
-
-            playbackOrder: 'shuffle'
-        }));
-
-        const s = get(currentSelection);
+        const settings = get(playbackSettingsStore);
 
         const url = await launchWithPlayback({
             layoutMode: 'car',
-            programType: s.programType,
-            language: s.language,
-            playbackOrder: s.playbackOrder,
-            skipPlayed: s.skipPlayed,
-            pauseMode: s.pauseMode,
+            programType: 'FAV_DG',
+            language,
+            languages,
+            playbackOrder: 'shuffle',
+            skipPlayed: settings.skipPlayed,
+            pauseMode: settings.pauseMode,
             voicePlayMode: 'before',
-            voices: s.voices,
+            voices: settings.voices,
 
             decade,
             genre,
@@ -422,10 +367,6 @@
     }
 
 
-    // function clearOne(p: ProgramHistory) {
-    //     resetProgram(p.key);
-    // }
-
     function clearAll() {
         resetAllPrograms();
     }
@@ -470,15 +411,14 @@
                 return;
             }
 
-            const selection = get(currentSelection);
             const settings = get(playbackSettingsStore);
 
             url = buildLaunchUrl({
                 layoutMode: 'car',
                 decade,
                 genre,
-                language: selection.language,
-                languages: selection.languages ?? [selection.language],
+                language,
+                languages,
                 voices: settings.voices,
                 playbackOrder: launchOrder,
                 voicePlayMode: settings.voicePlayMode,
@@ -495,15 +435,14 @@
                 console.error('Invalid COL key:', programKey);
                 return;
             }
-            const selection = get(currentSelection);
             const settings = get(playbackSettingsStore);
 
             url = buildLaunchUrl({
                 layoutMode: 'car',
                 collection,
                 collectionCategory,
-                language: selection.language,
-                languages: selection.languages ?? [selection.language],
+                language,
+                languages,
                 voices: settings.voices,
                 playbackOrder: launchOrder,
                 voicePlayMode: settings.voicePlayMode,

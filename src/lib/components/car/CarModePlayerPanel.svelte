@@ -4,6 +4,7 @@
     import CarModeNarration from './CarModeNarration.svelte';
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
     import CarModeTicker from './CarModeTicker.svelte';
+    import {favoritesStore} from '$lib/favorites/favorites';
 
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
@@ -24,6 +25,7 @@
     export let currentTrack: CarModeTrack | null = null;
     export let tracks: CarModeTrack[] = [];
     export let phase: PlaybackPhase | null = null;
+    export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
 
     export let isPlaying: boolean;
     export let elapsed: number;
@@ -40,6 +42,9 @@
 
     let isFav = false;
     let favBurst = false;
+    let showTrackList = false;
+
+    $: favoriteRefresh = $favoritesStore;
 
     /* ─────────────────────────────────────────────
        Derived values (Next + Progress)
@@ -105,7 +110,6 @@
             ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
             : null;
 
-    import {favoritesStore} from '$lib/favorites/favorites';
 
     $: {
         void $favoritesStore; // 👈 force reactive dependency (no unused var)
@@ -166,6 +170,31 @@
            • Genre: ${currentTrack.genreName ?? currentTrack.genreSlug ?? ''}`
             : null;
 
+    function isPlayed(rank: number): boolean {
+        const sel = $currentSelection;
+        if (!sel) return false;
+
+        let key: string | null = null;
+
+        if (sel.mode === 'decade_genre') {
+            const decade = sel.context?.decade;
+            const genre = sel.context?.genre;
+            if (decade && genre) key = `DG|${decade}|${genre}`;
+        }
+
+        if (sel.mode === 'collection') {
+            const collection = sel.context?.collection_slug ?? sel.context?.collection;
+            const group = sel.context?.collection_group_slug ?? sel.context?.collectionCategory;
+            if (collection && group) key = `COL|${collection}|${group}`;
+        }
+
+        if (!key) return false;
+
+        const program = $programHistoryStore.find(p => p.key === key);
+        return program?.playedRanks.includes(rank) ?? false;
+    }
+
+
     function onToggleFavorite() {
         if (
             !programType ||
@@ -175,7 +204,7 @@
             return;
         }
 
-        const {added} = toggleFavorite(
+        toggleFavorite(
             programType,
             programGroup,
             currentTrack.rankingId
@@ -269,10 +298,6 @@
     }
     />
 
-    <!--    <p style="color: yellow;">-->
-    <!--        DEBUG → {$currentSelection?.programType} | radio={isRadioMode ? 'YES' : 'NO'}-->
-    <!--    </p>-->
-
 
     {#if !isRadioMode}
         <div class="progress-line">
@@ -293,6 +318,7 @@
                 track={currentTrack}
                 onBackToOptions={onBackToOptions}
                 onOpenModal={() => setShowNarrationModal(true)}
+                onOpenTrackList={!isRadioMode ? (() => showTrackList = true) : undefined}
         />
     </div>
 
@@ -301,6 +327,83 @@
             open={showNarrationModal}
             onClose={() => setShowNarrationModal(false)}
     />
+
+    {#if showTrackList}
+        <div class="tracklist-overlay">
+            <div class="tracklist-panel">
+
+                <div class="tracklist-header">
+                    <div>
+                        <h3>Track List</h3>
+                        <div class="tracklist-subtitle">
+                            Click ★ to add favorites • Click Track Title to Jump to that Track
+                        </div>
+                    </div>
+
+                    <button
+                            class="close-btn"
+                            on:click={() => showTrackList = false}
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <div class="tracklist-scroll">
+
+                    <div class="track-row track-row-header">
+                        <span>Played</span>
+                        <span>Fav</span>
+                        <span>Rank</span>
+                        <span>Title</span>
+                        <span>Artist</span>
+                    </div>
+
+                    {#each [...tracks].sort((a, b) => a.rank - b.rank) as t}
+
+                        <button
+                                type="button"
+                                class="track-row"
+                                class:active={currentTrack?.rankingId === t.rankingId}
+                                on:click={() => {
+    onJumpToTrack?.(t);
+    showTrackList = false;
+}}
+                        >
+    <span class="played-col">
+        {#if isPlayed(t.rank)}
+            ✓
+        {/if}
+    </span>
+
+                            <span
+                                    class="fav-col"
+                                    class:active={
+                favoriteRefresh &&
+                programType &&
+                programGroup &&
+                t.rankingId != null &&
+                isFavorite(programType, programGroup, t.rankingId)
+            }
+                                    on:click|stopPropagation={() => {
+                if (programType && programGroup && t.rankingId != null) {
+                    toggleFavorite(programType, programGroup, t.rankingId);
+                }
+            }}
+                            >
+        ★
+    </span>
+
+                            <span class="rank">#{t.rank}</span>
+                            <span class="title">{t.trackName}</span>
+                            <span class="artist">{t.artistName}</span>
+                        </button>
+                    {/each}
+                </div>
+            </div>
+        </div>
+    {/if}
+
+
 </div>
 <style>
     /* ─────────────────────────────────────────────
@@ -436,6 +539,134 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .tracklist-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        background: rgba(0, 0, 0, 0.72);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 16px;
+    }
+
+    .tracklist-panel {
+        width: min(720px, 100%);
+        max-height: 72vh;
+        background: #121212;
+        border: 1px solid rgba(207, 184, 124, 0.45);
+        border-radius: 18px 18px 12px 12px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.65);
+        overflow: hidden;
+    }
+
+    .tracklist-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(207, 184, 124, 0.25);
+    }
+
+    .tracklist-header h3 {
+        margin: 0;
+        color: #cfb87c;
+        font-size: 1rem;
+    }
+
+    .close-btn {
+        border: none;
+        border-radius: 999px;
+        background: #333;
+        color: #eee;
+        cursor: pointer;
+        padding: 4px 10px;
+    }
+
+    .tracklist-scroll {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 8px;
+    }
+
+    .track-row {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 64px 44px 56px 1fr 1fr;
+        gap: 8px;
+        align-items: center;
+        text-align: left;
+        padding: 9px 10px;
+        border: none;
+        border-radius: 10px;
+        background: transparent;
+        color: #eee;
+        cursor: pointer;
+    }
+
+    .track-row:hover {
+        background: rgba(207, 184, 124, 0.12);
+    }
+
+    .track-row.active {
+        background: rgba(29, 185, 84, 0.18);
+        outline: 1px solid rgba(29, 185, 84, 0.45);
+    }
+
+    .rank {
+        color: #cfb87c;
+        font-weight: 700;
+    }
+
+    .title {
+        font-weight: 600;
+    }
+
+    .artist {
+        opacity: 0.75;
+    }
+
+    .track-row-header {
+        color: #cfb87c;
+        font-size: 0.75rem;
+        font-weight: 700;
+        opacity: 0.9;
+        cursor: default;
+    }
+
+    .played-col,
+    .fav-col {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 24px;
+    }
+
+    .played-col {
+        opacity: 0.7;
+    }
+
+    .fav-col {
+        border: none;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.35);
+        cursor: pointer;
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    .fav-col.active {
+        color: #cfb87c;
+    }
+
+    .tracklist-subtitle {
+        margin-top: 2px;
+        font-size: 0.72rem;
+        color: #d1d5db;
+        opacity: 0.72;
     }
 
 </style>

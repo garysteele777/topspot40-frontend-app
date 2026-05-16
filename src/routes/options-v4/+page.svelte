@@ -10,8 +10,6 @@
     import {get} from 'svelte/store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
-    import {currentSelection} from '$lib/carmode/CarMode.store';
-
 
     // ─────────────────────────────────────────────
     // UI Components
@@ -20,6 +18,7 @@
     import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
+    import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
 
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     // ─────────────────────────────────────────────
@@ -52,6 +51,9 @@
     let collections: string[] = [];
 
     let radioMode: 'nostalgia' | 'collections' | null = 'nostalgia';
+    type OpenSection = 'radio' | 'library' | 'history' | 'settings';
+
+    let openSection: OpenSection = 'radio';
 
     const playbackSettings = playbackSettingsStore;
 
@@ -64,7 +66,6 @@
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
 
-
     let collectionGroups: {
         name: string;
         slug: string;
@@ -73,7 +74,6 @@
 
     // Resume lifecycle guard
     let hydrated = false;
-    let resumeApplied = false;
     let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
     let selectedGenre: string | null = null;
 
@@ -125,18 +125,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(
-            `/car-page?mode=nostalgia` +
-            `&decade=ALL` +
-            `&genre=ALL` +
-            `&language=${language}` +
-            `&languages=${languages.join(',')}` +
-            `&voices=${buildVoiceQuery()}` +
-            `&playbackOrder=${playbackOrder}` +
-            `&voicePlayMode=before` +
-            `&pauseMode=${pauseMode}` +
-            `&skipPlayed=${skipPlayed}`
-        );
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
     }
 
     function launchNostalgiaGenre(genre: string) {
@@ -159,26 +148,14 @@
 
         saveResumeFromLocal(selection);
 
-        goto(
-            `/car-page?mode=nostalgia` +
-            `&decade=ALL` +
-            `&genre=${genre}` +
-            `&language=${language}` +
-            `&languages=${languages.join(',')}` +
-            `&voices=${buildVoiceQuery()}` +
-            `&playbackOrder=${playbackOrder}` +
-            `&voicePlayMode=before` +
-            `&pauseMode=${pauseMode}` +
-            `&skipPlayed=${skipPlayed}`
-        );
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
     }
 
     function launchCollectionsAll() {
         const selection = {
             activeGroup: 'collection' as ModeType,
             context: {
-                decade: 'ALL',
-                genre: 'ALL'
+                collection_group_slug: 'ALL'
             },
             language,
             languages,
@@ -193,17 +170,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(
-            `/car-page?mode=radio_collections` +
-            `&collection_group=ALL` +
-            `&language=${language}` +
-            `&languages=${languages.join(',')}` +
-            `&voices=${buildVoiceQuery()}` +
-            `&playbackOrder=${playbackOrder}` +
-            `&voicePlayMode=before` +
-            `&pauseMode=${pauseMode}` +
-            `&skipPlayed=${skipPlayed}`
-        );
+        goto(`/car-page?mode=radio_collections&collection_group=ALL&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
     }
 
     function buildVoiceQuery(): string {
@@ -230,17 +197,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(
-            `/car-page?mode=radio_collections` +
-            `&collection_group=${groupSlug}` +
-            `&language=${language}` +
-            `&languages=${languages.join(',')}` +
-            `&voices=${buildVoiceQuery()}` +
-            `&playbackOrder=${playbackOrder}` +
-            `&voicePlayMode=before` +
-            `&pauseMode=${pauseMode}` +
-            `&skipPlayed=${skipPlayed}`
-        );
+        goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
     }
 
 
@@ -291,7 +248,6 @@
         if (!selection) return;
 
         activeGroup = selection.mode;
-        radioMode = selection.mode === 'collection' ? 'collections' : 'nostalgia';
         language = selection.language;
         languages = selection.languages ?? [selection.language];
 
@@ -376,28 +332,16 @@
             }
 
             hydrated = true;
-            resumeApplied = true;
         } catch {
             console.error('❌ Error loading catalog.');
         }
     });
 
     // ─────────────────────────────────────────────
-    // Sync selected language into currentSelection
-    // ─────────────────────────────────────────────
-    $: if (browser && hydrated) {
-        currentSelection.update(s => {
-            return {
-                ...s,
-                language,
-                languages
-            };
-        });
-    }
-    // ─────────────────────────────────────────────
     // Auto-save (guarded)
     // ─────────────────────────────────────────────
     $: if (browser && hydrated) {
+        // console.log('OPTIONS AUTOSAVE languages:', languages);
         saveResumeFromLocal({
             activeGroup,
             context:
@@ -412,7 +356,7 @@
                             : {})
                     },
             language,
-            languages: languages.length > 0 ? languages : [language],
+            languages,
             startRank,
             endRank,
             playbackOrder,
@@ -425,8 +369,7 @@
     // ─────────────────────────────────────────────
     // Sync playback settings into store
     // ─────────────────────────────────────────────
-    // Auto-save (guarded)
-    $: if (browser && hydrated && resumeApplied) {
+    $: if (browser && hydrated) {
         playbackSettingsStore.set({
             voices: selectedVoices,
             playbackOrder,
@@ -452,89 +395,100 @@
     <div class="page">
 
         <!-- 🔥 RADIO (NEW) -->
-        <div class="opt-cell opt-cell--radio">
-            <h3 class="section-title">📻🐕 TopSpot40 Radio 📻🐕 </h3>
-
-            <div class="radio-description">
-                Nostalgia mixes decades and genres. Collections plays themed playlists.
+        <div
+                class="opt-cell opt-cell--radio"
+                on:click={() => openSection = 'radio'}
+        >
+            <div class="section-header-row">
+                <h3 class="section-title">📻🐕 TopSpot40 Interactive Radio 📻🐕</h3>
+                <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
             </div>
 
-            <div class="radio-description">
-                DJ Mode • Shuffle • Favor New • Continuous
-            </div>
+            {#if openSection === 'radio'}
+                <div class="radio-description">
+                    Nostalgia mixes decades and genres. Collections plays themed playlists.
+                </div>
 
-            <div class="radio-buttons">
-                <button
-                        class:active={radioMode === 'nostalgia'}
-                        on:click={() => startRadio('nostalgia')}
-                >
-                    Nostalgia Radio
-                </button>
+                <div class="radio-description">
+                    DJ Mode • Shuffle • Favor New • Continuous
+                </div>
 
-                <button
-                        class:active={radioMode === 'collections'}
-                        on:click={() => startRadio('collections')}
-                >
-                    Collections Radio
-                </button>
-            </div>
+                <div class="radio-buttons">
+                    <button
+                            class:active={radioMode === 'nostalgia'}
+                            on:click|stopPropagation={() => startRadio('nostalgia')}
+                    >
+                        Nostalgia Radio
+                    </button>
 
-            <div class="radio-separator">
-                <span>Stations</span>
-            </div>
-
-
-            {#if radioMode === 'nostalgia'}
-                <div style="margin-top: 10px;">
-                    <button class="start-all-btn" on:click={launchNostalgiaAll}>
-                        <span class="icon">📻</span>
-                        <span>Start All Genres: 1950s to the Present</span>
+                    <button
+                            class:active={radioMode === 'collections'}
+                            on:click|stopPropagation={() => startRadio('collections')}
+                    >
+                        Collections Radio
                     </button>
                 </div>
 
-                <div class="radio-genres">
-                    {#each genreOptions as g}
-                        <button
-                                class="genre-btn"
-                                class:selected={selectedGenre === g.id}
-                                on:click={() => {
-                                            launchNostalgiaGenre(g.id);
-                                        }}
-                        >
-                            <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
-                            <span>{g.label}</span>
+                <div class="radio-separator">
+                    <span>Stations</span>
+                </div>
+
+                {#if radioMode === 'nostalgia'}
+                    <div style="margin-top: 10px;">
+                        <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
+                            <span class="icon">📻</span>
+                            <span>Start All Genres: 1950s to the Present</span>
                         </button>
-                    {/each}
-                </div>
-            {/if}
+                    </div>
 
-            {#if radioMode === 'collections'}
-                <div style="margin-top: 10px;">
-                    <button class="start-all-btn" on:click={launchCollectionsAll}>
-                        <span class="icon">📻</span>
-                        <span>Start All Collections</span>
-                    </button>
-                </div>
+                    <div class="radio-genres">
+                        {#each genreOptions as g}
+                            <button
+                                    class="genre-btn"
+                                    class:selected={selectedGenre === g.id}
+                                    on:click|stopPropagation={() => {
+                                launchNostalgiaGenre(g.id);
+                            }}
+                            >
+                                <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
+                                <span>{g.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
 
-                <!-- 🔥 NEW: Collection Group Buttons -->
-                <div class="radio-genres">
-                    {#each collectionGroups as group}
-                        <button
-                                class="genre-btn"
-                                on:click={() => launchCollectionGroup(group.slug)}
-                        >
-                            <span class="icon">📀</span>
-                            <span>{group.name}</span>
+                {#if radioMode === 'collections'}
+                    <div style="margin-top: 10px;">
+                        <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
+                            <span class="icon">📻</span>
+                            <span>Start All Collections</span>
                         </button>
-                    {/each}
-                </div>
-            {/if}
+                    </div>
 
+                    <div class="radio-genres">
+                        {#each collectionGroups as group}
+                            <button
+                                    class="genre-btn"
+                                    on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
+                            >
+                                <span class="icon">📀</span>
+                                <span>{group.name}</span>
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
+            {/if}
         </div>
 
-        <!-- ✅ Playback History now at top -->
-        <PlaybackHistoryPanel/>
 
+        <ListeningLibraryPanel
+                {decadeOptions}
+                {genreOptions}
+                {collectionGroups}
+        />
+
+        <!-- ✅ Playback History now at top -->
+        <PlaybackHistoryPanel {language} {languages}/>
 
         <!-- TOP CONFIG GRID (4 + 4) -->
         <section class="options-grid options-grid--compact">
@@ -920,5 +874,18 @@
         color: rgba(207, 184, 124, 0.7);
         letter-spacing: 0.08em;
         text-transform: uppercase;
+    }
+
+    .section-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .section-toggle {
+        color: #cfb87c;
+        font-size: 0.8rem;
+        opacity: 0.85;
     }
 </style>

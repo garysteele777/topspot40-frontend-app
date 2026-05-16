@@ -115,6 +115,84 @@ export async function loadForSelection(
     currentTrack.set(null);
 
     // ─────────────────────────────────────────────
+// ARTIST SPOTLIGHT
+// ─────────────────────────────────────────────
+    if (sel.mode === 'artist_spotlight') {
+
+        const artistId = sel.context?.artist_id;
+
+        if (!artistId) {
+            status.set('Missing artist ID.');
+            return;
+        }
+
+        const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/artist-spotlight/artist-tracks?artist_id=${artistId}`
+        );
+
+        if (!response.ok) {
+            status.set('Failed to load artist tracks.');
+            return;
+        }
+
+        const rawTracks = await response.json();
+
+        if (!Array.isArray(rawTracks) || rawTracks.length === 0) {
+            status.set('No tracks found.');
+            return;
+        }
+
+        const normalized: CarModeTrack[] = rawTracks.map((track, index) => ({
+            id: track.track_id,
+            rankingId: null,
+            rank: index + 1,
+
+            trackName: track.track_name,
+            artistName: track.artist_name,
+
+            spotifyTrackId: track.spotify_track_id,
+
+            albumArtwork: track.album_artwork ?? null,
+            albumName: track.album_name ?? null,
+
+            year: track.year_released ?? null,
+
+            detail: track.detail ?? null,
+
+            artistText:
+                track.artist_description ??
+                null,
+
+            durationSeconds: Math.floor((track.duration_ms ?? 0) / 1000)
+        }));
+
+        let ordered: CarModeTrack[] = [...normalized];
+
+        if (sel.playbackOrder === 'shuffle') {
+            ordered = [...ordered].sort(() => Math.random() - 0.5);
+        }
+
+        if (sel.playbackOrder === 'down') {
+            ordered = [...ordered].reverse();
+        }
+
+        tracks.set(ordered);
+
+        const initial =
+            typeof initialRank === 'number'
+                ? ordered.find(track => track.rank === initialRank) ?? ordered[0]
+                : ordered[0];
+
+        currentTrack.set(initial ?? null);
+
+        status.set(
+            `${ordered.length} artist spotlight tracks loaded.`
+        );
+
+        return;
+    }
+
+    // ─────────────────────────────────────────────
     // FAVORITES: DECADE (programType = FAV_DG)
     // ─────────────────────────────────────────────
     if (sel.programType === 'FAV_DG') {

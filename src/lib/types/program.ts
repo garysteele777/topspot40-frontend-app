@@ -8,7 +8,8 @@ export type PlaybackProgramType =
     | 'FAV_DG'
     | 'FAV_COL'
     | 'RADIO_DG'
-    | 'RADIO_COL';
+    | 'RADIO_COL'
+    | 'ARTIST';
 
 
 /* -----------------------
@@ -21,7 +22,8 @@ export const PROGRAM_TYPES = {
     FAV_DG: 'FAV_DG',
     FAV_COL: 'FAV_COL',
     RADIO_DG: 'RADIO_DG',
-    RADIO_COL: 'RADIO_COL'
+    RADIO_COL: 'RADIO_COL',
+    ARTIST: 'ARTIST'
 } as const;
 
 
