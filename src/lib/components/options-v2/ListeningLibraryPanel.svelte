@@ -21,8 +21,8 @@
     type ArtistSpotlightItem = {
         artist_id: number;
         artist_name: string;
-        dg_track_count: number;
-        collection_track_count: number;
+        genre_track_count: number;
+        total_track_count: number;
     };
 
     type ArtistTrackItem = {
@@ -278,7 +278,6 @@
 
                 {/each}
             </div>
-
             {#if selectedArtistGenre}
 
                 <div class="genre-section">
@@ -302,71 +301,81 @@
 
                     {:else}
 
-                        <div class="artist-grid">
-
-                            {#each artistSpotlightItems as artist}
-
-                                <button
-                                        class="artist-btn"
-                                        class:selected={selectedArtist?.artist_id === artist.artist_id}
-                                        on:click={() => loadArtistTracks(artist)}
-                                >
-
-                                    <div class="artist-name">
-                                        {titleCaseName(artist.artist_name)}
-                                    </div>
-
-                                    <div class="artist-count">
-                                        {artist.dg_track_count} DG • {artist.collection_track_count} COL
-                                    </div>
-
-                                </button>
-
-                            {/each}
-
-                        </div>
-
                         {#if selectedArtist}
 
                             <div class="genre-section">
+
+                                <button
+                                        class="back-btn"
+                                        on:click={() => {
+                                selectedArtist = null;
+                                artistTracks = [];
+                            }}
+                                >
+                                    ← Back to Artists
+                                </button>
 
                                 <div class="genre-title">
                                     {titleCaseName(selectedArtist.artist_name)}
                                     • Artist Spotlight Tracks
                                 </div>
 
+                                <div class="artist-play-row">
+                                    <button
+                                            class="play-artist-btn"
+                                            on:click={() => {
+                                                const artist = selectedArtist;
+                                                if (!artist) return;
+
+                                                goto(
+                                                    `/car-page?mode=artist_spotlight` +
+                                                    `&artist_id=${artist.artist_id}` +
+                                                    `&artist=${encodeURIComponent(artist.artist_name)}`
+                                                );
+}}
+                                    >
+                                        ▶ Play Artist Spotlight
+                                    </button>
+                                </div>
+
                                 {#if artistTracksLoading}
-
-                                    <div class="library-description">
-                                        Loading tracks...
-                                    </div>
-
+                                    <div class="library-description">Loading tracks...</div>
                                 {:else if artistTracksError}
-
-                                    <div class="library-description">
-                                        {artistTracksError}
-                                    </div>
-
+                                    <div class="library-description">{artistTracksError}</div>
                                 {:else}
-
                                     <div class="track-grid">
-
                                         {#each artistTracks as track}
-
                                             <button class="track-btn">
-
                                                 <div class="track-name">
                                                     {titleCaseName(track.track_name)}
                                                 </div>
-
                                             </button>
-
                                         {/each}
-
                                     </div>
-
                                 {/if}
 
+                            </div>
+
+                        {:else}
+
+                            <div class="artist-grid">
+                                {#each artistSpotlightItems as artist}
+                                    <button
+                                            class="artist-btn"
+                                            on:click={() => loadArtistTracks(artist)}
+                                    >
+                                        <div class="artist-name">
+                                            {titleCaseName(artist.artist_name)}
+                                        </div>
+
+                                        <div class="artist-count">
+                                            {artist.genre_track_count}
+                                            {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
+                                            •
+                                            {artist.total_track_count} Total
+                                        </div>
+                                    </button>
+                                {/each}
                             </div>
 
                         {/if}
@@ -594,5 +603,34 @@
         color: #eee;
     }
 
+    .artist-play-row {
+        margin-bottom: 14px;
+    }
+
+    .back-btn {
+        background: transparent;
+        color: #cfb87c;
+        border: 1px solid rgba(207, 184, 124, 0.45);
+        border-radius: 999px;
+        padding: 6px 14px;
+        margin-bottom: 12px;
+        cursor: pointer;
+    }
+
+    .play-artist-btn {
+        background: #cfb87c;
+        color: #000;
+        border: none;
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+
+    .play-artist-btn:hover {
+        filter: brightness(1.05);
+    }
 
 </style>
