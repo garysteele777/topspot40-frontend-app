@@ -50,20 +50,8 @@
        Derived values (Next + Progress)
     ───────────────────────────────────────────── */
 
-    $: sessionTotal = tracks.length;
-
     let completed = 0;
     let programTotal = 0;
-
-    $: currentIndex =
-        currentTrack && currentTrack.rankingId != null
-            ? tracks.findIndex(t => t.rankingId === currentTrack.rankingId)
-            : -1;
-
-    $: nextTrack =
-        sessionTotal > 0 && currentIndex >= 0
-            ? tracks[(currentIndex + 1) % sessionTotal]
-            : null;
 
     $: {
         const sel = $currentSelection;
@@ -360,14 +348,22 @@
 
                     {#each [...tracks].sort((a, b) => a.rank - b.rank) as t}
 
-                        <button
-                                type="button"
+                        <div
                                 class="track-row"
+                                role="button"
+                                tabindex="0"
                                 class:active={currentTrack?.rankingId === t.rankingId}
                                 on:click={() => {
-    onJumpToTrack?.(t);
-    showTrackList = false;
-}}
+                                    onJumpToTrack?.(t);
+                                    showTrackList = false;
+                                }}
+                                on:keydown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        onJumpToTrack?.(t);
+                                        showTrackList = false;
+                                    }
+                                }}
                         >
     <span class="played-col">
         {#if isPlayed(t.rank)}
@@ -375,28 +371,29 @@
         {/if}
     </span>
 
-                            <span
+                            <button
+                                    type="button"
                                     class="fav-col"
                                     class:active={
-                favoriteRefresh &&
-                programType &&
-                programGroup &&
-                t.rankingId != null &&
-                isFavorite(programType, programGroup, t.rankingId)
-            }
+            favoriteRefresh &&
+            programType &&
+            programGroup &&
+            t.rankingId != null &&
+            isFavorite(programType, programGroup, t.rankingId)
+        }
                                     on:click|stopPropagation={() => {
-                if (programType && programGroup && t.rankingId != null) {
-                    toggleFavorite(programType, programGroup, t.rankingId);
-                }
-            }}
+            if (programType && programGroup && t.rankingId != null) {
+                toggleFavorite(programType, programGroup, t.rankingId);
+            }
+        }}
                             >
-        ★
-    </span>
+                                ★
+                            </button>
 
                             <span class="rank">#{t.rank}</span>
                             <span class="title">{t.trackName}</span>
                             <span class="artist">{t.artistName}</span>
-                        </button>
+                        </div>
                     {/each}
                 </div>
             </div>

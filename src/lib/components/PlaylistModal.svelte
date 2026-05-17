@@ -48,7 +48,11 @@
 </script>
 
 {#if visible}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="overlay" on:click={onClose}>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
                 class="popup"
                 role="dialog"
@@ -92,8 +96,8 @@
             </label>
 
             <div class="actions">
-                <button on:click={applySettings}>Apply</button>
-                <button class="secondary" on:click={onClose}>Cancel</button>
+                <button type="button" on:click={applySettings}>Apply</button>
+                <button type="button" class="secondary" on:click={onClose}>Cancel</button>
             </div>
         </div>
     </div>
