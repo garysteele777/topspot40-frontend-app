@@ -715,15 +715,6 @@ if (trackToPlay) {
 </div>
 
 <style>
-    .debug-panel {
-        background: rgba(0, 0, 0, 0.45);
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 1rem auto;
-        max-width: 900px;
-        font-size: 0.85rem;
-        color: #ccc;
-    }
 
     .car-mode-root {
         min-height: 100vh;

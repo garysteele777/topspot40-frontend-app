@@ -47,11 +47,6 @@
         line-height: 1.35;
     }
 
-    .intro-text {
-        opacity: 0.85;
-        margin-bottom: 0.4rem;
-    }
-
     .button-row {
         display: inline-flex;
         gap: 0.5rem;

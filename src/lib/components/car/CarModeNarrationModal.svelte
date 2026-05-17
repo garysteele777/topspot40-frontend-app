@@ -131,7 +131,7 @@
 
 {#if open}
     <!-- Backdrop -->
-    <div class="modal-backdrop" on:click={onClose} transition:fade/>
+    <div class="modal-backdrop" on:click={onClose} transition:fade></div>
 
     <!-- Modal -->
     <div
