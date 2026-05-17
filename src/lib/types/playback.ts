@@ -1,14 +1,21 @@
 // src/lib/types/playback.ts
 
 // ─────────────────────────────────────────────
-// Core playback types (single source of truth)
+// Core playback engine types
 // ─────────────────────────────────────────────
+//
+// ModeType identifies the low-level playback engine.
+// It does NOT distinguish Radio vs Program.
+//
+// Examples:
+// - decade_genre powers Nostalgia Radio and Nostalgia Programs
+// - collection powers Collections Radio and Collections Programs
+// - artist_spotlight powers Artist Spotlight
 
 export type ModeType =
-  | 'decade_genre'
-  | 'collection'
-  | 'artist_spotlight';
-
+    | 'decade_genre'
+    | 'collection'
+    | 'artist_spotlight';
 
 export type Language = 'en' | 'es' | 'ptbr';
 

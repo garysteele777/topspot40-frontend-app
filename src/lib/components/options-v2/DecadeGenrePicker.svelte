@@ -1,6 +1,15 @@
 <script lang="ts">
     import ListPicker from '$lib/components/options/ListPicker.svelte';
-    import type {DecadeOption, GenreOption} from '$lib/helpers/useCatalogLoader';
+
+    type DecadeOption = {
+        id: string;
+        label: string;
+    };
+
+    type GenreOption = {
+        id: string;
+        label: string;
+    };
 
     export let decades: string[] = [];
     export let genres: string[] = [];
