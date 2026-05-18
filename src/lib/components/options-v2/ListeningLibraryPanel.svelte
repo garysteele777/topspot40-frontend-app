@@ -49,6 +49,14 @@
     export let genreOptions: OptionItem[] = [];
     export let collectionGroups: CollectionGroup[] = [];
 
+    export let language = 'en';
+    export let languages: string[] = ['en'];
+    export let voices: string[] = ['intro'];
+    export let playbackOrder = 'up';
+    export let voicePlayMode = 'before';
+    export let pauseMode = 'pause';
+    export let skipPlayed = false;
+
     let libraryMode: LibraryMode = 'nostalgia';
 
     let selectedDecade: string | null = null;
@@ -183,11 +191,20 @@
                             <button
                                     class="genre-btn"
                                     on:click={() => {
-                    goto(
-                        `/car-page?mode=decade_genre` +
-                        `&decade=${selectedDecade}` +
-                        `&genre=${genre.id}`
-                    );
+            const params = new URLSearchParams({
+                mode: 'decade_genre',
+                decade: selectedDecade ?? '',
+                genre: genre.id,
+                language,
+                languages: languages.join(','),
+                voices: voices.join(','),
+                playbackOrder,
+                voicePlayMode,
+                pauseMode,
+                skipPlayed: String(skipPlayed)
+            });
+
+goto(`/car-page?${params.toString()}`);
                 }}
                             >
                                 {selectedDecade === 'ALL'

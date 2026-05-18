@@ -1,14 +1,23 @@
 // src/lib/helpers/selectionLoader.ts
+
 import {goto} from '$app/navigation';
 import {selection} from '$lib/stores/selection';
 import type {SelectionState} from '$lib/stores/selection';
-import type {ModeType} from '$lib/types/playback';
+import type {
+    Language,
+    ModeType,
+    PauseMode,
+    PlaybackOrder,
+    VoicePart,
+    VoicePlayMode
+} from '$lib/types/playback';
 import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
 
 export async function loadSelection(
     opts: {
         modeType: ModeType;
         ttsLanguage: string;
+        languages?: Language[];
 
         selectedDecade?: string;
         selectedGenre?: string;
@@ -28,14 +37,23 @@ export async function loadSelection(
         textArtistDescription: boolean;
 
         playTrack: boolean;
+
+        voices?: VoicePart[];
+        playbackOrder?: PlaybackOrder;
+        voicePlayMode?: VoicePlayMode;
+        pauseMode?: PauseMode;
+        skipPlayed?: boolean;
     },
     setStatus?: (msg: string) => void
 ): Promise<void> {
     const {
         modeType,
         ttsLanguage,
+        languages,
+
         selectedDecade,
         selectedGenre,
+
         selectedCollection,
         collectionSlugMap = {},
 
@@ -50,21 +68,37 @@ export async function loadSelection(
         textDetail,
         textArtistDescription,
 
-        playTrack,
+        voices,
+        playbackOrder = 'up',
+        voicePlayMode = 'before',
+        pauseMode = 'pause',
+        skipPlayed = false
     } = opts;
 
     try {
-        // ───────── Validation ─────────
         if (modeType === 'decade_genre' && (!selectedDecade || !selectedGenre)) {
             setStatus?.('⚠️ Please select both a Decade and a Genre.');
             return;
         }
+
         if (modeType === 'collection' && (!selectedCollection || selectedCollection === '')) {
             setStatus?.('⚠️ Please select a valid Collection.');
             return;
         }
 
-        // ───────── Build context ─────────
+        const language = normalizeLanguage(ttsLanguage);
+        const selectedLanguages =
+            languages?.length ? languages : [language];
+
+        const selectedVoices =
+            voices?.length
+                ? voices
+                : ([
+                    playIntro && 'intro',
+                    playDetail && 'detail',
+                    playArtistDescription && 'artist'
+                ].filter(Boolean) as VoicePart[]);
+
         let context: SelectionState['context'];
 
         if (modeType === 'collection') {
@@ -72,21 +106,21 @@ export async function loadSelection(
 
             context = {
                 collection_slug: slug,
-                collection_name: selectedCollection ?? '',
+                collection_name: selectedCollection ?? ''
             };
         } else {
             context = {
                 decade: selectedDecade ?? '',
-                genre: selectedGenre ?? '',
+                genre: selectedGenre ?? ''
             };
         }
 
-
-        // ───────── Update global store (WITHOUT tracks) ─────────
         selection.set({
             programType: modeType === 'collection' ? 'COL' : 'DG',
             mode: modeType,
-            language: normalizeLanguage(ttsLanguage),
+
+            language,
+            languages: selectedLanguages,
 
             context,
 
@@ -94,49 +128,40 @@ export async function loadSelection(
             endRank,
             currentRank: startRank,
 
-            // Playback toggles
             playIntro,
             playDetail,
             playArtistDescription,
 
-            // Text toggles
             textIntro,
             textDetail,
             textArtistDescription,
 
-            // Defaults
-            voices: ['intro'],
-            playbackOrder: 'up',
-            voicePlayMode: 'before',
-            pauseMode: 'pause',
-            categoryMode: 'single'
+            voices: selectedVoices,
+            playbackOrder,
+            voicePlayMode,
+            pauseMode,
+            categoryMode: 'single',
+            skipPlayed
         });
 
-        // ───────── Build query params ─────────
         const params = new URLSearchParams({
             mode: modeType,
-            language: ttsLanguage,
+            language,
+            languages: selectedLanguages.join(','),
 
             startRank: String(startRank),
             endRank: String(endRank),
 
-            voices: [
-                playIntro && 'intro',
-                playDetail && 'detail',
-                playArtistDescription && 'artist',
-            ]
-                .filter(Boolean)
-                .join(','),
+            voices: selectedVoices.join(','),
 
-            playbackOrder: 'up',
-            voicePlayMode: 'before',
-            pauseMode: 'pause',
+            playbackOrder,
+            voicePlayMode,
+            pauseMode,
+            skipPlayed: String(skipPlayed)
         });
-
 
         if (modeType === 'collection') {
             params.set('collection', collectionSlugMap[selectedCollection ?? ''] ?? '');
-
         } else {
             params.set('decade', selectedDecade ?? '');
             params.set('genre', selectedGenre ?? '');
@@ -144,10 +169,7 @@ export async function loadSelection(
 
         const url = `/car-page?${params.toString()}`;
 
-        // ───────── Navigation (Lint Safe) ─────────
-        // eslint-disable-next-line svelte/no-navigation-without-resolve
         void goto(url);
-
     } catch (err) {
         console.error('❌ loadSelection failed:', err);
         setStatus?.('❌ Error loading selection.');

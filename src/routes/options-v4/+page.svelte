@@ -486,6 +486,13 @@
                 {decadeOptions}
                 {genreOptions}
                 {collectionGroups}
+                {language}
+                {languages}
+                voices={selectedVoices}
+                {playbackOrder}
+                voicePlayMode="before"
+                {pauseMode}
+                {skipPlayed}
         />
 
         <!-- ✅ Playback History now at top -->
