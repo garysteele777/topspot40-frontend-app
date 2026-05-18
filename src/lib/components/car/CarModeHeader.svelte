@@ -18,7 +18,6 @@
     export let programType: PlaybackProgramType | undefined;
 
 
-    export let language = 'en';
     export let languages: string[] = ['en'];
     export let voices: string[] = ['intro'];
 

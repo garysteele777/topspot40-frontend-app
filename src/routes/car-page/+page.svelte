@@ -586,7 +586,6 @@
                 collection={headerMode === 'collection' ? uiDecade : undefined}
                 mode={headerMode}
                 programType={$currentSelection.programType}
-                language={$currentSelection.language}
                 languages={$currentSelection.languages ?? [$currentSelection.language]}
                 voices={settings.voices}
                 playbackOrder={$currentSelection.playbackOrder}

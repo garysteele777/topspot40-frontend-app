@@ -206,11 +206,4 @@
     accent-color: #1db954;
   }
 
-  /* svelte-ignore css-unused-selector */
-  .picker + .picker {
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    margin-top: 1rem;
-    padding-top: 1rem;
-  }
 </style>

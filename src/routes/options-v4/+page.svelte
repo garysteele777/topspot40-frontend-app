@@ -91,13 +91,6 @@
         tv_themes: '📺',
     };
 
-    function buildRadioContext(mode: 'nostalgia' | 'collections'): Record<string, string> {
-        if (mode === 'nostalgia') {
-            return {decade: 'ALL', genre: 'ALL'};
-        }
-        return {collection_slug: 'ALL'};
-    }
-
     function startRadio(mode: 'nostalgia' | 'collections') {
 
         radioMode = mode;
@@ -397,7 +390,15 @@
         <!-- 🔥 RADIO (NEW) -->
         <div
                 class="opt-cell opt-cell--radio"
+                role="button"
+                tabindex="0"
                 on:click={() => openSection = 'radio'}
+                on:keydown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openSection = 'radio';
+            }
+        }}
         >
             <div class="section-header-row">
                 <h3 class="section-title">📻🐕 TopSpot40 Interactive Radio 📻🐕</h3>

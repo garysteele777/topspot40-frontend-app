@@ -12,7 +12,7 @@
 	{#if recentTracks.length > 0}
 		<ul>
 			{#each recentTracks as track (track.id)}
-				<li class="track-card" role="button" tabindex="0">
+				<li class="track-card">
 					<img
 						src={track.album_artwork}
 						alt={`Album artwork for ${track.track_name} by ${track.artist_name}`}
