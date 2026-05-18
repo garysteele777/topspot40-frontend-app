@@ -50,7 +50,7 @@
     let genres: string[] = [];
     let collections: string[] = [];
 
-    let radioMode: 'nostalgia' | 'collections' | null = 'nostalgia';
+    let radioMode: 'nostalgia' | 'collections' | 'artist_spotlight' | null = 'nostalgia';
     type OpenSection = 'radio' | 'library' | 'history' | 'settings';
 
     let openSection: OpenSection = 'radio';
@@ -91,7 +91,7 @@
         tv_themes: '📺',
     };
 
-    function startRadio(mode: 'nostalgia' | 'collections') {
+    function startRadio(mode: 'nostalgia' | 'collections' | 'artist_spotlight') {
 
         radioMode = mode;
 
@@ -191,6 +191,20 @@
         saveResumeFromLocal(selection);
 
         goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
+    }
+
+    function launchArtistSpotlightRadioGenre(genre: string) {
+        goto(
+            `/car-page?mode=artist_radio` +
+            `&genre=${genre}` +
+            `&language=${language}` +
+            `&languages=${languages.join(',')}` +
+            `&voices=${buildVoiceQuery()}` +
+            `&playbackOrder=shuffle` +
+            `&voicePlayMode=before` +
+            `&pauseMode=${pauseMode}` +
+            `&skipPlayed=${skipPlayed}`
+        );
     }
 
 
@@ -428,6 +442,12 @@
                     >
                         Collections Radio
                     </button>
+                    <button
+                            class:active={radioMode === 'artist_spotlight'}
+                            on:click|stopPropagation={() => startRadio('artist_spotlight')}
+                    >
+                        Artist Spotlight Radio
+                    </button>
                 </div>
 
                 <div class="radio-separator">
@@ -480,6 +500,26 @@
                 {/if}
             {/if}
         </div>
+
+        {#if radioMode === 'artist_spotlight'}
+            <div class="radio-description" style="margin-top: 10px;">
+                Artist Spotlight Radio will rotate featured artists and play short artist-focused sets.
+            </div>
+
+            <div class="radio-genres">
+                {#each genreOptions.filter(g => g.id !== 'tv_themes') as g}
+                    <button
+                            class="genre-btn"
+                            on:click|stopPropagation={() => {
+                        launchArtistSpotlightRadioGenre(g.id);
+                    }}
+                    >
+                        <span class="icon">{genreIcons[g.id] ?? '🎤'}</span>
+                        <span>{g.label}</span>
+                    </button>
+                {/each}
+            </div>
+        {/if}
 
 
         <ListeningLibraryPanel
@@ -676,7 +716,7 @@
     /* RADIO BUTTONS */
     .radio-buttons {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 6px;
     }
 

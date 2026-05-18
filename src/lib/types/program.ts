@@ -25,7 +25,8 @@ export type PlaybackProgramType =
     | 'FAV_COL'
     | 'RADIO_DG'
     | 'RADIO_COL'
-    | 'ARTIST';
+    | 'ARTIST'
+    | 'RADIO_ARTIST';
 
 export const PROGRAM_TYPES = {
     DG: 'DG',
@@ -34,7 +35,8 @@ export const PROGRAM_TYPES = {
     FAV_COL: 'FAV_COL',
     RADIO_DG: 'RADIO_DG',
     RADIO_COL: 'RADIO_COL',
-    ARTIST: 'ARTIST'
+    ARTIST: 'ARTIST',
+    RADIO_ARTIST: 'RADIO_ARTIST'
 } as const;
 
 /**
@@ -55,5 +57,9 @@ export function isPlaybackProgramType(
 export function isRadioProgram(
     type: PlaybackProgramType | undefined
 ): boolean {
-    return type === 'RADIO_DG' || type === 'RADIO_COL';
+    return (
+    type === 'RADIO_DG' ||
+    type === 'RADIO_COL' ||
+    type === 'RADIO_ARTIST'
+);
 }
