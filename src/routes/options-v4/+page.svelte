@@ -507,6 +507,15 @@
             </div>
 
             <div class="radio-genres">
+
+                <button
+                        class="start-all-btn artist-start-all-btn"
+                        on:click|stopPropagation={() => launchArtistSpotlightRadioGenre('ALL')}
+                >
+                    <span class="icon">🎤</span>
+                    <span>Start All Artist Genres</span>
+                </button>
+
                 {#each genreOptions.filter(g => g.id !== 'tv_themes') as g}
                     <button
                             class="genre-btn"
@@ -900,6 +909,14 @@
 
     .start-all-btn .icon {
         font-size: 1rem;
+    }
+
+    .artist-start-all-btn {
+        grid-column: 1 / -1;
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 700;
     }
 
     .radio-separator {

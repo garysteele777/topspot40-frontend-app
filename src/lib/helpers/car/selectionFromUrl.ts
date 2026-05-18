@@ -159,6 +159,36 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         };
     }
 
+    if (modeParam === 'artist_radio') {
+        const genre = sp.get('genre') ?? 'ALL';
+
+        return {
+            programType: 'RADIO_ARTIST',
+            mode: 'artist_spotlight',
+            language,
+            languages,
+            context: {
+                genre
+            },
+            startRank: finalStartRank,
+            endRank: 9999,
+            currentRank,
+            playIntro: false,
+            playDetail: voices.includes('detail'),
+            playArtistDescription: voices.includes('artist'),
+            textIntro: false,
+            textDetail: false,
+            textArtistDescription: false,
+            voices,
+            playbackOrder: 'shuffle',
+            voicePlayMode,
+            pauseMode,
+            categoryMode: 'single',
+            skipPlayed
+        };
+    }
+
+
     if (modeParam === 'artist_spotlight') {
         const artistId = sp.get('artist_id') ?? '';
         const artistName = sp.get('artist') ?? '';

@@ -122,10 +122,35 @@ export async function loadForSelection(
         const artistId = sel.context?.artist_id;
 
         if (!artistId) {
+
+            if (sel.programType === 'RADIO_ARTIST') {
+
+                const genre =
+                    sel.context?.genre ??
+                    'ALL';
+
+                const placeholder: CarModeTrack = {
+                    id: null,
+                    rankingId: null,
+                    rank: 0,
+                    trackName: `${genre} Artist Spotlight Radio`,
+                    artistName: 'Press Play to Start',
+                    spotifyTrackId: '',
+                    albumArtwork: null,
+                    durationSeconds: 0
+                };
+
+                tracks.set([placeholder]);
+                currentTrack.set(placeholder);
+
+                status.set('Artist Spotlight Radio ready. Press Play.');
+
+                return;
+            }
+
             status.set('Missing artist ID.');
             return;
         }
-
         const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/artist-spotlight/artist-tracks?artist_id=${artistId}`
         );
