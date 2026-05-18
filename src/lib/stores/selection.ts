@@ -103,7 +103,19 @@ function loadInitial(): SelectionState {
                 parsed.programType = defaultSelection.programType;
             }
 
-            return {...defaultSelection, ...parsed};
+            const merged: SelectionState = {
+                ...defaultSelection,
+                ...parsed
+            };
+
+            merged.languages =
+                parsed.languages &&
+                Array.isArray(parsed.languages) &&
+                parsed.languages.length > 0
+                    ? parsed.languages
+                    : [merged.language ?? 'en'];
+
+            return merged;
         }
     } catch {
         // ignore
