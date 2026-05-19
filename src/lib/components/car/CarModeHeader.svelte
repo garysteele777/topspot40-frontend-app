@@ -28,8 +28,15 @@
     export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
 
     // Label helpers
-    const modeLabel = (m: import('./CarModeHeader.svelte').BrowseMode) =>
-        m === 'collection' ? 'Collection' : 'Decade–Genre';
+    const modeLabel = (
+        m: import('./CarModeHeader.svelte').BrowseMode,
+        p: PlaybackProgramType | undefined
+    ) =>
+        p === 'RADIO_ARTIST'
+            ? 'Artist Spotlight Radio'
+            : m === 'collection'
+                ? 'Collection'
+                : 'Decade–Genre';
 
     const categoryLabel = (m: import('./CarModeHeader.svelte').CategoryMode) =>
         m === 'multiple' ? 'Multiple' : 'Single';
@@ -102,7 +109,7 @@
         </div>
 
         <div class="cm-row cm-row--primary">
-            <span>{modeLabel(mode)}</span>
+            {modeLabel(mode, programType)}
             <span>•</span>
             <span>Category: {categoryLabel(categoryMode)}</span>
             <span>•</span>

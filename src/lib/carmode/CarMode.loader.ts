@@ -19,6 +19,7 @@ type ArtistRadioApiTrack = {
     track_name: string;
     artist_name: string;
     spotify_track_id: string;
+    spotify_artist_id?: string | null;
     album_artwork?: string | null;
     album_name?: string | null;
     year_released?: number | null;
@@ -26,7 +27,6 @@ type ArtistRadioApiTrack = {
     artist_description?: string | null;
     duration_ms?: number | null;
 };
-
 export async function loadForSelection(
     sel: SelectionState,
     initialRank?: number | null
@@ -158,6 +158,7 @@ export async function loadForSelection(
                     artistName: track.artist_name,
 
                     spotifyTrackId: track.spotify_track_id,
+                    spotifyArtistId: track.spotify_artist_id ?? null,
 
                     albumArtwork: track.album_artwork ?? null,
                     albumName: track.album_name ?? null,
@@ -210,6 +211,7 @@ export async function loadForSelection(
             artistName: track.artist_name,
 
             spotifyTrackId: track.spotify_track_id,
+            spotifyArtistId: track.spotify_artist_id ?? null,
 
             albumArtwork: track.album_artwork ?? null,
             albumName: track.album_name ?? null,

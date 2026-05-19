@@ -6,8 +6,6 @@ import {
     tracks
 } from '$lib/carmode/CarMode.store';
 
-import {updateTrack} from '$lib/carmode/CarMode.player';
-
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 export async function startPlayback() {
@@ -82,6 +80,45 @@ export async function startPlayback() {
     params.set('play_detail', String(sel.voices.includes('detail')));
     params.set('play_artist_description', String(sel.voices.includes('artist')));
     params.set('play_track', 'true');
+
+    if (sel.mode === 'artist_spotlight') {
+        const payload = {
+            track: {
+                track_id: track.id,
+                spotify_track_id: track.spotifyTrackId,
+                rank: track.rank,
+                track_name: track.trackName,
+                artist_name: track.artistName
+            },
+            selection: {
+                language: sel.language,
+                languages: sel.languages ?? [sel.language],
+                voices:
+                    sel.programType === 'RADIO_ARTIST'
+                        ? sel.voices.filter((voice) => voice !== 'artist')
+                        : sel.voices,
+                voicePlayMode: sel.voicePlayMode,
+                pauseMode: sel.pauseMode,
+                continuous: sel.pauseMode === 'continuous',
+                programType: sel.programType
+            },
+            context: {
+                type: 'artist_spotlight',
+                programType: sel.programType,
+                artist_id: sel.context?.artist_id,
+                artist_name: track.artistName,
+                spotify_artist_id: track.spotifyArtistId
+            }
+        };
+
+        await fetch(`${API_BASE}/playback/play-track`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        return;
+    }
 
     if (sel.mode === 'decade_genre') {
         const programDecade = sel.context?.decade ?? '';

@@ -139,6 +139,7 @@
                 sel.mode === 'artist_spotlight'
                     ? {
                         type: 'artist_spotlight',
+                        programType: sel.programType,
                         artist_id: sel.context?.artist_id,
                         artist_name: sel.context?.artist_name
                     }

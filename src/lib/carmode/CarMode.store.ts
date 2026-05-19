@@ -16,6 +16,7 @@ export type CarModeTrack = LoadedTrack & {
     intro?: string | null;
     detail?: string | null;
     artistText?: string | null;
+    spotifyArtistId?: string | null;
 
     textsByLanguage?: Record<
         string,
