@@ -88,111 +88,17 @@
     }
 
     async function playTrack(trackObj: CarModeTrack) {
-
-
         const sel = $currentSelection;
         if (!sel) return;
 
         const settings = get(playbackSettingsStore);
 
-        let decadeForPlayback: string | undefined;
-        let genreForPlayback: string | undefined;
-
-        if (sel.mode !== 'collection') {
-            const programDecade = sel.context?.decade;
-            decadeForPlayback =
-                programDecade === 'ALL'
-                    ? trackObj.decadeSlug ?? programDecade
-                    : programDecade;
-
-            const programGenre = sel.context?.genre;
-            genreForPlayback =
-                programGenre === 'ALL'
-                    ? trackObj.genreSlug ?? programGenre
-                    : programGenre;
-
-
-        }
-
-
-        const payload = {
-            track: {
-                track_id: trackObj.id,
-                ranking_id: trackObj.rankingId,
-                spotify_track_id: trackObj.spotifyTrackId,
-                rank: trackObj.rank,
-                track_name: trackObj.trackName,
-                artist_name: trackObj.artistName
-            },
-            selection: {
-                ...sel,
-                languages: sel.languages ?? [sel.language],
-
-                playbackOrder: settings.playbackOrder,
-
-                voices: settings.voices,
-                voicePlayMode: settings.voicePlayMode,
-                pauseMode: settings.pauseMode,
-                continuous: settings.pauseMode === 'continuous'
-            },
-            context:
-                sel.mode === 'artist_spotlight'
-                    ? {
-                        type: 'artist_spotlight',
-                        programType: sel.programType,
-                        artist_id: sel.context?.artist_id,
-                        artist_name: sel.context?.artist_name
-                    }
-                    : sel.mode === 'collection'
-                        ? (
-                            sel.programType === 'RADIO_COL'
-                                ? {
-                                    type: 'collection_radio',
-                                    collection_group_slug: sel.context?.collection_group_slug
-                                }
-                                : {
-                                    type: 'collection',
-                                    collection_slug: sel.context?.collection_slug
-                                }
-                        )
-                        : {
-                            type: 'decade_genre',
-                            decade: decadeForPlayback,
-                            genre: genreForPlayback
-                        }
-        };
-
-
-        if (
-            sel?.mode === 'decade_genre' &&
-            sel?.context?.decade === 'ALL' &&
-            trackObj.rank === 0
-        ) {
-
-            const settings = get(playbackSettingsStore);
-
-            const params = new URLSearchParams({
-                decade: 'ALL',
-                genre: sel.context?.genre ?? 'ALL',
-                tts_language: sel.language ?? 'en',
-                languages: (sel.languages ?? [sel.language]).join(','),
-                play_intro: String(settings.voices.includes('intro')),
-                play_detail: String(settings.voices.includes('detail')),
-                play_artist_description: String(settings.voices.includes('artist'))
-            });
-
-
-            const res = await fetch(
-                `${API_BASE}/supabase/decade-genre/play-sequence?${params.toString()}`,
-                {method: 'GET'}
-            );
-
-            const data = await res.json();
-
-            return;
-        }
-
         if (sel.mode === 'artist_spotlight' && sel.programType === 'RADIO_ARTIST') {
+            const firstTrack = $tracks[0] as unknown as {
+                spotifyArtistId?: string;
+                spotify_artist_id?: string;
+            };
+
             const artistParams = new URLSearchParams({
                 genre: sel.context?.genre ?? 'ALL',
                 tts_language: sel.language ?? 'en',
@@ -202,6 +108,13 @@
                 play_track: 'true'
             });
 
+            const spotifyArtistId =
+                firstTrack.spotifyArtistId ?? firstTrack.spotify_artist_id;
+
+            if (spotifyArtistId) {
+                artistParams.set('spotify_artist_id', spotifyArtistId);
+            }
+
             await fetch(
                 `${API_BASE}/artist-spotlight/play-radio?${artistParams.toString()}`,
                 {method: 'POST'}
@@ -210,13 +123,7 @@
             return;
         }
 
-        const res = await fetch(`${API_BASE}/playback/play-track`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-
-        const result = await res.json().catch(() => null);
+        console.warn('playTrack fallback not implemented for this mode:', sel.mode, sel.programType, trackObj);
     }
 
 
@@ -297,12 +204,6 @@
             sel?.context?.decade === 'ALL';
 
         if (isRadio) {
-
-            const res = await fetch(`${API_BASE}/supabase/decade-genre/next`, {
-                method: 'POST'
-            });
-
-            const data = await res.json().catch(() => null);
 
         } else {
 
@@ -470,8 +371,6 @@
                 voices: settings.voices,
                 skipPlayed: settings.skipPlayed,
 
-                // add if ResumeState includes it
-                // voicePlayMode: settings.voicePlayMode,
             };
 
             // ⭐ THIS LINE WAS MISSING
@@ -496,7 +395,7 @@
 
         // 🧹 Step 0: Reset backend transport safely
         try {
-            const res = await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
+            await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
         } catch (err) {
             console.warn('⚠️ Backend reset failed (continuing anyway):', err);
         }
@@ -529,11 +428,6 @@
                     sel.context?.collection_group_slug ??
                     sel.context?.collectionGroupSlug ??
                     sel.context?.collection_group;
-
-                const collectionSlug =
-                    sel.context?.collection_slug ??
-                    sel.context?.collectionSlug ??
-                    sel.context?.collection;
 
                 const modeParam = url.searchParams.get('mode');
 
@@ -694,13 +588,9 @@ const isRadio =
     sel?.mode === 'decade_genre' &&
     sel?.context?.decade === 'ALL';
 
-if (data?.restart_track && $currentTrack) {
-    if (isRadio) {
-        //'📻 Radio resume: backend keeps control, skipping playTrack restart');
-    } else {
-        markUserStartedPlayback();
-        await playTrack($currentTrack);
-    }
+if (data?.restart_track && $currentTrack && !isRadio) {
+    markUserStartedPlayback();
+    await playTrack($currentTrack);
 }
 
     return;
