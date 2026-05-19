@@ -111,11 +111,23 @@ export async function startPlayback() {
             }
         };
 
-        await fetch(`${API_BASE}/playback/play-track`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+        const artistGenre = sel.context?.genre ?? 'ALL';
+
+        const artistParams = new URLSearchParams({
+            genre: artistGenre,
+            tts_language: sel.language,
+            play_intro: 'true',
+            play_detail: String(sel.voices.includes('detail')),
+            play_artist_description: String(sel.voices.includes('artist')),
+            play_track: 'true'
         });
+
+        await fetch(
+            `${API_BASE}/artist-spotlight/play-radio?${artistParams.toString()}`,
+            {
+                method: 'POST'
+            }
+        );
 
         return;
     }

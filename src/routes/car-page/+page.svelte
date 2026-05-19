@@ -192,6 +192,23 @@
             return;
         }
 
+        if (sel.mode === 'artist_spotlight' && sel.programType === 'RADIO_ARTIST') {
+            const artistParams = new URLSearchParams({
+                genre: sel.context?.genre ?? 'ALL',
+                tts_language: sel.language ?? 'en',
+                play_intro: String(settings.voices.includes('intro')),
+                play_detail: String(settings.voices.includes('detail')),
+                play_artist_description: String(settings.voices.includes('artist')),
+                play_track: 'true'
+            });
+
+            await fetch(
+                `${API_BASE}/artist-spotlight/play-radio?${artistParams.toString()}`,
+                {method: 'POST'}
+            );
+
+            return;
+        }
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',

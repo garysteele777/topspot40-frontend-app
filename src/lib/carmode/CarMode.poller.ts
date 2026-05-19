@@ -589,7 +589,17 @@ export function startPlaybackPolling() {
             /* ─────────────────────────────
                🎵 Track handling (Spotify)
                ───────────────────────────── */
-            if (phase === 'track' && data.context?.spotify_track_id) {
+            const sel = get(currentSelection);
+
+            const sequenceEngineControlsSpotify =
+                sel?.programType === 'RADIO_DG' ||
+                sel?.programType === 'RADIO_COL' ||
+                sel?.programType === 'RADIO_ARTIST';
+            if (
+                phase === 'track' &&
+                data.context?.spotify_track_id &&
+                !sequenceEngineControlsSpotify
+            ) {
                 const spotifyId = data.context.spotify_track_id as string;
 
                 stopBed();
