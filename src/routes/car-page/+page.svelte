@@ -123,7 +123,94 @@
             return;
         }
 
-        console.warn('playTrack fallback not implemented for this mode:', sel.mode, sel.programType, trackObj);
+        let decadeForPlayback: string | undefined;
+        let genreForPlayback: string | undefined;
+
+        if (sel.mode !== 'collection') {
+            const programDecade = sel.context?.decade;
+            decadeForPlayback =
+                programDecade === 'ALL'
+                    ? trackObj.decadeSlug ?? programDecade
+                    : programDecade;
+
+            const programGenre = sel.context?.genre;
+            genreForPlayback =
+                programGenre === 'ALL'
+                    ? trackObj.genreSlug ?? programGenre
+                    : programGenre;
+        }
+
+        const payload = {
+            track: {
+                track_id: trackObj.id,
+                ranking_id: trackObj.rankingId,
+                spotify_track_id: trackObj.spotifyTrackId,
+                rank: trackObj.rank,
+                track_name: trackObj.trackName,
+                artist_name: trackObj.artistName
+            },
+            selection: {
+                ...sel,
+                languages: sel.languages ?? [sel.language],
+                playbackOrder: settings.playbackOrder,
+                voices: settings.voices,
+                voicePlayMode: settings.voicePlayMode,
+                pauseMode: settings.pauseMode,
+                continuous: settings.pauseMode === 'continuous'
+            },
+            context:
+                sel.mode === 'artist_spotlight'
+                    ? {
+                        type: 'artist_spotlight',
+                        programType: sel.programType,
+                        artist_id: sel.context?.artist_id,
+                        artist_name: sel.context?.artist_name
+                    }
+                    : sel.mode === 'collection'
+                        ? (
+                            sel.programType === 'RADIO_COL'
+                                ? {
+                                    type: 'collection_radio',
+                                    collection_group_slug: sel.context?.collection_group_slug
+                                }
+                                : {
+                                    type: 'collection',
+                                    collection_slug: sel.context?.collection_slug
+                                }
+                        )
+                        : {
+                            type: 'decade_genre',
+                            decade: decadeForPlayback,
+                            genre: genreForPlayback
+                        }
+        };
+
+
+        if (sel.mode === 'decade_genre' && sel.programType === 'RADIO_DG') {
+            const radioParams = new URLSearchParams({
+                decade: sel.context?.decade ?? 'ALL',
+                genre: sel.context?.genre ?? 'ALL',
+                tts_language: sel.language ?? 'en',
+                languages: (sel.languages ?? [sel.language]).join(','),
+                play_intro: String(settings.voices.includes('intro')),
+                play_detail: String(settings.voices.includes('detail')),
+                play_artist_description: String(settings.voices.includes('artist')),
+                play_track: 'true'
+            });
+
+            await fetch(
+                `${API_BASE}/supabase/decade-genre/play-sequence?${radioParams.toString()}`,
+                {method: 'GET'}
+            );
+
+            return;
+        }
+
+        await fetch(`${API_BASE}/playback/play-track`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
     }
 
 
@@ -200,8 +287,9 @@
         }
 
         const isRadio =
-            sel?.mode === 'decade_genre' &&
-            sel?.context?.decade === 'ALL';
+            sel?.programType === 'RADIO_DG' ||
+            sel?.programType === 'RADIO_COL' ||
+            sel?.programType === 'RADIO_ARTIST';
 
         if (isRadio) {
 
@@ -584,9 +672,11 @@ if (
 
 
 const sel = $currentSelection;
+
 const isRadio =
-    sel?.mode === 'decade_genre' &&
-    sel?.context?.decade === 'ALL';
+    sel?.programType === 'RADIO_DG' ||
+    sel?.programType === 'RADIO_COL' ||
+    sel?.programType === 'RADIO_ARTIST';
 
 if (data?.restart_track && $currentTrack && !isRadio) {
     markUserStartedPlayback();
