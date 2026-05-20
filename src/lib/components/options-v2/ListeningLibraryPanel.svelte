@@ -56,6 +56,7 @@
     export let voicePlayMode = 'before';
     export let pauseMode = 'pause';
     export let skipPlayed = false;
+    export let onActivate: (() => void) | undefined = undefined;
 
     let libraryMode: LibraryMode = 'nostalgia';
 
@@ -127,15 +128,33 @@
     </div>
 
     <div class="library-buttons">
-        <button class:active={libraryMode === 'nostalgia'} on:click={() => libraryMode = 'nostalgia'}>
+        <button
+                class:active={libraryMode === 'nostalgia'}
+                on:click={() => {
+        onActivate?.();
+        libraryMode = 'nostalgia';
+    }}
+        >
             Nostalgia Programs
         </button>
 
-        <button class:active={libraryMode === 'collections'} on:click={() => libraryMode = 'collections'}>
+        <button
+                class:active={libraryMode === 'collections'}
+                on:click={() => {
+        onActivate?.();
+        libraryMode = 'collections';
+    }}
+        >
             Collections Programs
         </button>
 
-        <button class:active={libraryMode === 'artists'} on:click={() => libraryMode = 'artists'}>
+        <button
+                class:active={libraryMode === 'artists'}
+                on:click={() => {
+        onActivate?.();
+        libraryMode = 'artists';
+    }}
+        >
             Artist Spotlight
         </button>
     </div>

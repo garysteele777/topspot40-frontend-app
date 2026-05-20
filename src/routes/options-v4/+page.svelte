@@ -450,13 +450,13 @@
                 </button>
 
                 <button
-                        class:active={radioMode === 'collections'}
+                        class:active={programType === PROGRAM_TYPES.RADIO_COL}
                         on:click|stopPropagation={() => startRadio('collections')}
                 >
                     Collections Radio
                 </button>
                 <button
-                        class:active={radioMode === 'artist_spotlight'}
+                        class:active={programType === PROGRAM_TYPES.RADIO_ARTIST}
                         on:click|stopPropagation={() => startRadio('artist_spotlight')}
                 >
                     Artist Spotlight Radio
@@ -554,6 +554,9 @@
                 voicePlayMode="before"
                 {pauseMode}
                 {skipPlayed}
+                onActivate={() => {
+            radioMode = null;
+        }}
         />
 
         <!-- ✅ Playback History now at top -->
