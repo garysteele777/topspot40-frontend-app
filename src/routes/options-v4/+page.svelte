@@ -11,6 +11,10 @@
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
     import {selection} from '$lib/stores/selection';
+    import {
+        PROGRAM_TYPES,
+        getProgramSection
+    } from '$lib/types/program';
 
     // ─────────────────────────────────────────────
     // UI Components
@@ -55,10 +59,10 @@
     let genres: string[] = [];
     let collections: string[] = [];
 
-    let radioMode: 'nostalgia' | 'collections' | 'artist_spotlight' | null = 'nostalgia';
+    let radioMode: 'nostalgia' | 'collections' | 'artist_spotlight' | null = null;
     type OpenSection = 'radio' | 'library' | 'history' | 'settings';
 
-    let openSection: OpenSection = 'radio';
+    let openSection: OpenSection | null = null;
     // Options
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
@@ -73,6 +77,9 @@
     let hydrated = false;
     let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
     let selectedGenre: string | null = null;
+
+    $: programType = $selection.programType;
+    $: activeSection = getProgramSection(programType);
 
     const genreIcons: Record<string, string> = {
         rock: '🎸',
@@ -426,85 +433,83 @@
                 <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
             </div>
 
-            {#if openSection === 'radio'}
-                <div class="radio-description">
-                    Nostalgia mixes decades and genres. Collections plays themed playlists.
-                </div>
+            <div class="radio-description">
+                Nostalgia mixes decades and genres. Collections plays themed playlists.
+            </div>
 
-                <div class="radio-description">
-                    DJ Mode • Shuffle • Favor New • Continuous
-                </div>
+            <div class="radio-description">
+                DJ Mode • Shuffle • Favor New • Continuous
+            </div>
 
-                <div class="radio-buttons">
-                    <button
-                            class:active={radioMode === 'nostalgia'}
-                            on:click|stopPropagation={() => startRadio('nostalgia')}
-                    >
-                        Nostalgia Radio
+            <div class="radio-buttons">
+                <button
+                        class:active={programType === PROGRAM_TYPES.RADIO_DG}
+                        on:click|stopPropagation={() => startRadio('nostalgia')}
+                >
+                    Nostalgia Radio
+                </button>
+
+                <button
+                        class:active={radioMode === 'collections'}
+                        on:click|stopPropagation={() => startRadio('collections')}
+                >
+                    Collections Radio
+                </button>
+                <button
+                        class:active={radioMode === 'artist_spotlight'}
+                        on:click|stopPropagation={() => startRadio('artist_spotlight')}
+                >
+                    Artist Spotlight Radio
+                </button>
+            </div>
+
+            <div class="radio-separator">
+                <span>Stations</span>
+            </div>
+
+            {#if radioMode === 'nostalgia'}
+                <div style="margin-top: 10px;">
+                    <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
+                        <span class="icon">📻</span>
+                        <span>Start All Genres: 1950s to the Present</span>
                     </button>
-
-                    <button
-                            class:active={radioMode === 'collections'}
-                            on:click|stopPropagation={() => startRadio('collections')}
-                    >
-                        Collections Radio
-                    </button>
-                    <button
-                            class:active={radioMode === 'artist_spotlight'}
-                            on:click|stopPropagation={() => startRadio('artist_spotlight')}
-                    >
-                        Artist Spotlight Radio
-                    </button>
                 </div>
 
-                <div class="radio-separator">
-                    <span>Stations</span>
-                </div>
-
-                {#if radioMode === 'nostalgia'}
-                    <div style="margin-top: 10px;">
-                        <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
-                            <span class="icon">📻</span>
-                            <span>Start All Genres: 1950s to the Present</span>
-                        </button>
-                    </div>
-
-                    <div class="radio-genres">
-                        {#each genreOptions as g}
-                            <button
-                                    class="genre-btn"
-                                    class:selected={selectedGenre === g.id}
-                                    on:click|stopPropagation={() => {
+                <div class="radio-genres">
+                    {#each genreOptions as g}
+                        <button
+                                class="genre-btn"
+                                class:selected={selectedGenre === g.id}
+                                on:click|stopPropagation={() => {
                                 launchNostalgiaGenre(g.id);
                             }}
-                            >
-                                <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
-                                <span>{g.label}</span>
-                            </button>
-                        {/each}
-                    </div>
-                {/if}
-
-                {#if radioMode === 'collections'}
-                    <div style="margin-top: 10px;">
-                        <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
-                            <span class="icon">📻</span>
-                            <span>Start All Collections</span>
+                        >
+                            <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
+                            <span>{g.label}</span>
                         </button>
-                    </div>
+                    {/each}
+                </div>
+            {/if}
 
-                    <div class="radio-genres">
-                        {#each collectionGroups as group}
-                            <button
-                                    class="genre-btn"
-                                    on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
-                            >
-                                <span class="icon">📀</span>
-                                <span>{group.name}</span>
-                            </button>
-                        {/each}
-                    </div>
-                {/if}
+            {#if radioMode === 'collections'}
+                <div style="margin-top: 10px;">
+                    <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
+                        <span class="icon">📻</span>
+                        <span>Start All Collections</span>
+                    </button>
+                </div>
+
+                <div class="radio-genres">
+                    {#each collectionGroups as group}
+                        <button
+                                class="genre-btn"
+                                on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
+                        >
+                            <span class="icon">📀</span>
+                            <span>{group.name}</span>
+                        </button>
+                    {/each}
+                </div>
             {/if}
         </div>
 

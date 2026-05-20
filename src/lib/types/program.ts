@@ -41,6 +41,20 @@ export const PROGRAM_TYPES = {
     RADIO_ARTIST: 'RADIO_ARTIST'
 } as const;
 
+export type ProgramSection =
+    | 'radio'
+    | 'library'
+    | 'favorites';
+
+export function getProgramSection(
+    type: PlaybackProgramType | undefined
+): ProgramSection {
+    if (isRadioProgram(type)) return 'radio';
+    if (isFavoritesProgram(type)) return 'favorites';
+
+    return 'library';
+}
+
 // ─────────────────────────────────────────────
 // Derived union type
 // ─────────────────────────────────────────────
