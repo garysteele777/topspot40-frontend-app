@@ -443,20 +443,21 @@
 
             <div class="radio-buttons">
                 <button
-                        class:active={programType === PROGRAM_TYPES.RADIO_DG}
+                        class:active={radioMode === 'nostalgia'}
                         on:click|stopPropagation={() => startRadio('nostalgia')}
                 >
                     Nostalgia Radio
                 </button>
 
                 <button
-                        class:active={programType === PROGRAM_TYPES.RADIO_COL}
+                        class:active={radioMode === 'collections'}
                         on:click|stopPropagation={() => startRadio('collections')}
                 >
                     Collections Radio
                 </button>
+
                 <button
-                        class:active={programType === PROGRAM_TYPES.RADIO_ARTIST}
+                        class:active={radioMode === 'artist_spotlight'}
                         on:click|stopPropagation={() => startRadio('artist_spotlight')}
                 >
                     Artist Spotlight Radio
