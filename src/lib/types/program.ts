@@ -4,62 +4,135 @@
 // Playback program / experience types
 // ─────────────────────────────────────────────
 //
-// PlaybackProgramType identifies the user-facing experience.
-// This is what distinguishes Radio vs Program behavior.
+// PlaybackProgramType identifies the USER EXPERIENCE.
 //
-// DG        = Nostalgia Programs
-// RADIO_DG  = Nostalgia Radio
+// PROGRAM_*  = interactive playback experience
+// RADIO_*    = continuous DJ/radio experience
+// FAVORITES_* = favorites-based playback
 //
-// COL       = Collections Programs
-// RADIO_COL = Collections Radio
+// Engines underneath may still use:
+// - decade_genre
+// - collection
+// - artist
 //
-// FAV_DG    = Favorite Nostalgia tracks
-// FAV_COL   = Favorite Collection tracks
+// Examples:
 //
-// ARTIST    = Artist Spotlight
-
-export type PlaybackProgramType =
-    | 'DG'
-    | 'COL'
-    | 'FAV_DG'
-    | 'FAV_COL'
-    | 'RADIO_DG'
-    | 'RADIO_COL'
-    | 'ARTIST'
-    | 'RADIO_ARTIST';
+// PROGRAM_DG       = Nostalgia Programs
+// RADIO_DG         = Nostalgia Radio
+//
+// PROGRAM_COL      = Collections Programs
+// RADIO_COL        = Collections Radio
+//
+// PROGRAM_ARTIST   = Artist Spotlight
+// RADIO_ARTIST     = Artist Spotlight Radio
+//
 
 export const PROGRAM_TYPES = {
-    DG: 'DG',
-    COL: 'COL',
-    FAV_DG: 'FAV_DG',
-    FAV_COL: 'FAV_COL',
+    PROGRAM_DG: 'PROGRAM_DG',
+    PROGRAM_COL: 'PROGRAM_COL',
+
+    FAVORITES_DG: 'FAVORITES_DG',
+    FAVORITES_COL: 'FAVORITES_COL',
+
     RADIO_DG: 'RADIO_DG',
     RADIO_COL: 'RADIO_COL',
-    ARTIST: 'ARTIST',
+
+    PROGRAM_ARTIST: 'PROGRAM_ARTIST',
     RADIO_ARTIST: 'RADIO_ARTIST'
 } as const;
 
-/**
- * Runtime type guard for safely checking unknown values.
- */
+// ─────────────────────────────────────────────
+// Derived union type
+// ─────────────────────────────────────────────
+
+export type PlaybackProgramType =
+    (typeof PROGRAM_TYPES)[keyof typeof PROGRAM_TYPES];
+
+// ─────────────────────────────────────────────
+// Cached values for runtime validation
+// ─────────────────────────────────────────────
+
+const PROGRAM_TYPE_VALUES: PlaybackProgramType[] =
+    Object.values(PROGRAM_TYPES);
+
+// ─────────────────────────────────────────────
+// Runtime type guard
+// Safely validates unknown values
+// (localStorage, backend payloads, etc.)
+// ─────────────────────────────────────────────
+
 export function isPlaybackProgramType(
     value: unknown
 ): value is PlaybackProgramType {
     return (
         typeof value === 'string' &&
-        Object.values(PROGRAM_TYPES).includes(value as PlaybackProgramType)
+        PROGRAM_TYPE_VALUES.includes(
+            value as PlaybackProgramType
+        )
     );
 }
 
-/**
- * True when the program type represents a radio-style experience.
- */
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
+
 export function isRadioProgram(
     type: PlaybackProgramType | undefined
 ): boolean {
     return (
-    type === 'RADIO_DG' ||
-    type === 'RADIO_COL' ||
-    type === 'RADIO_ARTIST'
-);
+        type === PROGRAM_TYPES.RADIO_DG ||
+        type === PROGRAM_TYPES.RADIO_COL ||
+        type === PROGRAM_TYPES.RADIO_ARTIST
+    );
+}
+
+export function isProgramPlayback(
+    type: PlaybackProgramType | undefined
+): boolean {
+    return (
+        type === PROGRAM_TYPES.PROGRAM_DG ||
+        type === PROGRAM_TYPES.PROGRAM_COL ||
+        type === PROGRAM_TYPES.PROGRAM_ARTIST
+    );
+}
+
+export function isFavoritesProgram(
+    type: PlaybackProgramType | undefined
+): boolean {
+    return (
+        type === PROGRAM_TYPES.FAVORITES_DG ||
+        type === PROGRAM_TYPES.FAVORITES_COL
+    );
+}
+
+// ─────────────────────────────────────────────
+// Backward compatibility migration helper
+// Converts old saved values into new values
+// ─────────────────────────────────────────────
+
+export function normalizeProgramType(
+    value: string | undefined
+): PlaybackProgramType | undefined {
+
+    switch (value) {
+        case 'DG':
+            return PROGRAM_TYPES.PROGRAM_DG;
+
+        case 'COL':
+            return PROGRAM_TYPES.PROGRAM_COL;
+
+        case 'ARTIST':
+            return PROGRAM_TYPES.PROGRAM_ARTIST;
+
+        case 'FAV_DG':
+            return PROGRAM_TYPES.FAVORITES_DG;
+
+        case 'FAV_COL':
+            return PROGRAM_TYPES.FAVORITES_COL;
+
+        default:
+            return isPlaybackProgramType(value)
+                ? value
+                : undefined;
+    }
 }
