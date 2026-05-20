@@ -336,13 +336,10 @@ export function startPlaybackPolling() {
                 hasPlaybackStarted &&
                 spotifyId &&
                 !data.isPaused &&
-                (
-                    spotifyId !== activeSpotifyTrackId ||
-                    ctxHasFreshText(data.context)
-                )
+                spotifyId !== activeSpotifyTrackId
             ) {
                 activeSpotifyTrackId = spotifyId;
-                trackSwitchTime = Date.now();   // 🔥 ADD THIS
+                trackSwitchTime = Date.now();
                 finishedTrackId = null;
 
                 const list = get(tracks);
@@ -661,7 +658,7 @@ export function startPlaybackPolling() {
                 durationSec > 0 ? Math.min(elapsedSecRaw, durationSec) : elapsedSecRaw;
 
 // 🔥 ONLY update timing when Spotify owns the clock
-            const justSwitched = Date.now() - trackSwitchTime < 8000;
+            const justSwitched = Date.now() - trackSwitchTime < 1500;
 
             if (get(timingSource) === 'spotify' && !justSwitched) {
                 elapsed.set(elapsedSec);
