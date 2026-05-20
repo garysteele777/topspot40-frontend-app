@@ -10,6 +10,7 @@
     import {get} from 'svelte/store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
+    import {selection} from '$lib/stores/selection';
 
     // ─────────────────────────────────────────────
     // UI Components
@@ -44,6 +45,10 @@
 
     let startRank = 1;
     let endRank = 1; // or undefined
+    let playbackOrder: PlaybackOrder = 'up';
+    let pauseMode: 'pause' | 'continuous' = 'pause';
+    let skipPlayed = false;
+    let selectedVoices: VoicePart[] = ['intro'];
 
 
     let decades: string[] = [];
@@ -54,14 +59,6 @@
     type OpenSection = 'radio' | 'library' | 'history' | 'settings';
 
     let openSection: OpenSection = 'radio';
-
-    const playbackSettings = playbackSettingsStore;
-
-    $: selectedVoices = $playbackSettings.voices as VoicePart[];
-    $: playbackOrder = $playbackSettings.playbackOrder as PlaybackOrder;
-    $: pauseMode = $playbackSettings.pauseMode as 'pause' | 'continuous';
-    $: skipPlayed = !!$playbackSettings.skipPlayed;
-
     // Options
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
@@ -90,6 +87,15 @@
         latin_global: '💃',
         tv_themes: '📺',
     };
+
+    function setPlaybackOrder(order: PlaybackOrder) {
+        playbackOrder = order;
+
+        selection.update(current => ({
+            ...current,
+            playbackOrder: order
+        }));
+    }
 
     function startRadio(mode: 'nostalgia' | 'collections' | 'artist_spotlight') {
 
@@ -320,7 +326,8 @@
     // Mount: load resume → catalog → apply
     // ─────────────────────────────────────────────
     onMount(async () => {
-        pendingSelection = buildSelectionFromResume(loadResumeState());
+        pendingSelection = null;
+        // pendingSelection = buildSelectionFromResume(loadResumeState());
 
         try {
 
@@ -568,15 +575,15 @@
                         <div class="playback-group">
                             <div class="label">Order</div>
                             <div class="grid">
-                                <button class:selected={playbackOrder === 'up'} on:click={() => playbackOrder = 'up'}>
+                                <button class:selected={playbackOrder === 'up'} on:click={() => setPlaybackOrder('up')}>
                                     Up
                                 </button>
                                 <button class:selected={playbackOrder === 'down'}
-                                        on:click={() => playbackOrder = 'down'}>
+                                        on:click={() => setPlaybackOrder('down')}>
                                     Down
                                 </button>
                                 <button class:selected={playbackOrder === 'shuffle'}
-                                        on:click={() => playbackOrder = 'shuffle'}>
+                                        on:click={() => setPlaybackOrder('shuffle')}>
                                     Shuffle
                                 </button>
                             </div>
