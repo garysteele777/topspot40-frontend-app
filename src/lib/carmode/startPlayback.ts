@@ -5,6 +5,7 @@ import {
     currentTrack,
     tracks
 } from '$lib/carmode/CarMode.store';
+import {PROGRAM_TYPES} from '$lib/types/program';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -17,7 +18,7 @@ export async function startPlayback() {
     if (!track) return;
 
     // ✅ Favorites: single-track playback for Step 1
-    if (sel.programType === 'FAV_DG') {
+    if (sel.programType === PROGRAM_TYPES.FAVORITES_DG) {
 
         if (track.rankingId == null) {
             console.warn('❌ Favorites playback requires track.rankingId but it is null');

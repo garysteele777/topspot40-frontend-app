@@ -4,6 +4,7 @@ import {cacheKey, applyPlaybackOrder, pickInitialTrack} from '$lib/helpers/car/t
 import type {SelectionState} from '$lib/stores/selection';
 import type {LoadedTrack} from '$lib/utils/normalizeTrack';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+import { PROGRAM_TYPES } from '$lib/types/program';
 
 import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
 import {getFavorites} from '$lib/favorites/favorites';
@@ -254,9 +255,9 @@ export async function loadForSelection(
     }
 
 // ─────────────────────────────────────────────
-// FAVORITES: DECADE (programType = FAV_DG)
+// FAVORITES: DECADE (programType = FAVORITES_DG)
 // ─────────────────────────────────────────────
-    if (sel.programType === 'FAV_DG') {
+    if (sel.programType === PROGRAM_TYPES.FAVORITES_DG) {
         const group = sel.context?.favoritesGroup;
 
         if (!group) {

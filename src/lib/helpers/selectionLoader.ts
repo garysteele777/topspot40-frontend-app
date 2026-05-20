@@ -12,6 +12,7 @@ import type {
     VoicePlayMode
 } from '$lib/types/playback';
 import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
+import {PROGRAM_TYPES} from '$lib/types/program';
 
 export async function loadSelection(
     opts: {
@@ -116,7 +117,10 @@ export async function loadSelection(
         }
 
         selection.set({
-            programType: modeType === 'collection' ? 'COL' : 'DG',
+            programType:
+                modeType === 'collection'
+                    ? PROGRAM_TYPES.PROGRAM_COL
+                    : PROGRAM_TYPES.PROGRAM_DG,
             mode: modeType,
 
             language,

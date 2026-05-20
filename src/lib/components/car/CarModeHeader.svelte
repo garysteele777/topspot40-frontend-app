@@ -5,6 +5,7 @@
     export type VoicePlayMode = 'before' | 'over';
     export type PauseMode = 'pause' | 'continuous';
     export type CategoryMode = 'single' | 'multiple';
+    import { PROGRAM_TYPES } from '$lib/types/program';
 </script>
 
 <script lang="ts">
@@ -64,7 +65,7 @@
             {#if mode === 'decade_genre'}
   <span class="cm-main-text">
 
-{#if programType === 'FAV_DG'}
+{#if programType === PROGRAM_TYPES.FAVORITES_DG}
 
   {#if (decade ?? '').toUpperCase() === 'ALL'}
 

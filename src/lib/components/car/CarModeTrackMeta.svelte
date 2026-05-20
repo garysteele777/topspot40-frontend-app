@@ -3,6 +3,7 @@
     import type {PlaybackPhase} from '$lib/helpers/car/types';
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
+    import { PROGRAM_TYPES } from '$lib/types/program';
 
     export let currentTrack: LoadedTrack | null = null;
     export let tracks: LoadedTrack[] = [];
@@ -111,7 +112,7 @@
         </div>
     {/if}
 
-{:else if $currentSelection?.programType === 'FAV_DG' || $currentSelection?.programType === 'FAV_COL'}
+{:else if $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG || $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_COL}
 
     Favorite #{idx >= 0 ? idx + 1 : '?'} of {tracks.length}
 

@@ -3,11 +3,15 @@ import type {SelectionState} from './types';
 import type {PlaybackOrder} from './types';
 import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
 import {normalizeVoices} from '$lib/helpers/normalizeVoices';
+import {PROGRAM_TYPES} from '$lib/types/program';
 
 export function buildSelectionFromUrl(url: URL): SelectionState {
     const sp = url.searchParams;
 
-    const programType = (sp.get('programType') ?? 'DG') as SelectionState['programType'];
+    const programType = (
+        sp.get('programType') ??
+        PROGRAM_TYPES.PROGRAM_DG
+    ) as SelectionState['programType'];
     const modeParam = sp.get('mode');
 
     const decade = sp.get('decade') ?? '';
@@ -76,7 +80,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
         if (parts[0] === 'DG') {
             return {
-                programType: 'DG',
+                programType: PROGRAM_TYPES.PROGRAM_DG,
                 mode: 'decade_genre',
                 language,
                 languages,
@@ -104,7 +108,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
         if (parts[0] === 'COL') {
             return {
-                programType: 'COL',
+                programType: PROGRAM_TYPES.PROGRAM_COL,
                 mode: 'collection',
                 language,
                 languages,
@@ -133,7 +137,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
     if (collection) {
         return {
-            programType: 'COL',
+            programType: PROGRAM_TYPES.PROGRAM_COL,
             mode: 'collection',
             language,
             languages,
@@ -194,7 +198,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         const artistName = sp.get('artist') ?? '';
 
         return {
-            programType: 'ARTIST',
+            programType: PROGRAM_TYPES.PROGRAM_ARTIST,
             mode: 'artist_spotlight',
             language,
             languages,
@@ -228,8 +232,15 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         context: {
             decade,
             genre,
-            favoritesType: programType === 'FAV_DG' ? 'DG' : '',
-            favoritesGroup: programType === 'FAV_DG' ? favoritesGroup : ''
+            favoritesType:
+                programType === PROGRAM_TYPES.FAVORITES_DG
+                    ? 'DG'
+                    : '',
+
+            favoritesGroup:
+                programType === PROGRAM_TYPES.FAVORITES_DG
+                    ? favoritesGroup
+                    : ''
         },
         startRank: finalStartRank,
         endRank: finalEndRank,

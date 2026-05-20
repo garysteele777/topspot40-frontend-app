@@ -2,6 +2,7 @@
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
     import {derived} from 'svelte/store';
+    import {PROGRAM_TYPES} from '$lib/types/program';
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
@@ -508,7 +509,9 @@
                 const isRadio =
                     sel.context?.decade === 'ALL';
 
-                sel.programType = isRadio ? 'RADIO_DG' : 'DG';
+                sel.programType = isRadio
+                    ? PROGRAM_TYPES.RADIO_DG
+                    : PROGRAM_TYPES.PROGRAM_DG;
             }
 
             if (sel.mode === 'collection') {
@@ -523,7 +526,9 @@
                     modeParam === 'radio_collections' ||
                     collectionGroup === 'ALL';
 
-                sel.programType = isRadio ? 'RADIO_COL' : 'COL';
+                sel.programType = isRadio
+                    ? PROGRAM_TYPES.RADIO_COL
+                    : PROGRAM_TYPES.PROGRAM_COL;
 
             }
 

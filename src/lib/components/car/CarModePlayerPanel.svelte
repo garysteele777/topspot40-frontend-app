@@ -11,6 +11,7 @@
 
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
+    import {PROGRAM_TYPES} from '$lib/types/program';
 
 
     import {
@@ -147,8 +148,8 @@
 
 
     $: isFavoritesProgram =
-        $currentSelection?.programType === 'FAV_DG' ||
-        $currentSelection?.programType === 'FAV_COL';
+        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG ||
+        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_COL;
 
 
     $: favoriteTickerText =
