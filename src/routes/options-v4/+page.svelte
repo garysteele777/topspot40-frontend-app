@@ -105,10 +105,8 @@
     }
 
     function startRadio(mode: 'nostalgia' | 'collections' | 'artist_spotlight') {
-
+        openSection = 'radio';
         radioMode = mode;
-
-        // 🚫 Stop here for now — no navigation yet
     }
 
     function launchNostalgiaAll() {
@@ -555,6 +553,7 @@
                 voicePlayMode="before"
                 {pauseMode}
                 {skipPlayed}
+                collapsed={openSection === 'radio' && radioMode !== null}
                 onActivate={() => {
             radioMode = null;
         }}
