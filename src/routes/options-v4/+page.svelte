@@ -6,13 +6,14 @@
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {buildSelectionFromResume} from '$lib/options/applyResume';
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
-    import {loadResumeState} from '$lib/utils/smartResume';
     import {get} from 'svelte/store';
-    import {programHistoryStore} from '$lib/carmode/programHistory';
+    import {
+        programHistoryStore,
+        resetProgram
+    } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
     import {selection} from '$lib/stores/selection';
     import {
-        PROGRAM_TYPES,
         getProgramSection
     } from '$lib/types/program';
 
@@ -78,8 +79,24 @@
     let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
     let selectedGenre: string | null = null;
 
+    let musicJourneyMode:
+        | 'nostalgia'
+        | 'collections'
+        | 'favorites'
+        | null = null;
+
+    let selectedJourneyDecade: string | null = null;
+
+    $: nostalgiaHistorySummary = buildNostalgiaHistorySummary($programHistoryStore);
+
+
     $: programType = $selection.programType;
     $: activeSection = getProgramSection(programType);
+
+    $: selectedJourneyGenres =
+        selectedJourneyDecade
+            ? buildGenreHistoryForDecade($programHistoryStore, selectedJourneyDecade)
+            : [];
 
     const genreIcons: Record<string, string> = {
         rock: '🎸',
@@ -94,6 +111,51 @@
         latin_global: '💃',
         tv_themes: '📺',
     };
+
+
+    function buildGenreHistoryForDecade(
+        history: { key: string; total: number; playedRanks: number[] }[],
+        decade: string
+    ) {
+        return history
+            .filter((entry) => entry.key.startsWith(`DG|${decade}|`))
+            .map((entry) => {
+                const parts = entry.key.split('|');
+                const genre = parts[2] ?? 'unknown';
+                const played = entry.playedRanks.length;
+                const percent = entry.total > 0
+                    ? Math.round((played / entry.total) * 100)
+                    : 0;
+
+                return {
+                    genre,
+                    label: `${decade} ${genre.replace(/_/g, ' ')}`,
+                    tracks: entry.total,
+                    played,
+                    percent
+                };
+            });
+    }
+
+    function buildNostalgiaHistorySummary(history: { key: string; total: number; playedRanks: number[] }[]) {
+        const decades = ['1950s', '1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'];
+
+        return decades.map((decade) => {
+            const rows = history.filter((entry) =>
+                entry.key.startsWith(`DG|${decade}|`)
+            );
+
+            const tracks = rows.reduce((sum, entry) => sum + entry.total, 0);
+            const played = rows.reduce((sum, entry) => sum + entry.playedRanks.length, 0);
+            const percent = tracks > 0 ? Math.round((played / tracks) * 100) : 0;
+
+            return {
+                decade: `${decade} All Genres`,
+                tracks,
+                percent
+            };
+        });
+    }
 
     function setPlaybackOrder(order: PlaybackOrder) {
         playbackOrder = order;
@@ -295,6 +357,18 @@
             decades = [];
             genres = [];
         }
+    }
+
+    function clearJourneyGenrePlayed(decade: string, genre: string) {
+        const programKey = `DG|${decade}|${genre}` as const;
+
+        const confirmed = confirm(
+            `Clear played tracks for ${decade} ${genre.replace(/_/g, ' ')}?`
+        );
+
+        if (!confirmed) return;
+
+        resetProgram(programKey);
     }
 
     function getTotalTracksForSelection(
@@ -553,10 +627,11 @@
                 voicePlayMode="before"
                 {pauseMode}
                 {skipPlayed}
-                collapsed={openSection === 'radio' && radioMode !== null}
+                collapsed={radioMode !== null || musicJourneyMode !== null}
                 onActivate={() => {
-            radioMode = null;
-        }}
+                    radioMode = null;
+                    musicJourneyMode = null;
+                }}
         />
 
         <div class="opt-cell music-journey-card">
@@ -567,19 +642,138 @@
             </div>
 
             <div class="radio-buttons">
-                <button type="button">
+                <button
+                        type="button"
+                        class:active={musicJourneyMode === 'nostalgia'}
+                        on:click={() => {
+                            musicJourneyMode = 'nostalgia';
+                            radioMode = null;
+                        }}
+                >
                     Nostalgia History
                 </button>
 
-                <button type="button">
+                <button
+                        type="button"
+                        class:active={musicJourneyMode === 'collections'}
+                        on:click={() => {
+                            musicJourneyMode = 'collections';
+                            radioMode = null;
+                        }}
+                >
                     Collections History
                 </button>
 
-                <button type="button">
+                <button
+                        type="button"
+                        class:active={musicJourneyMode === 'favorites'}
+                        on:click={() => {
+                            musicJourneyMode = 'favorites';
+                            radioMode = null;
+                        }}
+                >
                     Favorite Tracks
                 </button>
+
             </div>
         </div>
+
+        {#if musicJourneyMode === 'nostalgia'}
+            <div class="journey-panel">
+                <div class="genre-title">
+                    Nostalgia Listening History
+                </div>
+
+                <div class="library-description" style="margin-bottom: 12px;">
+                    Click on a decade to expand genre listening history.
+                </div>
+
+                <div class="journey-decade-grid">
+                    {#each nostalgiaHistorySummary as item}
+                        <button
+                                class="journey-decade-btn"
+                                type="button"
+                                class:selected={
+                                    selectedJourneyDecade === item.decade.replace(' All Genres', '')
+                                }
+                                on:click={() => {
+                                    selectedJourneyDecade =
+                                        item.decade.replace(' All Genres', '');
+                                }}
+                        >
+                            <div class="journey-decade-title">{item.decade}</div>
+
+                            <div class="journey-decade-meta">
+                                {item.tracks} tracks • {item.percent}% complete
+                            </div>
+
+                            <div class="journey-progress-bar">
+                                <div
+                                        class="journey-progress-fill"
+                                        style={`width: ${item.percent}%`}
+                                ></div>
+                            </div>
+                        </button>
+                    {/each}
+                </div>
+
+                {#if selectedJourneyDecade}
+                    <div class="genre-title" style="margin-top: 14px;">
+                        {selectedJourneyDecade} Genre History
+                    </div>
+
+                    <div class="journey-decade-grid">
+                        {#each selectedJourneyGenres as item}
+                            <div class="journey-decade-btn">
+                                <div class="journey-decade-title">
+                                    {item.label}
+                                </div>
+
+                                <div class="journey-decade-meta">
+                                    {item.played} / {item.tracks}
+                                    tracks • {item.percent}% complete
+                                </div>
+
+                                <div class="journey-progress-bar">
+                                    <div
+                                            class="journey-progress-fill"
+                                            style={`width: ${item.percent}%`}
+                                    ></div>
+                                </div>
+
+                                <div class="journey-actions">
+                                    <button
+                                            class="journey-clear-btn"
+                                            type="button"
+                                            on:click={() => {
+                                                clearJourneyGenrePlayed(
+                                                    selectedJourneyDecade ?? '',
+                                                    item.genre
+                                                );
+                                            }}
+                                    >
+                                        Clear Played Tracks
+                                    </button>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+
+            </div>
+        {/if}
+
+        {#if musicJourneyMode === 'collections'}
+            <div class="library-description" style="margin-top: 12px;">
+                Collections listening progress and collection completion will appear here.
+            </div>
+        {/if}
+
+        {#if musicJourneyMode === 'favorites'}
+            <div class="library-description" style="margin-top: 12px;">
+                Favorite tracks and favorite listening experiences will appear here.
+            </div>
+        {/if}
 
         <div class="opt-cell playback-preferences-card">
             <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
@@ -1011,5 +1205,52 @@
         color: #cfb87c;
         font-size: 0.8rem;
         opacity: 0.85;
+    }
+
+    .journey-decade-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .journey-decade-btn {
+        border-radius: 12px;
+        border: 1px solid #444;
+        background: #252525;
+        color: #ddd;
+        padding: 10px 12px;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .journey-decade-title {
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .journey-decade-meta {
+        margin-top: 4px;
+        font-size: 0.75rem;
+        color: #aaa;
+    }
+
+    .journey-progress-bar {
+        margin-top: 8px;
+        height: 6px;
+        border-radius: 999px;
+        background: #111;
+        overflow: hidden;
+    }
+
+    .journey-progress-fill {
+        height: 100%;
+        background: #cfb87c;
+    }
+
+    .journey-decade-btn.selected {
+        border: 2px solid #d4b66a;
+        background: rgba(212, 182, 106, 0.12);
+        box-shadow: 0 0 10px rgba(212, 182, 106, 0.25);
     }
 </style>
