@@ -26,6 +26,7 @@
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
     import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
     import MusicJourneyPanel from '$lib/components/options-v2/MusicJourneyPanel.svelte';
+    import PlaybackPreferencesPanel from '$lib/components/options-v2/PlaybackPreferencesPanel.svelte';
 
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     // ─────────────────────────────────────────────
@@ -637,27 +638,7 @@
 
         <MusicJourneyPanel/>
 
-        <div class="opt-cell playback-preferences-card">
-            <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
-
-            <div class="radio-description">
-                Choose narration languages, voice content, playback order, and listening flow.
-            </div>
-
-            <div class="radio-buttons">
-                <button type="button">
-                    Narration
-                </button>
-
-                <button type="button">
-                    Playback
-                </button>
-
-                <button type="button">
-                    Flow
-                </button>
-            </div>
-        </div>
+        <PlaybackPreferencesPanel/>
 
         <!-- ✅ Playback History now at top -->
         <PlaybackHistoryPanel {language} {languages}/>
