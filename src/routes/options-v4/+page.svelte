@@ -559,6 +559,50 @@
         }}
         />
 
+        <div class="opt-cell music-journey-card">
+            <h3 class="section-title">🎵 My TopSpot40 Music Journey</h3>
+
+            <div class="radio-description">
+                Track your listening progress, favorite tracks, and TopSpot40 discoveries.
+            </div>
+
+            <div class="radio-buttons">
+                <button type="button">
+                    Nostalgia History
+                </button>
+
+                <button type="button">
+                    Collections History
+                </button>
+
+                <button type="button">
+                    Favorite Tracks
+                </button>
+            </div>
+        </div>
+
+        <div class="opt-cell playback-preferences-card">
+            <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
+
+            <div class="radio-description">
+                Choose narration languages, voice content, playback order, and listening flow.
+            </div>
+
+            <div class="radio-buttons">
+                <button type="button">
+                    Narration
+                </button>
+
+                <button type="button">
+                    Playback
+                </button>
+
+                <button type="button">
+                    Flow
+                </button>
+            </div>
+        </div>
+
         <!-- ✅ Playback History now at top -->
         <PlaybackHistoryPanel {language} {languages}/>
 
