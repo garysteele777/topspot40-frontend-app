@@ -25,6 +25,7 @@
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
     import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
     import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
+    import MusicJourneyPanel from '$lib/components/options-v2/MusicJourneyPanel.svelte';
 
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     // ─────────────────────────────────────────────
@@ -634,146 +635,7 @@
                 }}
         />
 
-        <div class="opt-cell music-journey-card">
-            <h3 class="section-title">🎵 My TopSpot40 Music Journey</h3>
-
-            <div class="radio-description">
-                Track your listening progress, favorite tracks, and TopSpot40 discoveries.
-            </div>
-
-            <div class="radio-buttons">
-                <button
-                        type="button"
-                        class:active={musicJourneyMode === 'nostalgia'}
-                        on:click={() => {
-                            musicJourneyMode = 'nostalgia';
-                            radioMode = null;
-                        }}
-                >
-                    Nostalgia History
-                </button>
-
-                <button
-                        type="button"
-                        class:active={musicJourneyMode === 'collections'}
-                        on:click={() => {
-                            musicJourneyMode = 'collections';
-                            radioMode = null;
-                        }}
-                >
-                    Collections History
-                </button>
-
-                <button
-                        type="button"
-                        class:active={musicJourneyMode === 'favorites'}
-                        on:click={() => {
-                            musicJourneyMode = 'favorites';
-                            radioMode = null;
-                        }}
-                >
-                    Favorite Tracks
-                </button>
-
-            </div>
-        </div>
-
-        {#if musicJourneyMode === 'nostalgia'}
-            <div class="journey-panel">
-                <div class="genre-title">
-                    Nostalgia Listening History
-                </div>
-
-                <div class="library-description" style="margin-bottom: 12px;">
-                    Click on a decade to expand genre listening history.
-                </div>
-
-                <div class="journey-decade-grid">
-                    {#each nostalgiaHistorySummary as item}
-                        <button
-                                class="journey-decade-btn"
-                                type="button"
-                                class:selected={
-                                    selectedJourneyDecade === item.decade.replace(' All Genres', '')
-                                }
-                                on:click={() => {
-                                    selectedJourneyDecade =
-                                        item.decade.replace(' All Genres', '');
-                                }}
-                        >
-                            <div class="journey-decade-title">{item.decade}</div>
-
-                            <div class="journey-decade-meta">
-                                {item.tracks} tracks • {item.percent}% complete
-                            </div>
-
-                            <div class="journey-progress-bar">
-                                <div
-                                        class="journey-progress-fill"
-                                        style={`width: ${item.percent}%`}
-                                ></div>
-                            </div>
-                        </button>
-                    {/each}
-                </div>
-
-                {#if selectedJourneyDecade}
-                    <div class="genre-title" style="margin-top: 14px;">
-                        {selectedJourneyDecade} Genre History
-                    </div>
-
-                    <div class="journey-decade-grid">
-                        {#each selectedJourneyGenres as item}
-                            <div class="journey-decade-btn">
-                                <div class="journey-decade-title">
-                                    {item.label}
-                                </div>
-
-                                <div class="journey-decade-meta">
-                                    {item.played} / {item.tracks}
-                                    tracks • {item.percent}% complete
-                                </div>
-
-                                <div class="journey-progress-bar">
-                                    <div
-                                            class="journey-progress-fill"
-                                            style={`width: ${item.percent}%`}
-                                    ></div>
-                                </div>
-
-                                <div class="journey-actions">
-                                    <button
-                                            class="journey-clear-btn"
-                                            type="button"
-                                            on:click={() => {
-                                                clearJourneyGenrePlayed(
-                                                    selectedJourneyDecade ?? '',
-                                                    item.genre
-                                                );
-                                            }}
-                                    >
-                                        Clear Played Tracks
-                                    </button>
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
-
-            </div>
-        {/if}
-
-        {#if musicJourneyMode === 'collections'}
-            <div class="library-description" style="margin-top: 12px;">
-                Collections listening progress and collection completion will appear here.
-            </div>
-        {/if}
-
-        {#if musicJourneyMode === 'favorites'}
-            <div class="library-description" style="margin-top: 12px;">
-                Favorite tracks and favorite listening experiences will appear here.
-            </div>
-        {/if}
+        <MusicJourneyPanel/>
 
         <div class="opt-cell playback-preferences-card">
             <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
@@ -1207,50 +1069,5 @@
         opacity: 0.85;
     }
 
-    .journey-decade-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 8px;
-        margin-top: 12px;
-    }
 
-    .journey-decade-btn {
-        border-radius: 12px;
-        border: 1px solid #444;
-        background: #252525;
-        color: #ddd;
-        padding: 10px 12px;
-        cursor: pointer;
-        text-align: left;
-    }
-
-    .journey-decade-title {
-        font-weight: 700;
-        color: #fff;
-    }
-
-    .journey-decade-meta {
-        margin-top: 4px;
-        font-size: 0.75rem;
-        color: #aaa;
-    }
-
-    .journey-progress-bar {
-        margin-top: 8px;
-        height: 6px;
-        border-radius: 999px;
-        background: #111;
-        overflow: hidden;
-    }
-
-    .journey-progress-fill {
-        height: 100%;
-        background: #cfb87c;
-    }
-
-    .journey-decade-btn.selected {
-        border: 2px solid #d4b66a;
-        background: rgba(212, 182, 106, 0.12);
-        box-shadow: 0 0 10px rgba(212, 182, 106, 0.25);
-    }
 </style>
