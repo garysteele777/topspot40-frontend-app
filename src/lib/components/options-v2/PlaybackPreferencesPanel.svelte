@@ -1,23 +1,86 @@
 <script lang="ts">
-</script>
+    import type {
+        PlaybackOrder,
+        VoicePart,
+        Language
+    } from '$lib/types/playback';
 
+    type PreferenceMode =
+        | 'narration'
+        | 'playback'
+        | 'flow'
+        | null;
+
+    export let languages: Language[] = ['en'];
+    export let selectedVoices: VoicePart[] = ['intro'];
+    export let playbackOrder: PlaybackOrder = 'up';
+    export let pauseMode: 'pause' | 'continuous' = 'pause';
+    export let skipPlayed = false;
+
+    let preferenceMode: PreferenceMode = null;
+
+    $: languageSummary =
+        languages.map(l =>
+            l === 'ptbr' ? 'PT-BR' : l.toUpperCase()
+        ).join(' + ');
+
+    $: orderSummary =
+        playbackOrder === 'up'
+            ? 'Up'
+            : playbackOrder === 'down'
+                ? 'Down'
+                : 'Shuffle';
+
+    $: flowSummary =
+        pauseMode === 'continuous'
+            ? 'Continuous'
+            : 'Pause';
+
+    $: trackStrategySummary =
+        skipPlayed ? 'Favor New' : 'All Equal';
+
+    $: voiceSummary =
+        selectedVoices.length === 0
+            ? 'Track Only'
+            : selectedVoices
+                .map(v =>
+                    v === 'intro'
+                        ? 'Intro'
+                        : v === 'detail'
+                            ? 'Detail'
+                            : 'Artist'
+                )
+                .join('+');
+</script>
 <div class="opt-cell playback-preferences-card">
     <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
 
     <div class="radio-description">
-        Choose narration languages, voice content, playback order, and listening flow.
+        {languageSummary} • {orderSummary} • {flowSummary} • {trackStrategySummary} • {voiceSummary}
     </div>
 
     <div class="radio-buttons">
-        <button type="button">
+        <button
+                type="button"
+                class:active={preferenceMode === 'narration'}
+                on:click={() => preferenceMode = 'narration'}
+        >
             Narration
         </button>
 
-        <button type="button">
+        <button
+                type="button"
+                class:active={preferenceMode === 'playback'}
+                on:click={() => preferenceMode = 'playback'}
+        >
             Playback
         </button>
 
-        <button type="button">
+        <button
+                type="button"
+                class:active={preferenceMode === 'flow'}
+                on:click={() => preferenceMode = 'flow'}
+        >
             Flow
         </button>
     </div>
@@ -62,6 +125,13 @@
         color: #ccc;
         font-size: 0.8rem;
         cursor: pointer;
+    }
+
+    .radio-buttons button.active {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 600;
     }
 
 </style>

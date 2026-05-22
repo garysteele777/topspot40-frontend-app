@@ -489,6 +489,14 @@
 
     <div class="page">
 
+        <PlaybackPreferencesPanel
+                {languages}
+                {selectedVoices}
+                {playbackOrder}
+                {pauseMode}
+                {skipPlayed}
+        />
+
         <!-- 🔥 RADIO (NEW) -->
         <div
                 class="opt-cell opt-cell--radio"
@@ -638,7 +646,6 @@
 
         <MusicJourneyPanel/>
 
-        <PlaybackPreferencesPanel/>
 
         <!-- ✅ Playback History now at top -->
         <PlaybackHistoryPanel {language} {languages}/>
