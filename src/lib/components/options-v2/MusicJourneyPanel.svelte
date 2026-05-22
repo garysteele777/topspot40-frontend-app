@@ -1,7 +1,8 @@
 <script lang="ts">
     import {
         programHistoryStore,
-        resetProgram
+        resetProgram,
+        resetAllPrograms
     } from '$lib/carmode/programHistory';
 
     type HistoryEntry = {
@@ -70,13 +71,34 @@
     function clearJourneyGenrePlayed(decade: string, genre: string) {
         const programKey = `DG|${decade}|${genre}` as const;
 
+        resetProgram(programKey);
+    }
+
+
+    function clearJourneyDecadePlayed(decade: string) {
         const confirmed = confirm(
-            `Clear played tracks for ${decade} ${genre.replace(/_/g, ' ')}?`
+            `Clear ALL played history for ${decade}? This will reset every genre in that decade.`
         );
 
         if (!confirmed) return;
 
-        resetProgram(programKey);
+        const rows = $programHistoryStore.filter((entry) =>
+            entry.key.startsWith(`DG|${decade}|`)
+        );
+
+        rows.forEach((entry) => {
+            resetProgram(entry.key);
+        });
+    }
+
+    function clearJourneyAllPlayed() {
+        const confirmed = confirm(
+            'Clear ALL playback history for every decade, genre, collection, and program?'
+        );
+
+        if (!confirmed) return;
+
+        resetAllPrograms();
     }
 </script>
 
@@ -166,6 +188,22 @@
                                 style={`width: ${item.percent}%`}
                         ></div>
                     </div>
+
+                    <div class="journey-actions">
+                        <button
+                                class="journey-clear-btn journey-clear-btn--decade"
+                                type="button"
+                                on:click|stopPropagation={() => {
+                                    clearJourneyDecadePlayed(
+                                        item.decade.replace(' All Genres', '')
+                                    );
+                                }}
+                        >
+                            Clear Decade History
+                        </button>
+                    </div>
+
+
                 </div>
             {/each}
         </div>
@@ -198,11 +236,14 @@
                             <button
                                     class="journey-clear-btn"
                                     type="button"
-                                    on:click={() => {
-                                    clearJourneyGenrePlayed(
-                                        selectedJourneyDecade ?? '',
-                                        item.genre
+                                    on:click|stopPropagation={() => {
+                                    const confirmed = confirm(
+                                        `Clear played history for ${selectedJourneyDecade ?? ''} ${item.genre}?`
                                     );
+
+                                    if (!confirmed) return;
+
+                                    clearJourneyGenrePlayed(selectedJourneyDecade ?? '', item.genre);
                                 }}
                             >
                                 Clear Played Tracks
