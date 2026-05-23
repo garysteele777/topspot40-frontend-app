@@ -118,50 +118,66 @@
 </script>
 
 <div class="library-card">
-    <h3 class="section-title">🎧 TopSpot40 Listening Library 🎧</h3>
-
-    <div class="library-description">
-        Browse saved programs, explore collections, and spotlight favorite artists.
-    </div>
-
-    <div class="library-description">
-        Interactive Mode • Resume • Favorites • Jump to Tracks
-    </div>
-
-    <div class="library-buttons">
-        <button
-                class:active={!collapsed && libraryMode === 'nostalgia'}
-                on:click={() => {
-        onActivate?.();
-        libraryMode = 'nostalgia';
-    }}
-        >
-            Nostalgia Programs
-        </button>
-
-        <button
-                class:active={!collapsed && libraryMode === 'collections'}
-
-                on:click={() => {
-        onActivate?.();
-        libraryMode = 'collections';
-    }}
-        >
-            Collections Programs
-        </button>
-
-        <button
-                class:active={!collapsed && libraryMode === 'artists'}
-                on:click={() => {
-        onActivate?.();
-        libraryMode = 'artists';
-    }}
-        >
-            Artist Spotlight
-        </button>
+    <div
+            class="section-header-row section-header-clickable"
+            role="button"
+            tabindex="0"
+            on:click={() => {
+                onActivate?.();
+            }}
+            on:keydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onActivate?.();
+                }
+            }}
+    >
+        <h3 class="section-title">🎧 TopSpot40 Listening Library 🎧</h3>
+        <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
     </div>
 
     {#if !collapsed}
+        <div class="library-description">
+            Browse saved programs, explore collections, and spotlight favorite artists.
+        </div>
+
+        <div class="library-description">
+            Interactive Mode • Resume • Favorites • Jump to Tracks
+        </div>
+
+        <div class="library-buttons">
+            <button
+                    class:active={!collapsed && libraryMode === 'nostalgia'}
+                    on:click={() => {
+        onActivate?.();
+        libraryMode = 'nostalgia';
+    }}
+            >
+                Nostalgia Programs
+            </button>
+
+            <button
+                    class:active={!collapsed && libraryMode === 'collections'}
+
+                    on:click={() => {
+        onActivate?.();
+        libraryMode = 'collections';
+    }}
+            >
+                Collections Programs
+            </button>
+
+            <button
+                    class:active={!collapsed && libraryMode === 'artists'}
+                    on:click={() => {
+        onActivate?.();
+        libraryMode = 'artists';
+    }}
+            >
+                Artist Spotlight
+            </button>
+        </div>
+
         <div class="library-separator">
         <span>
             {#if libraryMode === 'nostalgia'}
@@ -329,41 +345,43 @@ goto(`/car-page?${params.toString()}`);
 
                         {#if artistSpotlightLoading}
 
-                            <div class="library-description">
-                                Loading artists...
-                            </div>
+                            {#if !collapsed}
 
-                        {:else if artistSpotlightError}
+                                <div class="library-description">
+                                    Loading artists...
+                                </div>
 
-                            <div class="library-description">
-                                {artistSpotlightError}
-                            </div>
+                            {:else if artistSpotlightError}
 
-                        {:else}
+                                <div class="library-description">
+                                    {artistSpotlightError}
+                                </div>
 
-                            {#if selectedArtist}
+                            {:else}
 
-                                <div class="genre-section">
+                                {#if selectedArtist}
 
-                                    <button
-                                            class="back-btn"
-                                            on:click={() => {
+                                    <div class="genre-section">
+
+                                        <button
+                                                class="back-btn"
+                                                on:click={() => {
                                 selectedArtist = null;
                                 artistTracks = [];
                             }}
-                                    >
-                                        ← Back to Artists
-                                    </button>
+                                        >
+                                            ← Back to Artists
+                                        </button>
 
-                                    <div class="genre-title">
-                                        {titleCaseName(selectedArtist.artist_name)}
-                                        • Artist Spotlight Tracks
-                                    </div>
+                                        <div class="genre-title">
+                                            {titleCaseName(selectedArtist.artist_name)}
+                                            • Artist Spotlight Tracks
+                                        </div>
 
-                                    <div class="artist-play-row">
-                                        <button
-                                                class="play-artist-btn"
-                                                on:click={() => {
+                                        <div class="artist-play-row">
+                                            <button
+                                                    class="play-artist-btn"
+                                                    on:click={() => {
                                                 const artist = selectedArtist;
                                                 if (!artist) return;
 
@@ -373,55 +391,55 @@ goto(`/car-page?${params.toString()}`);
                                                     `&artist=${encodeURIComponent(artist.artist_name)}`
                                                 );
 }}
-                                        >
-                                            ▶ Play Artist Spotlight
-                                        </button>
+                                            >
+                                                ▶ Play Artist Spotlight
+                                            </button>
+                                        </div>
+
+                                        {#if artistTracksLoading}
+                                            <div class="library-description">Loading tracks...</div>
+                                        {:else if artistTracksError}
+                                            <div class="library-description">{artistTracksError}</div>
+                                        {:else}
+                                            <div class="track-grid">
+                                                {#each artistTracks as track}
+                                                    <button class="track-btn">
+                                                        <div class="track-name">
+                                                            {titleCaseName(track.track_name)}
+                                                        </div>
+                                                    </button>
+                                                {/each}
+                                            </div>
+                                        {/if}
+
                                     </div>
 
-                                    {#if artistTracksLoading}
-                                        <div class="library-description">Loading tracks...</div>
-                                    {:else if artistTracksError}
-                                        <div class="library-description">{artistTracksError}</div>
-                                    {:else}
-                                        <div class="track-grid">
-                                            {#each artistTracks as track}
-                                                <button class="track-btn">
-                                                    <div class="track-name">
-                                                        {titleCaseName(track.track_name)}
-                                                    </div>
-                                                </button>
-                                            {/each}
-                                        </div>
-                                    {/if}
+                                {:else}
 
-                                </div>
+                                    <div class="artist-grid">
+                                        {#each artistSpotlightItems as artist}
+                                            <button
+                                                    class="artist-btn"
+                                                    on:click={() => loadArtistTracks(artist)}
+                                            >
+                                                <div class="artist-name">
+                                                    {titleCaseName(artist.artist_name)}
+                                                </div>
 
-                            {:else}
+                                                <div class="artist-count">
+                                                    {artist.genre_track_count}
+                                                    {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
+                                                    •
+                                                    {artist.total_track_count} Total
+                                                </div>
+                                            </button>
+                                        {/each}
+                                    </div>
 
-                                <div class="artist-grid">
-                                    {#each artistSpotlightItems as artist}
-                                        <button
-                                                class="artist-btn"
-                                                on:click={() => loadArtistTracks(artist)}
-                                        >
-                                            <div class="artist-name">
-                                                {titleCaseName(artist.artist_name)}
-                                            </div>
-
-                                            <div class="artist-count">
-                                                {artist.genre_track_count}
-                                                {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
-                                                •
-                                                {artist.total_track_count} Total
-                                            </div>
-                                        </button>
-                                    {/each}
-                                </div>
+                                {/if}
 
                             {/if}
-
                         {/if}
-
                     </div>
 
                 {/if}
@@ -672,6 +690,29 @@ goto(`/car-page?${params.toString()}`);
 
     .play-artist-btn:hover {
         filter: brightness(1.05);
+    }
+
+    .section-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .section-title {
+        margin: 0;
+    }
+
+    .section-toggle {
+        color: #cfb87c;
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1;
+        opacity: 0.95;
+    }
+
+    .section-header-clickable {
+        cursor: pointer;
     }
 
 </style>

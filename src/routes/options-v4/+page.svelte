@@ -63,9 +63,14 @@
     let collections: string[] = [];
 
     let radioMode: 'nostalgia' | 'collections' | 'artist_spotlight' | null = null;
-    type OpenSection = 'radio' | 'library' | 'history' | 'settings';
+    type OpenSection =
+        | 'preferences'
+        | 'radio'
+        | 'library'
+        | 'journey'
+        | null;
 
-    let openSection: OpenSection | null = null;
+    let openSection: OpenSection = null;
     // Options
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
@@ -489,110 +494,125 @@
 
     <div class="page">
 
-        <PlaybackPreferencesPanel
-                {languages}
-                {selectedVoices}
-                {playbackOrder}
-                {pauseMode}
-                {skipPlayed}
-        />
+        <div class:active-section-wrapper={openSection === 'preferences'}>
+
+            <PlaybackPreferencesPanel
+                    {languages}
+                    {selectedVoices}
+                    {playbackOrder}
+                    {pauseMode}
+                    {skipPlayed}
+                    collapsed={openSection !== 'preferences'}
+                    onActivate={() => {
+        openSection = openSection === 'preferences' ? null : 'preferences';
+        radioMode = null;
+    }}
+            />
+        </div>
 
         <!-- 🔥 RADIO (NEW) -->
         <div
                 class="opt-cell opt-cell--radio"
-                role="button"
-                tabindex="0"
-                on:click={() => openSection = 'radio'}
-                on:keydown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                openSection = 'radio';
-            }
-        }}
+                class:active-section-wrapper={openSection === 'radio'}
         >
-            <div class="section-header-row">
+            <div
+                    class="section-header-row section-header-clickable"
+                    role="button"
+                    tabindex="0"
+                    on:click={() => {
+                openSection = openSection === 'radio' ? null : 'radio';
+            }}
+                    on:keydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openSection = openSection === 'radio' ? null : 'radio';
+                }
+            }}
+            >
                 <h3 class="section-title">📻🐕 TopSpot40 Interactive Radio 📻🐕</h3>
                 <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
             </div>
 
-            <div class="radio-description">
-                Nostalgia mixes decades and genres. Collections plays themed playlists.
-            </div>
+            {#if openSection === 'radio'}
+                <div class="radio-description">
+                    Nostalgia mixes decades and genres. Collections plays themed playlists.
+                </div>
 
-            <div class="radio-description">
-                DJ Mode • Shuffle • Favor New • Continuous
-            </div>
+                <div class="radio-description">
+                    DJ Mode • Shuffle • Favor New • Continuous
+                </div>
 
-            <div class="radio-buttons">
-                <button
-                        class:active={radioMode === 'nostalgia'}
-                        on:click|stopPropagation={() => startRadio('nostalgia')}
-                >
-                    Nostalgia Radio
-                </button>
+                <div class="radio-buttons">
+                    <button
+                            class:active={radioMode === 'nostalgia'}
+                            on:click|stopPropagation={() => startRadio('nostalgia')}
+                    >
+                        Nostalgia Radio
+                    </button>
 
-                <button
-                        class:active={radioMode === 'collections'}
-                        on:click|stopPropagation={() => startRadio('collections')}
-                >
-                    Collections Radio
-                </button>
+                    <button
+                            class:active={radioMode === 'collections'}
+                            on:click|stopPropagation={() => startRadio('collections')}
+                    >
+                        Collections Radio
+                    </button>
 
-                <button
-                        class:active={radioMode === 'artist_spotlight'}
-                        on:click|stopPropagation={() => startRadio('artist_spotlight')}
-                >
-                    Artist Spotlight Radio
-                </button>
-            </div>
-
-            <div class="radio-separator">
-                <span>Stations</span>
-            </div>
-
-            {#if radioMode === 'nostalgia'}
-                <div style="margin-top: 10px;">
-                    <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
-                        <span class="icon">📻</span>
-                        <span>Start All Genres: 1950s to the Present</span>
+                    <button
+                            class:active={radioMode === 'artist_spotlight'}
+                            on:click|stopPropagation={() => startRadio('artist_spotlight')}
+                    >
+                        Artist Spotlight Radio
                     </button>
                 </div>
 
-                <div class="radio-genres">
-                    {#each genreOptions as g}
-                        <button
-                                class="genre-btn"
-                                class:selected={selectedGenre === g.id}
-                                on:click|stopPropagation={() => {
+                <div class="radio-separator">
+                    <span>Stations</span>
+                </div>
+
+                {#if radioMode === 'nostalgia'}
+                    <div style="margin-top: 10px;">
+                        <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
+                            <span class="icon">📻</span>
+                            <span>Start All Genres: 1950s to the Present</span>
+                        </button>
+                    </div>
+
+                    <div class="radio-genres">
+                        {#each genreOptions as g}
+                            <button
+                                    class="genre-btn"
+                                    class:selected={selectedGenre === g.id}
+                                    on:click|stopPropagation={() => {
                                 launchNostalgiaGenre(g.id);
                             }}
-                        >
-                            <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
-                            <span>{g.label}</span>
-                        </button>
-                    {/each}
-                </div>
-            {/if}
+                            >
+                                <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
+                                <span>{g.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
 
-            {#if radioMode === 'collections'}
-                <div style="margin-top: 10px;">
-                    <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
-                        <span class="icon">📻</span>
-                        <span>Start All Collections</span>
-                    </button>
-                </div>
-
-                <div class="radio-genres">
-                    {#each collectionGroups as group}
-                        <button
-                                class="genre-btn"
-                                on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
-                        >
-                            <span class="icon">📀</span>
-                            <span>{group.name}</span>
+                {#if radioMode === 'collections'}
+                    <div style="margin-top: 10px;">
+                        <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
+                            <span class="icon">📻</span>
+                            <span>Start All Collections</span>
                         </button>
-                    {/each}
-                </div>
+                    </div>
+
+                    <div class="radio-genres">
+                        {#each collectionGroups as group}
+                            <button
+                                    class="genre-btn"
+                                    on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
+                            >
+                                <span class="icon">📀</span>
+                                <span>{group.name}</span>
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
             {/if}
         </div>
 
@@ -626,25 +646,35 @@
         {/if}
 
 
-        <ListeningLibraryPanel
-                {decadeOptions}
-                {genreOptions}
-                {collectionGroups}
-                {language}
-                {languages}
-                voices={selectedVoices}
-                {playbackOrder}
-                voicePlayMode="before"
-                {pauseMode}
-                {skipPlayed}
-                collapsed={radioMode !== null || musicJourneyMode !== null}
-                onActivate={() => {
-                    radioMode = null;
-                    musicJourneyMode = null;
-                }}
-        />
+        <div class:active-section-wrapper={openSection === 'library'}>
+            <ListeningLibraryPanel
+                    {decadeOptions}
+                    {genreOptions}
+                    {collectionGroups}
+                    {language}
+                    {languages}
+                    voices={selectedVoices}
+                    {playbackOrder}
+                    voicePlayMode="before"
+                    {pauseMode}
+                    {skipPlayed}
+                    collapsed={openSection !== 'library'}
+                    onActivate={() => {
+                openSection = 'library';
+                radioMode = null;
+            }}
+            />
+        </div>
 
-        <MusicJourneyPanel/>
+        <div class:active-section-wrapper={openSection === 'journey'}>
+            <MusicJourneyPanel
+                    collapsed={openSection !== 'journey'}
+                    onActivate={() => {
+                        openSection = openSection === 'journey' ? null : 'journey';
+                        radioMode = null;
+                    }}
+            />
+        </div>
 
 
         <!-- ✅ Playback History now at top -->
@@ -1053,9 +1083,20 @@
 
     .section-toggle {
         color: #cfb87c;
-        font-size: 0.8rem;
-        opacity: 0.85;
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1;
+        opacity: 0.95;
     }
 
+    .active-section-wrapper {
+        border-color: rgba(207, 184, 124, 0.9);
+        box-shadow: 0 0 0 1px rgba(207, 184, 124, 0.45),
+        0 0 18px rgba(207, 184, 124, 0.18);
+    }
+
+    .section-header-clickable {
+        cursor: pointer;
+    }
 
 </style>

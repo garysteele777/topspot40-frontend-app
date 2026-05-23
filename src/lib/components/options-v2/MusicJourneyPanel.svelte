@@ -11,6 +11,9 @@
         playedRanks: number[];
     };
 
+    export let collapsed = false;
+    export let onActivate: (() => void) | undefined = undefined;
+
     let musicJourneyMode:
         | 'nostalgia'
         | 'collections'
@@ -103,46 +106,64 @@
 </script>
 
 <div class="opt-cell music-journey-card">
-    <h3 class="section-title">🎵 My TopSpot40 Music Journey</h3>
+    <div
+            class="section-header-row section-header-clickable"
+            role="button"
+            tabindex="0"
+            on:click={() => {
+                onActivate?.();
+            }}
+            on:keydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onActivate?.();
+                }
+            }}
+    >
+        <h3 class="section-title">🎵 My TopSpot40 Music Journey</h3>
+        <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
+    </div>
 
     <div class="radio-description">
         Track your listening progress, favorite tracks, and TopSpot40 discoveries.
     </div>
 
-    <div class="radio-buttons">
-        <button
-                type="button"
-                class:active={musicJourneyMode === 'nostalgia'}
-                on:click={() => {
+    {#if !collapsed}
+        <div class="radio-buttons">
+            <button
+                    type="button"
+                    class:active={musicJourneyMode === 'nostalgia'}
+                    on:click={() => {
                 musicJourneyMode = 'nostalgia';
             }}
-        >
-            Nostalgia History
-        </button>
+            >
+                Nostalgia History
+            </button>
 
-        <button
-                type="button"
-                class:active={musicJourneyMode === 'collections'}
-                on:click={() => {
+            <button
+                    type="button"
+                    class:active={musicJourneyMode === 'collections'}
+                    on:click={() => {
                 musicJourneyMode = 'collections';
             }}
-        >
-            Collections History
-        </button>
+            >
+                Collections History
+            </button>
 
-        <button
-                type="button"
-                class:active={musicJourneyMode === 'favorites'}
-                on:click={() => {
+            <button
+                    type="button"
+                    class:active={musicJourneyMode === 'favorites'}
+                    on:click={() => {
                 musicJourneyMode = 'favorites';
             }}
-        >
-            Favorite Tracks
-        </button>
-    </div>
+            >
+                Favorite Tracks
+            </button>
+        </div>
+    {/if}
 </div>
 
-{#if musicJourneyMode === 'nostalgia'}
+{#if !collapsed && musicJourneyMode === 'nostalgia'}
     <div class="journey-panel">
         <div class="genre-title">
             Nostalgia Listening History
@@ -375,6 +396,29 @@
         color: #000;
         border-color: #cfb87c;
         font-weight: 600;
+    }
+
+    .section-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .section-title {
+        margin: 0;
+    }
+
+    .section-toggle {
+        color: #cfb87c;
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1;
+        opacity: 0.95;
+    }
+
+    .section-header-clickable {
+        cursor: pointer;
     }
 
 </style>

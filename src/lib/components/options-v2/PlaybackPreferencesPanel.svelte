@@ -16,6 +16,9 @@
     export let playbackOrder: PlaybackOrder = 'up';
     export let pauseMode: 'pause' | 'continuous' = 'pause';
     export let skipPlayed = false;
+    export let collapsed = false;
+    export let onActivate: (() => void) | undefined = undefined;
+
 
     let preferenceMode: PreferenceMode = null;
 
@@ -53,37 +56,55 @@
                 .join('+');
 </script>
 <div class="opt-cell playback-preferences-card">
-    <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
+    <div
+            class="section-header-row section-header-clickable"
+            role="button"
+            tabindex="0"
+            on:click={() => {
+            onActivate?.();
+        }}
+            on:keydown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onActivate?.();
+            }
+        }}
+    >
+        <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
+        <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
+    </div>
 
     <div class="radio-description">
         {languageSummary} • {orderSummary} • {flowSummary} • {trackStrategySummary} • {voiceSummary}
     </div>
 
-    <div class="radio-buttons">
-        <button
-                type="button"
-                class:active={preferenceMode === 'narration'}
-                on:click={() => preferenceMode = 'narration'}
-        >
-            Narration
-        </button>
+    {#if !collapsed}
+        <div class="radio-buttons">
+            <button
+                    type="button"
+                    class:active={preferenceMode === 'narration'}
+                    on:click={() => preferenceMode = 'narration'}
+            >
+                Narration
+            </button>
 
-        <button
-                type="button"
-                class:active={preferenceMode === 'playback'}
-                on:click={() => preferenceMode = 'playback'}
-        >
-            Playback
-        </button>
+            <button
+                    type="button"
+                    class:active={preferenceMode === 'playback'}
+                    on:click={() => preferenceMode = 'playback'}
+            >
+                Playback
+            </button>
 
-        <button
-                type="button"
-                class:active={preferenceMode === 'flow'}
-                on:click={() => preferenceMode = 'flow'}
-        >
-            Flow
-        </button>
-    </div>
+            <button
+                    type="button"
+                    class:active={preferenceMode === 'flow'}
+                    on:click={() => preferenceMode = 'flow'}
+            >
+                Flow
+            </button>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -132,6 +153,29 @@
         color: #000;
         border-color: #cfb87c;
         font-weight: 600;
+    }
+
+    .section-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .section-title {
+        margin: 0;
+    }
+
+    .section-toggle {
+        color: #cfb87c;
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1;
+        opacity: 0.95;
+    }
+
+    .section-header-clickable {
+        cursor: pointer;
     }
 
 </style>
