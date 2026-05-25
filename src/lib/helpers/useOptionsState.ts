@@ -1,5 +1,3 @@
-import type { DecadeOption, GenreOption } from './useCatalogLoader';
-
 export type Language = 'en' | 'es' | 'pt';
 export type VoicePart = 'intro' | 'detail' | 'artist';
 export type PlaybackOrder = 'up' | 'down' | 'shuffle';

@@ -2,6 +2,7 @@
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
     import {derived} from 'svelte/store';
+    import {PROGRAM_TYPES} from '$lib/types/program';
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
@@ -88,12 +89,40 @@
     }
 
     async function playTrack(trackObj: CarModeTrack) {
-
-
         const sel = $currentSelection;
         if (!sel) return;
 
         const settings = get(playbackSettingsStore);
+
+        if (sel.mode === 'artist_spotlight' && sel.programType === 'RADIO_ARTIST') {
+            const firstTrack = $tracks[0] as unknown as {
+                spotifyArtistId?: string;
+                spotify_artist_id?: string;
+            };
+
+            const artistParams = new URLSearchParams({
+                genre: sel.context?.genre ?? 'ALL',
+                tts_language: sel.language ?? 'en',
+                play_intro: String(settings.voices.includes('intro')),
+                play_detail: String(settings.voices.includes('detail')),
+                play_artist_description: String(settings.voices.includes('artist')),
+                play_track: 'true'
+            });
+
+            const spotifyArtistId =
+                firstTrack.spotifyArtistId ?? firstTrack.spotify_artist_id;
+
+            if (spotifyArtistId) {
+                artistParams.set('spotify_artist_id', spotifyArtistId);
+            }
+
+            await fetch(
+                `${API_BASE}/artist-spotlight/play-radio?${artistParams.toString()}`,
+                {method: 'POST'}
+            );
+
+            return;
+        }
 
         let decadeForPlayback: string | undefined;
         let genreForPlayback: string | undefined;
@@ -110,10 +139,7 @@
                 programGenre === 'ALL'
                     ? trackObj.genreSlug ?? programGenre
                     : programGenre;
-
-
         }
-
 
         const payload = {
             track: {
@@ -127,9 +153,7 @@
             selection: {
                 ...sel,
                 languages: sel.languages ?? [sel.language],
-
                 playbackOrder: settings.playbackOrder,
-
                 voices: settings.voices,
                 voicePlayMode: settings.voicePlayMode,
                 pauseMode: settings.pauseMode,
@@ -139,6 +163,7 @@
                 sel.mode === 'artist_spotlight'
                     ? {
                         type: 'artist_spotlight',
+                        programType: sel.programType,
                         artist_id: sel.context?.artist_id,
                         artist_name: sel.context?.artist_name
                     }
@@ -162,43 +187,31 @@
         };
 
 
-        if (
-            sel?.mode === 'decade_genre' &&
-            sel?.context?.decade === 'ALL' &&
-            trackObj.rank === 0
-        ) {
-
-            const settings = get(playbackSettingsStore);
-
-            const params = new URLSearchParams({
-                decade: 'ALL',
+        if (sel.mode === 'decade_genre' && sel.programType === 'RADIO_DG') {
+            const radioParams = new URLSearchParams({
+                decade: sel.context?.decade ?? 'ALL',
                 genre: sel.context?.genre ?? 'ALL',
                 tts_language: sel.language ?? 'en',
                 languages: (sel.languages ?? [sel.language]).join(','),
                 play_intro: String(settings.voices.includes('intro')),
                 play_detail: String(settings.voices.includes('detail')),
-                play_artist_description: String(settings.voices.includes('artist'))
+                play_artist_description: String(settings.voices.includes('artist')),
+                play_track: 'true'
             });
 
-
-            const res = await fetch(
-                `${API_BASE}/supabase/decade-genre/play-sequence?${params.toString()}`,
+            await fetch(
+                `${API_BASE}/supabase/decade-genre/play-sequence?${radioParams.toString()}`,
                 {method: 'GET'}
             );
-
-            const data = await res.json();
 
             return;
         }
 
-
-        const res = await fetch(`${API_BASE}/playback/play-track`, {
+        await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-
-        const result = await res.json().catch(() => null);
     }
 
 
@@ -275,16 +288,11 @@
         }
 
         const isRadio =
-            sel?.mode === 'decade_genre' &&
-            sel?.context?.decade === 'ALL';
+            sel?.programType === 'RADIO_DG' ||
+            sel?.programType === 'RADIO_COL' ||
+            sel?.programType === 'RADIO_ARTIST';
 
         if (isRadio) {
-
-            const res = await fetch(`${API_BASE}/supabase/decade-genre/next`, {
-                method: 'POST'
-            });
-
-            const data = await res.json().catch(() => null);
 
         } else {
 
@@ -452,8 +460,6 @@
                 voices: settings.voices,
                 skipPlayed: settings.skipPlayed,
 
-                // add if ResumeState includes it
-                // voicePlayMode: settings.voicePlayMode,
             };
 
             // ⭐ THIS LINE WAS MISSING
@@ -478,7 +484,7 @@
 
         // 🧹 Step 0: Reset backend transport safely
         try {
-            const res = await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
+            await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
         } catch (err) {
             console.warn('⚠️ Backend reset failed (continuing anyway):', err);
         }
@@ -503,7 +509,9 @@
                 const isRadio =
                     sel.context?.decade === 'ALL';
 
-                sel.programType = isRadio ? 'RADIO_DG' : 'DG';
+                sel.programType = isRadio
+                    ? PROGRAM_TYPES.RADIO_DG
+                    : PROGRAM_TYPES.PROGRAM_DG;
             }
 
             if (sel.mode === 'collection') {
@@ -512,18 +520,15 @@
                     sel.context?.collectionGroupSlug ??
                     sel.context?.collection_group;
 
-                const collectionSlug =
-                    sel.context?.collection_slug ??
-                    sel.context?.collectionSlug ??
-                    sel.context?.collection;
-
                 const modeParam = url.searchParams.get('mode');
 
                 const isRadio =
                     modeParam === 'radio_collections' ||
                     collectionGroup === 'ALL';
 
-                sel.programType = isRadio ? 'RADIO_COL' : 'COL';
+                sel.programType = isRadio
+                    ? PROGRAM_TYPES.RADIO_COL
+                    : PROGRAM_TYPES.PROGRAM_COL;
 
             }
 
@@ -586,7 +591,6 @@
                 collection={headerMode === 'collection' ? uiDecade : undefined}
                 mode={headerMode}
                 programType={$currentSelection.programType}
-                language={$currentSelection.language}
                 languages={$currentSelection.languages ?? [$currentSelection.language]}
                 voices={settings.voices}
                 playbackOrder={$currentSelection.playbackOrder}
@@ -673,17 +677,15 @@ if (
 
 
 const sel = $currentSelection;
-const isRadio =
-    sel?.mode === 'decade_genre' &&
-    sel?.context?.decade === 'ALL';
 
-if (data?.restart_track && $currentTrack) {
-    if (isRadio) {
-        //'📻 Radio resume: backend keeps control, skipping playTrack restart');
-    } else {
-        markUserStartedPlayback();
-        await playTrack($currentTrack);
-    }
+const isRadio =
+    sel?.programType === 'RADIO_DG' ||
+    sel?.programType === 'RADIO_COL' ||
+    sel?.programType === 'RADIO_ARTIST';
+
+if (data?.restart_track && $currentTrack && !isRadio) {
+    markUserStartedPlayback();
+    await playTrack($currentTrack);
 }
 
     return;
@@ -715,15 +717,6 @@ if (trackToPlay) {
 </div>
 
 <style>
-    .debug-panel {
-        background: rgba(0, 0, 0, 0.45);
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 1rem auto;
-        max-width: 900px;
-        font-size: 0.85rem;
-        color: #ccc;
-    }
 
     .car-mode-root {
         min-height: 100vh;

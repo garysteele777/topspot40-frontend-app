@@ -9,31 +9,45 @@
 	let error = '';
 
 	function sendMessage(e: MouseEvent) {
-		// (optional) prevent default if inside a form someday
 		e.preventDefault();
 
 		if (!email.trim() || !message.trim()) {
 			error = 'Please enter both your email and a message.';
 			return;
 		}
-		submitted = true; // switch to thank-you view
+
+		submitted = true;
 		error = '';
+
 		// TODO: send message to backend here
 	}
 
 	function handleClose(e?: MouseEvent) {
 		e?.preventDefault?.();
-		// reset state (no shadowing—do NOT re-declare with `let`)
+
 		submitted = false;
 		email = '';
 		message = '';
 		error = '';
+
 		onClose?.();
 	}
 </script>
 
 {#if visible}
+	<!--
+		The overlay closes the modal when clicked.
+		This is structural modal behavior, not a button-style control.
+	-->
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="overlay" on:click={handleClose}>
+		<!--
+			The popup stops clicks inside the modal from closing it.
+			This is intentional event handling for modal layout.
+		-->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="popup" on:click|stopPropagation>
 			{#if !submitted}
 				<h2>Contact Us</h2>
@@ -85,6 +99,7 @@
 		justify-content: center;
 		align-items: center;
 	}
+
 	.popup {
 		background: #1e1e1e;
 		color: white;
@@ -93,6 +108,7 @@
 		width: 350px;
 		text-align: left;
 	}
+
 	input,
 	textarea {
 		width: 100%;
@@ -101,26 +117,31 @@
 		border-radius: 6px;
 		border: none;
 	}
+
 	.actions {
 		display: flex;
 		justify-content: flex-end;
 		gap: 1rem;
 		margin-top: 1rem;
 	}
+
 	button {
 		padding: 0.6rem 1.2rem;
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
 	}
+
 	button:first-of-type {
 		background: #1db954;
 		color: white;
 	}
+
 	.secondary {
 		background: #444;
 		color: white;
 	}
+
 	.error {
 		color: #ff4d4f;
 		margin-top: 0.5rem;

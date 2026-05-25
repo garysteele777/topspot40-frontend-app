@@ -11,17 +11,17 @@
 </script>
 
 <div class="overdub-block">
-  <label class="main-label">🎙 Voice Overdub</label>
+  <div class="main-label">🎙 Voice Overdub</div>
   <div class="btn-group">
-    <button class:active={overdubEnabled} on:click={onToggleMaster}>
+    <button type="button" class:active={overdubEnabled} on:click={onToggleMaster}>
       {overdubEnabled ? 'On' : 'Off'}
     </button>
   </div>
 
   <div class="pill-group">
-    <button class:active={overdubIntro}  disabled={!overdubEnabled} on:click={onToggleIntro}>Intro</button>
-    <button class:active={overdubDetail} disabled={!overdubEnabled} on:click={onToggleDetail}>Detail</button>
-    <button class:active={overdubArtist} disabled={!overdubEnabled} on:click={onToggleArtist}>Artist</button>
+    <button type="button" class:active={overdubIntro}  disabled={!overdubEnabled} on:click={onToggleIntro}>Intro</button>
+    <button type="button" class:active={overdubDetail} disabled={!overdubEnabled} on:click={onToggleDetail}>Detail</button>
+    <button type="button" class:active={overdubArtist} disabled={!overdubEnabled} on:click={onToggleArtist}>Artist</button>
   </div>
 
   <p class="hint">Play selected voice tracks over the main song instead of the bed.</p>

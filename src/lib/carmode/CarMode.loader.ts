@@ -4,6 +4,7 @@ import {cacheKey, applyPlaybackOrder, pickInitialTrack} from '$lib/helpers/car/t
 import type {SelectionState} from '$lib/stores/selection';
 import type {LoadedTrack} from '$lib/utils/normalizeTrack';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+import { PROGRAM_TYPES } from '$lib/types/program';
 
 import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
 import {getFavorites} from '$lib/favorites/favorites';
@@ -14,7 +15,19 @@ import {programHistoryStore} from '$lib/carmode/programHistory';
 
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
-
+type ArtistRadioApiTrack = {
+    track_id: number;
+    track_name: string;
+    artist_name: string;
+    spotify_track_id: string;
+    spotify_artist_id?: string | null;
+    album_artwork?: string | null;
+    album_name?: string | null;
+    year_released?: number | null;
+    detail?: string | null;
+    artist_description?: string | null;
+    duration_ms?: number | null;
+};
 export async function loadForSelection(
     sel: SelectionState,
     initialRank?: number | null
@@ -37,13 +50,6 @@ export async function loadForSelection(
         sel.context?.decade_slug ??
         sel.context?.decadeName ??
         sel.context?.decadeSlug;
-
-    const genre =
-        sel.context?.genre ??
-        sel.context?.genre_slug ??
-        sel.context?.genreName ??
-        sel.context?.genreSlug;
-
 
     if (
         sel.mode === 'decade_genre' &&
@@ -122,6 +128,61 @@ export async function loadForSelection(
         const artistId = sel.context?.artist_id;
 
         if (!artistId) {
+
+            if (sel.programType === 'RADIO_ARTIST') {
+                const genre = sel.context?.genre ?? 'ALL';
+
+                status.set('Loading Artist Spotlight Radio set…');
+
+                const response = await fetch(
+                    `${import.meta.env.VITE_API_BASE_URL}/artist-spotlight/radio-set?genre=${encodeURIComponent(genre)}`
+                );
+
+                if (!response.ok) {
+                    status.set('Failed to load Artist Spotlight Radio set.');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (!data?.ok || !Array.isArray(data.tracks) || data.tracks.length === 0) {
+                    status.set('No Artist Spotlight Radio tracks found.');
+                    return;
+                }
+
+                const normalized: CarModeTrack[] = data.tracks.map((track: ArtistRadioApiTrack, index: number) => ({
+                    id: track.track_id,
+                    rankingId: null,
+                    rank: index + 1,
+
+                    trackName: track.track_name,
+                    artistName: track.artist_name,
+
+                    spotifyTrackId: track.spotify_track_id,
+                    spotifyArtistId: track.spotify_artist_id ?? null,
+
+                    albumArtwork: track.album_artwork ?? null,
+                    albumName: track.album_name ?? null,
+
+                    year: track.year_released ?? null,
+
+                    detail: track.detail ?? null,
+
+                    artistText: track.artist_description ?? null,
+
+                    durationSeconds: Math.floor((track.duration_ms ?? 0) / 1000)
+                }));
+
+                tracks.set(normalized);
+                currentTrack.set(normalized[0] ?? null);
+
+                status.set(
+                    `${data.artist_name ?? 'Artist'} Spotlight Radio set loaded.`
+                );
+
+                return;
+            }
+
             status.set('Missing artist ID.');
             return;
         }
@@ -151,6 +212,7 @@ export async function loadForSelection(
             artistName: track.artist_name,
 
             spotifyTrackId: track.spotify_track_id,
+            spotifyArtistId: track.spotify_artist_id ?? null,
 
             albumArtwork: track.album_artwork ?? null,
             albumName: track.album_name ?? null,
@@ -192,10 +254,10 @@ export async function loadForSelection(
         return;
     }
 
-    // ─────────────────────────────────────────────
-    // FAVORITES: DECADE (programType = FAV_DG)
-    // ─────────────────────────────────────────────
-    if (sel.programType === 'FAV_DG') {
+// ─────────────────────────────────────────────
+// FAVORITES: DECADE (programType = FAVORITES_DG)
+// ─────────────────────────────────────────────
+    if (sel.programType === PROGRAM_TYPES.FAVORITES_DG) {
         const group = sel.context?.favoritesGroup;
 
         if (!group) {
@@ -337,9 +399,9 @@ export async function loadForSelection(
         return;
     }
 
-    // ─────────────────────────────────────────────
-    // DECADE / COLLECTION / NORMAL PROGRAMS
-    // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// DECADE / COLLECTION / NORMAL PROGRAMS
+// ─────────────────────────────────────────────
     try {
         const key = cacheKey(sel);
         const cached = sequenceCache.get(key);

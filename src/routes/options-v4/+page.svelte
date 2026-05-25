@@ -6,19 +6,19 @@
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {buildSelectionFromResume} from '$lib/options/applyResume';
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
-    import {loadResumeState} from '$lib/utils/smartResume';
     import {get} from 'svelte/store';
-    import {programHistoryStore} from '$lib/carmode/programHistory';
+    import {
+        programHistoryStore
+    } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
 
     // ─────────────────────────────────────────────
     // UI Components
     // ─────────────────────────────────────────────
     import HeroHeader from '$lib/components/options/HeroHeader.svelte';
-    import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
-    import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
-    import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
     import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
+    import MusicJourneyPanel from '$lib/components/options-v2/MusicJourneyPanel.svelte';
+    import PlaybackPreferencesPanel from '$lib/components/options-v2/PlaybackPreferencesPanel.svelte';
 
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     // ─────────────────────────────────────────────
@@ -43,25 +43,30 @@
     let languages: Language[] = ['en'];
 
     let startRank = 1;
-    let endRank = 1; // or undefined
+    let endRank = 9999;
+
+    let playbackOrder: PlaybackOrder = 'shuffle';
+
+    let pauseMode: 'pause' | 'continuous' = 'continuous';
+
+    let skipPlayed = true;
+
+    let selectedVoices: VoicePart[] = ['intro', 'detail'];
 
 
     let decades: string[] = [];
     let genres: string[] = [];
     let collections: string[] = [];
 
-    let radioMode: 'nostalgia' | 'collections' | null = 'nostalgia';
-    type OpenSection = 'radio' | 'library' | 'history' | 'settings';
+    let radioMode: 'nostalgia' | 'collections' | 'artist_spotlight' | null = null;
+    type OpenSection =
+        | 'preferences'
+        | 'radio'
+        | 'library'
+        | 'journey'
+        | null;
 
-    let openSection: OpenSection = 'radio';
-
-    const playbackSettings = playbackSettingsStore;
-
-    $: selectedVoices = $playbackSettings.voices as VoicePart[];
-    $: playbackOrder = $playbackSettings.playbackOrder as PlaybackOrder;
-    $: pauseMode = $playbackSettings.pauseMode as 'pause' | 'continuous';
-    $: skipPlayed = !!$playbackSettings.skipPlayed;
-
+    let openSection: OpenSection = null;
     // Options
     let decadeOptions: OptionItem[] = [];
     let genreOptions: OptionItem[] = [];
@@ -91,18 +96,10 @@
         tv_themes: '📺',
     };
 
-    function buildRadioContext(mode: 'nostalgia' | 'collections'): Record<string, string> {
-        if (mode === 'nostalgia') {
-            return {decade: 'ALL', genre: 'ALL'};
-        }
-        return {collection_slug: 'ALL'};
-    }
 
-    function startRadio(mode: 'nostalgia' | 'collections') {
-
+    function startRadio(mode: 'nostalgia' | 'collections' | 'artist_spotlight') {
+        openSection = 'radio';
         radioMode = mode;
-
-        // 🚫 Stop here for now — no navigation yet
     }
 
     function launchNostalgiaAll() {
@@ -125,7 +122,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=ALL&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}&playbackOrder=shuffle&voicePlayMode=before&pauseMode=${pauseMode}&skipPlayed=${skipPlayed}`);
     }
 
     function launchNostalgiaGenre(genre: string) {
@@ -148,7 +145,7 @@
 
         saveResumeFromLocal(selection);
 
-        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
+        goto(`/car-page?mode=nostalgia&decade=ALL&genre=${genre}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}&playbackOrder=shuffle&voicePlayMode=before&pauseMode=${pauseMode}&skipPlayed=${skipPlayed}`);
     }
 
     function launchCollectionsAll() {
@@ -198,6 +195,20 @@
         saveResumeFromLocal(selection);
 
         goto(`/car-page?mode=radio_collections&collection_group=${groupSlug}&language=${language}&languages=${languages.join(',')}&voices=${buildVoiceQuery()}`);
+    }
+
+    function launchArtistSpotlightRadioGenre(genre: string) {
+        goto(
+            `/car-page?mode=artist_radio` +
+            `&genre=${genre}` +
+            `&language=${language}` +
+            `&languages=${languages.join(',')}` +
+            `&voices=${buildVoiceQuery()}` +
+            `&playbackOrder=shuffle` +
+            `&voicePlayMode=before` +
+            `&pauseMode=${pauseMode}` +
+            `&skipPlayed=${skipPlayed}`
+        );
     }
 
 
@@ -313,7 +324,8 @@
     // Mount: load resume → catalog → apply
     // ─────────────────────────────────────────────
     onMount(async () => {
-        pendingSelection = buildSelectionFromResume(loadResumeState());
+        pendingSelection = null;
+        // pendingSelection = buildSelectionFromResume(loadResumeState());
 
         try {
 
@@ -394,23 +406,64 @@
 
     <div class="page">
 
+        <div class="page-hero">
+            <h1 class="page-title">
+                🎙️ TopSpot40 Control Center
+            </h1>
+
+            <div class="page-subtitle">
+                🎵 Your music. 🕰️ Your memories. 📻 Your station.
+            </div>
+        </div>
+
+        <div class:active-section-wrapper={openSection === 'preferences'}>
+
+            <PlaybackPreferencesPanel
+                    bind:language
+                    bind:languages
+                    bind:selectedVoices
+                    bind:playbackOrder
+                    bind:pauseMode
+                    bind:skipPlayed
+                    collapsed={openSection !== 'preferences'}
+                    onActivate={() => {
+        openSection = openSection === 'preferences' ? null : 'preferences';
+        radioMode = null;
+    }}
+            />
+        </div>
+
         <!-- 🔥 RADIO (NEW) -->
         <div
                 class="opt-cell opt-cell--radio"
-                on:click={() => openSection = 'radio'}
+                class:active-section-wrapper={openSection === 'radio'}
         >
-            <div class="section-header-row">
+            <div
+                    class="section-header-row section-header-clickable"
+                    role="button"
+                    tabindex="0"
+                    on:click={() => {
+                openSection = openSection === 'radio' ? null : 'radio';
+            }}
+                    on:keydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openSection = openSection === 'radio' ? null : 'radio';
+                }
+            }}
+            >
                 <h3 class="section-title">📻🐕 TopSpot40 Interactive Radio 📻🐕</h3>
                 <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
             </div>
 
+            <div class="radio-description">
+                Build custom nostalgia radio stations.
+            </div>
+
             {#if openSection === 'radio'}
                 <div class="radio-description">
-                    Nostalgia mixes decades and genres. Collections plays themed playlists.
-                </div>
-
-                <div class="radio-description">
-                    DJ Mode • Shuffle • Favor New • Continuous
+                    Nostalgia mixes sets by decades and genres. Collections plays themed playlists. Artists Spotlight
+                    mixes sets by artists.
                 </div>
 
                 <div class="radio-buttons">
@@ -426,6 +479,13 @@
                             on:click|stopPropagation={() => startRadio('collections')}
                     >
                         Collections Radio
+                    </button>
+
+                    <button
+                            class:active={radioMode === 'artist_spotlight'}
+                            on:click|stopPropagation={() => startRadio('artist_spotlight')}
+                    >
+                        Artist Spotlight Radio
                     </button>
                 </div>
 
@@ -480,91 +540,73 @@
             {/if}
         </div>
 
+        {#if radioMode === 'artist_spotlight'}
+            <div class="radio-description" style="margin-top: 10px;">
+                Artist Spotlight Radio will rotate featured artists and play short artist-focused sets.
+            </div>
 
-        <ListeningLibraryPanel
-                {decadeOptions}
-                {genreOptions}
-                {collectionGroups}
-        />
+            <div class="radio-genres">
+
+                <button
+                        class="start-all-btn artist-start-all-btn"
+                        on:click|stopPropagation={() => launchArtistSpotlightRadioGenre('ALL')}
+                >
+                    <span class="icon">🎤</span>
+                    <span>Start All Artist Genres</span>
+                </button>
+
+                {#each genreOptions.filter(g => g.id !== 'tv_themes') as g}
+                    <button
+                            class="genre-btn"
+                            on:click|stopPropagation={() => {
+                        launchArtistSpotlightRadioGenre(g.id);
+                    }}
+                    >
+                        <span class="icon">{genreIcons[g.id] ?? '🎤'}</span>
+                        <span>{g.label}</span>
+                    </button>
+                {/each}
+            </div>
+        {/if}
+
+
+        <div class:active-section-wrapper={openSection === 'library'}>
+            <ListeningLibraryPanel
+                    {decadeOptions}
+                    {genreOptions}
+                    {collectionGroups}
+                    {language}
+                    {languages}
+                    voices={selectedVoices}
+                    {playbackOrder}
+                    voicePlayMode="before"
+                    {pauseMode}
+                    {skipPlayed}
+                    collapsed={openSection !== 'library'}
+                    onActivate={() => {
+                        openSection = openSection === 'library'
+                            ? null
+                            : 'library';
+
+                        radioMode = null;
+                    }}
+            />
+        </div>
+
+        <div class:active-section-wrapper={openSection === 'journey'}>
+            <MusicJourneyPanel
+                    {collectionGroups}
+                    collapsed={openSection !== 'journey'}
+                    onActivate={() => {
+                        openSection = openSection === 'journey' ? null : 'journey';
+                        radioMode = null;
+                    }}
+            />
+        </div>
+
 
         <!-- ✅ Playback History now at top -->
-        <PlaybackHistoryPanel {language} {languages}/>
-
-        <!-- TOP CONFIG GRID (4 + 4) -->
-        <section class="options-grid options-grid--compact">
-
-            <!-- LEFT: CONTENT -->
-            <div class="opt-cell opt-cell--content">
-                <h3 class="section-title">Settings</h3>
-
-                <div class="compact-block compact-block--content">
-                    <LanguageSelector bind:language bind:languages/>
-                    <VoiceContentSelector bind:selectedVoices/>
-                </div>
-
-                <div class="opt-cell opt-cell--playback">
-                    <h3 class="section-title">Playback</h3>
-
-                    <div class="playback-section">
-
-                        <!-- ORDER -->
-                        <div class="playback-group">
-                            <div class="label">Order</div>
-                            <div class="grid">
-                                <button class:selected={playbackOrder === 'up'} on:click={() => playbackOrder = 'up'}>
-                                    Up
-                                </button>
-                                <button class:selected={playbackOrder === 'down'}
-                                        on:click={() => playbackOrder = 'down'}>
-                                    Down
-                                </button>
-                                <button class:selected={playbackOrder === 'shuffle'}
-                                        on:click={() => playbackOrder = 'shuffle'}>
-                                    Shuffle
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- TRACK STRATEGY -->
-                        <div class="playback-group">
-                            <div class="label">Tracks</div>
-                            <div class="grid grid-2">
-                                <button class:selected={skipPlayed} on:click={() => skipPlayed = true}>
-                                    Favor New
-                                </button>
-                                <button class:selected={!skipPlayed} on:click={() => skipPlayed = false}>
-                                    All Equal
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- FLOW -->
-                        <div class="playback-group">
-                            <div class="label">Flow</div>
-                            <div class="grid grid-2">
-                                <button class:selected={pauseMode === 'pause'} on:click={() => pauseMode = 'pause'}>
-                                    Pause
-                                </button>
-                                <button class:selected={pauseMode === 'continuous'}
-                                        on:click={() => pauseMode = 'continuous'}>
-                                    Continuous
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- RIGHT: PLAYBACK + RADIO STACK -->
-            <div class="right-column">
-
-
-            </div>
-
-        </section>
-
+        <!--        <PlaybackHistoryPanel {language} {languages}/>-->
 
     </div>
 </div>
@@ -581,42 +623,6 @@
         margin: 0 auto;
         padding: 1.5rem 1.25rem 4rem;
         color: #f5f5f5;
-    }
-
-    /* =========================
-       OPTIONS GRID (CORE UI)
-    ========================= */
-
-    .options-grid {
-        display: grid;
-        gap: 1.2rem;
-        grid-template-columns: repeat(4, minmax(200px, 1fr));
-        margin-bottom: 2rem;
-    }
-
-    .options-grid--compact {
-        gap: 0.75rem;
-        margin-bottom: 1.25rem;
-        grid-template-columns: 1fr 1fr;
-        align-items: start;
-    }
-
-    .opt-cell--content,
-    .opt-cell--playback {
-        min-width: 0;
-    }
-
-    @media (max-width: 1100px) {
-        .options-grid--compact {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 700px) {
-        .options-grid--compact {
-            grid-template-columns: 1fr;
-        }
-
     }
 
     /* =========================
@@ -637,12 +643,6 @@
         box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
         border-color: rgba(207, 184, 124, 0.8);
         background: rgba(24, 24, 24, 0.98);
-    }
-
-    .compact-block {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
     }
 
     /* SELECTED */
@@ -668,7 +668,7 @@
     /* RADIO BUTTONS */
     .radio-buttons {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 6px;
     }
 
@@ -695,68 +695,6 @@
         font-weight: 600;
     }
 
-
-    /* =========================
-       PLAYBACK SECTION (FINAL)
-    ========================= */
-
-    .playback-section {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .playback-group {
-        display: grid;
-        grid-template-columns: 70px 1fr;
-        align-items: center;
-        column-gap: 10px;
-    }
-
-    .playback-group .label {
-        font-size: 0.8rem;
-        color: #ccc;
-    }
-
-    /* GRID FOR BUTTONS */
-    .grid {
-        display: grid;
-        gap: 6px;
-    }
-
-    /* 3 buttons (Order) */
-    .grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    /* 2 buttons (Tracks, Flow) */
-    .grid-2 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    /* BUTTON STYLE (UNIFIED) */
-    .grid button {
-        padding: 5px 10px;
-        border-radius: 999px;
-        border: 1px solid #444;
-        background: #2a2a2a;
-        color: #ccc;
-        font-size: 0.8rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .grid button:hover {
-        border-color: #666;
-    }
-
-    /* SELECTED */
-    .grid button.selected {
-        background: #cfb87c;
-        color: #000;
-        border-color: #cfb87c;
-        font-weight: 600;
-    }
 
     .radio-genres {
         display: grid;
@@ -854,6 +792,14 @@
         font-size: 1rem;
     }
 
+    .artist-start-all-btn {
+        grid-column: 1 / -1;
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 700;
+    }
+
     .radio-separator {
         display: flex;
         align-items: center;
@@ -885,7 +831,41 @@
 
     .section-toggle {
         color: #cfb87c;
-        font-size: 0.8rem;
-        opacity: 0.85;
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1;
+        opacity: 0.95;
     }
+
+    .active-section-wrapper {
+        border-color: rgba(207, 184, 124, 0.9);
+        box-shadow: 0 0 0 1px rgba(207, 184, 124, 0.45),
+        0 0 18px rgba(207, 184, 124, 0.18);
+    }
+
+    .section-header-clickable {
+        cursor: pointer;
+    }
+
+    .page-hero {
+        margin-bottom: 1.5rem;
+        padding: 0.5rem 0 1rem 0;
+        border-bottom: 1px solid rgba(207, 184, 124, 0.18);
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #cfb87c;
+        margin: 0;
+        letter-spacing: 0.02em;
+    }
+
+    .page-subtitle {
+        margin-top: 0.35rem;
+        font-size: 0.95rem;
+        color: #aaa;
+        letter-spacing: 0.01em;
+    }
+
 </style>

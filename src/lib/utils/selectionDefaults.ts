@@ -2,7 +2,7 @@
 
 import { selection, type SelectionState } from '$lib/stores/selection';
 import { normalizeLanguage } from '$lib/helpers/normalizeLanguage';
-import type { PlaybackProgramType } from '$lib/types/program';
+import { PROGRAM_TYPES } from '$lib/types/program';
 
 /** Canonical rank bounds */
 export const DEFAULT_START_RANK = 1;
@@ -26,7 +26,7 @@ export function buildDefaultSelection(
 ): SelectionState {
     return {
         mode: 'decade_genre',
-        programType: 'DG' satisfies PlaybackProgramType, // 🔥 required now
+        programType: PROGRAM_TYPES.PROGRAM_DG,
         language: normalizeLanguage(language),
         context: null,
 

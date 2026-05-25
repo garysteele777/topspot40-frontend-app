@@ -10,13 +10,31 @@
 </script>
 
 <!-- $lib/components/DropdownMenu.svelte -->
+
+<!--
+	This container is not an interactive control.
+	It only prevents clicks inside the menu from bubbling upward.
+-->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="dropdown-menu" on:click|stopPropagation>
 	<ul>
 		<li>Manage Account / Subscription</li>
 		<li>Stats & Analytics</li>
 		<li>Notifications</li>
-		<li on:click={() => handleClick('feedback')}>Feedback</li>
-		<li on:click={() => handleClick('contact')}>Contact Us</li>
+
+		<li>
+			<button type="button" on:click={() => handleClick('feedback')}>
+				Feedback
+			</button>
+		</li>
+
+		<li>
+			<button type="button" on:click={() => handleClick('contact')}>
+				Contact Us
+			</button>
+		</li>
+
 		<li>Logout</li>
 	</ul>
 </div>
@@ -30,6 +48,7 @@
 		border-radius: 5px;
 		overflow: hidden;
 		z-index: 20;
+		min-width: 220px;
 	}
 
 	.dropdown-menu ul {
@@ -39,11 +58,25 @@
 	}
 
 	.dropdown-menu li {
-		padding: 0.8rem 1.5rem;
-		cursor: pointer;
+		padding: 0;
 	}
 
 	.dropdown-menu li:hover {
+		background: #1db954;
+	}
+
+	.dropdown-menu button {
+		width: 100%;
+		padding: 0.8rem 1.5rem;
+		background: transparent;
+		border: none;
+		color: inherit;
+		text-align: left;
+		cursor: pointer;
+		font: inherit;
+	}
+
+	.dropdown-menu button:hover {
 		background: #1db954;
 	}
 </style>

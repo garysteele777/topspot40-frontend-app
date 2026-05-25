@@ -49,6 +49,16 @@
     export let genreOptions: OptionItem[] = [];
     export let collectionGroups: CollectionGroup[] = [];
 
+    export let language = 'en';
+    export let languages: string[] = ['en'];
+    export let voices: string[] = ['intro'];
+    export let playbackOrder = 'up';
+    export let voicePlayMode = 'before';
+    export let pauseMode = 'pause';
+    export let skipPlayed = false;
+    export let onActivate: (() => void) | undefined = undefined;
+    export let collapsed = false;
+
     let libraryMode: LibraryMode = 'nostalgia';
 
     let selectedDecade: string | null = null;
@@ -108,31 +118,68 @@
 </script>
 
 <div class="library-card">
-    <h3 class="section-title">🎧 TopSpot40 Listening Library 🎧</h3>
-
-    <div class="library-description">
-        Browse saved programs, explore collections, and spotlight favorite artists.
+    <div
+            class="section-header-row section-header-clickable"
+            role="button"
+            tabindex="0"
+            on:click={() => {
+                onActivate?.();
+            }}
+            on:keydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onActivate?.();
+                }
+            }}
+    >
+        <h3 class="section-title">🎧 TopSpot40 Listening Library 🎧</h3>
+        <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
     </div>
 
     <div class="library-description">
-        Interactive Mode • Resume • Favorites • Jump to Tracks
+        Browse saved programs and curated collections.
     </div>
 
-    <div class="library-buttons">
-        <button class:active={libraryMode === 'nostalgia'} on:click={() => libraryMode = 'nostalgia'}>
-            Nostalgia Programs
-        </button>
+    {#if !collapsed}
 
-        <button class:active={libraryMode === 'collections'} on:click={() => libraryMode = 'collections'}>
-            Collections Programs
-        </button>
 
-        <button class:active={libraryMode === 'artists'} on:click={() => libraryMode = 'artists'}>
-            Artist Spotlight
-        </button>
-    </div>
+        <div class="library-description">
+            Interactive Mode • Resume • Favorites • Jump to Tracks
+        </div>
 
-    <div class="library-separator">
+        <div class="library-buttons">
+            <button
+                    class:active={!collapsed && libraryMode === 'nostalgia'}
+                    on:click|stopPropagation={() => {
+            if (collapsed) onActivate?.();
+            libraryMode = 'nostalgia';
+        }}
+            >
+                Nostalgia Programs
+            </button>
+
+            <button
+                    class:active={!collapsed && libraryMode === 'collections'}
+                    on:click|stopPropagation={() => {
+            if (collapsed) onActivate?.();
+            libraryMode = 'collections';
+        }}
+            >
+                Collections Programs
+            </button>
+
+            <button
+                    class:active={!collapsed && libraryMode === 'artists'}
+                    on:click|stopPropagation={() => {
+            if (collapsed) onActivate?.();
+            libraryMode = 'artists';
+        }}
+            >
+                Artist Spotlight
+            </button>
+        </div>
+
+        <div class="library-separator">
         <span>
             {#if libraryMode === 'nostalgia'}
                 Decades & Genres
@@ -142,188 +189,200 @@
                 Featured Artists
             {/if}
         </span>
-    </div>
+        </div>
 
-    <div class="library-placeholder">
-        {#if libraryMode === 'nostalgia'}
 
-            <div class="decade-grid">
+        <div class="library-placeholder">
+            {#if libraryMode === 'nostalgia'}
 
-                <button
-                        class="all-decades-btn"
-                        class:selected={selectedDecade === 'ALL'}
-                        on:click={() => selectedDecade = 'ALL'}
-                >
-                    📻 All Decades • 1950s to Present
-                </button>
+                <div class="decade-grid">
 
-                {#each decadeOptions as decade}
                     <button
-                            class:selected={selectedDecade === decade.id}
-                            on:click={() => selectedDecade = decade.id}
+                            class="all-decades-btn"
+                            class:selected={selectedDecade === 'ALL'}
+                            on:click={() => selectedDecade = 'ALL'}
                     >
-                        {decade.label}
+                        📻 All Decades • 1950s to Present
                     </button>
-                {/each}
 
-            </div>
-
-            {#if selectedDecade}
-
-                <div class="genre-section">
-
-                    <div class="genre-title">
-                        {selectedDecade === 'ALL'
-                            ? 'All Genres • Select a Genre to Start Listening'
-                            : `${selectedDecade} Genres • Select a Genre to Start Listening`}
-                    </div>
-
-                    <div class="genre-grid">
-                        {#each genreOptions as genre}
-                            <button
-                                    class="genre-btn"
-                                    on:click={() => {
-                    goto(
-                        `/car-page?mode=decade_genre` +
-                        `&decade=${selectedDecade}` +
-                        `&genre=${genre.id}`
-                    );
-                }}
-                            >
-                                {selectedDecade === 'ALL'
-                                    ? `All Decades • ${genre.label}`
-                                    : `${selectedDecade} • ${genre.label}`
-                                }
-                            </button>
-                        {/each}
-                    </div>
+                    {#each decadeOptions as decade}
+                        <button
+                                class:selected={selectedDecade === decade.id}
+                                on:click={() => selectedDecade = decade.id}
+                        >
+                            {decade.label}
+                        </button>
+                    {/each}
 
                 </div>
 
-            {/if}
+                {#if selectedDecade}
 
-        {:else if libraryMode === 'collections'}
+                    <div class="genre-section">
 
-            <div class="decade-grid">
+                        <div class="genre-title">
+                            {selectedDecade === 'ALL'
+                                ? 'All Genres • Select a Genre to Start Listening'
+                                : `${selectedDecade} Genres • Select a Genre to Start Listening`}
+                        </div>
 
-                <button
-                        class="all-decades-btn"
-                        class:selected={selectedCollectionGroup === 'ALL'}
-                        on:click={() => selectedCollectionGroup = 'ALL'}
-                >
-                    📀 All Collection Groups
-                </button>
+                        <div class="genre-grid">
+                            {#each genreOptions as genre}
+                                <button
+                                        class="genre-btn"
+                                        on:click={() => {
+            const params = new URLSearchParams({
+                mode: 'decade_genre',
+                decade: selectedDecade ?? '',
+                genre: genre.id,
+                language,
+                languages: languages.join(','),
+                voices: voices.join(','),
+                playbackOrder,
+                voicePlayMode,
+                pauseMode,
+                skipPlayed: String(skipPlayed)
+            });
 
-                {#each collectionGroups as group}
-                    <button
-                            class:selected={selectedCollectionGroup === group.slug}
-                            on:click={() => selectedCollectionGroup = group.slug}
-                    >
-                        {group.name}
-                    </button>
-                {/each}
+goto(`/car-page?${params.toString()}`);
+                }}
+                                >
+                                    {selectedDecade === 'ALL'
+                                        ? `All Decades • ${genre.label}`
+                                        : `${selectedDecade} • ${genre.label}`
+                                    }
+                                </button>
+                            {/each}
+                        </div>
 
-            </div>
-            {#if selectedCollectionGroup && selectedCollectionGroup !== 'ALL'}
-
-                <div class="genre-section">
-
-                    <div class="genre-title">
-                        {collectionGroups.find(g => g.slug === selectedCollectionGroup)?.name}
-                        Collections • Select a Collection to Start Listening
                     </div>
 
-                    <div class="genre-grid">
+                {/if}
 
-                        {#each collectionGroups.find(g => g.slug === selectedCollectionGroup)?.items ?? [] as collection}
+            {:else if libraryMode === 'collections'}
 
-                            <button
-                                    class="genre-btn"
-                                    on:click={() => {
+                <div class="decade-grid">
+
+                    <button
+                            class="all-decades-btn"
+                            class:selected={selectedCollectionGroup === 'ALL'}
+                            on:click={() => selectedCollectionGroup = 'ALL'}
+                    >
+                        📀 All Collection Groups
+                    </button>
+
+                    {#each collectionGroups as group}
+                        <button
+                                class:selected={selectedCollectionGroup === group.slug}
+                                on:click={() => selectedCollectionGroup = group.slug}
+                        >
+                            {group.name}
+                        </button>
+                    {/each}
+
+                </div>
+                {#if selectedCollectionGroup && selectedCollectionGroup !== 'ALL'}
+
+                    <div class="genre-section">
+
+                        <div class="genre-title">
+                            {collectionGroups.find(g => g.slug === selectedCollectionGroup)?.name}
+                            Collections • Select a Collection to Start Listening
+                        </div>
+
+                        <div class="genre-grid">
+
+                            {#each collectionGroups.find(g => g.slug === selectedCollectionGroup)?.items ?? [] as collection}
+
+                                <button
+                                        class="genre-btn"
+                                        on:click={() => {
                                     goto(
                                         `/car-page?mode=collection` +
                                         `&collection=${collection.slug}` +
                                         `&collection_group=${selectedCollectionGroup}`
                                     );
                                     }}
-                            >
-                                {collection.name}
-                            </button>
+                                >
+                                    {collection.name}
+                                </button>
 
-                        {/each}
+                            {/each}
+
+                        </div>
 
                     </div>
 
+                {/if}
+
+
+            {:else}
+
+                <div class="genre-title">
+                    Pick a Genre Below to See Artist Spotlights
                 </div>
 
-            {/if}
+                <div class="genre-grid">
+                    {#each genreOptions.filter(g => g.id !== 'tv_themes') as genre}
 
+                        <button
+                                class="genre-btn"
+                                class:selected={selectedArtistGenre === genre.id}
+                                on:click={() => loadArtistSpotlights(genre.id)}
+                        >
+                            {genre.label}
+                        </button>
 
-        {:else}
+                    {/each}
+                </div>
+                {#if selectedArtistGenre}
 
-            <div class="genre-title">
-                Pick a Genre Below to See Artist Spotlights
-            </div>
+                    <div class="genre-section">
 
-            <div class="genre-grid">
-                {#each genreOptions.filter(g => g.id !== 'tv_themes') as genre}
-
-                    <button
-                            class="genre-btn"
-                            class:selected={selectedArtistGenre === genre.id}
-                            on:click={() => loadArtistSpotlights(genre.id)}
-                    >
-                        {genre.label}
-                    </button>
-
-                {/each}
-            </div>
-            {#if selectedArtistGenre}
-
-                <div class="genre-section">
-
-                    <div class="genre-title">
-                        {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
-                        Artists • Select an Artist to Start Listening
-                    </div>
-
-                    {#if artistSpotlightLoading}
-
-                        <div class="library-description">
-                            Loading artists...
+                        <div class="genre-title">
+                            {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
+                            Artists • Select an Artist to Start Listening
                         </div>
 
-                    {:else if artistSpotlightError}
+                        {#if artistSpotlightLoading}
 
-                        <div class="library-description">
-                            {artistSpotlightError}
-                        </div>
+                            {#if !collapsed}
 
-                    {:else}
+                                <div class="library-description">
+                                    Loading artists...
+                                </div>
 
-                        {#if selectedArtist}
+                            {:else if artistSpotlightError}
 
-                            <div class="genre-section">
+                                <div class="library-description">
+                                    {artistSpotlightError}
+                                </div>
 
-                                <button
-                                        class="back-btn"
-                                        on:click={() => {
+                            {:else}
+
+                                {#if selectedArtist}
+
+                                    <div class="genre-section">
+
+                                        <button
+                                                class="back-btn"
+                                                on:click={() => {
                                 selectedArtist = null;
                                 artistTracks = [];
                             }}
-                                >
-                                    ← Back to Artists
-                                </button>
+                                        >
+                                            ← Back to Artists
+                                        </button>
 
-                                <div class="genre-title">
-                                    {titleCaseName(selectedArtist.artist_name)}
-                                    • Artist Spotlight Tracks
-                                </div>
+                                        <div class="genre-title">
+                                            {titleCaseName(selectedArtist.artist_name)}
+                                            • Artist Spotlight Tracks
+                                        </div>
 
-                                <div class="artist-play-row">
-                                    <button
-                                            class="play-artist-btn"
-                                            on:click={() => {
+                                        <div class="artist-play-row">
+                                            <button
+                                                    class="play-artist-btn"
+                                                    on:click={() => {
                                                 const artist = selectedArtist;
                                                 if (!artist) return;
 
@@ -333,61 +392,62 @@
                                                     `&artist=${encodeURIComponent(artist.artist_name)}`
                                                 );
 }}
-                                    >
-                                        ▶ Play Artist Spotlight
-                                    </button>
-                                </div>
+                                            >
+                                                ▶ Play Artist Spotlight
+                                            </button>
+                                        </div>
 
-                                {#if artistTracksLoading}
-                                    <div class="library-description">Loading tracks...</div>
-                                {:else if artistTracksError}
-                                    <div class="library-description">{artistTracksError}</div>
+                                        {#if artistTracksLoading}
+                                            <div class="library-description">Loading tracks...</div>
+                                        {:else if artistTracksError}
+                                            <div class="library-description">{artistTracksError}</div>
+                                        {:else}
+                                            <div class="track-grid">
+                                                {#each artistTracks as track}
+                                                    <button class="track-btn">
+                                                        <div class="track-name">
+                                                            {titleCaseName(track.track_name)}
+                                                        </div>
+                                                    </button>
+                                                {/each}
+                                            </div>
+                                        {/if}
+
+                                    </div>
+
                                 {:else}
-                                    <div class="track-grid">
-                                        {#each artistTracks as track}
-                                            <button class="track-btn">
-                                                <div class="track-name">
-                                                    {titleCaseName(track.track_name)}
+
+                                    <div class="artist-grid">
+                                        {#each artistSpotlightItems as artist}
+                                            <button
+                                                    class="artist-btn"
+                                                    on:click={() => loadArtistTracks(artist)}
+                                            >
+                                                <div class="artist-name">
+                                                    {titleCaseName(artist.artist_name)}
+                                                </div>
+
+                                                <div class="artist-count">
+                                                    {artist.genre_track_count}
+                                                    {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
+                                                    •
+                                                    {artist.total_track_count} Total
                                                 </div>
                                             </button>
                                         {/each}
                                     </div>
+
                                 {/if}
 
-                            </div>
-
-                        {:else}
-
-                            <div class="artist-grid">
-                                {#each artistSpotlightItems as artist}
-                                    <button
-                                            class="artist-btn"
-                                            on:click={() => loadArtistTracks(artist)}
-                                    >
-                                        <div class="artist-name">
-                                            {titleCaseName(artist.artist_name)}
-                                        </div>
-
-                                        <div class="artist-count">
-                                            {artist.genre_track_count}
-                                            {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
-                                            •
-                                            {artist.total_track_count} Total
-                                        </div>
-                                    </button>
-                                {/each}
-                            </div>
-
+                            {/if}
                         {/if}
+                    </div>
 
-                    {/if}
-
-                </div>
+                {/if}
 
             {/if}
-
-        {/if}
-    </div>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -631,6 +691,29 @@
 
     .play-artist-btn:hover {
         filter: brightness(1.05);
+    }
+
+    .section-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .section-title {
+        margin: 0;
+    }
+
+    .section-toggle {
+        color: #cfb87c;
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1;
+        opacity: 0.95;
+    }
+
+    .section-header-clickable {
+        cursor: pointer;
     }
 
 </style>

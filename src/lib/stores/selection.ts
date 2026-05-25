@@ -1,4 +1,10 @@
 import {writable} from 'svelte/store';
+
+import {
+    PROGRAM_TYPES,
+    normalizeProgramType
+} from '$lib/types/program';
+
 import type {PlaybackProgramType} from '$lib/types/program';
 import type {ModeType} from '$lib/types/playback';
 
@@ -41,7 +47,6 @@ export interface SelectionState {
     pauseMode: PauseMode;
     categoryMode: CategoryMode;
 
-    // ✅ NEW
     skipPlayed?: boolean;
 }
 
@@ -50,7 +55,7 @@ export interface SelectionState {
  * --------------------- */
 const defaultSelection: SelectionState = {
     mode: 'decade_genre',
-    programType: 'DG',
+    programType: PROGRAM_TYPES.PROGRAM_DG,
     language: 'en',
     languages: ['en'],
     context: null,
@@ -82,35 +87,42 @@ const defaultSelection: SelectionState = {
 function loadInitial(): SelectionState {
     try {
         const raw = localStorage.getItem('ts_selection');
+
         if (raw) {
             const parsed = JSON.parse(raw);
 
             if (
                 parsed.mode !== 'decade_genre' &&
                 parsed.mode !== 'collection' &&
-                parsed.mode !== 'favorites'
+                parsed.mode !== 'artist_spotlight'
             ) {
                 parsed.mode = defaultSelection.mode;
             }
 
-            if (
-                parsed.programType !== 'DG' &&
-                parsed.programType !== 'COL' &&
-                parsed.programType !== 'FAV_DG' &&
-                parsed.programType !== 'FAV_COL' &&
-                parsed.programType !== 'ALL'
-            ) {
-                parsed.programType = defaultSelection.programType;
-            }
+            parsed.programType =
+                normalizeProgramType(parsed.programType) ??
+                defaultSelection.programType;
 
-            return {...defaultSelection, ...parsed};
+            const merged: SelectionState = {
+                ...defaultSelection,
+                ...parsed
+            };
+
+            merged.languages =
+                parsed.languages &&
+                Array.isArray(parsed.languages) &&
+                parsed.languages.length > 0
+                    ? parsed.languages
+                    : [merged.language ?? 'en'];
+
+            return merged;
         }
     } catch {
         // ignore
     }
+
     return {...defaultSelection};
 }
-
 
 export const selection = writable<SelectionState>(loadInitial());
 

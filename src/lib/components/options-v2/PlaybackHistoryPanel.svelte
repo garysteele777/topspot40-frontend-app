@@ -465,7 +465,7 @@
 
 <section class="history-panel">
     <header class="history-header">
-        <h3>Playback History</h3>
+        <h3>Playback History (Old Section)</h3>
         <p class="history-sub">
             Resume or clear previously played programs
         </p>

@@ -53,6 +53,7 @@ export type DurationLike = LoadedTrack & {
 export type CarModeTrack = DurationLike & {
     rankingId?: number;
     sourceRank?: number;
+    spotifyArtistId?: string | null;
 
     decade?: string;
     genre?: string;

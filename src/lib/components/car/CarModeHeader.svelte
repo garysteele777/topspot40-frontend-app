@@ -5,6 +5,7 @@
     export type VoicePlayMode = 'before' | 'over';
     export type PauseMode = 'pause' | 'continuous';
     export type CategoryMode = 'single' | 'multiple';
+    import { PROGRAM_TYPES } from '$lib/types/program';
 </script>
 
 <script lang="ts">
@@ -18,7 +19,6 @@
     export let programType: PlaybackProgramType | undefined;
 
 
-    export let language = 'en';
     export let languages: string[] = ['en'];
     export let voices: string[] = ['intro'];
 
@@ -29,8 +29,15 @@
     export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
 
     // Label helpers
-    const modeLabel = (m: import('./CarModeHeader.svelte').BrowseMode) =>
-        m === 'collection' ? 'Collection' : 'Decade–Genre';
+    const modeLabel = (
+        m: import('./CarModeHeader.svelte').BrowseMode,
+        p: PlaybackProgramType | undefined
+    ) =>
+        p === 'RADIO_ARTIST'
+            ? 'Artist Spotlight Radio'
+            : m === 'collection'
+                ? 'Collection'
+                : 'Decade–Genre';
 
     const categoryLabel = (m: import('./CarModeHeader.svelte').CategoryMode) =>
         m === 'multiple' ? 'Multiple' : 'Single';
@@ -58,7 +65,7 @@
             {#if mode === 'decade_genre'}
   <span class="cm-main-text">
 
-{#if programType === 'FAV_DG'}
+{#if programType === PROGRAM_TYPES.FAVORITES_DG}
 
   {#if (decade ?? '').toUpperCase() === 'ALL'}
 
@@ -103,7 +110,7 @@
         </div>
 
         <div class="cm-row cm-row--primary">
-            <span>{modeLabel(mode)}</span>
+            {modeLabel(mode, programType)}
             <span>•</span>
             <span>Category: {categoryLabel(categoryMode)}</span>
             <span>•</span>

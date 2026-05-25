@@ -1,5 +1,6 @@
 import type {ResumeState} from '$lib/utils/smartResume';
 import type {SelectionState} from '$lib/stores/selection';
+import {PROGRAM_TYPES} from '$lib/types/program';
 
 export function buildSelectionFromResume(
     resumed: ResumeState | null
@@ -11,8 +12,8 @@ export function buildSelectionFromResume(
     return {
         programType:
             resumed.mode === 'collection'
-                ? 'COL'
-                : 'DG',
+                ? PROGRAM_TYPES.PROGRAM_COL
+                : PROGRAM_TYPES.PROGRAM_DG,
 
         mode: resumed.mode,
         context: resumed.context ?? null,

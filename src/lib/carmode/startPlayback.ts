@@ -5,8 +5,7 @@ import {
     currentTrack,
     tracks
 } from '$lib/carmode/CarMode.store';
-
-import {updateTrack} from '$lib/carmode/CarMode.player';
+import {PROGRAM_TYPES} from '$lib/types/program';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -19,7 +18,7 @@ export async function startPlayback() {
     if (!track) return;
 
     // ✅ Favorites: single-track playback for Step 1
-    if (sel.programType === 'FAV_DG') {
+    if (sel.programType === PROGRAM_TYPES.FAVORITES_DG) {
 
         if (track.rankingId == null) {
             console.warn('❌ Favorites playback requires track.rankingId but it is null');
@@ -82,6 +81,57 @@ export async function startPlayback() {
     params.set('play_detail', String(sel.voices.includes('detail')));
     params.set('play_artist_description', String(sel.voices.includes('artist')));
     params.set('play_track', 'true');
+
+    if (sel.mode === 'artist_spotlight') {
+        const payload = {
+            track: {
+                track_id: track.id,
+                spotify_track_id: track.spotifyTrackId,
+                rank: track.rank,
+                track_name: track.trackName,
+                artist_name: track.artistName
+            },
+            selection: {
+                language: sel.language,
+                languages: sel.languages ?? [sel.language],
+                voices:
+                    sel.programType === 'RADIO_ARTIST'
+                        ? sel.voices.filter((voice) => voice !== 'artist')
+                        : sel.voices,
+                voicePlayMode: sel.voicePlayMode,
+                pauseMode: sel.pauseMode,
+                continuous: sel.pauseMode === 'continuous',
+                programType: sel.programType
+            },
+            context: {
+                type: 'artist_spotlight',
+                programType: sel.programType,
+                artist_id: sel.context?.artist_id,
+                artist_name: track.artistName,
+                spotify_artist_id: track.spotifyArtistId
+            }
+        };
+
+        const artistGenre = sel.context?.genre ?? 'ALL';
+
+        const artistParams = new URLSearchParams({
+            genre: artistGenre,
+            tts_language: sel.language,
+            play_intro: 'true',
+            play_detail: String(sel.voices.includes('detail')),
+            play_artist_description: String(sel.voices.includes('artist')),
+            play_track: 'true'
+        });
+
+        await fetch(
+            `${API_BASE}/artist-spotlight/play-radio?${artistParams.toString()}`,
+            {
+                method: 'POST'
+            }
+        );
+
+        return;
+    }
 
     if (sel.mode === 'decade_genre') {
         const programDecade = sel.context?.decade ?? '';

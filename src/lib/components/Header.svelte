@@ -1,12 +1,14 @@
 <!-- $lib/components/Header.svelte -->
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import DropdownMenu from './DropdownMenu.svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
+
+	import DropdownMenu from './DropdownMenu.svelte';
 	import ContactModal from './profile-components/ContactModal.svelte';
 	import FeedbackModal from './profile-components/FeedbackModal.svelte';
 
-	let dropdownRef: HTMLElement; // reference to the dropdown container
+	let dropdownRef: HTMLButtonElement;
+
 	let showDropdown = false;
 	let showFeedbackModal = false;
 	let showContactModal = false;
@@ -32,8 +34,17 @@
 
 <header class="header">
 	<div class="logo">TopSpot40</div>
-	<div class="user-profile" bind:this={dropdownRef} on:click={() => (showDropdown = !showDropdown)}>
+
+	<button
+		type="button"
+		class="user-profile"
+		bind:this={dropdownRef}
+		on:click={() => (showDropdown = !showDropdown)}
+		aria-expanded={showDropdown}
+		aria-haspopup="menu"
+	>
 		<img src="/user-avatar.png" alt="User" />
+
 		{#if showDropdown}
 			<DropdownMenu
 				onFeedback={() => {
@@ -46,13 +57,11 @@
 				}}
 			/>
 		{/if}
-	</div>
+	</button>
 </header>
 
-<!-- Feedback Modal -->
 <FeedbackModal visible={showFeedbackModal} onClose={() => (showFeedbackModal = false)} />
 
-<!-- Contact Us Modal -->
 <ContactModal visible={showContactModal} onClose={() => (showContactModal = false)} />
 
 <style>
@@ -68,5 +77,9 @@
 	.user-profile {
 		position: relative;
 		cursor: pointer;
+		background: transparent;
+		border: none;
+		padding: 0;
+		color: inherit;
 	}
 </style>

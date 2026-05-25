@@ -16,6 +16,7 @@ export type CarModeTrack = LoadedTrack & {
     intro?: string | null;
     detail?: string | null;
     artistText?: string | null;
+    spotifyArtistId?: string | null;
 
     textsByLanguage?: Record<
         string,
@@ -51,7 +52,15 @@ function loadSelection(): SelectionState {
     try {
         const raw = localStorage.getItem(SELECTION_KEY);
         if (raw) {
-            return JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+
+            return {
+                ...get(baseSelection),
+                ...parsed,
+                languages:
+                    parsed.languages ??
+                    (parsed.language ? [parsed.language] : ['en'])
+            };
         }
     } catch {
         // ignore parse errors

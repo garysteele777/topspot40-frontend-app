@@ -121,32 +121,32 @@
 
     <section class="features">
         <div class="features-grid">
-            <div class="feature-card" tabindex="0">
+            <div class="feature-card">
                 <div class="icon">🎵</div>
                 <h3>Personalized Rankings</h3>
                 <p>Discover your unique countdowns based on your Spotify history.</p>
             </div>
-            <div class="feature-card" tabindex="0">
+            <div class="feature-card">
                 <div class="icon">⚡</div>
                 <h3>Fast & Easy</h3>
                 <p>Instant access to your top 40 songs with smooth playback and intuitive controls.</p>
             </div>
-            <div class="feature-card" tabindex="0">
+            <div class="feature-card">
                 <div class="icon">📅</div>
                 <h3>Decades Reimagined</h3>
                 <p>Relive the best tracks of your favorite decades with a fresh perspective.</p>
             </div>
-            <div class="feature-card" tabindex="0">
+            <div class="feature-card">
                 <div class="icon">🌟</div>
                 <h3>Exclusive Content</h3>
                 <p>Enjoy unique insights, artist stories, and curated playlists only on TopSpot40.</p>
             </div>
-            <div class="feature-card" tabindex="0">
+            <div class="feature-card">
                 <div class="icon">🔒</div>
                 <h3>Secure & Private</h3>
                 <p>Your data is safe with us — we never share your personal info or listening habits.</p>
             </div>
-            <div class="feature-card" tabindex="0">
+            <div class="feature-card">
                 <div class="icon">💡</div>
                 <h3>Smart Recommendations</h3>
                 <p>Discover new tracks and artists based on your top 40 and listening trends.</p>
@@ -229,6 +229,7 @@
         letter-spacing: 0.2px;
 
         background: linear-gradient(90deg, #a7f3d0, #ffffff);
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
 
@@ -273,6 +274,7 @@
         background: linear-gradient(90deg, #a7f3d0, #ffffff);
         background-size: 200% auto;
         background-position: 100% 0;
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
 
@@ -462,7 +464,6 @@
         outline-offset: 4px;
     }
 
-    .feature-card:focus,
     .feature-card:hover {
         transform: translateY(-6px);
         box-shadow: 0 8px 25px rgba(29, 185, 84, 0.7);

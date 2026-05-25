@@ -4,9 +4,9 @@
 </script>
 
 <div class="random-block">
-  <label class="main-label">🎲 Random All Categories</label>
+  <div class="main-label">🎲 Random All Categories</div>
   <div class="btn-group">
-    <button class:active={randomAllCategories} on:click={onToggleRandomAll}>
+    <button type="button" class:active={randomAllCategories} on:click={onToggleRandomAll}>
       {randomAllCategories ? 'On' : 'Off'}
     </button>
   </div>

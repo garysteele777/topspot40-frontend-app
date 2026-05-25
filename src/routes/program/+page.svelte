@@ -6,7 +6,11 @@
     import {onMount} from 'svelte';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
 
-    import type {PlaybackProgramType} from '$lib/types/program';
+    import {
+        PROGRAM_TYPES,
+        type PlaybackProgramType
+    } from '$lib/types/program';
+
     import {
         programHistoryStore,
         resetProgram
@@ -24,7 +28,6 @@
     let collectionNameMap: Record<string, string> = {};
     let collectionGroupNameMap: Record<string, string> = {};
 
-
     let programKey: ProgramKey | null = null;
 
     $: {
@@ -33,11 +36,10 @@
     }
 
     $: currentFavorites =
-        programType === 'DG' && groupKey
+        programType === PROGRAM_TYPES.PROGRAM_DG && groupKey
             ? $favoritesStore.DG?.[groupKey] ?? []
             : [];
 
-    // ✅ Match backend shape from /get-sequence
     type TrackRow = {
         rankingId: number;
         rank: number;
@@ -71,7 +73,6 @@
                 collectionNameMap,
                 collectionGroupNameMap
             });
-
         } catch (err) {
             console.error('Failed to load catalog:', err);
         }
@@ -89,7 +90,7 @@
         if (!programKey) return;
 
         const label =
-            programType === 'COL'
+            programType === PROGRAM_TYPES.PROGRAM_COL
                 ? `${displayCollectionName ?? decadeSlug} — ${displayGroupName ?? genreSlug}`
                 : `${displayDecadeName ?? decadeSlug} — ${displayGenreName ?? genreSlug}`;
 
@@ -100,9 +101,8 @@
         resetProgram(programKey);
     }
 
-
     function handleToggleFavorite(rankingId: number) {
-        if (programType !== 'DG' || !groupKey) return;
+        if (programType !== PROGRAM_TYPES.PROGRAM_DG || !groupKey) return;
 
         toggleFavorite('DG', groupKey, rankingId);
     }
@@ -116,15 +116,19 @@
         if (!programKey) return;
 
         if (
-            (programType !== 'DG' && programType !== 'COL') ||
+            (
+                programType !== PROGRAM_TYPES.PROGRAM_DG &&
+                programType !== PROGRAM_TYPES.PROGRAM_COL
+            ) ||
             !decadeSlug ||
             !genreSlug
         ) return;
 
         loading = true;
+
         try {
             const selection =
-                programType === 'COL'
+                programType === PROGRAM_TYPES.PROGRAM_COL
                     ? {
                         mode: 'collection',
                         language: 'en',
@@ -165,7 +169,7 @@
         const parts = (programKey as string).split('|');
         programType = parts[0] as PlaybackProgramType;
 
-        if (programType === 'DG') {
+        if (programType === PROGRAM_TYPES.PROGRAM_DG) {
             decadeSlug = parts[1] ?? null;
             genreSlug = parts[2] ?? null;
 
@@ -174,7 +178,7 @@
                     ? `${decadeSlug}|${genreSlug}`
                     : null;
 
-        } else if (programType === 'COL') {
+        } else if (programType === PROGRAM_TYPES.PROGRAM_COL) {
             const collectionSlug = parts[1] ?? null;
             const group = parts[2] ?? null;
 
@@ -205,23 +209,22 @@
     }
 
     $: displayDecadeName =
-        programType === 'DG'
+        programType === PROGRAM_TYPES.PROGRAM_DG
             ? formatSlug(decadeSlug)
             : null;
 
     $: displayGenreName =
-        programType === 'DG'
+        programType === PROGRAM_TYPES.PROGRAM_DG
             ? formatSlug(genreSlug)
             : null;
 
-
     $: displayCollectionName =
-        programType === 'COL' && decadeSlug
+        programType === PROGRAM_TYPES.PROGRAM_COL && decadeSlug
             ? collectionNameMap?.[decadeSlug] ?? decadeSlug
             : null;
 
     $: displayGroupName =
-        programType === 'COL' && genreSlug
+        programType === PROGRAM_TYPES.PROGRAM_COL && genreSlug
             ? collectionGroupNameMap?.[genreSlug] ?? genreSlug
             : null;
 
@@ -230,7 +233,6 @@
         if (!program) return false;
         return program.playedRanks.includes(rank);
     }
-
 </script>
 
 <section class="program-view">
@@ -238,17 +240,17 @@
         <h2>Program View</h2>
         <p>No program selected.</p>
 
-    {:else if programType === 'FAV_DG' || programType === 'FAV_COL'}
+    {:else if programType === PROGRAM_TYPES.FAVORITES_DG || programType === PROGRAM_TYPES.FAVORITES_COL}
         <h2>Program View</h2>
         <p>Program View is not available for Favorites programs.</p>
 
-    {:else if programType !== 'DG' && programType !== 'COL'}
+    {:else if programType !== PROGRAM_TYPES.PROGRAM_DG && programType !== PROGRAM_TYPES.PROGRAM_COL}
         <h2>Program View</h2>
         <p>Program View is only implemented for Decade/Genre and Collections right now.</p>
 
     {:else}
         <h2>
-            {#if programType === 'COL'}
+            {#if programType === PROGRAM_TYPES.PROGRAM_COL}
                 {displayCollectionName} — {displayGroupName}
             {:else}
                 {displayDecadeName} — {displayGenreName}
