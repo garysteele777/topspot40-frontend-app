@@ -9,10 +9,20 @@
         key: string;
         total: number;
         playedRanks: number[];
+        collectionGroup?: string;
+        collectionGroupSlug?: string;
     };
 
     export let collapsed = false;
     export let onActivate: (() => void) | undefined = undefined;
+
+    export let collectionGroups: {
+        name: string;
+        slug: string;
+        items: { name: string; slug: string }[];
+    }[] = [];
+
+    let selectedJourneyCollectionGroup: string | null = null;
 
     let musicJourneyMode:
         | 'nostalgia'
@@ -29,6 +39,78 @@
         selectedJourneyDecade
             ? buildGenreHistoryForDecade($programHistoryStore, selectedJourneyDecade)
             : [];
+
+    $: collectionGroupHistorySummary =
+        buildCollectionGroupHistorySummary($programHistoryStore, collectionGroups);
+
+    $: selectedJourneyCollections =
+        selectedJourneyCollectionGroup
+            ? buildCollectionHistoryForGroup(
+                $programHistoryStore,
+                collectionGroups,
+                selectedJourneyCollectionGroup
+            )
+            : [];
+
+    function buildCollectionGroupHistorySummary(
+        history: HistoryEntry[],
+        groups: { name: string; slug: string; items: { name: string; slug: string }[] }[]
+    ) {
+        return groups.map((group) => {
+            const rows = group.items.map((item) => {
+                const entry = history.find(
+                    (h) =>
+                        h.key.startsWith(`COL|${item.slug}|`) ||
+                        h.collectionGroupSlug === group.slug
+                );
+
+                return {
+                    total: entry?.total ?? 0,
+                    played: entry?.playedRanks.length ?? 0
+                };
+            });
+
+            const tracks = rows.reduce((sum, row) => sum + row.total, 0);
+            const played = rows.reduce((sum, row) => sum + row.played, 0);
+            const percent = tracks > 0 ? Math.round((played / tracks) * 100) : 0;
+
+            return {
+                name: group.name,
+                slug: group.slug,
+                tracks,
+                played,
+                percent
+            };
+        });
+    }
+
+    function buildCollectionHistoryForGroup(
+        history: HistoryEntry[],
+        groups: { name: string; slug: string; items: { name: string; slug: string }[] }[],
+        groupSlug: string
+    ) {
+        const group = groups.find((g) => g.slug === groupSlug);
+
+        if (!group) return [];
+
+        return group.items.map((item) => {
+            const entry = history.find(
+                (h) => h.key === `COL|${item.slug}|${groupSlug}`
+            );
+            const tracks = entry?.total ?? 0;
+            const played = entry?.playedRanks.length ?? 0;
+            const percent = tracks > 0 ? Math.round((played / tracks) * 100) : 0;
+
+            return {
+                name: item.name,
+                slug: item.slug,
+                tracks,
+                played,
+                percent
+            };
+        });
+    }
+
 
     function buildNostalgiaHistorySummary(history: HistoryEntry[]) {
         const decades = ['1950s', '1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'];
@@ -103,6 +185,17 @@
 
         resetAllPrograms();
     }
+
+    function clearJourneyCollectionPlayed(collectionName: string, collectionSlug: string) {
+        const confirmed = confirm(
+            `Clear played history for ${collectionName}?`
+        );
+
+        if (!confirmed) return;
+
+        const programKey = `COL|${collectionSlug}` as Parameters<typeof resetProgram>[0];
+        resetProgram(programKey);
+    }
 </script>
 
 <div class="opt-cell music-journey-card">
@@ -125,7 +218,7 @@
     </div>
 
     <div class="radio-description">
-        Track your listening progress, favorite tracks, and TopSpot40 discoveries.
+        Track your music journey and favorite discoveries.
     </div>
 
     {#if !collapsed}
@@ -266,6 +359,94 @@
 
                                     clearJourneyGenrePlayed(selectedJourneyDecade ?? '', item.genre);
                                 }}
+                            >
+                                Clear Played Tracks
+                            </button>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+        {/if}
+    </div>
+{/if}
+
+{#if !collapsed && musicJourneyMode === 'collections'}
+    <div class="journey-panel">
+        <div class="genre-title">
+            Collections Listening History
+        </div>
+
+        <div class="radio-description" style="margin-bottom: 12px;">
+            Click on a collection group to expand collection listening history.
+        </div>
+
+        <div class="journey-decade-grid">
+            {#each collectionGroupHistorySummary as item}
+                <div
+                        class="journey-decade-btn"
+                        class:selected={selectedJourneyCollectionGroup === item.slug}
+                        role="button"
+                        tabindex="0"
+                        on:click={() => {
+                            selectedJourneyCollectionGroup = item.slug;
+                        }}
+                        on:keydown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                selectedJourneyCollectionGroup = item.slug;
+                            }
+                        }}
+                >
+                    <div class="journey-decade-title">
+                        {item.name}
+                    </div>
+
+                    <div class="journey-decade-meta">
+                        {item.played} / {item.tracks}
+                        tracks • {item.percent}% complete
+                    </div>
+
+                    <div class="journey-progress-bar">
+                        <div
+                                class="journey-progress-fill"
+                                style={`width: ${item.percent}%`}
+                        ></div>
+                    </div>
+                </div>
+            {/each}
+        </div>
+
+        {#if selectedJourneyCollectionGroup}
+            <div class="genre-title" style="margin-top: 14px;">
+                Collection History
+            </div>
+
+            <div class="journey-decade-grid">
+                {#each selectedJourneyCollections as item}
+                    <div class="journey-decade-btn">
+                        <div class="journey-decade-title">
+                            {item.name}
+                        </div>
+
+                        <div class="journey-decade-meta">
+                            {item.played} / {item.tracks}
+                            tracks • {item.percent}% complete
+                        </div>
+
+                        <div class="journey-progress-bar">
+                            <div
+                                    class="journey-progress-fill"
+                                    style={`width: ${item.percent}%`}
+                            ></div>
+                        </div>
+
+                        <div class="journey-actions">
+                            <button
+                                    class="journey-clear-btn"
+                                    type="button"
+                                    on:click|stopPropagation={() => {
+                                        clearJourneyCollectionPlayed(item.name, item.slug);
+                                    }}
                             >
                                 Clear Played Tracks
                             </button>

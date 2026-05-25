@@ -535,7 +535,7 @@
             </div>
 
             <div class="radio-description">
-                Create your own custom radio experience.
+                Build custom nostalgia radio stations.
             </div>
 
             {#if openSection === 'radio'}
@@ -670,6 +670,7 @@
 
         <div class:active-section-wrapper={openSection === 'journey'}>
             <MusicJourneyPanel
+                    {collectionGroups}
                     collapsed={openSection !== 'journey'}
                     onActivate={() => {
                         openSection = openSection === 'journey' ? null : 'journey';

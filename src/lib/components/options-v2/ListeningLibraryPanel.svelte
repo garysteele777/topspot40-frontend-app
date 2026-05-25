@@ -137,13 +137,11 @@
     </div>
 
     <div class="library-description">
-        Browse saved programs, explore collections, and spotlight favorite artists.
+        Browse saved programs and curated collections.
     </div>
 
     {#if !collapsed}
-        <div class="library-description">
-            Browse saved programs, explore collections, and spotlight favorite artists.
-        </div>
+
 
         <div class="library-description">
             Interactive Mode • Resume • Favorites • Jump to Tracks
