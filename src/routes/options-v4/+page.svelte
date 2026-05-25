@@ -43,11 +43,15 @@
     let languages: Language[] = ['en'];
 
     let startRank = 1;
-    let endRank = 1; // or undefined
-    let playbackOrder: PlaybackOrder = 'up';
-    let pauseMode: 'pause' | 'continuous' = 'pause';
-    let skipPlayed = false;
-    let selectedVoices: VoicePart[] = ['intro'];
+    let endRank = 9999;
+
+    let playbackOrder: PlaybackOrder = 'shuffle';
+
+    let pauseMode: 'pause' | 'continuous' = 'continuous';
+
+    let skipPlayed = true;
+
+    let selectedVoices: VoicePart[] = ['intro', 'detail'];
 
 
     let decades: string[] = [];
@@ -402,6 +406,16 @@
 
     <div class="page">
 
+        <div class="page-hero">
+            <h1 class="page-title">
+                🎙️ TopSpot40 Control Center
+            </h1>
+
+            <div class="page-subtitle">
+                🎵 Your music. 🕰️ Your memories. 📻 Your station.
+            </div>
+        </div>
+
         <div class:active-section-wrapper={openSection === 'preferences'}>
 
             <PlaybackPreferencesPanel
@@ -679,7 +693,6 @@
     }
 
 
-
     .radio-genres {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -829,6 +842,27 @@
 
     .section-header-clickable {
         cursor: pointer;
+    }
+
+    .page-hero {
+        margin-bottom: 1.5rem;
+        padding: 0.5rem 0 1rem 0;
+        border-bottom: 1px solid rgba(207, 184, 124, 0.18);
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #cfb87c;
+        margin: 0;
+        letter-spacing: 0.02em;
+    }
+
+    .page-subtitle {
+        margin-top: 0.35rem;
+        font-size: 0.95rem;
+        color: #aaa;
+        letter-spacing: 0.01em;
     }
 
 </style>
