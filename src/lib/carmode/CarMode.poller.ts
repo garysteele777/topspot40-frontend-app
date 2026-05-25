@@ -330,7 +330,7 @@ export function startPlaybackPolling() {
                 phase === 'artist' ||
                 phase === 'track';
 
-            const justSwitchedRecently = Date.now() - trackSwitchTime < 1500;
+            const justSwitchedRecently = Date.now() - trackSwitchTime < 5000;
 
             if (
                 hasPlaybackStarted &&

@@ -150,31 +150,30 @@
         <div class="library-buttons">
             <button
                     class:active={!collapsed && libraryMode === 'nostalgia'}
-                    on:click={() => {
-        onActivate?.();
-        libraryMode = 'nostalgia';
-    }}
+                    on:click|stopPropagation={() => {
+            if (collapsed) onActivate?.();
+            libraryMode = 'nostalgia';
+        }}
             >
                 Nostalgia Programs
             </button>
 
             <button
                     class:active={!collapsed && libraryMode === 'collections'}
-
-                    on:click={() => {
-        onActivate?.();
-        libraryMode = 'collections';
-    }}
+                    on:click|stopPropagation={() => {
+            if (collapsed) onActivate?.();
+            libraryMode = 'collections';
+        }}
             >
                 Collections Programs
             </button>
 
             <button
                     class:active={!collapsed && libraryMode === 'artists'}
-                    on:click={() => {
-        onActivate?.();
-        libraryMode = 'artists';
-    }}
+                    on:click|stopPropagation={() => {
+            if (collapsed) onActivate?.();
+            libraryMode = 'artists';
+        }}
             >
                 Artist Spotlight
             </button>

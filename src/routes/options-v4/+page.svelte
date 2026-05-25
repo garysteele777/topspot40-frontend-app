@@ -584,9 +584,12 @@
                     {skipPlayed}
                     collapsed={openSection !== 'library'}
                     onActivate={() => {
-                openSection = 'library';
-                radioMode = null;
-            }}
+                        openSection = openSection === 'library'
+                            ? null
+                            : 'library';
+
+                        radioMode = null;
+                    }}
             />
         </div>
 
