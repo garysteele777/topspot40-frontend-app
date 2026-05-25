@@ -133,6 +133,11 @@
             }}
     >
         <h3 class="section-title">🎧 TopSpot40 Listening Library 🎧</h3>
+    </div>
+
+    <div class="library-description">
+        Browse saved programs, explore collections, and spotlight favorite artists.
+
         <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
     </div>
 
