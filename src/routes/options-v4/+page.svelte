@@ -497,11 +497,12 @@
         <div class:active-section-wrapper={openSection === 'preferences'}>
 
             <PlaybackPreferencesPanel
-                    {languages}
-                    {selectedVoices}
-                    {playbackOrder}
-                    {pauseMode}
-                    {skipPlayed}
+                    bind:language
+                    bind:languages
+                    bind:selectedVoices
+                    bind:playbackOrder
+                    bind:pauseMode
+                    bind:skipPlayed
                     collapsed={openSection !== 'preferences'}
                     onActivate={() => {
         openSection = openSection === 'preferences' ? null : 'preferences';
@@ -533,13 +534,14 @@
                 <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
             </div>
 
+            <div class="radio-description">
+                Create your own custom radio experience.
+            </div>
+
             {#if openSection === 'radio'}
                 <div class="radio-description">
-                    Nostalgia mixes decades and genres. Collections plays themed playlists.
-                </div>
-
-                <div class="radio-description">
-                    DJ Mode • Shuffle • Favor New • Continuous
+                    Nostalgia mixes sets by decades and genres. Collections plays themed playlists. Artists Spotlight
+                    mixes sets by artists.
                 </div>
 
                 <div class="radio-buttons">
@@ -679,82 +681,6 @@
 
         <!-- ✅ Playback History now at top -->
         <PlaybackHistoryPanel {language} {languages}/>
-
-        <!-- TOP CONFIG GRID (4 + 4) -->
-        <section class="options-grid options-grid--compact">
-
-            <!-- LEFT: CONTENT -->
-            <div class="opt-cell opt-cell--content">
-                <h3 class="section-title">Settings</h3>
-
-                <div class="compact-block compact-block--content">
-                    <LanguageSelector bind:language bind:languages/>
-                    <VoiceContentSelector bind:selectedVoices/>
-                </div>
-
-                <div class="opt-cell opt-cell--playback">
-                    <h3 class="section-title">Playback</h3>
-
-                    <div class="playback-section">
-
-                        <!-- ORDER -->
-                        <div class="playback-group">
-                            <div class="label">Order</div>
-                            <div class="grid">
-                                <button class:selected={playbackOrder === 'up'} on:click={() => setPlaybackOrder('up')}>
-                                    Up
-                                </button>
-                                <button class:selected={playbackOrder === 'down'}
-                                        on:click={() => setPlaybackOrder('down')}>
-                                    Down
-                                </button>
-                                <button class:selected={playbackOrder === 'shuffle'}
-                                        on:click={() => setPlaybackOrder('shuffle')}>
-                                    Shuffle
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- TRACK STRATEGY -->
-                        <div class="playback-group">
-                            <div class="label">Tracks</div>
-                            <div class="grid grid-2">
-                                <button class:selected={skipPlayed} on:click={() => skipPlayed = true}>
-                                    Favor New
-                                </button>
-                                <button class:selected={!skipPlayed} on:click={() => skipPlayed = false}>
-                                    All Equal
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- FLOW -->
-                        <div class="playback-group">
-                            <div class="label">Flow</div>
-                            <div class="grid grid-2">
-                                <button class:selected={pauseMode === 'pause'} on:click={() => pauseMode = 'pause'}>
-                                    Pause
-                                </button>
-                                <button class:selected={pauseMode === 'continuous'}
-                                        on:click={() => pauseMode = 'continuous'}>
-                                    Continuous
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- RIGHT: PLAYBACK + RADIO STACK -->
-            <div class="right-column">
-
-
-            </div>
-
-        </section>
-
 
     </div>
 </div>
