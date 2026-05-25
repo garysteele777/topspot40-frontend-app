@@ -66,17 +66,17 @@
         <div class="radio-buttons">
             <button type="button" class:active={activePanel === 'languages'}
                     on:click|stopPropagation={() => activePanel = 'languages'}>
-                Languages
+                🌐 Languages
             </button>
 
             <button type="button" class:active={activePanel === 'voice'}
                     on:click|stopPropagation={() => activePanel = 'voice'}>
-                Voice
+                🎙 Voice
             </button>
 
             <button type="button" class:active={activePanel === 'playback'}
                     on:click|stopPropagation={() => activePanel = 'playback'}>
-                Playback
+                ▶ Playback
             </button>
         </div>
 

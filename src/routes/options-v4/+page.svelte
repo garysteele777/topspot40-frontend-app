@@ -8,22 +8,14 @@
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
     import {get} from 'svelte/store';
     import {
-        programHistoryStore,
-        resetProgram
+        programHistoryStore
     } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
-    import {selection} from '$lib/stores/selection';
-    import {
-        getProgramSection
-    } from '$lib/types/program';
 
     // ─────────────────────────────────────────────
     // UI Components
     // ─────────────────────────────────────────────
     import HeroHeader from '$lib/components/options/HeroHeader.svelte';
-    import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
-    import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
-    import PlaybackHistoryPanel from '$lib/components/options-v2/PlaybackHistoryPanel.svelte';
     import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
     import MusicJourneyPanel from '$lib/components/options-v2/MusicJourneyPanel.svelte';
     import PlaybackPreferencesPanel from '$lib/components/options-v2/PlaybackPreferencesPanel.svelte';
@@ -86,25 +78,6 @@
     let pendingSelection: ReturnType<typeof buildSelectionFromResume> | null = null;
     let selectedGenre: string | null = null;
 
-    let musicJourneyMode:
-        | 'nostalgia'
-        | 'collections'
-        | 'favorites'
-        | null = null;
-
-    let selectedJourneyDecade: string | null = null;
-
-    $: nostalgiaHistorySummary = buildNostalgiaHistorySummary($programHistoryStore);
-
-
-    $: programType = $selection.programType;
-    $: activeSection = getProgramSection(programType);
-
-    $: selectedJourneyGenres =
-        selectedJourneyDecade
-            ? buildGenreHistoryForDecade($programHistoryStore, selectedJourneyDecade)
-            : [];
-
     const genreIcons: Record<string, string> = {
         rock: '🎸',
         country: '🤠',
@@ -119,59 +92,6 @@
         tv_themes: '📺',
     };
 
-
-    function buildGenreHistoryForDecade(
-        history: { key: string; total: number; playedRanks: number[] }[],
-        decade: string
-    ) {
-        return history
-            .filter((entry) => entry.key.startsWith(`DG|${decade}|`))
-            .map((entry) => {
-                const parts = entry.key.split('|');
-                const genre = parts[2] ?? 'unknown';
-                const played = entry.playedRanks.length;
-                const percent = entry.total > 0
-                    ? Math.round((played / entry.total) * 100)
-                    : 0;
-
-                return {
-                    genre,
-                    label: `${decade} ${genre.replace(/_/g, ' ')}`,
-                    tracks: entry.total,
-                    played,
-                    percent
-                };
-            });
-    }
-
-    function buildNostalgiaHistorySummary(history: { key: string; total: number; playedRanks: number[] }[]) {
-        const decades = ['1950s', '1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'];
-
-        return decades.map((decade) => {
-            const rows = history.filter((entry) =>
-                entry.key.startsWith(`DG|${decade}|`)
-            );
-
-            const tracks = rows.reduce((sum, entry) => sum + entry.total, 0);
-            const played = rows.reduce((sum, entry) => sum + entry.playedRanks.length, 0);
-            const percent = tracks > 0 ? Math.round((played / tracks) * 100) : 0;
-
-            return {
-                decade: `${decade} All Genres`,
-                tracks,
-                percent
-            };
-        });
-    }
-
-    function setPlaybackOrder(order: PlaybackOrder) {
-        playbackOrder = order;
-
-        selection.update(current => ({
-            ...current,
-            playbackOrder: order
-        }));
-    }
 
     function startRadio(mode: 'nostalgia' | 'collections' | 'artist_spotlight') {
         openSection = 'radio';
@@ -364,18 +284,6 @@
             decades = [];
             genres = [];
         }
-    }
-
-    function clearJourneyGenrePlayed(decade: string, genre: string) {
-        const programKey = `DG|${decade}|${genre}` as const;
-
-        const confirmed = confirm(
-            `Clear played tracks for ${decade} ${genre.replace(/_/g, ' ')}?`
-        );
-
-        if (!confirmed) return;
-
-        resetProgram(programKey);
     }
 
     function getTotalTracksForSelection(
@@ -681,7 +589,7 @@
 
 
         <!-- ✅ Playback History now at top -->
-        <PlaybackHistoryPanel {language} {languages}/>
+        <!--        <PlaybackHistoryPanel {language} {languages}/>-->
 
     </div>
 </div>
@@ -698,42 +606,6 @@
         margin: 0 auto;
         padding: 1.5rem 1.25rem 4rem;
         color: #f5f5f5;
-    }
-
-    /* =========================
-       OPTIONS GRID (CORE UI)
-    ========================= */
-
-    .options-grid {
-        display: grid;
-        gap: 1.2rem;
-        grid-template-columns: repeat(4, minmax(200px, 1fr));
-        margin-bottom: 2rem;
-    }
-
-    .options-grid--compact {
-        gap: 0.75rem;
-        margin-bottom: 1.25rem;
-        grid-template-columns: 1fr 1fr;
-        align-items: start;
-    }
-
-    .opt-cell--content,
-    .opt-cell--playback {
-        min-width: 0;
-    }
-
-    @media (max-width: 1100px) {
-        .options-grid--compact {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 700px) {
-        .options-grid--compact {
-            grid-template-columns: 1fr;
-        }
-
     }
 
     /* =========================
@@ -754,12 +626,6 @@
         box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
         border-color: rgba(207, 184, 124, 0.8);
         background: rgba(24, 24, 24, 0.98);
-    }
-
-    .compact-block {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
     }
 
     /* SELECTED */
@@ -813,67 +679,6 @@
     }
 
 
-    /* =========================
-       PLAYBACK SECTION (FINAL)
-    ========================= */
-
-    .playback-section {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .playback-group {
-        display: grid;
-        grid-template-columns: 70px 1fr;
-        align-items: center;
-        column-gap: 10px;
-    }
-
-    .playback-group .label {
-        font-size: 0.8rem;
-        color: #ccc;
-    }
-
-    /* GRID FOR BUTTONS */
-    .grid {
-        display: grid;
-        gap: 6px;
-    }
-
-    /* 3 buttons (Order) */
-    .grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    /* 2 buttons (Tracks, Flow) */
-    .grid-2 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    /* BUTTON STYLE (UNIFIED) */
-    .grid button {
-        padding: 5px 10px;
-        border-radius: 999px;
-        border: 1px solid #444;
-        background: #2a2a2a;
-        color: #ccc;
-        font-size: 0.8rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .grid button:hover {
-        border-color: #666;
-    }
-
-    /* SELECTED */
-    .grid button.selected {
-        background: #cfb87c;
-        color: #000;
-        border-color: #cfb87c;
-        font-weight: 600;
-    }
 
     .radio-genres {
         display: grid;
