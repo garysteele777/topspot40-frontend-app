@@ -250,7 +250,7 @@
                 musicJourneyMode = 'favorites';
             }}
             >
-                Favorite Tracks
+                Favorite Tracks (incomplete)
             </button>
         </div>
     {/if}
