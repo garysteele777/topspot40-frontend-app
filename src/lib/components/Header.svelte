@@ -1,17 +1,17 @@
 <!-- $lib/components/Header.svelte -->
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
-	import { browser } from '$app/environment';
-
+	import { onMount, onDestroy } from 'svelte';
 	import DropdownMenu from './DropdownMenu.svelte';
+	import { browser } from '$app/environment';
 	import ContactModal from './profile-components/ContactModal.svelte';
 	import FeedbackModal from './profile-components/FeedbackModal.svelte';
 
-	let dropdownRef: HTMLButtonElement;
-
+	let dropdownRef: HTMLElement; // reference to the dropdown container
 	let showDropdown = false;
 	let showFeedbackModal = false;
 	let showContactModal = false;
+
+	export let user: any = null;
 
 	function handleClickOutside(event: MouseEvent) {
 		if (dropdownRef && !dropdownRef.contains(event.target as Node)) {
@@ -34,17 +34,11 @@
 
 <header class="header">
 	<div class="logo">TopSpot40</div>
-
-	<button
-		type="button"
-		class="user-profile"
-		bind:this={dropdownRef}
-		on:click={() => (showDropdown = !showDropdown)}
-		aria-expanded={showDropdown}
-		aria-haspopup="menu"
-	>
-		<img src="/user-avatar.png" alt="User" />
-
+	<div class="user-profile" bind:this={dropdownRef} on:click={() => (showDropdown = !showDropdown)}>
+		<!-- <img src="/user-avatar.png" alt="User" /> -->
+		 <img
+			src={user?.app_avatar_url || user?.spotify_profile_image || '/user-avatar.png'}
+			alt="User"/>
 		{#if showDropdown}
 			<DropdownMenu
 				onFeedback={() => {
@@ -52,16 +46,19 @@
 					showDropdown = false;
 				}}
 				onContact={() => {
+					console.log('Contact clicked!');
 					showContactModal = true;
 					showDropdown = false;
 				}}
 			/>
 		{/if}
-	</button>
+	</div>
 </header>
 
+<!-- Feedback Modal -->
 <FeedbackModal visible={showFeedbackModal} onClose={() => (showFeedbackModal = false)} />
 
+<!-- Contact Us Modal -->
 <ContactModal visible={showContactModal} onClose={() => (showContactModal = false)} />
 
 <style>
@@ -77,9 +74,13 @@
 	.user-profile {
 		position: relative;
 		cursor: pointer;
-		background: transparent;
-		border: none;
-		padding: 0;
-		color: inherit;
+	}
+
+	.user-profile img {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		object-fit: cover;
+		border: 2px solid #1db954;
 	}
 </style>
