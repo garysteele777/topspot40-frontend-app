@@ -132,6 +132,23 @@
         });
     }
 
+    function clearJourneyCollectionGroupPlayed(groupName: string, groupSlug: string) {
+        const confirmed = confirm(
+            `Clear ALL played history for ${groupName}?`
+        );
+
+        if (!confirmed) return;
+
+        const rows = $programHistoryStore.filter((entry) =>
+            entry.key.endsWith(`|${groupSlug}`) ||
+            entry.collectionGroupSlug === groupSlug
+        );
+
+        rows.forEach((entry) => {
+            resetProgram(entry.key);
+        });
+    }
+
     function buildGenreHistoryForDecade(history: HistoryEntry[], decade: string) {
         return history
             .filter((entry) => entry.key.startsWith(`DG|${decade}|`))
@@ -193,8 +210,13 @@
 
         if (!confirmed) return;
 
-        const programKey = `COL|${collectionSlug}` as Parameters<typeof resetProgram>[0];
-        resetProgram(programKey);
+        const rows = $programHistoryStore.filter((entry) =>
+            entry.key.startsWith(`COL|${collectionSlug}|`)
+        );
+
+        rows.forEach((entry) => {
+            resetProgram(entry.key);
+        });
     }
 </script>
 
@@ -346,6 +368,7 @@
                             ></div>
                         </div>
 
+
                         <div class="journey-actions">
                             <button
                                     class="journey-clear-btn"
@@ -412,6 +435,19 @@
                                 style={`width: ${item.percent}%`}
                         ></div>
                     </div>
+
+                    <div class="journey-actions">
+                        <button
+                                class="journey-clear-btn journey-clear-btn--decade"
+                                type="button"
+                                on:click|stopPropagation={() => {
+                                    clearJourneyCollectionGroupPlayed(item.name, item.slug);
+                                }}
+                        >
+                            Clear Group History
+                        </button>
+                    </div>
+
                 </div>
             {/each}
         </div>

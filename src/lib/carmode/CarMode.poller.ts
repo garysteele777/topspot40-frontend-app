@@ -439,11 +439,20 @@ export function startPlaybackPolling() {
                 lastNarrationPhase = null;
             }
 
-            if (phase === 'track' && data.context?.spotify_track_id) {
+            /* ─────────────────────────────
+               🎵 Track handling (Spotify)
+               ───────────────────────────── */
+            // const sel = get(currentSelection);
 
-                timingSource.set('spotify');
-
-                const spotifyTrackId = data.context.spotify_track_id as string;
+            // const sequenceEngineControlsSpotify =
+            //     sel?.programType === 'RADIO_DG' ||
+            //     sel?.programType === 'RADIO_COL' ||
+            //     sel?.programType === 'RADIO_ARTIST';
+            if (
+                phase === 'track' &&
+                data.context?.spotify_track_id
+            ) {
+                const spotifyId = data.context.spotify_track_id as string;
 
                 stopBed();
 
