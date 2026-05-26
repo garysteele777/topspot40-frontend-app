@@ -123,7 +123,7 @@
 
 	<!-- TEMPORARY BLOCK/BUTTON!-->
 	<div class="temporary-button">
-    	<button on:click={() => go('/options-v2')}>Go to Options</button>
+    	<button on:click={() => go('/options-v4')}>Go to Options</button>
 	</div>
 
 
