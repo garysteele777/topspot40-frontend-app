@@ -608,6 +608,11 @@ function toCarModeTrack(t: LoadedTrack): CarModeTrack {
             (t as any).artist_description ??
             null,
 
+        textsByLanguage:
+            (t as any).textsByLanguage ??
+            (t as any).texts_by_language ??
+            null,
+
         sourceRank: x.sourceRank,
         genreSlug: x.genreSlug,
         genreName: x.genreName,
