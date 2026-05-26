@@ -305,7 +305,6 @@ export function startPlaybackPolling() {
 
     dlog('▶️ Playback polling started');
 
-
     pollTimer = window.setInterval(async () => {
         try {
             const res = await fetch(`${API_BASE}/playback/status`);
@@ -586,16 +585,15 @@ export function startPlaybackPolling() {
             /* ─────────────────────────────
                🎵 Track handling (Spotify)
                ───────────────────────────── */
-            const sel = get(currentSelection);
+            // const sel = get(currentSelection);
 
-            const sequenceEngineControlsSpotify =
-                sel?.programType === 'RADIO_DG' ||
-                sel?.programType === 'RADIO_COL' ||
-                sel?.programType === 'RADIO_ARTIST';
+            // const sequenceEngineControlsSpotify =
+            //     sel?.programType === 'RADIO_DG' ||
+            //     sel?.programType === 'RADIO_COL' ||
+            //     sel?.programType === 'RADIO_ARTIST';
             if (
                 phase === 'track' &&
-                data.context?.spotify_track_id &&
-                !sequenceEngineControlsSpotify
+                data.context?.spotify_track_id
             ) {
                 const spotifyId = data.context.spotify_track_id as string;
 
