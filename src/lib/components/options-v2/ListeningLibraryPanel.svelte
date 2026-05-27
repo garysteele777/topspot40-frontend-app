@@ -330,43 +330,41 @@ goto(`/car-page?${params.toString()}`);
 
                         {#if artistSpotlightLoading}
 
-                            {#if !collapsed}
+                            <div class="library-description">
+                                Loading artists...
+                            </div>
 
-                                <div class="library-description">
-                                    Loading artists...
-                                </div>
+                        {:else if artistSpotlightError}
 
-                            {:else if artistSpotlightError}
+                            <div class="library-description">
+                                {artistSpotlightError}
+                            </div>
 
-                                <div class="library-description">
-                                    {artistSpotlightError}
-                                </div>
+                        {:else}
 
-                            {:else}
+                            {#if selectedArtist}
 
-                                {#if selectedArtist}
+                                <div class="genre-section">
 
-                                    <div class="genre-section">
-
-                                        <button
-                                                class="back-btn"
-                                                on:click={() => {
+                                    <button
+                                            class="back-btn"
+                                            on:click={() => {
                                 selectedArtist = null;
                                 artistTracks = [];
                             }}
-                                        >
-                                            ← Back to Artists
-                                        </button>
+                                    >
+                                        ← Back to Artists
+                                    </button>
 
-                                        <div class="genre-title">
-                                            {titleCaseName(selectedArtist.artist_name)}
-                                            • Artist Spotlight Tracks
-                                        </div>
+                                    <div class="genre-title">
+                                        {titleCaseName(selectedArtist.artist_name)}
+                                        • Artist Spotlight Tracks
+                                    </div>
 
-                                        <div class="artist-play-row">
-                                            <button
-                                                    class="play-artist-btn"
-                                                    on:click={() => {
+                                    <div class="artist-play-row">
+                                        <button
+                                                class="play-artist-btn"
+                                                on:click={() => {
                                                 const artist = selectedArtist;
                                                 if (!artist) return;
 
@@ -376,62 +374,61 @@ goto(`/car-page?${params.toString()}`);
                                                     `&artist=${encodeURIComponent(artist.artist_name)}`
                                                 );
 }}
-                                            >
-                                                ▶ Play Artist Spotlight
-                                            </button>
+                                        >
+                                            ▶ Play Artist Spotlight
+                                        </button>
+                                    </div>
+
+                                    {#if artistTracksLoading}
+                                        <div class="library-description">Loading tracks...</div>
+                                    {:else if artistTracksError}
+                                        <div class="library-description">{artistTracksError}</div>
+                                    {:else}
+                                        <div class="track-grid">
+                                            {#each artistTracks as track}
+                                                <button class="track-btn">
+                                                    <div class="track-name">
+                                                        {titleCaseName(track.track_name)}
+                                                    </div>
+                                                </button>
+                                            {/each}
                                         </div>
+                                    {/if}
 
-                                        {#if artistTracksLoading}
-                                            <div class="library-description">Loading tracks...</div>
-                                        {:else if artistTracksError}
-                                            <div class="library-description">{artistTracksError}</div>
-                                        {:else}
-                                            <div class="track-grid">
-                                                {#each artistTracks as track}
-                                                    <button class="track-btn">
-                                                        <div class="track-name">
-                                                            {titleCaseName(track.track_name)}
-                                                        </div>
-                                                    </button>
-                                                {/each}
+                                </div>
+
+                            {:else}
+
+                                <div class="artist-grid">
+                                    {#each artistSpotlightItems as artist}
+                                        <button
+                                                class="artist-btn"
+                                                on:click={() => loadArtistTracks(artist)}
+                                        >
+                                            <div class="artist-name">
+                                                {titleCaseName(artist.artist_name)}
                                             </div>
-                                        {/if}
 
-                                    </div>
-
-                                {:else}
-
-                                    <div class="artist-grid">
-                                        {#each artistSpotlightItems as artist}
-                                            <button
-                                                    class="artist-btn"
-                                                    on:click={() => loadArtistTracks(artist)}
-                                            >
-                                                <div class="artist-name">
-                                                    {titleCaseName(artist.artist_name)}
-                                                </div>
-
-                                                <div class="artist-count">
-                                                    {artist.genre_track_count}
-                                                    {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
-                                                    •
-                                                    {artist.total_track_count} Total
-                                                </div>
-                                            </button>
-                                        {/each}
-                                    </div>
-
-                                {/if}
+                                            <div class="artist-count">
+                                                {artist.genre_track_count}
+                                                {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
+                                                •
+                                                {artist.total_track_count} Total
+                                            </div>
+                                        </button>
+                                    {/each}
+                                </div>
 
                             {/if}
-                        {/if}
-                    </div>
 
-                {/if}
+                        {/if}
+                </div>
 
             {/if}
-        </div>
+
     {/if}
+</div>
+{/if}
 </div>
 
 <style>
