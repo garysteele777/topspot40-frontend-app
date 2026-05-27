@@ -64,12 +64,17 @@
             if (d && g) key = `DG|${d}|${g}`;
         }
 
+        if (sel?.mode === 'collection') {
+            const collection = sel.context?.collection_slug ?? sel.context?.collection;
+            const group = sel.context?.collection_group_slug ?? sel.context?.collectionCategory;
+            if (collection && group) key = `COL|${collection}|${group}`;
+        }
+
         if (!key) {
             completed = 0;
             programTotal = 0;
         } else {
             const program = $programHistoryStore.find(p => p.key === key);
-            completed = program?.playedRanks.length ?? 0;
             programTotal = tracks.length;
             completed = program?.playedRanks.length ?? 0;
         }
@@ -86,18 +91,23 @@
        Favorites logic (Decade only)
     ───────────────────────────────────────────── */
 
+
     let programType: ProgramType | null = null;
+    let programGroup: string | null = null;
 
     $: programType =
         $currentSelection?.mode === 'decade_genre'
             ? 'DG'
-            : null;
-
+            : $currentSelection?.mode === 'collection'
+                ? 'COL'
+                : null;
 
     $: programGroup =
         programType === 'DG'
             ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
-            : null;
+            : programType === 'COL'
+                ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
+                : null;
 
 
     $: {

@@ -281,12 +281,19 @@ goto(`/car-page?${params.toString()}`);
                                 <button
                                         class="genre-btn"
                                         on:click={() => {
-                                    goto(
-                                        `/car-page?mode=collection` +
-                                        `&collection=${collection.slug}` +
-                                        `&collection_group=${selectedCollectionGroup}`
-                                    );
-                                    }}
+                                        goto(
+                                            `/car-page?mode=collection` +
+                                            `&collection=${collection.slug}` +
+                                            `&collection_group=${selectedCollectionGroup}` +
+                                            `&language=${language}` +
+                                            `&languages=${languages.join(',')}` +
+                                            `&voices=${voices.join(',')}` +
+                                            `&playbackOrder=${playbackOrder}` +
+                                            `&voicePlayMode=${voicePlayMode}` +
+                                            `&pauseMode=${pauseMode}` +
+                                            `&skipPlayed=${skipPlayed}`
+                                        );
+                                                                            }}
                                 >
                                     {collection.name}
                                 </button>
@@ -422,13 +429,13 @@ goto(`/car-page?${params.toString()}`);
                             {/if}
 
                         {/if}
-                </div>
+                    </div>
+
+                {/if}
 
             {/if}
-
+        </div>
     {/if}
-</div>
-{/if}
 </div>
 
 <style>

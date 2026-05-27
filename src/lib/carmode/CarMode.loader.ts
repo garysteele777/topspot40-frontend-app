@@ -562,7 +562,7 @@ export async function loadForSelection(
 
         } else if (sel.playbackOrder === 'shuffle') {
             first = sel.skipPlayed
-                ? candidateTracks.find(t => !playedRanks.has(t.rank)) ?? null
+                ? candidateTracks.find(t => !playedRanks.has(t.rank)) ?? candidateTracks[0] ?? null
                 : candidateTracks[0] ?? null;
 
         } else {

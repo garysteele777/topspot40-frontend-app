@@ -41,7 +41,11 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const finalStartRank = startRank;
     const finalEndRank = startRank === endRank ? startRank : endRank;
     const currentRank = finalStartRank;
-    const collectionCategory = sp.get('collectionCategory') ?? '';
+    const collectionCategory =
+        sp.get('collectionCategory') ??
+        sp.get('collection_group') ??
+        sp.get('collection_group_slug') ??
+        '';
 
     const programKey = sp.get('programKey');
 
