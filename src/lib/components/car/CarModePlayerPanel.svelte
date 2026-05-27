@@ -393,10 +393,17 @@
             isFavorite(programType, programGroup, t.rankingId)
         }
                                     on:click|stopPropagation={() => {
-            if (programType && programGroup && t.rankingId != null) {
-                toggleFavorite(programType, programGroup, t.rankingId);
-            }
-        }}
+                                        console.log('FAV CLICK', {
+                                            programType,
+                                            programGroup,
+                                            rankingId: t.rankingId,
+                                            track: t
+                                        });
+
+                                        if (programType && programGroup && t.rankingId != null) {
+                                            toggleFavorite(programType, programGroup, t.rankingId);
+                                        }
+                                    }}
                             >
                                 ★
                             </button>

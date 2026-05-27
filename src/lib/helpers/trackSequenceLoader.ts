@@ -91,6 +91,24 @@ function mapItemsToTracks(
         const row = preNormalizeRow(raw);
         const track = normalizeTrack(row);
 
+        const rowRecord = row as Record<string, unknown>;
+
+        const rankingId =
+            row.rankingId ??
+            row.ranking_id ??
+            rowRecord['collection_ranking_id'] ??
+            rowRecord['collection_track_ranking_id'] ??
+            rowRecord['track_ranking_id'] ??
+            null;
+
+        track.rankingId =
+            track.rankingId =
+                typeof rankingId === 'number'
+                    ? rankingId
+                    : typeof rankingId === 'string' && rankingId.trim() !== '' && Number.isFinite(Number(rankingId))
+                        ? Number(rankingId)
+                        : undefined;
+
         // attach ranking info
         track.sourceRank = track.rank;
 
