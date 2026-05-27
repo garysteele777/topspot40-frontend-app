@@ -197,14 +197,6 @@
 
                 <div class="decade-grid">
 
-                    <button
-                            class="all-decades-btn"
-                            class:selected={selectedDecade === 'ALL'}
-                            on:click={() => selectedDecade = 'ALL'}
-                    >
-                        📻 All Decades • 1950s to Present
-                    </button>
-
                     {#each decadeOptions as decade}
                         <button
                                 class:selected={selectedDecade === decade.id}
@@ -262,14 +254,6 @@ goto(`/car-page?${params.toString()}`);
             {:else if libraryMode === 'collections'}
 
                 <div class="decade-grid">
-
-                    <button
-                            class="all-decades-btn"
-                            class:selected={selectedCollectionGroup === 'ALL'}
-                            on:click={() => selectedCollectionGroup = 'ALL'}
-                    >
-                        📀 All Collection Groups
-                    </button>
 
                     {#each collectionGroups as group}
                         <button

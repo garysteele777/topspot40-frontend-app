@@ -431,6 +431,16 @@ export function startPlaybackPolling() {
                         narrationItems.map(item => item.url)
                     );
 
+                    const bedAudioUrl =
+                        typeof data.context?.bed_audio_url === 'string'
+                            ? data.context.bed_audio_url
+                            : null;
+
+                    if (bedAudioUrl && !isBedPlaying()) {
+                        dlog('🎧 BED start:', bedAudioUrl);
+                        startBedUrl(bedAudioUrl);
+                    }
+
                     narrationQueue.push(...narrationItems);
 
                     void playNarrationQueue();
@@ -452,7 +462,7 @@ export function startPlaybackPolling() {
                 phase === 'track' &&
                 data.context?.spotify_track_id
             ) {
-                const spotifyId = data.context.spotify_track_id as string;
+                const spotifyTrackId = data.context.spotify_track_id as string;
 
                 stopBed();
 
