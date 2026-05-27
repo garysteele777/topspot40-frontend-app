@@ -4,7 +4,7 @@ import {cacheKey, applyPlaybackOrder, pickInitialTrack} from '$lib/helpers/car/t
 import type {SelectionState} from '$lib/stores/selection';
 import type {LoadedTrack} from '$lib/utils/normalizeTrack';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
-import { PROGRAM_TYPES } from '$lib/types/program';
+import {PROGRAM_TYPES} from '$lib/types/program';
 
 import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
 import {getFavorites} from '$lib/favorites/favorites';
@@ -28,6 +28,7 @@ type ArtistRadioApiTrack = {
     artist_description?: string | null;
     duration_ms?: number | null;
 };
+
 export async function loadForSelection(
     sel: SelectionState,
     initialRank?: number | null
@@ -560,7 +561,9 @@ export async function loadForSelection(
             first = candidateTracks[0] ?? null;
 
         } else if (sel.playbackOrder === 'shuffle') {
-            first = candidateTracks[0] ?? null;
+            first = sel.skipPlayed
+                ? candidateTracks.find(t => !playedRanks.has(t.rank)) ?? null
+                : candidateTracks[0] ?? null;
 
         } else {
             first = pickInitialTrack(
