@@ -464,8 +464,6 @@ export function startPlaybackPolling() {
             ) {
                 const spotifyTrackId = data.context.spotify_track_id as string;
 
-                stopBed();
-
                 if (
                     lastSpotifyId !== spotifyTrackId &&
                     !spotifyStartLock &&
@@ -482,6 +480,7 @@ export function startPlaybackPolling() {
 
                     try {
                         await playSpotifyTrackApi(spotifyTrackId);
+                        stopBed();
                     } catch (err) {
                         console.error('❌ Spotify start failed', err);
                     } finally {

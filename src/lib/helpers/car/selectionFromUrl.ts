@@ -220,7 +220,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             textDetail: false,
             textArtistDescription: false,
             voices,
-            playbackOrder,
+            playbackOrder: playbackOrder === 'up' ? 'shuffle' : playbackOrder,
             voicePlayMode,
             pauseMode,
             categoryMode: 'single',

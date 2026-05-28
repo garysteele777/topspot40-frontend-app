@@ -433,7 +433,8 @@
 
     $: headerMode =
         $currentSelection?.mode === 'decade_genre' ||
-        $currentSelection?.mode === 'collection'
+        $currentSelection?.mode === 'collection' ||
+        $currentSelection?.mode === 'artist_spotlight'
             ? $currentSelection.mode
             : 'decade_genre';
 

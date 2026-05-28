@@ -1,11 +1,11 @@
 <script context="module" lang="ts">
     // Types live ONLY in module script → no runtime, no conflicts
-    export type BrowseMode = 'decade_genre' | 'collection';
+    export type BrowseMode = 'decade_genre' | 'collection' | 'artist_spotlight';
     export type PlaybackOrder = 'up' | 'down' | 'shuffle';
     export type VoicePlayMode = 'before' | 'over';
     export type PauseMode = 'pause' | 'continuous';
     export type CategoryMode = 'single' | 'multiple';
-    import { PROGRAM_TYPES } from '$lib/types/program';
+    import {PROGRAM_TYPES} from '$lib/types/program';
 </script>
 
 <script lang="ts">
@@ -28,16 +28,17 @@
     export let skipPlayed: boolean = false;
     export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
 
-    // Label helpers
     const modeLabel = (
         m: import('./CarModeHeader.svelte').BrowseMode,
         p: PlaybackProgramType | undefined
     ) =>
-        p === 'RADIO_ARTIST'
-            ? 'Artist Spotlight Radio'
-            : m === 'collection'
-                ? 'Collection'
-                : 'Decade–Genre';
+        m === 'artist_spotlight'
+            ? 'Artist Spotlight'
+            : p === 'RADIO_ARTIST'
+                ? 'Artist Spotlight Radio'
+                : m === 'collection'
+                    ? 'Collection'
+                    : 'Decade–Genre';
 
     const categoryLabel = (m: import('./CarModeHeader.svelte').CategoryMode) =>
         m === 'multiple' ? 'Multiple' : 'Single';
@@ -98,13 +99,14 @@
         {/if}
 
   </span>
+            {:else if mode === 'artist_spotlight'}
+    <span class="cm-main-text">
+        Artist Spotlight
+    </span>
             {:else}
-
-
-
-  <span class="cm-main-text">
-    {collection ?? '—'}
-  </span>
+    <span class="cm-main-text">
+        {collection ?? '—'}
+    </span>
             {/if}
 
         </div>
