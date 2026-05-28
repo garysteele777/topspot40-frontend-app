@@ -162,23 +162,31 @@
                 continuous: settings.pauseMode === 'continuous'
             },
             context:
-                sel.mode === 'collection'
-                    ? (
-                        sel.programType === 'RADIO_COL'
-                            ? {
-                                type: 'collection_radio',
-                                collection_group_slug: sel.context?.collection_group_slug
-                            }
-                            : {
-                                type: 'collection',
-                                collection_slug: sel.context?.collection_slug
-                            }
-                    )
-                    : {
-                        type: 'decade_genre',
-                        decade: decadeForPlayback,
-                        genre: genreForPlayback
+                sel.mode === 'artist_spotlight'
+                    ? {
+                        type: 'artist_spotlight',
+                        programType: sel.programType,
+                        artist_id: sel.context?.artist_id,
+                        artist_name: sel.context?.artist_name ?? trackObj.artistName,
+                        spotify_artist_id: trackObj.spotifyArtistId
                     }
+                    : sel.mode === 'collection'
+                        ? (
+                            sel.programType === 'RADIO_COL'
+                                ? {
+                                    type: 'collection_radio',
+                                    collection_group_slug: sel.context?.collection_group_slug
+                                }
+                                : {
+                                    type: 'collection',
+                                    collection_slug: sel.context?.collection_slug
+                                }
+                        )
+                        : {
+                            type: 'decade_genre',
+                            decade: decadeForPlayback,
+                            genre: genreForPlayback
+                        }
         };
 
 
