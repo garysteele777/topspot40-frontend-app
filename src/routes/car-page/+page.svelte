@@ -103,10 +103,11 @@
             const artistParams = new URLSearchParams({
                 genre: sel.context?.genre ?? 'ALL',
                 tts_language: sel.language ?? 'en',
-                play_intro: String(settings.voices.includes('intro')),
+                play_intro: 'true',
                 play_detail: String(settings.voices.includes('detail')),
-                play_artist_description: String(settings.voices.includes('artist')),
-                play_track: 'true'
+                play_artist_description: 'true',
+                play_track: 'true',
+                voice_style: settings.voicePlayMode
             });
 
             const spotifyArtistId =
@@ -115,6 +116,7 @@
             if (spotifyArtistId) {
                 artistParams.set('spotify_artist_id', spotifyArtistId);
             }
+
 
             await fetch(
                 `${API_BASE}/artist-spotlight/play-radio?${artistParams.toString()}`,
@@ -160,30 +162,23 @@
                 continuous: settings.pauseMode === 'continuous'
             },
             context:
-                sel.mode === 'artist_spotlight'
-                    ? {
-                        type: 'artist_spotlight',
-                        programType: sel.programType,
-                        artist_id: sel.context?.artist_id,
-                        artist_name: sel.context?.artist_name
+                sel.mode === 'collection'
+                    ? (
+                        sel.programType === 'RADIO_COL'
+                            ? {
+                                type: 'collection_radio',
+                                collection_group_slug: sel.context?.collection_group_slug
+                            }
+                            : {
+                                type: 'collection',
+                                collection_slug: sel.context?.collection_slug
+                            }
+                    )
+                    : {
+                        type: 'decade_genre',
+                        decade: decadeForPlayback,
+                        genre: genreForPlayback
                     }
-                    : sel.mode === 'collection'
-                        ? (
-                            sel.programType === 'RADIO_COL'
-                                ? {
-                                    type: 'collection_radio',
-                                    collection_group_slug: sel.context?.collection_group_slug
-                                }
-                                : {
-                                    type: 'collection',
-                                    collection_slug: sel.context?.collection_slug
-                                }
-                        )
-                        : {
-                            type: 'decade_genre',
-                            decade: decadeForPlayback,
-                            genre: genreForPlayback
-                        }
         };
 
 
@@ -193,7 +188,7 @@
                 genre: sel.context?.genre ?? 'ALL',
                 tts_language: sel.language ?? 'en',
                 languages: (sel.languages ?? [sel.language]).join(','),
-                play_intro: String(settings.voices.includes('intro')),
+                play_intro: 'true',
                 play_detail: String(settings.voices.includes('detail')),
                 play_artist_description: String(settings.voices.includes('artist')),
                 play_track: 'true'
