@@ -54,6 +54,8 @@
     let completed = 0;
     let programTotal = 0;
 
+    $: isArtistSpotlight = $currentSelection?.mode === 'artist_spotlight';
+
     $: {
         const sel = $currentSelection;
         let key: string | null = null;
@@ -298,7 +300,7 @@
     />
 
 
-    {#if !isRadioMode}
+    {#if !isRadioMode && !isArtistSpotlight}
         <div class="progress-line">
             Completed {completed} of {programTotal} ({Math.round(percent)}%)
             <span class="dot">•</span>
