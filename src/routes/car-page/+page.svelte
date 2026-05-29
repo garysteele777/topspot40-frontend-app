@@ -67,19 +67,11 @@
 
 
     const pauseMessage = derived(
-        [playbackPhase, isPlaying],
-        ([$phase, $playing]) => {
-            if ($playing) return '';
+        [playbackPhase],
+        ([$phase]) => {
+            if ($phase !== 'paused') return '';
 
-            if ($phase === 'track') {
-                return '⏸ Paused — Press ▶ to resume track';
-            }
-
-            if ($phase === 'intro' || $phase === 'detail' || $phase === 'artist') {
-                return '⏸ Paused — Press ▶ to restart narration';
-            }
-
-            return '';
+            return '⏸ Paused — Press ▶ to resume';
         }
     );
 
@@ -150,7 +142,9 @@
                 spotify_track_id: trackObj.spotifyTrackId,
                 rank: trackObj.rank,
                 track_name: trackObj.trackName,
-                artist_name: trackObj.artistName
+                artist_name: trackObj.artistName,
+                intro: trackObj.intro,
+                detail: trackObj.detail
             },
             selection: {
                 ...sel,

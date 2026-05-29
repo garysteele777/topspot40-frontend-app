@@ -479,6 +479,12 @@ export function startPlaybackPolling() {
                     trackFinalized = false;
 
                     try {
+                        const sel = get(currentSelection);
+
+                        if (sel?.mode === 'artist_spotlight') {
+                            dlog('🎵 Artist Spotlight: backend controls Spotify start');
+                            return;
+                        }
                         await playSpotifyTrackApi(spotifyTrackId);
                         stopBed();
                     } catch (err) {
