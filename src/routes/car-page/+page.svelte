@@ -51,6 +51,7 @@
     let collectionNameMap: Record<string, string> = {};
     let lastProgramKey: string | null = null;
     let nextTrackLock = false;
+    let artistBioPlayedThisSet = false;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -162,7 +163,9 @@
                         programType: sel.programType,
                         artist_id: sel.context?.artist_id,
                         artist_name: sel.context?.artist_name ?? trackObj.artistName,
-                        spotify_artist_id: trackObj.spotifyArtistId
+                        spotify_artist_id: trackObj.spotifyArtistId,
+                        genre: sel.context?.genre ?? trackObj.genreSlug,
+                        play_artist_bio: !artistBioPlayedThisSet
                     }
                     : sel.mode === 'collection'
                         ? (
@@ -204,11 +207,15 @@
             return;
         }
 
-        await fetch(`${API_BASE}/playback/play-track`, {
+        const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
+
+        if (res.ok && sel.mode === 'artist_spotlight') {
+            artistBioPlayedThisSet = true;
+        }
     }
 
 

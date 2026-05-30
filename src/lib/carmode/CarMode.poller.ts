@@ -436,6 +436,12 @@ export function startPlaybackPolling() {
                             ? data.context.bed_audio_url
                             : null;
 
+                    console.log(
+                        '🎧 BED DEBUG',
+                        phase,
+                        data.context?.bed_audio_url
+                    );
+
                     if (bedAudioUrl && !isBedPlaying()) {
                         dlog('🎧 BED start:', bedAudioUrl);
                         startBedUrl(bedAudioUrl);
@@ -452,12 +458,6 @@ export function startPlaybackPolling() {
             /* ─────────────────────────────
                🎵 Track handling (Spotify)
                ───────────────────────────── */
-            // const sel = get(currentSelection);
-
-            // const sequenceEngineControlsSpotify =
-            //     sel?.programType === 'RADIO_DG' ||
-            //     sel?.programType === 'RADIO_COL' ||
-            //     sel?.programType === 'RADIO_ARTIST';
             if (
                 phase === 'track' &&
                 data.context?.spotify_track_id
@@ -483,6 +483,12 @@ export function startPlaybackPolling() {
 
                         if (sel?.mode === 'artist_spotlight') {
                             dlog('🎵 Artist Spotlight: backend controls Spotify start');
+
+                            if (isBedPlaying()) {
+                                dlog('🎧 BED stop: artist spotlight track start');
+                                stopBed();
+                            }
+
                             return;
                         }
                         await playSpotifyTrackApi(spotifyTrackId);

@@ -200,6 +200,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     if (modeParam === 'artist_spotlight') {
         const artistId = sp.get('artist_id') ?? '';
         const artistName = sp.get('artist') ?? '';
+        const genre = sp.get('genre') ?? '';
 
         return {
             programType: PROGRAM_TYPES.PROGRAM_ARTIST,
@@ -208,7 +209,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             languages,
             context: {
                 artist_id: artistId,
-                artist_name: artistName
+                artist_name: artistName,
+                genre
             },
             startRank: finalStartRank,
             endRank: 9999,

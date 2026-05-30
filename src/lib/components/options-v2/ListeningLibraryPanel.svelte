@@ -375,12 +375,13 @@ goto(`/car-page?${params.toString()}`);
                                                 const artist = selectedArtist;
                                                 if (!artist) return;
 
-                                                goto(
-                                                    `/car-page?mode=artist_spotlight` +
-                                                    `&artist_id=${artist.artist_id}` +
-                                                    `&artist=${encodeURIComponent(artist.artist_name)}`
-                                                );
-}}
+                                                    goto(
+                                                        `/car-page?mode=artist_spotlight` +
+                                                        `&artist_id=${artist.artist_id}` +
+                                                        `&artist=${encodeURIComponent(artist.artist_name)}` +
+                                                        `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
+                                                    );
+                                                    }}
                                         >
                                             ▶ Play Artist Spotlight
                                         </button>
