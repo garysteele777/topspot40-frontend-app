@@ -34,6 +34,20 @@
         artist_name: string;
     };
 
+    type ArtistStoryInfo = {
+        ok: boolean;
+        has_story: boolean;
+        story_id?: number;
+        artist_id?: number;
+        title?: string;
+        story_type?: string;
+        duration_seconds?: number;
+        tts_bucket?: string;
+        tts_key?: string;
+    };
+
+    let artistStoryInfo: ArtistStoryInfo | null = null;
+
     let selectedArtist: ArtistSpotlightItem | null = null;
     let artistTracks: ArtistTrackItem[] = [];
     let artistTracksLoading = false;
@@ -68,6 +82,7 @@
     async function loadArtistTracks(artist: ArtistSpotlightItem) {
         selectedArtist = artist;
         artistTracks = [];
+        artistStoryInfo = null;
         artistTracksError = null;
         artistTracksLoading = true;
 
@@ -81,11 +96,25 @@
             }
 
             artistTracks = await res.json();
+
+            const storyRes = await fetch(
+                `${API_BASE}/artist-spotlight/artist-story?artist_id=${artist.artist_id}&language=${language}`
+            );
+
+            if (storyRes.ok) {
+                artistStoryInfo = await storyRes.json();
+            }
         } catch (err) {
             artistTracksError = err instanceof Error ? err.message : 'Failed to load artist tracks.';
         } finally {
             artistTracksLoading = false;
         }
+    }
+
+    function formatMinutes(seconds?: number | null): string {
+        if (!seconds) return '';
+        const minutes = Math.max(1, Math.round(seconds / 60));
+        return ` (${minutes} min)`;
     }
 
     function titleCaseName(name: string): string {
@@ -363,17 +392,40 @@ goto(`/car-page?${params.toString()}`);
                                         ← Back to Artists
                                     </button>
 
-                                    <div class="genre-title">
+                                    <div class="spotlight-artist-title">
+                                        Spotlight Artist
+                                    </div>
+
+                                    <div class="spotlight-artist-name">
                                         {titleCaseName(selectedArtist.artist_name)}
-                                        • Artist Spotlight Tracks
                                     </div>
 
                                     <div class="artist-play-row">
+                                        {#if artistStoryInfo?.has_story}
+                                            <button
+                                                    class="play-artist-btn"
+                                                    on:click={() => {
+                const artist = selectedArtist;
+                if (!artist) return;
+
+                goto(
+                    `/story-player?type=artist_story` +
+                    `&artist_id=${artist.artist_id}` +
+                    `&artist=${encodeURIComponent(artist.artist_name)}` +
+                    `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}` +
+                    `&language=${language}`
+                );
+            }}
+                                            >
+                                                ▶ Play Artist Story{formatMinutes(artistStoryInfo.duration_seconds)}
+                                            </button>
+                                        {/if}
+
                                         <button
                                                 class="play-artist-btn"
                                                 on:click={() => {
-                                                const artist = selectedArtist;
-                                                if (!artist) return;
+                                                    const artist = selectedArtist;
+                                                    if (!artist) return;
 
                                                     goto(
                                                         `/car-page?mode=artist_spotlight` +
@@ -381,12 +433,11 @@ goto(`/car-page?${params.toString()}`);
                                                         `&artist=${encodeURIComponent(artist.artist_name)}` +
                                                         `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
                                                     );
-                                                    }}
+                                                }}
                                         >
                                             ▶ Play Artist Spotlight
                                         </button>
                                     </div>
-
                                     {#if artistTracksLoading}
                                         <div class="library-description">Loading tracks...</div>
                                     {:else if artistTracksError}
@@ -653,6 +704,9 @@ goto(`/car-page?${params.toString()}`);
     }
 
     .artist-play-row {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
         margin-bottom: 14px;
     }
 
@@ -703,6 +757,24 @@ goto(`/car-page?${params.toString()}`);
 
     .section-header-clickable {
         cursor: pointer;
+    }
+
+    .spotlight-artist-title {
+        text-align: center;
+        color: #cfb87c;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .spotlight-artist-name {
+        text-align: center;
+        color: #ffffff;
+        font-size: 2.2rem; /* was 2.0 */
+        font-weight: 800;
+        margin-bottom: 18px; /* was 14 */
     }
 
 </style>
