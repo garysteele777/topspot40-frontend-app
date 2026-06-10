@@ -8,6 +8,7 @@
         ok: boolean;
         story_id?: number;
         title?: string;
+        story_text?: string;
         duration_seconds?: number;
         tts_bucket?: string;
         tts_key?: string;
@@ -16,9 +17,17 @@
         artist_artwork?: string;
         message?: string;
     };
-
     let audio: HTMLAudioElement | null = null;
     let isPlaying = false;
+    let currentTime = 0;
+    let totalTime = 0;
+    let showMoreInfo = false;
+
+    $: progressPercent =
+        totalTime > 0
+            ? Math.min(100, (currentTime / totalTime) * 100)
+            : 0;
+
 
     let artistId: string | null = null;
     let artistName = '';
@@ -38,12 +47,58 @@
         audio?.pause();
 
         audio = new Audio(url);
+        audio.ontimeupdate = () => {
+            currentTime = audio?.currentTime ?? 0;
+        };
+
+        audio.onloadedmetadata = () => {
+            totalTime = audio?.duration ?? story?.duration_seconds ?? 0;
+        };
         audio.onended = () => {
             isPlaying = false;
         };
 
         audio.play();
         isPlaying = true;
+    }
+
+    function formatTime(seconds: number): string {
+        if (!Number.isFinite(seconds)) return '0:00';
+
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function pauseStory() {
+        audio?.pause();
+        isPlaying = false;
+    }
+
+    function resumeStory() {
+        audio?.play();
+        isPlaying = true;
+    }
+
+    function stopStory() {
+        audio?.pause();
+
+        if (audio) {
+            audio.currentTime = 0;
+        }
+
+        isPlaying = false;
+    }
+
+    function titleCase(value: string): string {
+        return value
+            .split(' ')
+            .map(word =>
+                word.charAt(0).toUpperCase() +
+                word.slice(1).toLowerCase()
+            )
+            .join(' ');
     }
 
     function formatMinutes(seconds?: number | null): string {
@@ -104,15 +159,65 @@
                 />
             {/if}
 
-            <h1>{story.title ?? `The Story of ${artistName}`}</h1>
+            <h1>{titleCase(story.artist_name ?? artistName)}</h1>
 
-            {#if story.duration_seconds}
+            {#if !audio && story.duration_seconds}
                 <div class="duration">{formatMinutes(story.duration_seconds)}</div>
             {/if}
 
-            <button class="play-btn" on:click={playStory}>
-                {isPlaying ? 'Playing...' : '▶ Play Story'}
-            </button>
+            {#if audio}
+                <div class="progress-container">
+                    <div
+                            class="progress-fill"
+                            style={`width: ${progressPercent}%`}
+                    ></div>
+                </div>
+
+                <div class="time-display">
+                    {formatTime(currentTime)} / {formatTime(totalTime || story.duration_seconds || 0)}
+                </div>
+            {/if}
+
+            <div class="story-controls">
+                {#if !audio}
+                    <button class="play-btn" on:click={playStory}>
+                        ▶ Play Story
+                    </button>
+                {:else if isPlaying}
+                    <button class="play-btn" on:click={pauseStory}>
+                        ⏸ Pause
+                    </button>
+
+                    <button class="secondary-btn" on:click={stopStory}>
+                        ■ Stop
+                    </button>
+                {:else}
+                    <button class="play-btn" on:click={resumeStory}>
+                        ▶ Resume
+                    </button>
+
+                    <button class="secondary-btn" on:click={stopStory}>
+                        ■ Stop
+                    </button>
+                {/if}
+            </div>
+
+            {#if story.story_text}
+                <button
+                        class="more-info-btn"
+                        on:click={() => showMoreInfo = !showMoreInfo}
+                >
+                    {showMoreInfo ? 'Hide Story Text' : 'Show Story Text'}
+                </button>
+            {/if}
+
+            {#if showMoreInfo && story.story_text}
+                <div class="story-text-panel">
+                    {#each story.story_text.split('\n').filter(p => p.trim()) as paragraph}
+                        <p>{paragraph}</p>
+                    {/each}
+                </div>
+            {/if}
         </div>
     {/if}
 </div>
@@ -136,9 +241,9 @@
     }
 
     .story-card {
-        max-width: 720px;
+        max-width: 900px;
         margin: 0 auto;
-        padding: 32px;
+        padding: 24px 32px;
         border-radius: 18px;
         background: rgba(18, 18, 18, 0.95);
         border: 1px solid rgba(207, 184, 124, 0.35);
@@ -193,7 +298,72 @@
         border-radius: 50%;
         border: 3px solid rgba(207, 184, 124, 0.65);
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-        margin: 8px auto 22px;
+        margin: 4px auto 16px;
         display: block;
     }
+
+    .story-controls {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .secondary-btn {
+        background: transparent;
+        color: #cfb87c;
+        border: 1px solid rgba(207, 184, 124, 0.55);
+        border-radius: 999px;
+        padding: 12px 24px;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .time-display {
+        color: #aaa;
+        font-size: 0.9rem;
+        margin-bottom: 18px;
+    }
+
+    .progress-container {
+        width: 100%;
+        max-width: 420px;
+        height: 8px;
+        margin: 12px auto 10px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: #cfb87c;
+        transition: width 0.25s linear;
+    }
+
+    .more-info-btn {
+        display: block;
+        margin: 20px auto;
+        background: transparent;
+        color: #cfb87c;
+        border: 1px solid rgba(207, 184, 124, 0.55);
+        border-radius: 999px;
+        padding: 10px 22px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .story-text-panel {
+        margin-top: 24px;
+        text-align: left;
+        max-width: 760px;
+        line-height: 1.8;
+        color: #e8e8e8;
+    }
+
+    .story-text-panel p {
+        margin-bottom: 18px;
+    }
+
 </style>
