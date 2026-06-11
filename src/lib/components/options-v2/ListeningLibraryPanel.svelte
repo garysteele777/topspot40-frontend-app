@@ -34,19 +34,23 @@
         artist_name: string;
     };
 
-    type ArtistStoryInfo = {
-        ok: boolean;
-        has_story: boolean;
-        story_id?: number;
-        artist_id?: number;
-        title?: string;
-        story_type?: string;
-        duration_seconds?: number;
-        tts_bucket?: string;
-        tts_key?: string;
+    type DocuseriesCollection = {
+        id: number;
+        slug: string;
+        name: string;
+        description?: string;
+        sort_order: number;
     };
 
-    let artistStoryInfo: ArtistStoryInfo | null = null;
+    type DocuseriesItem = {
+        id: number;
+        slug: string;
+        title: string;
+        short_description?: string | null;
+        artwork_url?: string | null;
+        target_length?: string | null;
+        sort_order: number;
+    };
 
     let selectedArtist: ArtistSpotlightItem | null = null;
     let artistTracks: ArtistTrackItem[] = [];
@@ -56,6 +60,12 @@
     let artistSpotlightItems: ArtistSpotlightItem[] = [];
     let artistSpotlightLoading = false;
     let artistSpotlightError: string | null = null;
+
+    let docuseriesCollections: DocuseriesCollection[] = [];
+    let selectedDocuseriesCollection: string | null = null;
+    let docuseriesItems: DocuseriesItem[] = [];
+    let docuseriesLoading = false;
+    let docuseriesError: string | null = null;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -82,7 +92,6 @@
     async function loadArtistTracks(artist: ArtistSpotlightItem) {
         selectedArtist = artist;
         artistTracks = [];
-        artistStoryInfo = null;
         artistTracksError = null;
         artistTracksLoading = true;
 
@@ -96,25 +105,11 @@
             }
 
             artistTracks = await res.json();
-
-            const storyRes = await fetch(
-                `${API_BASE}/artist-spotlight/artist-story?artist_id=${artist.artist_id}&language=${language}`
-            );
-
-            if (storyRes.ok) {
-                artistStoryInfo = await storyRes.json();
-            }
         } catch (err) {
             artistTracksError = err instanceof Error ? err.message : 'Failed to load artist tracks.';
         } finally {
             artistTracksLoading = false;
         }
-    }
-
-    function formatMinutes(seconds?: number | null): string {
-        if (!seconds) return '';
-        const minutes = Math.max(1, Math.round(seconds / 60));
-        return ` (${minutes} min)`;
     }
 
     function titleCaseName(name: string): string {
@@ -141,6 +136,50 @@
             artistSpotlightError = err instanceof Error ? err.message : 'Failed to load artists.';
         } finally {
             artistSpotlightLoading = false;
+        }
+    }
+
+    async function loadDocuseriesCollections() {
+        docuseriesLoading = true;
+        docuseriesError = null;
+        docuseriesItems = [];
+        selectedDocuseriesCollection = null;
+
+        try {
+            const res = await fetch(`${API_BASE}/music-docuseries/collections`);
+
+            if (!res.ok) {
+                throw new Error(`Request failed: ${res.status}`);
+            }
+
+            docuseriesCollections = await res.json();
+        } catch (err) {
+            docuseriesError = err instanceof Error ? err.message : 'Failed to load Music Docuseries.';
+        } finally {
+            docuseriesLoading = false;
+        }
+    }
+
+    async function loadDocuseriesItems(collectionSlug: string) {
+        selectedDocuseriesCollection = collectionSlug;
+        docuseriesLoading = true;
+        docuseriesError = null;
+        docuseriesItems = [];
+
+        try {
+            const res = await fetch(
+                `${API_BASE}/music-docuseries/items?collection_slug=${collectionSlug}`
+            );
+
+            if (!res.ok) {
+                throw new Error(`Request failed: ${res.status}`);
+            }
+
+            docuseriesItems = await res.json();
+        } catch (err) {
+            docuseriesError = err instanceof Error ? err.message : 'Failed to load Docuseries items.';
+        } finally {
+            docuseriesLoading = false;
         }
     }
 
@@ -293,8 +332,75 @@ goto(`/car-page?${params.toString()}`);
                         </button>
                     {/each}
 
+                    <button
+                            class:selected={selectedCollectionGroup === 'music_docuseries'}
+                            on:click={() => {
+                                selectedCollectionGroup = 'music_docuseries';
+                                loadDocuseriesCollections();
+                            }}
+                    >
+                        🎙 Music Docuseries
+                    </button>
+
                 </div>
-                {#if selectedCollectionGroup && selectedCollectionGroup !== 'ALL'}
+
+                {#if selectedCollectionGroup === 'music_docuseries'}
+
+                    <div class="genre-section">
+
+                        <div class="genre-title">
+                            Music Docuseries Collections • Select a Collection
+                        </div>
+
+                        {#if docuseriesLoading}
+                            <div class="library-description">
+                                Loading Music Docuseries...
+                            </div>
+                        {:else if docuseriesError}
+                            <div class="library-description">
+                                {docuseriesError}
+                            </div>
+                        {:else}
+                            <div class="genre-grid">
+                                {#each docuseriesCollections as collection}
+                                    <button
+                                            class="genre-btn"
+                                            class:selected={selectedDocuseriesCollection === collection.slug}
+                                            on:click={() => loadDocuseriesItems(collection.slug)}
+                                    >
+                                        {collection.name}
+                                    </button>
+                                {/each}
+                            </div>
+
+                            {#if docuseriesItems.length}
+                                <div class="genre-title" style="margin-top:16px;">
+                                    {docuseriesCollections.find(c => c.slug === selectedDocuseriesCollection)?.name}
+                                    • Select a Story
+                                </div>
+
+                                <div class="genre-grid">
+                                    {#each docuseriesItems as item}
+                                        <button
+                                                class="genre-btn"
+                                                on:click={() => {
+                                    goto(
+                                        `/story-player?type=music_docuseries` +
+                                        `&slug=${item.slug}` +
+                                        `&language=${language}`
+                                    );
+                                }}
+                                        >
+                                            {item.title}
+                                        </button>
+                                    {/each}
+                                </div>
+                            {/if}
+                        {/if}
+
+                    </div>
+
+                {:else if selectedCollectionGroup && selectedCollectionGroup !== 'ALL'}
 
                     <div class="genre-section">
 
@@ -304,31 +410,27 @@ goto(`/car-page?${params.toString()}`);
                         </div>
 
                         <div class="genre-grid">
-
                             {#each collectionGroups.find(g => g.slug === selectedCollectionGroup)?.items ?? [] as collection}
-
                                 <button
                                         class="genre-btn"
                                         on:click={() => {
-                                        goto(
-                                            `/car-page?mode=collection` +
-                                            `&collection=${collection.slug}` +
-                                            `&collection_group=${selectedCollectionGroup}` +
-                                            `&language=${language}` +
-                                            `&languages=${languages.join(',')}` +
-                                            `&voices=${voices.join(',')}` +
-                                            `&playbackOrder=${playbackOrder}` +
-                                            `&voicePlayMode=${voicePlayMode}` +
-                                            `&pauseMode=${pauseMode}` +
-                                            `&skipPlayed=${skipPlayed}`
-                                        );
-                                                                            }}
+                            goto(
+                                `/car-page?mode=collection` +
+                                `&collection=${collection.slug}` +
+                                `&collection_group=${selectedCollectionGroup}` +
+                                `&language=${language}` +
+                                `&languages=${languages.join(',')}` +
+                                `&voices=${voices.join(',')}` +
+                                `&playbackOrder=${playbackOrder}` +
+                                `&voicePlayMode=${voicePlayMode}` +
+                                `&pauseMode=${pauseMode}` +
+                                `&skipPlayed=${skipPlayed}`
+                            );
+                        }}
                                 >
                                     {collection.name}
                                 </button>
-
                             {/each}
-
                         </div>
 
                     </div>
@@ -401,25 +503,22 @@ goto(`/car-page?${params.toString()}`);
                                     </div>
 
                                     <div class="artist-play-row">
-                                        {#if artistStoryInfo?.has_story}
-                                            <button
-                                                    class="play-artist-btn"
-                                                    on:click={() => {
+                                        <button
+                                                class="play-artist-btn"
+                                                on:click={() => {
                 const artist = selectedArtist;
                 if (!artist) return;
 
                 goto(
-                    `/story-player?type=artist_story` +
+                    `/car-page?mode=artist_bio` +
                     `&artist_id=${artist.artist_id}` +
                     `&artist=${encodeURIComponent(artist.artist_name)}` +
-                    `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}` +
-                    `&language=${language}`
+                    `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
                 );
             }}
-                                            >
-                                                ▶ Play Artist Story{formatMinutes(artistStoryInfo.duration_seconds)}
-                                            </button>
-                                        {/if}
+                                        >
+                                            ▶ Play Artist Bio (3 min)
+                                        </button>
 
                                         <button
                                                 class="play-artist-btn"
@@ -704,9 +803,6 @@ goto(`/car-page?${params.toString()}`);
     }
 
     .artist-play-row {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
         margin-bottom: 14px;
     }
 
