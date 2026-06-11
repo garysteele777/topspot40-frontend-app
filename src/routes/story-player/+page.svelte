@@ -16,6 +16,10 @@
         artist_name?: string;
         artist_artwork?: string;
         message?: string;
+        content_type?: string;
+        slug?: string;
+        artwork_url?: string;
+        target_length?: string;
     };
     let audio: HTMLAudioElement | null = null;
     let isPlaying = false;
@@ -32,6 +36,9 @@
     let artistId: string | null = null;
     let artistName = '';
     let language = 'en';
+
+    let contentType = 'artist_story';
+    let slug: string | null = null;
 
     let story: StoryResponse | null = null;
     let error: string | null = null;
@@ -112,24 +119,43 @@
         artistName = $page.url.searchParams.get('artist') ?? '';
         language = $page.url.searchParams.get('language') ?? 'en';
 
-        if (!artistId) {
-            error = 'Missing artist id.';
-            loading = false;
-            return;
-        }
+        contentType = $page.url.searchParams.get('type') ?? 'artist_story';
+        slug = $page.url.searchParams.get('slug');
 
         try {
-            const res = await fetch(
-                `${API_BASE}/artist-spotlight/play-artist-story?artist_id=${artistId}&language=${language}`,
-                {method: 'POST'}
-            );
+            let url = '';
+
+            if (contentType === 'music_docuseries') {
+                if (!slug) {
+                    error = 'Missing docuseries slug.';
+                    loading = false;
+                    return;
+                }
+
+                url =
+                    `${API_BASE}/music-docuseries/play` +
+                    `?slug=${slug}&language=${language}`;
+            } else {
+                if (!artistId) {
+                    error = 'Missing artist id.';
+                    loading = false;
+                    return;
+                }
+
+                url =
+                    `${API_BASE}/artist-spotlight/play-artist-story` +
+                    `?artist_id=${artistId}&language=${language}`;
+            }
+
+            const res = await fetch(url, {
+                method: 'POST'
+            });
 
             story = await res.json();
 
             if (story && !story.ok) {
-                error = story.message ?? 'Artist story not found.';
+                error = story.message ?? 'Story not found.';
             }
-
         } catch (err) {
             error = err instanceof Error ? err.message : 'Failed to load artist story.';
         } finally {
@@ -149,17 +175,24 @@
         <div class="status error">{error}</div>
     {:else if story}
         <div class="story-card">
-            <div class="label">Artist Story</div>
+            <div class="label">
+                {contentType === 'music_docuseries'
+                    ? 'Music Docuseries'
+                    : 'Artist Story'}
+            </div>
 
-            {#if story.artist_artwork}
+            {#if story.artist_artwork || story.artwork_url}
                 <img
                         class="artist-artwork"
-                        src={story.artist_artwork}
-                        alt={story.title ?? 'Artist artwork'}
+                        src={story.artist_artwork ?? story.artwork_url}
+                        alt={story.title ?? 'Artwork'}
                 />
             {/if}
-
-            <h1>{titleCase(story.artist_name ?? artistName)}</h1>
+            <h1>
+                {contentType === 'music_docuseries'
+                    ? story.title
+                    : titleCase(story.artist_name ?? artistName)}
+            </h1>
 
             {#if !audio && story.duration_seconds}
                 <div class="duration">{formatMinutes(story.duration_seconds)}</div>
