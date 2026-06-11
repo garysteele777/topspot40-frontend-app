@@ -21,7 +21,7 @@ export async function startBedUrl(url: string): Promise<void> {
     await bedAudio.play();
 
     // 🎧 Fade in
-    const targetVolume = 0.085;
+    const targetVolume = 0.065;
     const step = 0.02;
 
     const fadeIn = setInterval(() => {

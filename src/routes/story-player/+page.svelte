@@ -12,6 +12,8 @@
         duration_seconds?: number;
         tts_bucket?: string;
         tts_key?: string;
+        bed_bucket?: string;
+        bed_key?: string;
         artist_id?: number;
         artist_name?: string;
         artist_artwork?: string;
@@ -22,6 +24,9 @@
         target_length?: string;
     };
     let audio: HTMLAudioElement | null = null;
+    let bedAudio: HTMLAudioElement | null = null;
+    const BED_VOLUME = 0.02;
+
     let isPlaying = false;
     let currentTime = 0;
     let totalTime = 0;
@@ -47,13 +52,29 @@
     function playStory() {
         if (!story?.tts_bucket || !story?.tts_key) return;
 
-        const url =
+        const narrationUrl =
             `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/` +
             `${story.tts_bucket}/${story.tts_key}`;
 
-        audio?.pause();
+        const bedUrl =
+            story.bed_bucket && story.bed_key
+                ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/` +
+                `${story.bed_bucket}/${story.bed_key}`
+                : null;
 
-        audio = new Audio(url);
+        audio?.pause();
+        bedAudio?.pause();
+
+        audio = new Audio(narrationUrl);
+
+        if (bedUrl) {
+            bedAudio = new Audio(bedUrl);
+            bedAudio.loop = true;
+            bedAudio.volume = BED_VOLUME;
+        } else {
+            bedAudio = null;
+        }
+
         audio.ontimeupdate = () => {
             currentTime = audio?.currentTime ?? 0;
         };
@@ -61,9 +82,20 @@
         audio.onloadedmetadata = () => {
             totalTime = audio?.duration ?? story?.duration_seconds ?? 0;
         };
+
         audio.onended = () => {
             isPlaying = false;
+
+            if (bedAudio) {
+                bedAudio.pause();
+                bedAudio.currentTime = 0;
+            }
         };
+
+        if (bedAudio) {
+            bedAudio.play().catch(() => {
+            });
+        }
 
         audio.play();
         isPlaying = true;
@@ -80,21 +112,30 @@
 
     function pauseStory() {
         audio?.pause();
+        bedAudio?.pause();
         isPlaying = false;
     }
 
     function resumeStory() {
+        bedAudio?.play().catch(() => {
+        });
         audio?.play();
         isPlaying = true;
     }
 
     function stopStory() {
         audio?.pause();
+        bedAudio?.pause();
 
         if (audio) {
             audio.currentTime = 0;
         }
 
+        if (bedAudio) {
+            bedAudio.currentTime = 0;
+        }
+
+        currentTime = 0;
         isPlaying = false;
     }
 

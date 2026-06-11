@@ -25,6 +25,18 @@
         total_track_count: number;
     };
 
+    type ArtistStoryInfo = {
+        ok: boolean;
+        has_story: boolean;
+        story_id?: number;
+        artist_id?: number;
+        title?: string;
+        story_type?: string;
+        duration_seconds?: number;
+        tts_bucket?: string;
+        tts_key?: string;
+    };
+
     type ArtistTrackItem = {
         track_id: number;
         track_name: string;
@@ -56,6 +68,7 @@
     let artistTracks: ArtistTrackItem[] = [];
     let artistTracksLoading = false;
     let artistTracksError: string | null = null;
+    let artistStoryInfo: ArtistStoryInfo | null = null;
 
     let artistSpotlightItems: ArtistSpotlightItem[] = [];
     let artistSpotlightLoading = false;
@@ -92,6 +105,7 @@
     async function loadArtistTracks(artist: ArtistSpotlightItem) {
         selectedArtist = artist;
         artistTracks = [];
+        artistStoryInfo = null;
         artistTracksError = null;
         artistTracksLoading = true;
 
@@ -105,6 +119,14 @@
             }
 
             artistTracks = await res.json();
+
+            const storyRes = await fetch(
+                `${API_BASE}/artist-spotlight/artist-story?artist_id=${artist.artist_id}&language=${language}`
+            );
+
+            if (storyRes.ok) {
+                artistStoryInfo = await storyRes.json();
+            }
         } catch (err) {
             artistTracksError = err instanceof Error ? err.message : 'Failed to load artist tracks.';
         } finally {
@@ -503,57 +525,65 @@ goto(`/car-page?${params.toString()}`);
                                     </div>
 
                                     <div class="artist-play-row">
-                                        <button
-                                                class="play-artist-btn"
-                                                on:click={() => {
+
+                                            {#if artistStoryInfo?.has_story}
+                                                <button
+                                                        class="play-artist-btn"
+                                                        on:click={() => {
+                    const artist = selectedArtist;
+                    if (!artist) return;
+
+                    goto(
+                        `/story-player?type=artist_story` +
+                        `&artist_id=${artist.artist_id}` +
+                        `&artist=${encodeURIComponent(artist.artist_name)}` +
+                        `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}` +
+                        `&language=${language}`
+                    );
+                }}
+                                                >
+                                                    ▶ Play Artist Story
+                                                    {artistStoryInfo.duration_seconds
+                                                        ? ` (${Math.max(1, Math.round(artistStoryInfo.duration_seconds / 60))} min)`
+                                                        : ''}
+                                                </button>
+                                            {/if}
+
+                                            <button
+                                                    class="play-artist-btn"
+                                                    on:click={() => {
                 const artist = selectedArtist;
                 if (!artist) return;
 
                 goto(
-                    `/car-page?mode=artist_bio` +
+                    `/car-page?mode=artist_spotlight` +
                     `&artist_id=${artist.artist_id}` +
                     `&artist=${encodeURIComponent(artist.artist_name)}` +
                     `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
                 );
             }}
-                                        >
-                                            ▶ Play Artist Bio (3 min)
-                                        </button>
+                                            >
+                                                ▶ Play Artist Spotlight
+                                            </button>
 
-                                        <button
-                                                class="play-artist-btn"
-                                                on:click={() => {
-                                                    const artist = selectedArtist;
-                                                    if (!artist) return;
-
-                                                    goto(
-                                                        `/car-page?mode=artist_spotlight` +
-                                                        `&artist_id=${artist.artist_id}` +
-                                                        `&artist=${encodeURIComponent(artist.artist_name)}` +
-                                                        `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
-                                                    );
-                                                }}
-                                        >
-                                            ▶ Play Artist Spotlight
-                                        </button>
-                                    </div>
-                                    {#if artistTracksLoading}
-                                        <div class="library-description">Loading tracks...</div>
-                                    {:else if artistTracksError}
-                                        <div class="library-description">{artistTracksError}</div>
-                                    {:else}
-                                        <div class="track-grid">
-                                            {#each artistTracks as track}
-                                                <button class="track-btn">
-                                                    <div class="track-name">
-                                                        {titleCaseName(track.track_name)}
-                                                    </div>
-                                                </button>
-                                            {/each}
                                         </div>
-                                    {/if}
+                                        {#if artistTracksLoading}
+                                            <div class="library-description">Loading tracks...</div>
+                                        {:else if artistTracksError}
+                                            <div class="library-description">{artistTracksError}</div>
+                                        {:else}
+                                            <div class="track-grid">
+                                                {#each artistTracks as track}
+                                                    <button class="track-btn">
+                                                        <div class="track-name">
+                                                            {titleCaseName(track.track_name)}
+                                                        </div>
+                                                    </button>
+                                                {/each}
+                                            </div>
+                                        {/if}
 
-                                </div>
+                                    </div>
 
                             {:else}
 
