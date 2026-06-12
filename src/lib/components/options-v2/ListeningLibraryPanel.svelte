@@ -70,7 +70,7 @@
     let artistTracksLoading = false;
     let artistTracksError: string | null = null;
     let artistStoryInfo: ArtistStoryInfo | null = null;
-    let artistRange = 'ALL';
+    let artistRange = 'A-D';
 
     let artistSpotlightItems: ArtistSpotlightItem[] = [];
     let artistSpotlightLoading = false;
@@ -103,23 +103,24 @@
     let selectedDecade: string | null = null;
     let selectedCollectionGroup: string | null = null;
     let selectedArtistGenre: string | null = 'all';
-    let featuredOnly = true;
+    let artistCategory = 'featured';
 
-    $: filteredArtists = artistSpotlightItems.filter((artist) => {
+    $: filteredArtists = artistSpotlightItems
+        .filter((artist) => {
+            const first = artist.artist_name.charAt(0).toUpperCase();
 
-        if (artistRange === 'ALL') return true;
+            if (artistRange === 'A-D') return first >= 'A' && first <= 'D';
+            if (artistRange === 'E-H') return first >= 'E' && first <= 'H';
+            if (artistRange === 'I-L') return first >= 'I' && first <= 'L';
+            if (artistRange === 'M-P') return first >= 'M' && first <= 'P';
+            if (artistRange === 'Q-T') return first >= 'Q' && first <= 'T';
+            if (artistRange === 'U-Z') return first >= 'U' && first <= 'Z';
 
-        const first = artist.artist_name.charAt(0).toUpperCase();
-
-        if (artistRange === 'A-D') return first >= 'A' && first <= 'D';
-        if (artistRange === 'E-H') return first >= 'E' && first <= 'H';
-        if (artistRange === 'I-L') return first >= 'I' && first <= 'L';
-        if (artistRange === 'M-P') return first >= 'M' && first <= 'P';
-        if (artistRange === 'Q-T') return first >= 'Q' && first <= 'T';
-        if (artistRange === 'U-Z') return first >= 'U' && first <= 'Z';
-
-        return true;
-    });
+            return false;
+        })
+        .sort((a, b) =>
+            titleCaseName(a.artist_name).localeCompare(titleCaseName(b.artist_name))
+        );
 
     async function loadArtistTracks(artist: ArtistSpotlightItem) {
         selectedArtist = artist;
@@ -159,7 +160,7 @@
 
     async function loadArtistSpotlights(
         genreId: string,
-        featured: boolean = featuredOnly
+        featured: boolean = artistCategory === 'featured'
     ) {
         selectedArtistGenre = genreId;
         artistSpotlightItems = [];
@@ -491,35 +492,39 @@ goto(`/car-page?${params.toString()}`);
 
             {:else}
 
-                <div class="decade-grid" style="margin-bottom:12px;">
+                <div class="library-buttons artist-category-buttons">
                     <button
-                            class:selected={featuredOnly}
+                            class:selected={artistCategory === 'featured'}
                             on:click={() => {
-            featuredOnly = true;
-            loadArtistSpotlights(selectedArtistGenre ?? 'all');
-        }}
+                                artistCategory = 'featured';
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all');
+                            }}
                     >
                         ⭐ Featured Artists
                     </button>
 
                     <button
-                            class:selected={!featuredOnly}
+                            class:selected={artistCategory === 'other'}
                             on:click={() => {
-            featuredOnly = false;
-            loadArtistSpotlights(selectedArtistGenre ?? 'all');
-        }}
+                                artistCategory = 'other';
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all');
+                            }}
                     >
-                        All Artists
+                        🎵 Other Artists
+                    </button>
+
+                    <button
+                            class:selected={artistCategory === 'single'}
+                            on:click={() => {
+                                artistCategory = 'single';
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all');
+                            }}
+                    >
+                        🎵 Single Track Artists
                     </button>
                 </div>
 
-                <div class="decade-grid" style="margin-bottom:12px;">
-                    <button
-                            class:selected={artistRange === 'ALL'}
-                            on:click={() => artistRange = 'ALL'}
-                    >
-                        All
-                    </button>
+                <div class="alphabet-grid" style="margin-bottom:12px;">
 
                     <button
                             class:selected={artistRange === 'A-D'}
@@ -594,7 +599,13 @@ goto(`/car-page?${params.toString()}`);
                     <div class="genre-section">
 
                         <div class="genre-title">
-                            {featuredOnly ? 'Featured Artists' : 'All Artists'}
+                            {#if artistCategory === 'featured'}
+                                Featured Artists
+                            {:else if artistCategory === 'other'}
+                                Other Artists
+                            {:else}
+                                Single Track Artists
+                            {/if}
                             • Select an Artist to Start Listening
                         </div>
 
@@ -762,10 +773,19 @@ goto(`/car-page?${params.toString()}`);
         line-height: 1.3;
     }
 
+    .library-buttons button.active,
+    .library-buttons button.selected {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 600;
+    }
+
     .library-buttons {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
+        gap: 8px;
+        margin-bottom: 12px;
     }
 
     .library-buttons button {
@@ -1021,6 +1041,42 @@ goto(`/car-page?${params.toString()}`);
 
     .story-star {
         margin-right: 6px;
+    }
+
+    .alphabet-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .alphabet-grid button {
+        border-radius: 999px;
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #ddd;
+        padding: 7px 10px;
+        cursor: pointer;
+        font-size: 0.82rem;
+    }
+
+    .alphabet-grid button.selected {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 700;
+    }
+
+    .artist-category-buttons {
+        margin-bottom: 12px;
+    }
+
+    .artist-category-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+        width: 100%;
     }
 
 </style>
