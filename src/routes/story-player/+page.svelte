@@ -25,7 +25,7 @@
     };
     let audio: HTMLAudioElement | null = null;
     let bedAudio: HTMLAudioElement | null = null;
-    const BED_VOLUME = 0.02;
+    const BED_VOLUME = 0.002;
 
     let isPlaying = false;
     let currentTime = 0;
