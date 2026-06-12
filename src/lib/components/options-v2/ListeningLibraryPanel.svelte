@@ -100,7 +100,7 @@
 
     let selectedDecade: string | null = null;
     let selectedCollectionGroup: string | null = null;
-    let selectedArtistGenre: string | null = null;
+    let selectedArtistGenre: string | null = 'all';
 
     async function loadArtistTracks(artist: ArtistSpotlightItem) {
         selectedArtist = artist;
@@ -261,9 +261,13 @@
             <button
                     class:active={!collapsed && libraryMode === 'artists'}
                     on:click|stopPropagation={() => {
-            if (collapsed) onActivate?.();
-            libraryMode = 'artists';
-        }}
+                        if (collapsed) onActivate?.();
+                        libraryMode = 'artists';
+
+                        if (artistSpotlightItems.length === 0) {
+                            loadArtistSpotlights('all');
+                        }
+                    }}
             >
                 Artist Spotlight
             </button>
@@ -463,10 +467,18 @@ goto(`/car-page?${params.toString()}`);
             {:else}
 
                 <div class="genre-title">
-                    Pick a Genre Below to See Artist Spotlights
+                    Browse All Artists or Filter by Genre
                 </div>
 
                 <div class="genre-grid">
+                    <button
+                            class="genre-btn"
+                            class:selected={selectedArtistGenre === 'all'}
+                            on:click={() => loadArtistSpotlights('all')}
+                    >
+                        All Genres
+                    </button>
+
                     {#each genreOptions.filter(g => g.id !== 'tv_themes') as genre}
 
                         <button
@@ -526,10 +538,10 @@ goto(`/car-page?${params.toString()}`);
 
                                     <div class="artist-play-row">
 
-                                            {#if artistStoryInfo?.has_story}
-                                                <button
-                                                        class="play-artist-btn"
-                                                        on:click={() => {
+                                        {#if artistStoryInfo?.has_story}
+                                            <button
+                                                    class="play-artist-btn"
+                                                    on:click={() => {
                     const artist = selectedArtist;
                     if (!artist) return;
 
@@ -541,17 +553,17 @@ goto(`/car-page?${params.toString()}`);
                         `&language=${language}`
                     );
                 }}
-                                                >
-                                                    ▶ Play Artist Story
-                                                    {artistStoryInfo.duration_seconds
-                                                        ? ` (${Math.max(1, Math.round(artistStoryInfo.duration_seconds / 60))} min)`
-                                                        : ''}
-                                                </button>
-                                            {/if}
+                                            >
+                                                ▶ Play Artist Story
+                                                {artistStoryInfo.duration_seconds
+                                                    ? ` (${Math.max(1, Math.round(artistStoryInfo.duration_seconds / 60))} min)`
+                                                    : ''}
+                                            </button>
+                                        {/if}
 
-                                            <button
-                                                    class="play-artist-btn"
-                                                    on:click={() => {
+                                        <button
+                                                class="play-artist-btn"
+                                                on:click={() => {
                 const artist = selectedArtist;
                 if (!artist) return;
 
@@ -562,28 +574,28 @@ goto(`/car-page?${params.toString()}`);
                     `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
                 );
             }}
-                                            >
-                                                ▶ Play Artist Spotlight
-                                            </button>
-
-                                        </div>
-                                        {#if artistTracksLoading}
-                                            <div class="library-description">Loading tracks...</div>
-                                        {:else if artistTracksError}
-                                            <div class="library-description">{artistTracksError}</div>
-                                        {:else}
-                                            <div class="track-grid">
-                                                {#each artistTracks as track}
-                                                    <button class="track-btn">
-                                                        <div class="track-name">
-                                                            {titleCaseName(track.track_name)}
-                                                        </div>
-                                                    </button>
-                                                {/each}
-                                            </div>
-                                        {/if}
+                                        >
+                                            ▶ Play Artist Spotlight
+                                        </button>
 
                                     </div>
+                                    {#if artistTracksLoading}
+                                        <div class="library-description">Loading tracks...</div>
+                                    {:else if artistTracksError}
+                                        <div class="library-description">{artistTracksError}</div>
+                                    {:else}
+                                        <div class="track-grid">
+                                            {#each artistTracks as track}
+                                                <button class="track-btn">
+                                                    <div class="track-name">
+                                                        {titleCaseName(track.track_name)}
+                                                    </div>
+                                                </button>
+                                            {/each}
+                                        </div>
+                                    {/if}
+
+                                </div>
 
                             {:else}
 
@@ -598,10 +610,14 @@ goto(`/car-page?${params.toString()}`);
                                             </div>
 
                                             <div class="artist-count">
-                                                {artist.genre_track_count}
-                                                {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
-                                                •
-                                                {artist.total_track_count} Total
+                                                {#if selectedArtistGenre === 'all'}
+                                                    {artist.total_track_count} Total
+                                                {:else}
+                                                    {artist.genre_track_count}
+                                                    {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
+                                                    •
+                                                    {artist.total_track_count} Total
+                                                {/if}
                                             </div>
                                         </button>
                                     {/each}
