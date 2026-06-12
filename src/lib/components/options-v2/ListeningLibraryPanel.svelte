@@ -23,6 +23,7 @@
         artist_name: string;
         genre_track_count: number;
         total_track_count: number;
+        has_story: boolean;
     };
 
     type ArtistStoryInfo = {
@@ -69,6 +70,7 @@
     let artistTracksLoading = false;
     let artistTracksError: string | null = null;
     let artistStoryInfo: ArtistStoryInfo | null = null;
+    let artistRange = 'ALL';
 
     let artistSpotlightItems: ArtistSpotlightItem[] = [];
     let artistSpotlightLoading = false;
@@ -101,6 +103,23 @@
     let selectedDecade: string | null = null;
     let selectedCollectionGroup: string | null = null;
     let selectedArtistGenre: string | null = 'all';
+    let featuredOnly = true;
+
+    $: filteredArtists = artistSpotlightItems.filter((artist) => {
+
+        if (artistRange === 'ALL') return true;
+
+        const first = artist.artist_name.charAt(0).toUpperCase();
+
+        if (artistRange === 'A-D') return first >= 'A' && first <= 'D';
+        if (artistRange === 'E-H') return first >= 'E' && first <= 'H';
+        if (artistRange === 'I-L') return first >= 'I' && first <= 'L';
+        if (artistRange === 'M-P') return first >= 'M' && first <= 'P';
+        if (artistRange === 'Q-T') return first >= 'Q' && first <= 'T';
+        if (artistRange === 'U-Z') return first >= 'U' && first <= 'Z';
+
+        return true;
+    });
 
     async function loadArtistTracks(artist: ArtistSpotlightItem) {
         selectedArtist = artist;
@@ -138,7 +157,10 @@
         return name.replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    async function loadArtistSpotlights(genreId: string) {
+    async function loadArtistSpotlights(
+        genreId: string,
+        featured: boolean = featuredOnly
+    ) {
         selectedArtistGenre = genreId;
         artistSpotlightItems = [];
         artistSpotlightError = null;
@@ -146,7 +168,10 @@
 
         try {
             const res = await fetch(
-                `${API_BASE}/artist-spotlight/artists-by-genre?genre=${genreId}&min_tracks=2`
+                `${API_BASE}/artist-spotlight/artists-by-genre` +
+                `?genre=${genreId}` +
+                `&min_tracks=2` +
+                `&featured_only=${featured}`
             );
 
             if (!res.ok) {
@@ -466,6 +491,79 @@ goto(`/car-page?${params.toString()}`);
 
             {:else}
 
+                <div class="decade-grid" style="margin-bottom:12px;">
+                    <button
+                            class:selected={featuredOnly}
+                            on:click={() => {
+            featuredOnly = true;
+            loadArtistSpotlights(selectedArtistGenre ?? 'all');
+        }}
+                    >
+                        ⭐ Featured Artists
+                    </button>
+
+                    <button
+                            class:selected={!featuredOnly}
+                            on:click={() => {
+            featuredOnly = false;
+            loadArtistSpotlights(selectedArtistGenre ?? 'all');
+        }}
+                    >
+                        All Artists
+                    </button>
+                </div>
+
+                <div class="decade-grid" style="margin-bottom:12px;">
+                    <button
+                            class:selected={artistRange === 'ALL'}
+                            on:click={() => artistRange = 'ALL'}
+                    >
+                        All
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'A-D'}
+                            on:click={() => artistRange = 'A-D'}
+                    >
+                        A-D
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'E-H'}
+                            on:click={() => artistRange = 'E-H'}
+                    >
+                        E-H
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'I-L'}
+                            on:click={() => artistRange = 'I-L'}
+                    >
+                        I-L
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'M-P'}
+                            on:click={() => artistRange = 'M-P'}
+                    >
+                        M-P
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'Q-T'}
+                            on:click={() => artistRange = 'Q-T'}
+                    >
+                        Q-T
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'U-Z'}
+                            on:click={() => artistRange = 'U-Z'}
+                    >
+                        U-Z
+                    </button>
+                </div>
+
                 <div class="genre-title">
                     Browse All Artists or Filter by Genre
                 </div>
@@ -496,8 +594,8 @@ goto(`/car-page?${params.toString()}`);
                     <div class="genre-section">
 
                         <div class="genre-title">
-                            {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
-                            Artists • Select an Artist to Start Listening
+                            {featuredOnly ? 'Featured Artists' : 'All Artists'}
+                            • Select an Artist to Start Listening
                         </div>
 
                         {#if artistSpotlightLoading}
@@ -600,15 +698,17 @@ goto(`/car-page?${params.toString()}`);
                             {:else}
 
                                 <div class="artist-grid">
-                                    {#each artistSpotlightItems as artist}
+                                    {#each filteredArtists as artist}
                                         <button
                                                 class="artist-btn"
                                                 on:click={() => loadArtistTracks(artist)}
                                         >
                                             <div class="artist-name">
+                                                {#if artist.has_story}
+                                                    <span class="story-star">⭐</span>
+                                                {/if}
                                                 {titleCaseName(artist.artist_name)}
                                             </div>
-
                                             <div class="artist-count">
                                                 {#if selectedArtistGenre === 'all'}
                                                     {artist.total_track_count} Total
@@ -917,6 +1017,10 @@ goto(`/car-page?${params.toString()}`);
         font-size: 2.2rem; /* was 2.0 */
         font-weight: 800;
         margin-bottom: 18px; /* was 14 */
+    }
+
+    .story-star {
+        margin-right: 6px;
     }
 
 </style>
