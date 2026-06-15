@@ -95,6 +95,17 @@ export function stopCurrentNarrationPhase(
         narrationPausedAtBoundary = true;
     }
 
+    const preservedResolve = options.preserveResolve
+        ? activeNarrationResolve
+        : null;
+
+    if (activeNarrationAudio) {
+        narrationInterrupting = true;
+        activeNarrationAudio.pause();
+        activeNarrationAudio.currentTime = 0;
+        activeNarrationAudio.src = '';
+        activeNarrationAudio.load();
+    }
     cleanupNarrationAudio({
         timer: activeNarrationTimer,
         setTimer: value => {
@@ -108,11 +119,16 @@ export function stopCurrentNarrationPhase(
         }
     });
 
+    if (options.preserveResolve) {
+        activeNarrationResolve = preservedResolve;
+        return;
+    }
+
     if (options.resolvePhase !== false && activeNarrationResolve) {
         const resolve = activeNarrationResolve;
         activeNarrationResolve = null;
         resolve();
-    } else if (!options.preserveResolve) {
+    } else {
         activeNarrationResolve = null;
     }
 }
@@ -158,11 +174,6 @@ function playOneAudio(
         playbackPhase.set(phase);
 
         audio.onloadedmetadata = () => {
-            console.log('🎧 narration metadata', {
-                duration: audio.duration,
-                phase,
-                url
-            });
 
             duration.set(audio.duration);
             elapsed.set(0);
@@ -242,6 +253,7 @@ function playOneAudio(
 }
 
 export function continueStoppedNarrationPhase(): void {
+
     narrationPausedAtBoundary = false;
 
     if (activeNarrationResolve) {
@@ -436,12 +448,6 @@ export function startPlaybackPolling() {
                             ? data.context.bed_audio_url
                             : null;
 
-                    console.log(
-                        '🎧 BED DEBUG',
-                        phase,
-                        data.context?.bed_audio_url
-                    );
-
                     if (bedAudioUrl && !isBedPlaying()) {
                         dlog('🎧 BED start:', bedAudioUrl);
                         startBedUrl(bedAudioUrl);
@@ -566,6 +572,14 @@ export function startPlaybackPolling() {
             console.warn('⚠️ Playback poll error', err);
         }
     }, POLL_INTERVAL_MS);
+}
+
+export function resetNarrationPhaseState(): void {
+    narrationQueue = [];
+    narrationLock = false;
+    lastNarrationPhase = null;
+    narrationSignaled = false;
+    narrationPausedAtBoundary = false;
 }
 
 export async function skipToNextTrack(): Promise<void> {

@@ -22,7 +22,8 @@
         stopPlaybackPolling,
         markUserStartedPlayback,
         stopCurrentNarrationPhase,
-        continueStoppedNarrationPhase
+        continueStoppedNarrationPhase,
+        resetNarrationPhaseState
     } from '$lib/carmode/CarMode.poller';
 
     import {stopBed} from '$lib/audio/bedPlayer';
@@ -247,7 +248,12 @@
         if (nextTrackLock) return;
         nextTrackLock = true;
 
-        stopCurrentNarrationPhase();
+        stopCurrentNarrationPhase({resolvePhase: false});
+        stopBed();
+
+        await stopPlayback();
+
+        resetNarrationPhaseState();
 
         if (!$currentTrack || $tracks.length === 0) return;
 
