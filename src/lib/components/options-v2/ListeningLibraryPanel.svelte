@@ -107,6 +107,13 @@
 
     $: filteredArtists = artistSpotlightItems
         .filter((artist) => {
+
+            // Category filter
+            if (artistCategory === 'featured' && !artist.has_story) return false;
+            if (artistCategory === 'other' && artist.has_story) return false;
+            if (artistCategory === 'single' && artist.total_track_count !== 1) return false;
+
+            // Alphabet filter
             const first = artist.artist_name.charAt(0).toUpperCase();
 
             if (artistRange === 'A-D') return first >= 'A' && first <= 'D';
@@ -160,7 +167,9 @@
 
     async function loadArtistSpotlights(
         genreId: string,
-        featured: boolean = artistCategory === 'featured'
+        featured: boolean = artistCategory === 'featured',
+        minTracks: number = 2,
+        maxTracks: number | null = null
     ) {
         selectedArtistGenre = genreId;
         artistSpotlightItems = [];
@@ -168,10 +177,14 @@
         artistSpotlightLoading = true;
 
         try {
+            const maxTracksParam =
+                maxTracks !== null ? `&max_tracks=${maxTracks}` : '';
+
             const res = await fetch(
                 `${API_BASE}/artist-spotlight/artists-by-genre` +
                 `?genre=${genreId}` +
-                `&min_tracks=2` +
+                `&min_tracks=${minTracks}` +
+                maxTracksParam +
                 `&featured_only=${featured}`
             );
 
@@ -517,7 +530,7 @@ goto(`/car-page?${params.toString()}`);
                             class:selected={artistCategory === 'single'}
                             on:click={() => {
                                 artistCategory = 'single';
-                                loadArtistSpotlights(selectedArtistGenre ?? 'all');
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all', false, 1, 1);
                             }}
                     >
                         🎵 Single Track Artists
