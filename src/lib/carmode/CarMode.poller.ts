@@ -75,6 +75,7 @@ let narrationLock = false;
 let narrationQueue: NarrationQueueItem[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
+let lastNarrationKey: string | null = null;
 let trackFinalized = false;
 let narrationSignaled = false;
 
@@ -131,6 +132,10 @@ export function stopCurrentNarrationPhase(
     } else {
         activeNarrationResolve = null;
     }
+
+    if (options.resolvePhase === false && !options.preserveResolve) {
+        narrationLock = false;
+    }
 }
 
 function isSingleMode(): boolean {
@@ -166,6 +171,10 @@ function playOneAudio(
 
         const audio = new Audio(url);
         audio.volume = 0.60;
+
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
 
         activeNarrationAudio = audio;
         activeNarrationResolve = resolve;
@@ -232,6 +241,12 @@ function playOneAudio(
             resolve();
         };
 
+        dlog(
+            '🎤 START AUDIO',
+            phase,
+            url
+        );
+
         audio.play().catch((err: unknown) => {
             console.warn('🔇 Narration could not play, skipping:', url, err);
 
@@ -286,6 +301,14 @@ async function playNarrationQueue() {
         }
 
         dlog('🔔 Narration finished');
+
+
+        dlog(
+            '🔔 SIGNAL NARRATION FINISHED',
+            get(currentTrack)?.trackName
+        );
+
+        console.log('🔔 SIGNAL FINISHED', get(currentTrack)?.trackName, get(playbackPhase));
 
         await signalNarrationFinished();
     } catch (err) {
@@ -381,7 +404,7 @@ export function startPlaybackPolling() {
                 dlog('🎯 UI track switch:', next?.trackName ?? data.track_name);
             }
 
-            dlog('⏱ Poll data:', data);
+            // dlog('⏱ Poll data:', data);
 
             const rankingId =
                 data.context?.ranking_id != null
@@ -392,7 +415,6 @@ export function startPlaybackPolling() {
                             ? Number(data.context.collection_ranking_id)
                             : null;
 
-            dlog('🎯 rankingId:', rankingId);
 
             playbackPhase.set(phase);
 
@@ -427,11 +449,26 @@ export function startPlaybackPolling() {
                 (data.context?.audio_url || data.context?.audio_queue)
             ) {
 
-                if (phase !== lastNarrationPhase) {
+                const narrationKey =
+                    `${phase}:${data.context?.audio_url ?? JSON.stringify(data.context?.audio_queue ?? '')}`;
+
+                if (narrationKey !== lastNarrationKey) {
                     dlog(`🎤 Narration phase: ${phase}`);
 
                     narrationSignaled = false;
                     lastNarrationPhase = phase;
+                    lastNarrationKey = narrationKey;
+
+                    if (phase === 'intro') {
+                        lastSpotifyId = null;
+                    }
+
+                    dlog(
+                        '🎤 NARRATION FRAME',
+                        phase,
+                        data.context?.spotify_track_id,
+                        data.track_name
+                    );
 
                     const narrationItems = buildNarrationQueue(
                         phase,
@@ -578,6 +615,7 @@ export function resetNarrationPhaseState(): void {
     narrationQueue = [];
     narrationLock = false;
     lastNarrationPhase = null;
+    lastNarrationKey = null;
     narrationSignaled = false;
     narrationPausedAtBoundary = false;
 }

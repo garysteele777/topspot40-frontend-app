@@ -253,7 +253,7 @@
 
         await stopPlayback();
 
-        resetNarrationPhaseState();
+        // resetNarrationPhaseState();
 
         if (!$currentTrack || $tracks.length === 0) return;
 
