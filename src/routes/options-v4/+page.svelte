@@ -2,6 +2,7 @@
     /* eslint-disable svelte/no-navigation-without-resolve */
 
     import {onMount} from 'svelte';
+    import {page} from '$app/state';
     import {browser} from '$app/environment';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {buildSelectionFromResume} from '$lib/options/applyResume';
@@ -41,6 +42,7 @@
     let activeGroup: ModeType = 'decade_genre';
     let language: Language = 'en';
     let languages: Language[] = ['en'];
+    let initialLibraryTab: 'nostalgia' | 'collections' | 'artists' = 'nostalgia';
 
     let startRank = 1;
     let endRank = 9999;
@@ -325,7 +327,20 @@
     // ─────────────────────────────────────────────
     onMount(async () => {
         pendingSelection = null;
-        // pendingSelection = buildSelectionFromResume(loadResumeState());
+
+        const panel = page.url.searchParams.get('panel');
+        const tab = page.url.searchParams.get('tab');
+
+        console.log('panel=', panel);
+        console.log('tab=', tab);
+
+        if (panel === 'library') {
+            openSection = 'library';
+        }
+
+        if (tab === 'artist') {
+            initialLibraryTab = 'artists';
+        }
 
         try {
 
@@ -582,14 +597,15 @@
                     voicePlayMode="before"
                     {pauseMode}
                     {skipPlayed}
+                    initialTab={initialLibraryTab}
                     collapsed={openSection !== 'library'}
                     onActivate={() => {
-                        openSection = openSection === 'library'
-                            ? null
-                            : 'library';
+        openSection = openSection === 'library'
+            ? null
+            : 'library';
 
-                        radioMode = null;
-                    }}
+        radioMode = null;
+    }}
             />
         </div>
 

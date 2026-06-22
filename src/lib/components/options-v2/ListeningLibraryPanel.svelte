@@ -97,8 +97,17 @@
     export let skipPlayed = false;
     export let onActivate: (() => void) | undefined = undefined;
     export let collapsed = false;
+    export let initialTab: LibraryMode = 'nostalgia';
 
     let libraryMode: LibraryMode = 'nostalgia';
+
+    $: if (initialTab && libraryMode !== initialTab) {
+        libraryMode = initialTab;
+
+        if (initialTab === 'artists' && artistSpotlightItems.length === 0) {
+            loadArtistSpotlights('all');
+        }
+    }
 
     let selectedDecade: string | null = null;
     let selectedCollectionGroup: string | null = null;
