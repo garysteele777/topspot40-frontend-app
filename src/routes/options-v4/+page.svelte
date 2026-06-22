@@ -328,6 +328,13 @@
     onMount(async () => {
         pendingSelection = null;
 
+        const savedLanguage = localStorage.getItem('topspot_language');
+
+        if (savedLanguage === 'en' || savedLanguage === 'es' || savedLanguage === 'ptbr') {
+            language = savedLanguage;
+            languages = [savedLanguage];
+        }
+
         const panel = page.url.searchParams.get('panel');
         const tab = page.url.searchParams.get('tab');
 

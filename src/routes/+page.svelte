@@ -1,9 +1,76 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
+    import {onMount} from 'svelte';
 
-    let language = 'en';
+    type LandingLanguage = 'en' | 'es' | 'ptbr';
 
-    function setLanguage(value: string) {
+    let language: LandingLanguage = 'en';
+
+    const text = {
+        en: {
+            tagline: 'Your music. Your memories. Your station.',
+            choose: 'Choose Language',
+            discoverTitle: 'Discover TopSpot40',
+            discoverDesc: 'Explore stories, artists, collections, and music history.',
+            controlTitle: 'Main Control Panel',
+            controlDesc: 'Start listening, radio, playlists, favorites, and playback settings.',
+            classic: 'View classic landing page'
+        },
+        es: {
+            tagline: 'Tu música. Tus recuerdos. Tu estación.',
+            choose: 'Elige idioma',
+            discoverTitle: 'Descubrir TopSpot40',
+            discoverDesc: 'Explora historias, artistas, colecciones e historia musical.',
+            controlTitle: 'Panel de Control Principal',
+            controlDesc: 'Empieza a escuchar, radio, listas, favoritos y ajustes de reproducción.',
+            classic: 'Ver página clásica'
+        },
+        'ptbr': {
+            tagline: 'Sua música. Suas memórias. Sua estação.',
+            choose: 'Escolha o idioma',
+            discoverTitle: 'Descobrir TopSpot40',
+            discoverDesc: 'Explore histórias, artistas, coleções e história da música.',
+            controlTitle: 'Painel de Controle Principal',
+            controlDesc: 'Comece a ouvir, rádio, playlists, favoritos e configurações de reprodução.',
+            classic: 'Ver página clássica'
+        }
+    };
+
+    const rotatingMessages = {
+        en: [
+            'Rediscover the songs. Remember the feeling.',
+            'Every track has a story. We tell it.',
+            'Music discovery through the decades.',
+            'Your countdown companion.',
+            'Where the beat meets the story.'
+        ],
+        es: [
+            'Redescubre las canciones. Recuerda la emoción.',
+            'Cada canción tiene una historia. Nosotros la contamos.',
+            'Descubrimiento musical a través de las décadas.',
+            'Tu compañero de cuenta regresiva.',
+            'Donde el ritmo se encuentra con la historia.'
+        ],
+        'ptbr': [
+            'Redescubra as músicas. Relembre a emoção.',
+            'Cada faixa tem uma história. Nós contamos.',
+            'Descoberta musical através das décadas.',
+            'Seu companheiro de contagem regressiva.',
+            'Onde a batida encontra a história.'
+        ]
+    };
+
+
+    $: marqueeMessages = [
+        ...rotatingMessages[language],
+        ...rotatingMessages[language]
+    ];
+
+    function isLandingLanguage(value: string | null): value is LandingLanguage {
+        return value === 'en' || value === 'es' || value === 'ptbr';
+    }
+
+    function setLanguage(value: LandingLanguage) {
         language = value;
         localStorage.setItem('topspot_language', value);
         localStorage.setItem('tts_language', value);
@@ -18,6 +85,15 @@
         setLanguage(language);
         goto('/options-v4');
     }
+
+    onMount(() => {
+        const savedLanguage = localStorage.getItem('topspot_language');
+
+        if (isLandingLanguage(savedLanguage)) {
+            language = savedLanguage;
+        }
+
+    });
 </script>
 
 <main class="page">
@@ -25,10 +101,18 @@
         <img src="/favicon.ico" alt="TopSpot40" class="logo"/>
 
         <h1>TopSpot40</h1>
-        <p class="tagline">Your music. Your memories. Your station.</p>
+        <p class="tagline">{text[language].tagline}</p>
+
+        <div class="message-marquee">
+            <div class="message-track">
+                {#each marqueeMessages as message}
+                    <span>{message}</span>
+                {/each}
+            </div>
+        </div>
 
         <div class="language">
-            <div class="label">Choose Language</div>
+            <div class="label">{text[language].choose}</div>
 
             <div class="language-buttons">
                 <button class:active={language === 'en'} on:click={() => setLanguage('en')}>
@@ -39,7 +123,7 @@
                     Español
                 </button>
 
-                <button class:active={language === 'pt-BR'} on:click={() => setLanguage('pt-BR')}>
+                <button class:active={language === 'ptbr'} on:click={() => setLanguage('ptbr')}>
                     Português
                 </button>
             </div>
@@ -47,21 +131,30 @@
 
         <div class="choices">
             <button class="choice" on:click={discover}>
-                <span>Discover TopSpot40</span>
-                <small>Explore stories, artists, collections, and music history.</small>
+                <span>{text[language].discoverTitle}</span>
+                <small>{text[language].discoverDesc}</small>
             </button>
 
             <button class="choice" on:click={controlPanel}>
-                <span>Main Control Panel</span>
-                <small>Start listening, radio, playlists, favorites, and playback settings.</small>
+                <span>{text[language].controlTitle}</span>
+                <small>{text[language].controlDesc}</small>
             </button>
         </div>
 
-        <a class="classic" href="/landing-classic">View classic landing page</a>
+        <a class="classic" href="/landing-classic">
+            {text[language].classic}
+        </a>
     </section>
 </main>
 
 <style>
+
+    :global(html),
+    :global(body) {
+        overflow-x: hidden;
+    }
+
+
     :global(body) {
         margin: 0;
         background: #101010;
@@ -86,6 +179,7 @@
         padding: 42px;
         text-align: center;
         box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
     }
 
     .logo {
@@ -102,11 +196,42 @@
     .tagline {
         font-size: 22px;
         color: #d8f5e2;
-        margin-bottom: 34px;
+        margin-bottom: 10px;
+    }
+
+    .message-marquee {
+        width: 100%;
+        overflow: hidden;
+        margin: 10px 0 24px;
+    }
+
+    .message-track {
+        display: inline-flex;
+        width: max-content;
+        gap: 48px;
+        animation: messageScroll 28s linear infinite;
+    }
+
+    .message-track span {
+        flex-shrink: 0;
+        color: #d8f5e2;
+        font-size: 1.05rem;
+        font-weight: 600;
+        opacity: 0.92;
+    }
+
+    @keyframes messageScroll {
+        from {
+            transform: translateX(0);
+        }
+
+        to {
+            transform: translateX(-50%);
+        }
     }
 
     .language {
-        margin-bottom: 34px;
+        margin-bottom: 28px;
     }
 
     .label {
