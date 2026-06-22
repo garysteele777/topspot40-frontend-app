@@ -1,0 +1,3066 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TopSpot40 Print Catalog V2</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    color: #111;
+    background: white;
+}
+
+@page {
+    size: letter landscape;
+    margin: 0.45in;
+}
+
+.catalog-page {
+    width: 11in;
+    min-height: 8.5in;
+    box-sizing: border-box;
+    padding: 0.45in;
+    page-break-after: always;
+    break-after: page;
+}
+
+.catalog-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+}
+
+.nav {
+    display: none;
+}
+
+img {
+    max-width: 100%;
+}
+
+a {
+    color: #111;
+    text-decoration: none;
+}
+
+.card,
+.stat,
+.genre-card,
+.summary-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.footer {
+    margin-top: 28px;
+    font-size: 12px;
+    color: #777;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+}
+
+.cover-image,
+.cover-logo {
+    max-width: 420px;
+    display: block;
+    margin: 0 auto 24px;
+}
+
+.stats-grid,
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.decade-grid,
+.genre-grid,
+.collection-grid,
+.group-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.artist-layout,
+.showcase-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 18px;
+}
+
+details {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+audio {
+    display: none;
+}
+
+/* Landscape showcase cleanup */
+.catalog-page[data-source^="nostalgia/"],
+.catalog-page[data-source^="collections/"] {
+    padding: 0.35in;
+}
+
+.catalog-page[data-source^="nostalgia/"] body,
+.catalog-page[data-source^="collections/"] body {
+    max-width: none;
+}
+
+.catalog-page[data-source^="nostalgia/"] h1,
+.catalog-page[data-source^="collections/"] h1 {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.catalog-page[data-source^="nostalgia/"] p,
+.catalog-page[data-source^="collections/"] p {
+    max-width: none;
+}
+
+.catalog-page[data-source^="nostalgia/"] ol,
+.catalog-page[data-source^="collections/"] ol,
+.catalog-page[data-source^="nostalgia/"] ul,
+.catalog-page[data-source^="collections/"] ul {
+    columns: 2;
+    column-gap: 42px;
+}
+
+.catalog-page[data-source^="nostalgia/"] li,
+.catalog-page[data-source^="collections/"] li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 3px;
+}
+
+/* Clean print text spacing */
+.text-block {
+    line-height: 1.45;
+    font-size: 14px;
+    white-space: pre-line;
+}
+
+.card {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+summary {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+details {
+    margin-bottom: 12px;
+}
+
+/* Hide audio blocks completely in print catalog */
+.audio {
+    display: none !important;
+}
+
+/* Hide repeated no-audio messages */
+.small {
+    line-height: 1.35;
+}
+
+.small:has(+ audio),
+.audio + .small {
+    display: none;
+}
+
+@media print {
+    body {
+        margin: 0;
+    }
+
+    .catalog-page {
+        width: 11in;
+        min-height: 8.5in;
+        page-break-after: always;
+        break-after: page;
+    }
+}
+</style>
+
+</head>
+<body>
+<section class="catalog-page" data-source="cover.html">
+<img class="cover-image" src="assets/old_dog_new_tracks.png" alt="TopSpot40 Old Dog New Tracks">
+
+    <div class="subtitle">
+        Music Discovery Through the Decades
+    </div>
+
+    <div class="tagline">
+        Discovery Never Ends
+    </div>
+
+    <div class="version">
+        Version 1 • June 2026
+    </div>
+
+    <div class="author">
+        Gary W. Steele<br>
+        Founder
+    </div>
+
+<div class="footer">
+    4,425+ Songs Linked Through Spotify • 1,943 Artists • 329 Featured Artists<br>
+    64 Nostalgia Programs • 52 Collections<br>
+    English • Spanish • Portuguese<br><br>
+
+    TopSpot40.com — Old Dog, New Tracks
+</div>
+</section>
+<section class="catalog-page" data-source="welcome.html">
+<div class="nav">
+    <a href="index.html">TopSpot40 Catalog</a>
+</div>
+
+<h1>Welcome</h1>
+
+<div class="subtitle">
+    Welcome to the TopSpot40 Catalog, Version 1.
+</div>
+
+<p>
+Thank you for exploring TopSpot40.
+</p>
+
+<p>
+What began as a software project eventually became a journey through music history,
+artist stories, cultural traditions, memories, and lifelong discovery.
+</p>
+
+<p>
+This catalog introduces the people, ideas, collections, artist stories, and listening
+experiences that make TopSpot40 unique.
+</p>
+
+<p>
+TopSpot40 is designed to enhance music listening through rankings, narration, artist
+biographies, music history, and curated discovery experiences that integrate with Spotify playback.
+</p>
+
+<div class="quote">
+Discovery Never Ends.
+</div>
+
+<p>
+Whether you are revisiting old favorites or discovering something completely new,
+I hope you enjoy the journey.
+</p>
+
+<div class="signature">
+Gary W. Steele<br>
+Founder, TopSpot40
+</div>
+
+<div class="footer">
+TopSpot40.com — Music Discovery Through the Decades
+</div>
+</section>
+<section class="catalog-page" data-source="table_of_contents.html">
+<div class="nav">
+    <a href="index.html">TopSpot40 Catalog</a>
+</div>
+
+<h1>Table of Contents</h1>
+
+<div class="subtitle">
+    A guided path through the TopSpot40 Catalog, Version 1.
+</div>
+
+<h2>Start Here</h2>
+<ul>
+    <li><a href="cover.html">Cover</a></li>
+    <li><a href="welcome.html">Welcome</a></li>
+</ul>
+
+<h2>Introduction</h2>
+<ul>
+    <li><a href="about_topspot40.html">About TopSpot40</a></li>
+    <li><a href="at_a_glance.html">TopSpot40 At A Glance</a></li>
+    <li><a href="why_topspot40_is_different.html">Why TopSpot40 Is Different</a></li>
+    <li><a href="four_ways_to_listen.html">Four Ways To Listen</a></li>
+    <li><a href="using_topspot40.html">Using TopSpot40</a></li>
+    <li><a href="listening_experience.html">TopSpot40 Listening Experience</a></li>
+    <li><a href="vision_for_topspot40.html">A Vision For TopSpot40</a></li>
+</ul>
+
+<h2>Featured Artist Content</h2>
+<ul>
+    <li><a href="artists/index.html">Featured Artist Index</a></li>
+    <li><a href="bb_king_artist_story.html">Featured Artist Story Example: B.B. King</a></li>
+</ul>
+
+<h2>Music Discovery Libraries</h2>
+<ul>
+    <li><a href="nostalgia_index.html">Nostalgia Program Library</a></li>
+    <li><a href="collections_index.html">Collection Library</a></li>
+</ul>
+
+<h2>Catalog Sections</h2>
+<ul>
+    <li>64 Nostalgia Programs organized by decade and genre</li>
+    <li>52 Curated Collections organized by collection group</li>
+    <li>Featured Artists organized by genre</li>
+</ul>
+
+<h2>Closing</h2>
+<ul>
+    <li><a href="invitation_to_discover.html">An Invitation To Discover</a></li>
+</ul>
+
+<div class="note">
+    Spotify provides the licensed music streaming experience. TopSpot40 provides rankings,
+    artist stories, historical context, narration, and curated discovery experiences.
+</div>
+
+<div class="footer">
+TopSpot40.com — Music Discovery Through the Decades
+</div>
+</section>
+<section class="catalog-page" data-source="part1_story.html">
+<section class="page">
+    <div class="part">PART I</div>
+    <h1>The TopSpot40 Story</h1>
+    <div class="text">How a software project became a journey through music, memory, storytelling, and discovery.</div>
+
+    <div class="footer">
+        TopSpot40.com — Discovery Never Ends
+    </div>
+</section>
+</section>
+<section class="catalog-page" data-source="about_topspot40.html">
+<div class="nav">
+        <a href="index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>About TopSpot40</h1>
+
+    <div class="subtitle">
+        Why I created TopSpot40, and why music discovery still matters.
+    </div>
+
+    <h2>Growing Up with Radio</h2>
+    <p>
+        TopSpot40 began with memories of growing up on an Indiana farm, where radio was more
+        than background noise. Programs like Casey Kasem's American Top 40 did more than play
+        songs. They created anticipation, told stories, introduced artists, and made music feel
+        like a journey.
+    </p>
+    
+        <h2>The Story Behind the Name</h2>
+    <p>
+        People occasionally ask where the name <strong>TopSpot40</strong> came from.
+        The answer reflects the three major influences behind the project.
+    </p>
+
+    <p>
+        The word <strong>Top</strong> refers to the ranked music programs that form
+        the foundation of TopSpot40. Like the countdown shows I enjoyed growing up,
+        songs are organized into ranked lists that highlight memorable tracks from
+        each decade, genre, or collection.
+    </p>
+
+    <p>
+        The word <strong>Spot</strong> is a nod to Spotify, which provides the music
+        playback experience that powers the platform. TopSpot40 adds storytelling,
+        artist biographies, music history, and discovery, while Spotify delivers the
+        music itself.
+    </p>
+
+    <p>
+        The number <strong>40</strong> comes from the influence of Casey Kasem's
+        American Top 40 countdowns. Those programs inspired my love of music rankings,
+        artist stories, and the excitement of discovering what song would come next.
+    </p>
+
+    <p>
+        Put together, the name <strong>TopSpot40</strong> represents ranked music
+        discovery, Spotify-powered listening, and the enduring influence of the Top 40
+        radio tradition that inspired the project.
+    </p>
+
+    <p>
+        I wanted to bring some of that feeling back. Streaming services make it easy to hear
+        almost any song instantly, but the stories behind the songs are often missing.
+        TopSpot40 was created to add the context, history, artist information, and storytelling
+        that make music more meaningful.
+    </p>
+
+    <h2>Music, Memory, and Older Generations</h2>
+    <p>
+        One of my hopes for TopSpot40 is that it can help older generations reconnect with the
+        songs that shaped their lives. A favorite song can bring back memories of childhood,
+        first dates, military service, weddings, family gatherings, church, road trips, and
+        moments that might otherwise have faded.
+    </p>
+
+    <p>
+        Music has a special ability to connect people across generations. TopSpot40 is my way
+        of honoring those memories while helping younger listeners discover the music, artists,
+        and stories that came before them.
+    </p>
+
+<h2>Patty's Rule</h2>
+
+<p>
+My wife Patty has played an important role in shaping TopSpot40 from the very beginning. Fluent in English, Spanish, and Portuguese, she brought a unique perspective to the project as both a music lover and a multilingual listener.
+</p>
+
+<p>
+Over time, I developed what I jokingly call "Patty's Rule": if Patty cannot easily understand or enjoy a feature, it probably needs to be simplified. That simple principle helped keep TopSpot40 focused on the listener rather than the technology. As an engineer, I naturally enjoy building systems and adding features, but Patty consistently reminded me that the experience should remain intuitive, enjoyable, and accessible.
+</p>
+
+<p>
+Patty also played a vital role in one of the most distinctive parts of TopSpot40—its narrated storytelling. As we explored the growing library of ElevenLabs voices, she helped evaluate and select many of the voices used throughout the platform. Her fluency in all three supported languages allowed her to judge pronunciation, pacing, tone, and overall authenticity in ways that I could not have done alone.
+</p>
+
+<p>
+The result is that TopSpot40 does not simply tell stories in English, Spanish, and Portuguese—it tells them in voices carefully chosen to sound natural and engaging to listeners in each language. Many of the voices heard throughout the platform were selected with Patty's guidance and encouragement.
+</p>
+
+<p>
+In many ways, Patty helped shape not only how TopSpot40 works, but also how it sounds.
+</p>
+
+<div class="quote">
+Patty's Rule: If a feature is too complicated to enjoy, it probably needs to be simplified.
+</div>
+
+
+    <h2>Teaching, Isaiah, and the Python Class</h2>
+    <p>
+        TopSpot40 also grew out of my work with the Pharr Fetched Coders group at the Pharr
+        Memorial Library. What started as a local Python programming class became connected to
+        a real software project.
+    </p>
+
+    <p>
+        Through that group, I met Isaiah, a computer science student at the University of Texas
+        Rio Grande Valley. Working with him reminded me that learning is a two-way street. I
+        have been able to share decades of experience in programming, engineering, and project
+        development, while Isaiah has brought fresh ideas, modern web development skills, and
+        a new perspective to the platform.
+    </p>
+
+    <h2>Music Without Borders</h2>
+    <p>
+        My life and career have also shaped the multilingual side of TopSpot40. I am bilingual
+        in English and Spanish, and somewhat fluent in Portuguese after working in Angola, Africa
+        as a Six Sigma consultant. Those experiences expanded my appreciation for the ways music
+        connects people across languages and cultures.
+    </p>
+
+    <p>
+        That is one reason TopSpot40 supports English, Spanish, and Portuguese. Music may be a
+        universal language, but I wanted the stories behind the music to be accessible too.
+    </p>
+
+    <h2>A Personal Journey</h2>
+    <p>
+        What began as a software project gradually became something much more personal. Along
+        the way, TopSpot40 introduced me to artists, stories, cultures, and musical traditions
+        that I might never have explored otherwise.
+    </p>
+
+    <p>
+        In that sense, TopSpot40 has been almost a spiritual journey for me. It has deepened my
+        appreciation for music, history, heritage, creativity, and the experiences that connect
+        us across generations.
+    </p>
+
+    <h2>Discovery Never Ends</h2>
+    <p>
+        One of my favorite discoveries came from my own project. While exploring music and
+        artists for TopSpot40, I came across B.B. King and realized I knew very little about him,
+        despite his enormous influence on blues and popular music.
+    </p>
+
+    <p>
+        That discovery led me to learn about his remarkable career, his influence on generations
+        of musicians, and his connection to artists such as Buddy Guy. In fact, learning through
+        TopSpot40 inspired me to plan a trip to see Buddy Guy perform in person.
+    </p>
+
+    <p>
+        If TopSpot40 has taught me anything, it is that discovery never ends. There is always
+        another artist to learn about, another story to hear, another culture to appreciate,
+        and another song waiting to become a favorite.
+    </p>
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="at_a_glance.html">
+<div class="nav">
+        <a href="index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>TopSpot40 At A Glance</h1>
+
+    <div class="subtitle">
+        A quick look at the scale, structure, and storytelling behind TopSpot40.
+    </div>
+
+    <h2>Music Library</h2>
+    <div class="stats-grid">
+        <div class="stat">
+            <div class="stat-number">4,425+</div>
+            <div class="stat-label">Songs Linked Through Spotify</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">1,943</div>
+            <div class="stat-label">Total Artists</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">1950s–2020s</div>
+            <div class="stat-label">Music Across the Decades</div>
+        </div>
+    </div>
+
+    <h2>Listening Experiences</h2>
+    <h2>Genre Coverage</h2>
+    <p>
+        TopSpot40 includes eight major genre categories: Country, Pop, Rock,
+        R&amp;B Soul, Latin Global, Blues Jazz, Folk Acoustic, and TV Themes.
+    </p>
+
+    <h2>Featured Artist Storytelling</h2>
+    <div class="stats-grid">
+        <div class="stat">
+            <div class="stat-number">329</div>
+            <div class="stat-label">Featured Artists</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">110+ Hours</div>
+            <div class="stat-label">Narrated Artist Stories</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">3</div>
+            <div class="stat-label">Languages</div>
+        </div>
+    </div>
+
+    <div class="note">
+        Featured Artist stories are available in English, Spanish, and Portuguese.
+        The narration library represents more than 110 hours of artist-story content
+        across the three supported languages.
+    </div>
+
+    <h2>Genres</h2>
+    <div class="stats-grid">
+        <div class="stat"><div class="stat-number">Country</div><div class="stat-label">Genre</div></div>
+        <div class="stat"><div class="stat-number">Pop</div><div class="stat-label">Genre</div></div>
+        <div class="stat"><div class="stat-number">Rock</div><div class="stat-label">Genre</div></div>
+        <div class="stat"><div class="stat-number">R&B Soul</div><div class="stat-label">Genre</div></div>
+        <div class="stat"><div class="stat-number">Latin Global</div><div class="stat-label">Genre</div></div>
+        <div class="stat"><div class="stat-number">Blues Jazz</div><div class="stat-label">Genre</div></div>
+        <div class="stat"><div class="stat-number">Folk Acoustic</div><div class="stat-label">Genre</div></div>
+        <div class="stat"><div class="stat-number">TV Themes</div><div class="stat-label">Genre</div></div>
+    </div>
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="why_topspot40_is_different.html">
+<div class="nav">
+        <a href="index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>Why TopSpot40 Is Different</h1>
+
+    <div class="subtitle">
+        TopSpot40 is not a streaming service. It is a music discovery and storytelling experience that integrates with Spotify playback.
+    </div>
+
+    <p>
+        Most music platforms focus on helping listeners find and play songs. TopSpot40 focuses on helping listeners connect with the stories, artists, history, memories, and emotions behind the music.
+    </p>
+
+    <p>
+        Streaming technology has made music more available than ever before. A listener can search for almost any song and hear it within seconds. But availability is not the same as connection. Sometimes the missing piece is context: who created the song, why it mattered, what was happening at the time, and how it fits into the larger story of music history.
+    </p>
+
+    <div class="quote">
+        Spotify helps provide the licensed music playback experience. TopSpot40 helps listeners connect more deeply with the music.
+    </div>
+
+    <h2>Storytelling Around the Music</h2>
+    <p>
+        TopSpot40 surrounds music playback with narrated introductions, artist biographies, historical background, rankings, cultural context, and curated listening programs. The goal is to make listening feel more like a guided journey than a simple playlist.
+    </p>
+
+    <h2>Discovery With Meaning</h2>
+    <p>
+        TopSpot40 is designed for both nostalgia and discovery. A listener may begin with a favorite song from the past and end up learning about an artist, a musical tradition, a cultural movement, or a forgotten piece of history.
+    </p>
+
+    <h2>Multilingual Music Stories</h2>
+    <p>
+        Artist stories and discovery content are available in English, Spanish, and Portuguese. This allows listeners to experience the same music history and storytelling across languages and cultures.
+    </p>
+
+    <h2>Connection, Not Consumption</h2>
+    <p>
+        TopSpot40 is not designed to encourage people to consume more music as quickly as possible. It is designed to slow the experience down enough to notice the stories, memories, and meaning behind the songs.
+    </p>
+
+    <div class="quote">
+        TopSpot40 is not designed to help people listen to more music.
+        It is designed to help people connect more deeply with the music they already love.
+    </div>
+
+    <div class="note">
+        TopSpot40 provides rankings, artist biographies, narration, music history, curated discovery programs, and storytelling. Spotify provides the licensed music streaming and playback experience.
+    </div>
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="vision_for_topspot40.html">
+<div class="nav">
+    <a href="index.html">TopSpot40 Catalog</a>
+</div>
+
+<h1>A Vision for TopSpot40</h1>
+
+<div class="subtitle">
+    Looking beyond technology toward connection, discovery, learning, and preserving musical heritage.
+</div>
+
+<p>
+TopSpot40 began as a personal software project, but over time it grew into something much larger. What started as an effort to combine music, storytelling, and technology gradually became a vision for helping people reconnect with the music and memories that have shaped their lives.
+</p>
+
+<h2>Music and Memory</h2>
+
+<p>
+One of the audiences I hope to serve is older adults, including retirees, Winter Texans, and assisted living communities. Many people in these groups grew up during some of the most influential decades in popular music history. The songs they remember are often connected to important moments in their lives, and hearing those songs can unlock memories that may have been dormant for years.
+</p>
+
+<p>
+A favorite song can bring back memories of childhood, military service, first dates, weddings, church gatherings, family traditions, road trips, and lifelong friendships. Music has a remarkable ability to reconnect us with experiences that helped shape who we are.
+</p>
+
+<h2>Conversations and Connection</h2>
+
+<p>
+Music often creates opportunities for conversation. A single song can lead to stories about where someone grew up, who influenced them, what they experienced, and how the world has changed over time.
+</p>
+
+<p>
+My hope is that TopSpot40 can become more than a music discovery platform. I hope it becomes a catalyst for conversation, learning, memory sharing, and human connection.
+</p>
+
+<h2>Lifelong Discovery</h2>
+
+<p>
+TopSpot40 is not only about revisiting the past. It is also about continuing to learn. Younger listeners can discover artists and traditions from earlier generations, while older listeners can continue exploring music, cultures, and stories they may never have encountered before.
+</p>
+
+<p>
+One of the great surprises of building TopSpot40 has been realizing how much there is still to learn. Every artist biography leads to another artist. Every collection leads to another story. Every genre opens the door to another chapter of music history.
+</p>
+
+<div class="quote">
+Discovery Never Ends.
+</div>
+
+<h2>Music Without Borders</h2>
+
+<p>
+TopSpot40 currently supports storytelling in English, Spanish, and Portuguese. This reflects my own experiences living and working across cultures and my belief that music has the power to connect people across languages, generations, and backgrounds.
+</p>
+
+<p>
+By making artist stories and music history available in multiple languages, TopSpot40 seeks to make discovery accessible to a wider audience while celebrating the rich diversity of musical traditions around the world.
+</p>
+
+<h2>Looking Ahead</h2>
+
+<p>
+The future of TopSpot40 is not defined by technology alone. It is defined by curiosity, connection, storytelling, and a desire to help people experience music in a deeper and more meaningful way.
+</p>
+
+<p>
+Whether someone is hearing a favorite song from childhood, learning the story behind an artist for the first time, or discovering an entirely new genre of music, there is always another connection waiting to be made.
+</p>
+
+<p>
+That is the future I imagine for TopSpot40.
+</p>
+
+<div class="footer">
+    TopSpot40.com — Music Discovery Through the Decades
+</div>
+</section>
+<section class="catalog-page" data-source="part2_artists.html">
+<section class="page">
+    <div class="part">PART II</div>
+    <h1>Featured Artists</h1>
+    <div class="text">The voices, performers, and stories that shaped generations.</div>
+
+    <div class="footer">
+        TopSpot40.com — Discovery Never Ends
+    </div>
+</section>
+</section>
+<section class="catalog-page" data-source="artists/141.html">
+<div class="nav">
+<a href="../index.html">← Catalog Home</a>
+<a href="../featured_artists.html">Featured Artists</a>
+</div>
+<h1>Johnny Cash</h1>
+<div class="subtitle">TopSpot40 Featured Artist Detail Page</div>
+<div class="stat-grid">
+<div class="stat"><div class="num">27</div><div class="label">Tracks</div></div>
+<div class="stat"><div class="num">7</div><div class="label">Nostalgia Appearances</div></div>
+<div class="stat"><div class="num">24</div><div class="label">Collection Appearances</div></div>
+<div class="stat"><div class="num">Yes</div><div class="label">Artist Story</div></div>
+</div>
+<div class="card">
+<h2>Artist Story</h2>
+<h3>The Story of Johnny Cash</h3>
+<p class="small">Type: feature • Duration: 7.0 minutes</p>
+<div class="audio"><div class="small">Artist Story MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/artist-story/1.mp3"></audio></div>
+<details open><summary>Story Text</summary>
+<div class="text-block">The first time I heard that low, rumbling voice roll across the airwaves like distant thunder, I knew I was listening to somebody who didn’t just sing about life—he had wrestled it to the ground and still carried the bruises. That’s the thing about Johnny Cash. He never sounded like he was performing for us. He sounded like he was confessing, testifying, and cracking jokes all at the same time.
+
+One of the stories I love most happened on a cold January day in 1968 inside Folsom Prison. Most entertainers wouldn’t have gone near the place. Johnny not only showed up, he treated those men like they were family he hadn’t seen in years. You can hear it on the record. When he growled out the opening lines of “Folsom Prison Blues,” the whole room exploded. These were lifers and hard cases, but for a few minutes they weren’t prisoners anymore. They were just men hearing somebody tell their story out loud. He even joked with them between songs, that dry Arkansas humor cutting through the tension like a pocket knife. That concert didn’t just give him a hit record. It reminded the whole world that Johnny Cash was the patron saint of the second chance—the man who believed no one was beyond redemption because he needed redeeming himself.
+
+And Lord knows he did. The pills had him by the throat for years. They kept him awake on those endless tours, then they put him to sleep when the crowds went home. The addiction got so bad that one dark afternoon he drove his truck out to Nickajack Cave with every intention of never coming back out. He walked deep into that cave until his flashlight died, sat down, and waited for the end. But something—maybe the prayers June had been praying over him, maybe the stubborn faith his mama planted in him as a boy—wouldn’t let him stay there. He stumbled out hours later, half-dead, covered in mud, and decided to live.
+
+That’s when June Carter really stepped into the story. She’d been circling his life for years, singing with him on the road, watching him destroy himself and still somehow seeing the good man drowning underneath. People think their love was all romance and duets. It was a lot tougher than that. June was tough as hickory. She told him straight out that she loved him too much to watch him kill himself. And somehow that tough love worked where everything else had failed. In front of a live audience in 1968, right after singing “Jackson,” he got down on one knee and proposed—completely unplanned. June laughed that big, beautiful laugh of hers and said yes. From that moment on they were a team. She kept him steady. He kept her laughing. Their house rang with gospel songs in the morning and kids running through the halls. It was messy and real and it worked.
+
+There’s another tale that always makes me smile. Early in his career, the Grand Ole Opry basically fired him. He was young, wild, and full of that restless energy that made his music dangerous. One night he got a little too rowdy, kicked out the footlights on that sacred stage, and they told him not to come back. Most singers would’ve been crushed. Johnny just looked at the suits and basically said, “Fine. I’ll go where they actually need me.” That decision sent him straight into the arms of the people who became his true audience—the truck drivers, the factory workers, the folks in prison, the ones who felt overlooked. He started wearing black every night not because it was dramatic, though it certainly was. He wore it, he said, for the poor and the hungry, for the prisoner and the sick. It was his uniform, and he wore it like a preacher wears a collar.
+
+Years later, when his voice had grown rough as gravel roads and his hands shook from Parkinson’s, a young producer named Rick Rubin gave him one last glorious chapter. They sat together in Johnny’s living room with just a guitar and that worn-out baritone. No band, no tricks. Just truth. When he recorded “Hurt,” that old Nine Inch Nails song, something almost holy happened. A man in his seventies looked straight into the camera and sang about regret, about his failing body, about the crown of thorns he felt he wore. People who had never heard of Johnny Cash suddenly found themselves crying in their cars. It was as if he’d saved the most powerful sermon of his life for last.
+
+You hear that boom-chicka-boom rhythm he invented with Luther Perkins and Marshall Grant—one of the most distinctive sounds in all of American music—and you can’t help but move. But it’s the spaces between the notes where Johnny really worked his magic. The way he could sing a murder ballad and make you feel sorry for the killer. The way he could deliver a gospel song and make believers out of skeptics. The way he could turn a simple train song into a metaphor for life rushing past us all.
+
+That’s what I hope you take away from his music. Not just the hits you already know, but the man behind them—the Air Force veteran who taught himself guitar by listening to the radio, the father who adored his children even when the road pulled him away, the husband who found his salvation in a woman named June, the friend who stood up for Native American rights when it wasn’t popular, the sinner who never claimed to be a saint.
+
+When you listen to Johnny Cash, you’re sitting down with someone who understands that life will break your heart and your body but it doesn’t get the final word. His voice still feels like a hand on your shoulder saying, “I’ve been where you are, friend. Keep going.”
+
+And in a world that moves too fast and forgets too easily, that voice—raw, honest, and full of hard-won grace—matters now more than ever. Put on one of his records tonight. Turn it up a little. Let that deep baritone roll over you like a freight train that knows exactly where it’s going. I promise you’ll feel better for it. We all do.</div>
+</details>
+</div>
+<div class="card">
+<h2>Artist Description</h2>
+<p class="small">No Artist Description MP3 MP3 available.</p>
+<div class="text-block">Johnny Cash, known as the &#x27;Man in Black,&#x27; was a legendary singer-songwriter whose career spanned over five decades. His deep, resonant voice and songs like &#x27;Ring of Fire&#x27; and &#x27;Folsom Prison Blues&#x27; made him a cultural icon. Cash&#x27;s influence extended beyond music, as he was also known for his advocacy for the marginalized.</div>
+</div>
+<div class="card">
+<h2>Track Detail Review</h2>
+<details>
+<summary>a boy named sue (1969)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Now, let&#x27;s unravel the tale of &#x27;A Boy Named Sue&#x27;. This humorous yet poignant song was penned by the legendary Shel Silverstein, showcasing his unique ability to blend comedy with heartfelt storytelling. Johnny Cash recorded it live at San Quentin Prison, where the inmates&#x27; reactions added an authentic layer to the performance. The song&#x27;s narrative about a father&#x27;s unconventional way of toughening up his son struck a chord with audiences, earning Cash a Grammy. And that&#x27;s the magic of music, folks, it can make you laugh and tug at your heartstrings all at once!</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/5xMNjx7uqCzMpJZSo4Wq55.mp3"></audio></div>
+<div class="text-block">A Boy Named Sue, Shel Silverstein&#x27;s humorous yet poignant tale of a father toughening his son with an unusual name, was recorded live at San Quentin Prison and earned a Grammy.</div>
+</details>
+<details>
+<summary>ballad of a teenage queen (1958)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Johnny Cash&#x27;s &#x27;Ballad of a Teenage Queen&#x27; is a story of youthful romance, written by Jack Clement. The song was recorded at Sun Studio, where Cash&#x27;s raw energy was captured perfectly. It soared to the top of the country charts in 1958, showcasing Cash&#x27;s ability to blend storytelling with melody. Did you know that the song was inspired by a real-life encounter Clement had with a teenage girl? It&#x27;s these personal touches that make the song so relatable. Stay with us as we keep spinning the classics!</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/1pr7Wj2CJkPipWUhMGjnsB.mp3"></audio></div>
+<div class="text-block">Written by Jack Clement after a real-life encounter with a teenage girl, Ballad of a Teenage Queen was recorded at Sun Studio and topped the country charts in 1958.</div>
+</details>
+<details>
+<summary>Bury Me Not on the Lone Prairie (2005)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Johnny Cash lent his distinctive voice to the old cowboy standard Bury Me Not on the Lone Prairie. The lyrics voice the plea of a frontiersman who fears dying alone and being interred far from family and familiar ground. This mournful ballad taps into universal feelings of isolation and the human desire for a proper resting place among kin. The piece dates back to the 1800s when it first appeared as a poem in a newspaper.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/7GCOQTkqqpjFeOUet9IsxI.mp3"></audio></div>
+<div class="text-block">Dating back to a newspaper poem from the 1800s, the mournful Bury Me Not on the Lone Prairie captures a frontiersman&#x27;s plea against dying alone and being buried far from his family and familiar ground.</div>
+</details>
+<details>
+<summary>daddy sang bass (1968)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Let&#x27;s delve into the heartwarming &#x27;Daddy Sang Bass&#x27;. This song, written by Carl Perkins, celebrates family and faith, reflecting Johnny Cash&#x27;s own values. Recorded at Columbia Studio A in Nashville, the track features the voices of Cash&#x27;s family members, adding a genuine touch to the recording. The song&#x27;s simple yet powerful message resonated with audiences, climbing the charts and becoming a beloved classic. And remember, it&#x27;s the songs that touch our souls that stay with us forever!</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/15TITugVC8RrpLctHXOqT8.mp3"></audio></div>
+<div class="text-block">Written by Carl Perkins, Daddy Sang Bass celebrates family and faith with the voices of family members recorded at Columbia Studio A in Nashville, climbing the charts to become a beloved classic.</div>
+</details>
+<details>
+<summary>Don&#x27;t Take Your Guns to Town (2011)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Johnny Cash narrates a tragic tale in Don&#x27;t Take Your Guns to Town. The song warns of the deadly outcomes that can follow when a young man carries firearms into uncertain environments despite his mother&#x27;s counsel. Through its storytelling, it communicates a powerful message about maturity, restraint, and the senselessness of gun violence. The single topped the country music charts upon its original release.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6OITYoG02JlOPRNcfdspx4.mp3"></audio></div>
+<div class="text-block">Don&#x27;t Take Your Guns to Town topped the country charts with its tragic tale of a young man ignoring his mother&#x27;s warnings against carrying firearms into dangerous places and the senselessness of gun violence.</div>
+</details>
+<details>
+<summary>folsom prison blues (1955)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Let&#x27;s take a stroll down memory lane with &#x27;Folsom Prison Blues&#x27;. Johnny Cash wrote this classic while stationed in Germany, inspired by the film &#x27;Inside the Walls of Folsom Prison&#x27;. The song&#x27;s iconic line, &#x27;I shot a man in Reno just to watch him die&#x27;, was crafted to capture the raw essence of prison life. Recorded live at Folsom Prison, the energy of the inmates can be felt through the recording, making it a landmark moment in music history. And that, my friends, is the power of a song that speaks straight to the heart!</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/2fDHuS1PTkHBbCWWZF1ph9.mp3"></audio></div>
+<div class="text-block">Folsom Prison Blues was written while stationed in Germany inspired by the film Inside the Walls of Folsom Prison and recorded live at the prison capturing the inmates energy as a landmark moment in music history.</div>
+</details>
+<details>
+<summary>Ghost Riders in the Sky (1979)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Ghost Riders in the Sky depicts a vision of spectral horsemen riding across the heavens. It serves as a moral lesson on the dangers of a godless and rowdy cowboy lifestyle. The song stirs emotions of foreboding and amazement at this supernatural spectacle. Stan Jones wrote it drawing from traditional folklore and personal experience.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/3I1vEQhGwRK7URrTq4BqNl.mp3"></audio></div>
+<div class="text-block">Ghost Riders in the Sky depicts spectral horsemen riding across the heavens in a moral lesson on the dangers of a godless and rowdy cowboy lifestyle drawn from traditional folklore and personal experience.</div>
+</details>
+<details>
+<summary>Hey Porter (1961)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Hey Porter follows a train passenger excited to be heading back home. He keeps inquiring about the arrival time as the locomotive speeds through the night. The song embodies the mix of impatience and joy that comes with returning to familiar territory after a long absence. It was penned on a return trip from military service overseas.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6y9azVbFwvEGjLjTAwQHdd.mp3"></audio></div>
+<div class="text-block">Hey Porter was penned on a return trip from military service overseas and captures the impatience and joy of an excited train passenger heading home while repeatedly inquiring about arrival time through the night.</div>
+</details>
+<details>
+<summary>How Great Thou Art (1968)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">How Great Thou Art is a hymn that praises the Lord&#x27;s magnificent works. The lyrics consider the stars, the forests, and the mountains before turning to the savior&#x27;s sacrifice for humanity. It inspires a deep sense of humility and adoration toward the divine. Carl Boberg originally penned the words in his native Sweden in 1885.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/3FsWij9VrgmY8S6bcZZaR9.mp3"></audio></div>
+<div class="text-block">Penned in Sweden in 1885, How Great Thou Art praises the Lord&#x27;s magnificent works through reflections on the stars, forests and mountains as well as the savior&#x27;s sacrifice for humanity, inspiring humility and adoration.</div>
+</details>
+<details>
+<summary>I Saw the Light (1982)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">I Saw the Light is an upbeat gospel tune about personal redemption. The narrative follows the shift from a life of worry and sin to one of peace and certainty in Christ. The emotion captured is pure elation at being freed from spiritual blindness. It was written and first recorded in the late 1940s.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/3BK4xUbbxVPzG1K3JRHwM0.mp3"></audio></div>
+<div class="text-block">Written and first recorded in the late 1940s, I Saw the Light is an upbeat gospel tune that captures pure elation at shifting from worry and sin to peace and certainty in Christ.</div>
+</details>
+<details>
+<summary>i walk the line (1956)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Johnny Cash penned &#x27;I Walk the Line&#x27; as a promise to his wife, Vivian, to stay faithful while on the road. Recorded in a single take at Sun Studio in Memphis, the song&#x27;s unique sound comes from Cash&#x27;s guitar played through a tape echo unit, giving it that haunting reverb. It soared to the top of the country charts and even crossed over to the pop charts, a testament to its universal appeal. And remember, folks, every time you hear that steady strum, it&#x27;s Johnny walking that line, straight from his heart to yours!</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6uya0AiJA1Avd4DY2XFlVm.mp3"></audio></div>
+<div class="text-block">Written as a promise to his wife Vivian to stay faithful while on the road, I Walk the Line was recorded in a single take at Sun Studio and topped the country charts.</div>
+</details>
+<details>
+<summary>Jackson (1967)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">This duet captures the playful yet fiery dynamic of a couple&#x27;s banter, perfectly embodying the spirit of country storytelling through its spirited back-and-forth. Used in various film and TV contexts, it often underscores scenes of romantic tension or lighthearted conflict, with the upbeat tempo and witty lyrics enhancing the push-and-pull of relationships. Its charm lies in the authentic chemistry between the singers, making it a standout choice for moments that blend humor and heart in visual narratives.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/5fcxVCOtfesNzI2n4Y4kiJ.mp3"></audio></div>
+<div class="text-block">Jackson embodies the playful fiery banter of a couple through its spirited back-and-forth storytelling, earning frequent use in film and TV to underscore scenes of romantic tension and lighthearted conflict.</div>
+</details>
+<details>
+<summary>John Henry (1968)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">John Henry is a classic American folk song centered on a legendary steel-driving hero. The lyrics describe his bold race against a steam-powered drill during railroad construction and his ultimate victory at the expense of his own life. This tale embodies the themes of human perseverance and the fear of being supplanted by technology in the industrial age. The story has roots in the building of the Big Bend Tunnel for the Chesapeake and Ohio Railway in the early 1870s.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/1mZwScTO9xOyxizjQIugn7.mp3"></audio></div>
+<div class="text-block">Rooted in the 1870s construction of the Big Bend Tunnel, John Henry is a classic American folk song about a steel-driving hero who beat a steam-powered drill in a race but died in the process.</div>
+</details>
+<details>
+<summary>My Old Kentucky Home (1975)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">My Old Kentucky Home stirs up deep nostalgia for the sights and sounds of Kentucky. The words describe joyful memories of home contrasted with the pain of exile and loss. The piece carries an underlying sadness about the human condition and forced separations. It has served as Kentucky&#x27;s official state song since 1928.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/1G9Zji13IlCad7EL8Hs0AM.mp3"></audio></div>
+<div class="text-block">My Old Kentucky Home has served as Kentucky&#x27;s official state song since 1928, blending joyful memories of home with the deep sadness of exile, loss, and the human condition.</div>
+</details>
+<details>
+<summary>Orange Blossom Special (1965)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">The Orange Blossom Special captures the speed and excitement of the luxury train bound for Florida. Its driving rhythm and fiddle lines mirror the clickety-clack of rails through the South. The piece conveys the freedom and adventure central to rail travel culture. Ervin Rouse and his brother composed the fiddle tune in 1938 while performing in Florida.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/28KTisZDzhDBALLSvRf4wv.mp3"></audio></div>
+<div class="text-block">Orange Blossom Special captures the speed and excitement of the luxury train bound for Florida with its driving rhythm and fiddle lines mirroring the clickety-clack of rails through the South.</div>
+</details>
+<details>
+<summary>Peace in the Valley (1963)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Peace in the Valley offers reassurance by envisioning rest beyond worldly troubles. The lyrics express a yearning for a place where there is no more sorrow, pain, or death. They deliver a message of enduring hope rooted in faith during times of hardship. Thomas A. Dorsey wrote the gospel standard in 1937 for Mahalia Jackson.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/0VBvfzawnoYVVXsHLF5jwK.mp3"></audio></div>
+<div class="text-block">Written in 1937, the gospel standard Peace in the Valley offers reassurance by envisioning rest beyond worldly troubles and delivers a message of enduring hope rooted in faith during hardship.</div>
+</details>
+<details>
+<summary>Ragged Old Flag (1974)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Ragged Old Flag weaves a compelling tale of the American flag&#x27;s journey through history. The narrative highlights its tattered condition as evidence of the many battles fought to preserve liberty and justice. Listeners feel a surge of national pride and respect for those who defended the country across generations. The work draws from conflicts ranging from the War of 1812 to the Vietnam War.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/3lUizfXlBYvhDTYXk2X96w.mp3"></audio></div>
+<div class="text-block">Ragged Old Flag chronicles the American flag&#x27;s journey from the War of 1812 to Vietnam, its tattered condition highlighting battles for liberty and justice while inspiring pride and respect for generations of defenders.</div>
+</details>
+<details>
+<summary>Rebel Soldier</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Rebel Soldier details the plight of a Southern fighter far from his loved ones. The protagonist voices his intention to quit the war and make his way back to his wife and child. This ballad emphasizes the personal hardships and emotional struggles faced by individuals in the Civil War. It has been interpreted by various artists in the folk and country traditions.</div>
+<h4>Short Detail Text</h4>
+<p class="small">No Short Detail MP3 MP3 available.</p>
+<div class="text-block">Rebel Soldier chronicles the emotional hardships of a Southern soldier intent on quitting the war to reunite with his wife and child.</div>
+</details>
+<details>
+<summary>ring of fire (1963)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Johnny Cash&#x27;s &#x27;Ring of Fire&#x27; was co-written by June Carter Cash and Merle Kilgore, inspired by June&#x27;s feelings for Johnny. The song&#x27;s fiery lyrics and Cash&#x27;s distinctive voice made it an iconic hit, reaching the top of the charts in 1963. Recorded at the Columbia Studio in Nashville, the track features a unique mariachi-style horn arrangement. And remember, folks, when you&#x27;re caught in the flames of love, Johnny Cash&#x27;s &#x27;Ring of Fire&#x27; will always be there to fan the flames!</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6YffUZJ2R06kyxyK6onezL.mp3"></audio></div>
+<div class="text-block">Co-written by June Carter Cash and Merle Kilgore and inspired by her feelings for Johnny, Ring of Fire topped the charts in 1963 with its fiery lyrics and unique mariachi-style horn arrangement recorded in Nashville.</div>
+</details>
+<details>
+<summary>Rock Island Line (1957)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Rock Island Line pays tribute to a powerful Midwest railroad known for its speed and reliability. The lyrics list various goods being transported as the train makes its way across the country. This folk standard stirs up feelings of adventure and marvel at human engineering achievements. The tune follows a call and response pattern that encourages audience participation.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/4l0wUGtoiRol9esuvChXzN.mp3"></audio></div>
+<div class="text-block">The folk standard Rock Island Line pays tribute to a powerful Midwest railroad known for its speed and reliability while its call and response pattern stirs feelings of adventure and marvel at human engineering achievements.</div>
+</details>
+<details>
+<summary>Streets of Laredo (2002)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Streets of Laredo narrates the final words of a young cowboy struck down by a bullet. He requests that his fellow riders carry him away and bury him properly with certain honors. The song delivers a poignant message about mortality and the consequences of a lawless lifestyle in the Old West. Its melody was adapted from a traditional Irish folk song.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/1ZhTHkB1Kt7qO4MP5uZlX6.mp3"></audio></div>
+<div class="text-block">Adapted from a traditional Irish folk song, Streets of Laredo details a young cowboy&#x27;s last requests for burial after being shot and conveys the consequences of a lawless lifestyle in the Old West.</div>
+</details>
+<details>
+<summary>Swing Low Sweet Chariot (1959)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Swing Low Sweet Chariot is a beloved spiritual with roots in American slavery. The song uses the image of a chariot to represent the call to the promised land of heaven. It conveys both the pain of current suffering and the anticipation of glorious release. The piece was popularized by the Fisk Jubilee Singers in the 1870s.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/4ouRy2y1A34GcHhouzkls0.mp3"></audio></div>
+<div class="text-block">Swing Low Sweet Chariot, a spiritual with roots in American slavery, uses the chariot image to represent the call to heaven while conveying both the pain of suffering and anticipation of glorious release.</div>
+</details>
+<details>
+<summary>The Ballad of Ira Hayes (1964)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">The Ballad of Ira Hayes narrates the sad fate of a Pima Indian war hero. After helping to raise the flag on Iwo Jima he was used for publicity but then abandoned to a life of poverty and substance abuse. The song&#x27;s message condemns the hypocrisy of a country that honors a man in wartime but ignores him in peace especially if he is Native American. Ira Hayes was one of the flag raisers who survived the battle only to die young years later.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/0BtqwFxTqPoMIRNq6Og77I.mp3"></audio></div>
+<div class="text-block">The Ballad of Ira Hayes condemns a country&#x27;s hypocrisy in honoring a Pima Indian hero for raising the flag on Iwo Jima yet abandoning him to poverty and substance abuse in peacetime.</div>
+</details>
+<details>
+<summary>The Legend of John Henry&#x27;s Hammer (1963)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">The Legend of John Henry&#x27;s Hammer tells of a contest between a man and a machine. The song expresses the pride of the laborer and the fear of being replaced by technology. It imparts a message about the enduring strength of the human will even in defeat. In the story John Henry beats the steam hammer but dies with his hammer in his hand.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/1rxkJt6AldTgLzCm9s4Tue.mp3"></audio></div>
+<div class="text-block">The Legend of John Henry&#x27;s Hammer highlights the laborer&#x27;s pride and the human will&#x27;s enduring strength in its story of John Henry defeating a steam hammer only to die with it in his hand.</div>
+</details>
+<details>
+<summary>The Old Account (1959)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">The Old Account is a gospel classic about balancing the books with God. The song explains how Jesus took care of the debt accumulated by a lifetime of sin. This creates a feeling of tremendous relief and gratitude in the heart of the singer. The song was written by F. M. Graham in 1902.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/5VyTLZrrb7rS3GSECj0gzP.mp3"></audio></div>
+<div class="text-block">The Old Account is a gospel classic written by F. M. Graham in 1902 that uses balancing the books with God to show how Jesus paid the debt of sin, bringing tremendous relief and gratitude.</div>
+</details>
+<details>
+<summary>The Rebel Johnny Yuma (2002)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">The Rebel Johnny Yuma chronicles the journey of a Confederate veteran drifting through the post-war West. The protagonist values his liberty above all else and rejects any attempts to confine him to a settled life. The track embodies the emotional turmoil and resilient autonomy felt by many after the Civil War. It served as the theme song for a television series about a wandering drifter.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/5OnpbTu8j6r4vckPaG96q1.mp3"></audio></div>
+<div class="text-block">The Rebel Johnny Yuma follows a fiercely independent Confederate veteran drifting across the post-Civil War West and became the theme song for a television series about a wandering drifter.</div>
+</details>
+<details>
+<summary>Were You There When They Crucified My Lord (1963)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Were You There When They Crucified My Lord draws the singer into the events of the crucifixion with piercing questions. The spiritual evokes shared sorrow and awe at the suffering, burial, and rising of Jesus. Its repetitive structure fosters personal reflection on sacrifice and redemption. The hymn first appeared in print in 1899 after circulating for decades in African American communities.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6FQ36fnytRtVALIpsBwXBv.mp3"></audio></div>
+<div class="text-block">Having circulated for decades in African American communities before appearing in print in 1899, Were You There When They Crucified My Lord uses piercing questions to evoke shared sorrow and awe at the crucifixion.</div>
+</details>
+</div>
+<div class="card">
+<h2>Nostalgia Program Appearances</h2>
+<details>
+<summary>1950S-Country (3 tracks)</summary>
+<ul>
+<li>#1 - i walk the line</li>
+<li>#6 - folsom prison blues</li>
+<li>#22 - ballad of a teenage queen</li>
+</ul>
+</details>
+<details>
+<summary>1960S-Country (4 tracks)</summary>
+<ul>
+<li>#8 - ring of fire</li>
+<li>#32 - folsom prison blues</li>
+<li>#33 - a boy named sue</li>
+<li>#34 - daddy sang bass</li>
+</ul>
+</details>
+</div>
+<div class="card">
+<h2>Collection Appearances</h2>
+<details>
+<summary>American Folk Heroes (3 tracks)</summary>
+<ul>
+<li>#1 - John Henry</li>
+<li>#10 - The Legend of John Henry&#x27;s Hammer</li>
+<li>#22 - The Ballad of Ira Hayes</li>
+</ul>
+</details>
+<details>
+<summary>Civil War Songs (2 tracks)</summary>
+<ul>
+<li>#19 - My Old Kentucky Home</li>
+<li>#37 - Rebel Soldier</li>
+</ul>
+</details>
+<details>
+<summary>Country Duets (1 tracks)</summary>
+<ul>
+<li>#3 - Jackson</li>
+</ul>
+</details>
+<details>
+<summary>Cowboy Songs &amp; Western Favorites (2 tracks)</summary>
+<ul>
+<li>#17 - Don&#x27;t Take Your Guns to Town</li>
+<li>#18 - Bury Me Not on the Lone Prairie</li>
+</ul>
+</details>
+<details>
+<summary>Legends – Country (1 tracks)</summary>
+<ul>
+<li>#5 - i walk the line</li>
+</ul>
+</details>
+<details>
+<summary>Patriotic Favorites (1 tracks)</summary>
+<ul>
+<li>#2 - Ragged Old Flag</li>
+</ul>
+</details>
+<details>
+<summary>Railroad &amp; Train Songs (4 tracks)</summary>
+<ul>
+<li>#3 - Orange Blossom Special</li>
+<li>#4 - Rock Island Line</li>
+<li>#5 - folsom prison blues</li>
+<li>#6 - Hey Porter</li>
+</ul>
+</details>
+<details>
+<summary>Traditional Hymns (6 tracks)</summary>
+<ul>
+<li>#19 - Peace in the Valley</li>
+<li>#20 - Were You There When They Crucified My Lord</li>
+<li>#21 - The Old Account</li>
+<li>#22 - Swing Low Sweet Chariot</li>
+<li>#23 - How Great Thou Art</li>
+<li>#24 - I Saw the Light</li>
+</ul>
+</details>
+<details>
+<summary>Western Heritage Favorites (4 tracks)</summary>
+<ul>
+<li>#6 - Ghost Riders in the Sky</li>
+<li>#7 - Don&#x27;t Take Your Guns to Town</li>
+<li>#8 - The Rebel Johnny Yuma</li>
+<li>#9 - Streets of Laredo</li>
+</ul>
+</details>
+</div>
+</section>
+<section class="catalog-page" data-source="artists/1924.html">
+<div class="nav">
+<a href="../index.html">← Catalog Home</a>
+<a href="../featured_artists.html">Featured Artists</a>
+</div>
+<h1>Vicente Fernández</h1>
+<div class="subtitle">TopSpot40 Featured Artist Detail Page</div>
+<div class="stat-grid">
+<div class="stat"><div class="num">16</div><div class="label">Tracks</div></div>
+<div class="stat"><div class="num">0</div><div class="label">Nostalgia Appearances</div></div>
+<div class="stat"><div class="num">14</div><div class="label">Collection Appearances</div></div>
+<div class="stat"><div class="num">Yes</div><div class="label">Artist Story</div></div>
+</div>
+<div class="card">
+<h2>Artist Story</h2>
+<h3>The Story of Vicente Fernández</h3>
+<p class="small">Type: feature • Duration: 6.8 minutes</p>
+<div class="audio"><div class="small">Artist Story MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/artist-story/3.mp3"></audio></div>
+<details open><summary>Story Text</summary>
+<div class="text-block">You know that feeling when a voice comes on and suddenly you’re not in your car or your kitchen anymore? You’re back under a Mexican sky, maybe at a family gathering, or standing in a crowded plaza with tears in your eyes and a lump in your throat. That’s what Vicente Fernández does. That rich, powerful, unmistakably ranchero voice didn’t just sing songs; it carried the heart of a whole culture.
+
+Let me tell you about the boy who became El Rey.
+
+Vicente grew up poor in Huentitán el Alto, Jalisco, the kind of place where the radio was the only entertainment and the mountains seemed to sing back to you. From the time he was small he was already imitating his heroes, Pedro Infante and Jorge Negrete. He’d stand in the fields and sing to the cows, because they didn’t criticize. His father left when he was young, so Vicente went to work early—selling milk, shining shoes, whatever it took. But he always had that guitar slung across his back like it was part of his spine.
+
+When he finally got the nerve to try Mexico City, the rejections came fast and hard. One radio producer listened to him audition and told him, in so many words, that his voice was too rough, too country, that he sounded like a farmhand. Vicente later laughed about it, but at the time it stung. So what did he do? He took that same voice to the buses. He’d hop on a moving bus with his guitar, sing three songs, pass the hat, then jump off at the next stop and do it all over again. Can you picture it? A skinny young man in cheap boots, pouring his soul out between stops while people clutched their change and tried not to cry. Those years taught him something the recording studios never could—how to look people in the eye and make them feel like he was singing only to them.
+
+That stubbornness paid off. When success finally came, it came like a flood. “Volver, Volver” turned into an anthem for every person who ever left home and couldn’t stop looking back. The song wasn’t just popular; it became part of the language of longing. Suddenly the kid who sang to cows was selling out bullrings and arenas. He started appearing in movies, always playing the proud, heartbroken, honorable ranchero. He refused to lip-sync. If Vicente was on screen, that was really him singing, chest out, sombrero tilted, giving everything.
+
+But here’s what I love most about him—the contrast between the man and the music. He built a career on songs about betrayal, drinking to forget, and women who broke your heart. Yet in real life, he was married to the same woman, María del Refugio “Doña Cuca” Abarca, for fifty-five years. They met when they were practically kids. He used to tell people he fell in love with her the moment he saw her, and that was that. While he was on the road singing about loss, she was home raising their children and keeping him grounded. He called her “mi Chata” until the end of his days. In an industry full of flash and temptation, Vicente stayed faithful, stayed Mexican, and stayed humble. That’s rarer than a diamond.
+
+There’s a story from the late nineties that tells you everything about what family meant to him. His oldest son, Vicente Jr., was kidnapped. The ransom demand was enormous. The whole country held its breath. Vicente didn’t hesitate. He paid what they asked, got his boy back, and then did something remarkable. Instead of letting bitterness eat him alive, he poured that pain into his work and held his family even closer. He bought a beautiful ranch outside Guadalajara and named it Los Tres Potrillos after his three boys. That ranch became their sanctuary, a place where the Fernandez family still gathers today. You can hear that love and protectiveness in every note he sings.
+
+I also have to tell you about the night he said goodbye.
+
+In 2016, at the Estadio Azteca in Mexico City, more than eighty thousand people showed up to thank him. Vicente was seventy-six years old, his voice still strong but his body beginning to fail him. He sang for hours. At one point he broke down crying, overwhelmed by the love coming back at him. Then he did what only Vicente would do—he kept singing. He didn’t want to leave the stage. That night wasn’t just a concert; it was a love letter between an artist and his people. You could feel generations in that stadium—grandparents who grew up with him, parents who courted to his music, kids discovering him for the first time.
+
+Even after he left us in 2021, the voice didn’t leave. His son Alejandro carries it forward with that same velvet-and-gravel tone. His grandsons are coming up now too. The tradition didn’t break; it just got passed from one pair of hands to another, the way a father hands his son the reins of a favorite horse.
+
+That’s why Vicente Fernández still matters. In a world that keeps trying to smooth every edge and make everything sound the same, he reminds us what it means to sing with your whole chest. To be proud of where you come from. To love your wife, your children, and your culture so fiercely that it bleeds into every song. When you hear “Mujeres Divinas,” “El Rey,” or “Estos Celos,” you’re not listening to a recording. You’re listening to a man who once sang on buses for pocket change and never forgot what it felt like to need the music just to keep going.
+
+So next time you put him on, turn it up a little. Close your eyes and let that voice wrap around you like a warm serape. You’ll probably find yourself smiling even as the tears come. That’s the magic of Vicente. He makes you feel everything at once—proud, heartbroken, hopeful, and most of all, alive.
+
+And somewhere, I like to think the old man in the charro suit is smiling too, tipping his sombrero, saying, “See? I told you I’d come back.”</div>
+</details>
+</div>
+<div class="card">
+<h2>Artist Description</h2>
+<p class="small">No Artist Description MP3 MP3 available.</p>
+<div class="text-block">Vicente Fernández delivered ranchera and mariachi classics with a booming voice full of passion and sincerity that made every performance feel personal. Beloved as El Rey de la Ranchera, he sold millions of records across five decades, creating a powerful legacy that keeps traditional Mexican music alive in the hearts of generations of devoted fans.</div>
+</div>
+<div class="card">
+<h2>Track Detail Review</h2>
+<details>
+<summary>Acá Entre Nos (1992)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Acá Entre Nos delves into the pretense of emotional recovery. The song highlights the difference between public assurances of well-being and private admissions of heartbreak. It expresses the universal struggle to hide pain from lost love. Traditional Mexican rhythms accompany the candid storytelling.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/2FDFz5TuYlpP180AUicAcl.mp3"></audio></div>
+<div class="text-block">Acá Entre Nos explores the contrast between public claims of emotional recovery and private heartbreak, capturing the universal struggle to conceal pain from lost love with traditional Mexican rhythms.</div>
+</details>
+<details>
+<summary>Cruz De Olvido (1991)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Cruz De Olvido presents a heartfelt cry for oblivion after romantic loss. The central idea revolves around seeking a symbolic cross to bury painful memories and find inner peace. It explores the conflicting emotions of love that lingers despite the hurt and the wish to start anew. This bolero has touched generations with its sincere depiction of vulnerability.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/2vJyNEy7aNXMZomvzn5bJo.mp3"></audio></div>
+<div class="text-block">Cruz De Olvido has touched generations as a bolero that captures the ache of lingering love after romantic loss and the longing for inner peace by burying painful memories.</div>
+</details>
+<details>
+<summary>De Qué Manera Te Olvido (1978)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">De Qué Manera Te Olvido examines the futility of trying to forget a former lover. The lyrics question all possible methods to remove persistent memories and feelings that refuse to fade. Such vulnerability reveals the lasting impression of a significant relationship. Passionate delivery amplifies the sense of longing and desperation.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/0mLSnzvqwlq9hhrgJucGJs.mp3"></audio></div>
+<div class="text-block">De Qué Manera Te Olvido explores the futility of erasing the persistent memories and emotions from a significant relationship that refuse to fade no matter what is tried.</div>
+</details>
+<details>
+<summary>El Jinete (2009)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">El Jinete captures the essence of a wandering horseman. The song speaks to themes of adventure, solitude, and connection with nature on endless trails. It carries an emotion of restless freedom mixed with quiet contemplation. Powerful brass instrumentation drives the energetic pulse of the piece.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/3n6MMNR9fmz1X5xvK1E2rw.mp3"></audio></div>
+<div class="text-block">El Jinete delivers themes of adventure, solitude, and connection with nature on endless trails, conveying the restless freedom and quiet contemplation of a wandering horseman with its powerful brass instrumentation.</div>
+</details>
+<details>
+<summary>El Rey (1972)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">El Rey stands tall as an anthem of independence and pride. The protagonist declares himself the king of his own life regardless of whether others remember or love him. This resonates with listeners through its bold assertion of self-value in the face of hardship. It was composed by the legendary José Alfredo Jiménez.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6P3dT8EkJd0LOyZklOl0Na.mp3"></audio></div>
+<div class="text-block">El Rey has become an anthem of independence and pride by boldly asserting that its protagonist is the king of his own life regardless of whether others remember or love him.</div>
+</details>
+<details>
+<summary>Estos Celos (2007)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Estos Celos reveals the dark side of love through the lens of jealous obsession. The narrative describes the sleepless nights and constant doubts that plague the heart. It delivers a warning about allowing such feelings to overshadow the good in a relationship. The song builds to a powerful crescendo that mirrors rising emotional turmoil.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6u6kH7V7Tx5xDJtF82vVw0.mp3"></audio></div>
+<div class="text-block">Estos Celos captures the dark side of jealous obsession through sleepless nights and constant doubts that warn against overshadowing a relationship&#x27;s good with its crescendo mirroring rising emotional turmoil.</div>
+</details>
+<details>
+<summary>Hermoso Cariño (1993)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Hermoso Cariño offers a celebration of tender love and companionship. The words convey immense gratitude for the way a partner&#x27;s care has brightened the singer&#x27;s world. This creates an atmosphere of warmth and reciprocal commitment that touches the heart. Classic mariachi elements provide an authentic backdrop to the vocals.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6UN6W5tj0qrMYV8N9MQMJC.mp3"></audio></div>
+<div class="text-block">Hermoso Cariño celebrates tender love and companionship through its expression of immense gratitude for a partner&#x27;s care that brightened the singer&#x27;s world, all backed by classic mariachi elements.</div>
+</details>
+<details>
+<summary>La Diferencia (1980)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">La Diferencia explores the unique qualities that distinguish sincere love from mere infatuation. Heartfelt lyrics reveal the disappointment of discovering a partner&#x27;s true colors after investing deep trust. The emotional weight lies in accepting the truth and finding closure after deception. This ranchera classic has inspired countless covers by other notable Mexican artists.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/6wwMqdntt3An3mmVSb613i.mp3"></audio></div>
+<div class="text-block">La Diferencia stands as a ranchera classic that has inspired countless covers by notable Mexican artists through its exploration of sincere love versus infatuation and the closure found after betrayal.</div>
+</details>
+<details>
+<summary>La Ley Del Monte (2010)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">La Ley Del Monte is a stirring ranchera filled with raw passion and resolve. The lyrics invoke the law of the mountain as a metaphor for claiming what is rightfully yours in matters of the heart. This creates a powerful message about natural instincts taking precedence over social expectations. The song has become a staple in the repertoires of mariachi ensembles across Mexico.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/2qWPIc4TfXwTzw8cTNxgoI.mp3"></audio></div>
+<div class="text-block">La Ley Del Monte has become a staple in the repertoires of mariachi ensembles across Mexico by using the law of the mountain as a metaphor for natural instincts prevailing over social expectations in matters of the heart.</div>
+</details>
+<details>
+<summary>Las Mañanitas (1973)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Las Mañanitas welcomes the birthday celebrant with traditional Mexican warmth. The song describes the beauty of the morning and offers wishes for many more years of life and joy. It stirs feelings of affection and community as it is often sung at dawn by loved ones. The piece remains a standard in celebrations throughout Latin America.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/5kWzM5dWoG54dGyFb5uMuX.mp3"></audio></div>
+<div class="text-block">Sung at dawn by loved ones, Las Mañanitas welcomes birthday celebrants with traditional Mexican warmth while describing the morning&#x27;s beauty and extending wishes for many more years of life and joy.</div>
+</details>
+<details>
+<summary>México Lindo y Querido (2006)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">México Lindo y Querido stands as a passionate ode to the native country. The composition speaks of eternal love for Mexico and a wish to return even in death. Such sentiments stir deep patriotic emotions and a sense of belonging no matter the distance. It is traditionally performed with full mariachi accompaniment to enhance its cultural resonance.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/2r5HpO5yuhGHR0xDw7FTBr.mp3"></audio></div>
+<div class="text-block">A timeless expression of Mexican patriotism, México Lindo y Querido celebrates eternal love for the homeland and the longing to return even after death while traditionally featuring full mariachi accompaniment.</div>
+</details>
+<details>
+<summary>Mujeres Divinas (1982)</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Mujeres Divinas reflects on the profound impact women have on men. The composition praises their divine qualities while acknowledging the pain and tears that often accompany such passions. It communicates a message of acceptance despite the risks inherent in love. Rich vocal inflections convey the complex emotions embedded in the lyrics.</div>
+<h4>Short Detail Text</h4>
+<div class="audio"><div class="small">Short Detail MP3</div><audio controls src="https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/audio-en/short-detail/2PxGGRmj5yunYdNF2Ud2vm.mp3"></audio></div>
+<div class="text-block">Mujeres Divinas reflects on the profound impact women have on men, praising their divine qualities while acknowledging the pain and tears that accompany such passions and a message of acceptance despite love&#x27;s risks.</div>
+</details>
+<details>
+<summary>Por Tu Maldito Amor</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Por Tu Maldito Amor details the suffering inflicted by a toxic yet irresistible romance. The message highlights the paradox of loving someone who brings only sorrow and despair. Listeners connect with its raw honesty about emotional dependency and pain. The title captures the cursed nature of this all-consuming passion.</div>
+<h4>Short Detail Text</h4>
+<p class="small">No Short Detail MP3 MP3 available.</p>
+<div class="text-block"><em>Missing</em></div>
+</details>
+<details>
+<summary>Que Bonita Es Mi Tierra</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Que Bonita Es Mi Tierra is an ode to the wonders of the homeland. The song paints pictures of fertile fields, majestic mountains, and the warmth of its inhabitants with genuine affection. It carries a message of appreciation for simple beauties and the importance of staying connected to one&#x27;s origins. Audiences often sing along during communal celebrations of national pride.</div>
+<h4>Short Detail Text</h4>
+<p class="small">No Short Detail MP3 MP3 available.</p>
+<div class="text-block">Que Bonita Es Mi Tierra celebrates the homeland&#x27;s fertile fields, majestic mountains, and warm inhabitants while delivering a message of gratitude for simple beauties and the need to remain connected to one&#x27;s roots that sparks sing-alongs at national pride events.</div>
+</details>
+<details>
+<summary>Viva México</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Viva México embodies the unbridled enthusiasm for all things Mexican. Lyrics call out the valor of historical figures and the splendor of the diverse regions within the country. The emotion conveyed is one of unbreakable loyalty and joy in cultural belonging. This composition frequently accompanies fireworks and parades on important holidays.</div>
+<h4>Short Detail Text</h4>
+<p class="small">No Short Detail MP3 MP3 available.</p>
+<div class="text-block">Viva México celebrates the valor of historical figures and the splendor of Mexico&#x27;s diverse regions while conveying unbreakable loyalty and joy that make it a favorite for holiday fireworks and parades.</div>
+</details>
+<details>
+<summary>Volver Volver</summary>
+<h4>Detail Text</h4>
+<p class="small">No Detail MP3 MP3 available.</p>
+<div class="text-block">Volver Volver articulates the profound desire to reunite with a loved one. The song explores themes of remorse for past decisions and the strength of lingering affection. Its emotional depth has made it a staple for expressing personal regrets and hopes. The word volver is repeated to stress the urgency of returning.</div>
+<h4>Short Detail Text</h4>
+<p class="small">No Short Detail MP3 MP3 available.</p>
+<div class="text-block"><em>Missing</em></div>
+</details>
+</div>
+<div class="card">
+<h2>Nostalgia Program Appearances</h2>
+<p>No nostalgia appearances found.</p>
+</div>
+<div class="card">
+<h2>Collection Appearances</h2>
+<details>
+<summary>Mexican-American Favorites (4 tracks)</summary>
+<ul>
+<li>#11 - El Rey</li>
+<li>#12 - Las Mañanitas</li>
+<li>#43 - La Diferencia</li>
+<li>#44 - México Lindo y Querido</li>
+</ul>
+</details>
+<details>
+<summary>Traditional Mexican Favorites (10 tracks)</summary>
+<ul>
+<li>#35 - Estos Celos</li>
+<li>#37 - Hermoso Cariño</li>
+<li>#38 - Mujeres Divinas</li>
+<li>#39 - Acá Entre Nos</li>
+<li>#40 - De Qué Manera Te Olvido</li>
+<li>#41 - El Jinete</li>
+<li>#42 - La Ley Del Monte</li>
+<li>#43 - Cruz De Olvido</li>
+<li>#44 - Que Bonita Es Mi Tierra</li>
+<li>#45 - Viva México</li>
+</ul>
+</details>
+</div>
+</section>
+<section class="catalog-page" data-source="artists/index.html">
+<div class="nav">
+        <a href="../index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>Featured Artists</h1>
+
+    <div class="subtitle">
+        Explore TopSpot40 featured artists organized by genre. Featured artists have
+        narrated artist stories and curated TopSpot track appearances.
+    </div>
+
+    <div class="summary">
+        329 featured artists • 39.4 hours of narrated artist stories • 7.2 min average story
+    </div>
+
+    
+            <div class="genre-card">
+                <h2>
+                    <a href="country.html">Country</a>
+                </h2>
+                <p>Explore featured TopSpot artists with artist stories and curated tracks in Country.</p>
+                <div class="stats">
+                    56 featured artists
+                </div>
+            </div>
+            
+            <div class="genre-card">
+                <h2>
+                    <a href="pop.html">Pop</a>
+                </h2>
+                <p>Explore featured TopSpot artists with artist stories and curated tracks in Pop.</p>
+                <div class="stats">
+                    92 featured artists
+                </div>
+            </div>
+            
+            <div class="genre-card">
+                <h2>
+                    <a href="rock.html">Rock</a>
+                </h2>
+                <p>Explore featured TopSpot artists with artist stories and curated tracks in Rock.</p>
+                <div class="stats">
+                    79 featured artists
+                </div>
+            </div>
+            
+            <div class="genre-card">
+                <h2>
+                    <a href="rnb_soul.html">R&amp;B Soul</a>
+                </h2>
+                <p>Explore featured TopSpot artists with artist stories and curated tracks in R&amp;B Soul.</p>
+                <div class="stats">
+                    48 featured artists
+                </div>
+            </div>
+            
+            <div class="genre-card">
+                <h2>
+                    <a href="latin_global.html">Latin Global</a>
+                </h2>
+                <p>Explore featured TopSpot artists with artist stories and curated tracks in Latin Global.</p>
+                <div class="stats">
+                    34 featured artists
+                </div>
+            </div>
+            
+            <div class="genre-card">
+                <h2>
+                    <a href="blues_jazz.html">Blues Jazz</a>
+                </h2>
+                <p>Explore featured TopSpot artists with artist stories and curated tracks in Blues Jazz.</p>
+                <div class="stats">
+                    37 featured artists
+                </div>
+            </div>
+            
+            <div class="genre-card">
+                <h2>
+                    <a href="folk_acoustic.html">Folk Acoustic</a>
+                </h2>
+                <p>Explore featured TopSpot artists with artist stories and curated tracks in Folk Acoustic.</p>
+                <div class="stats">
+                    26 featured artists
+                </div>
+            </div>
+            
+
+    <div class="note">
+        TV Themes are handled separately because they are usually organized by show,
+        theme, composer, or performer rather than by featured artist.
+    </div>
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="part3_nostalgia.html">
+<section class="page">
+    <div class="part">PART III</div>
+    <h1>Nostalgia Programs</h1>
+    <div class="text">Sixty-four ranked programs spanning eight decades and eight genres.</div>
+
+    <div class="footer">
+        TopSpot40.com — Discovery Never Ends
+    </div>
+</section>
+</section>
+<section class="catalog-page" data-source="nostalgia/1950s-country.html">
+<div class="nav">
+    <a href="../index.html">TopSpot40 Catalog</a>
+    <a href="../nostalgia_index.html">Nostalgia Library</a>
+    <a href="1950s.html">1950s</a>
+</div>
+
+<div class="program-line">
+    Nostalgia Program: 1950s / country
+</div>
+
+<div class="program-name">
+    1950S COUNTRY
+</div>
+
+<div class="stats">
+    45 tracks • 26 artists • 1950–1958
+</div>
+
+<p class="description">Country is storytelling you can hum—front‑porch wisdom set to steel, fiddle, and a pocket that
+walks steady. In the 1950s, honky‑tonk grit and Nashville polish defined its twin identities; the
+1960s refined studio craft and radio‑friendly choruses; the 1970s split lanes between outlaw
+rebellion and soft‑focus crossover; the 1980s codified the modern radio sound; the 1990s turned
+arena‑sized narratives into mainstream spectacles; the 2000s and 2010s mixed pop textures and
+roots revivals; and the 2020s favor honest writing that travels from TikTok to tailgates. What
+persists is voice—plainspoken but poetic—and songs that feel like family stories. For how country
+flexes in each era and who carried the torch decade by decade, check the decade‑genre
+descriptions.</p>
+
+<h3>Top Artists in This Program</h3>
+<div class="featured-artists-line">
+    <span class='featured-artist'>Hank Williams (7)</span>
+<span class='featured-artist'>Johnny Cash (3)</span>
+<span class='featured-artist'>Elvis Presley (3)</span>
+<span class='featured-artist'>The Everly Brothers (3)</span>
+<span class='featured-artist'>Lefty Frizzell (3)</span>
+<span class='featured-artist'>Hank Snow (2)</span>
+<span class='featured-artist'>Kitty Wells (2)</span>
+<span class='featured-artist'>Webb Pierce (2)</span>
+</div>
+
+<h3>Track List</h3>
+<ol class="track-list">
+    <li><span class='track-title'>i walk the line</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>heartbreak hotel</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>your cheatin heart</span> <span class='artist-name'>— Hank Williams</span></li>
+<li><span class='track-title'>hey good lookin</span> <span class='artist-name'>— Hank Williams</span></li>
+<li><span class='track-title'>blue suede shoes</span> <span class='artist-name'>— Carl Perkins</span></li>
+<li><span class='track-title'>folsom prison blues</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>cold cold heart</span> <span class='artist-name'>— Hank Williams</span></li>
+<li><span class='track-title'>dont be cruel</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>jambalaya on the bayou</span> <span class='artist-name'>— Hank Williams</span></li>
+<li><span class='track-title'>singing the blues</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>im movin on</span> <span class='artist-name'>— Hank Snow</span></li>
+<li><span class='track-title'>crazy arms</span> <span class='artist-name'>— Ray Price</span></li>
+<li><span class='track-title'>the wild side of life</span> <span class='artist-name'>— Hank Thompson</span></li>
+<li><span class='track-title'>it wasnt god who made honky tonk angels</span> <span class='artist-name'>— Kitty Wells</span></li>
+<li><span class='track-title'>young love</span> <span class='artist-name'>— Sonny James</span></li>
+<li><span class='track-title'>why dont you love me</span> <span class='artist-name'>— Hank Williams</span></li>
+<li><span class='track-title'>wake up little susie</span> <span class='artist-name'>— The Everly Brothers</span></li>
+<li><span class='track-title'>all i have to do is dream</span> <span class='artist-name'>— The Everly Brothers</span></li>
+<li><span class='track-title'>kawliga</span> <span class='artist-name'>— Hank Williams</span></li>
+<li><span class='track-title'>bye bye love</span> <span class='artist-name'>— The Everly Brothers</span></li>
+<li><span class='track-title'>sixteen tons</span> <span class='artist-name'>— Tennessee Ernie Ford</span></li>
+<li><span class='track-title'>ballad of a teenage queen</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>i forgot to remember to forget</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>slow poke</span> <span class='artist-name'>— Pee Wee King</span></li>
+<li><span class='track-title'>chatanoogie shoe shine boy</span> <span class='artist-name'>— Red Foley</span></li>
+<li><span class='track-title'>goodnight irene</span> <span class='artist-name'>— Ernest Tubb</span></li>
+<li><span class='track-title'>tennessee waltz</span> <span class='artist-name'>— Patti Page</span></li>
+<li><span class='track-title'>there stands the glass</span> <span class='artist-name'>— Webb Pierce</span></li>
+<li><span class='track-title'>in the jailhouse now</span> <span class='artist-name'>— Webb Pierce</span></li>
+<li><span class='track-title'>honky tonk blues</span> <span class='artist-name'>— Hank Williams</span></li>
+<li><span class='track-title'>i want to be with you always</span> <span class='artist-name'>— Lefty Frizzell</span></li>
+<li><span class='track-title'>if youve got the money ive got the time</span> <span class='artist-name'>— Lefty Frizzell</span></li>
+<li><span class='track-title'>gone</span> <span class='artist-name'>— Ferlin Husky</span></li>
+<li><span class='track-title'>always late with your kisses</span> <span class='artist-name'>— Lefty Frizzell</span></li>
+<li><span class='track-title'>slippin around</span> <span class='artist-name'>— Margaret Whiting</span></li>
+<li><span class='track-title'>blue moon of kentucky</span> <span class='artist-name'>— Bill Monroe</span></li>
+<li><span class='track-title'>i dont hurt anymore</span> <span class='artist-name'>— Hank Snow</span></li>
+<li><span class='track-title'>let old mother nature have her way</span> <span class='artist-name'>— Carl Smith</span></li>
+<li><span class='track-title'>makin believe</span> <span class='artist-name'>— Kitty Wells</span></li>
+<li><span class='track-title'>a dear john letter</span> <span class='artist-name'>— Jean Shepard</span></li>
+<li><span class='track-title'>mexican joe</span> <span class='artist-name'>— Jim Reeves</span></li>
+<li><span class='track-title'>bimbo</span> <span class='artist-name'>— Jim Reeves</span></li>
+<li><span class='track-title'>live fast love hard die young</span> <span class='artist-name'>— Faron Young</span></li>
+<li><span class='track-title'>sweet dreams</span> <span class='artist-name'>— Don Gibson</span></li>
+<li><span class='track-title'>oh lonesome me</span> <span class='artist-name'>— Don Gibson</span></li>
+</ol>
+</section>
+<section class="catalog-page" data-source="nostalgia/1960s-rock.html">
+<div class="nav">
+    <a href="../index.html">TopSpot40 Catalog</a>
+    <a href="../nostalgia_index.html">Nostalgia Library</a>
+    <a href="1960s.html">1960s</a>
+</div>
+
+<div class="program-line">
+    Nostalgia Program: 1960s / rock
+</div>
+
+<div class="program-name">
+    1960S ROCK
+</div>
+
+<div class="stats">
+    44 tracks • 20 artists • 1963–1971
+</div>
+
+<p class="description">Rock is electricity, attitude, and the alchemy between riff and roar. Its roots sit in blues and
+backbeat; its branches span garage grit, psychedelic color, prog ambition, arena thunder, punk
+minimalism, indie romance, and modern genre‑mixing. Every decade remixes the formula—from the
+1950s spark to the 1960s revolution, the widescreen 1970s, the big‑drum 1980s, the alt‑leaning
+1990s, the festival‑waving 2000s and 2010s, and the roots‑meets‑digital 2020s. Rock thrives
+wherever a guitar dares the room to get louder. For how each era sounded on records and stages,
+jump to the decade‑genre details.</p>
+
+<h3>Top Artists in This Program</h3>
+<div class="featured-artists-line">
+    <span class='featured-artist'>The Rolling Stones (7)</span>
+<span class='featured-artist'>Bob Dylan (5)</span>
+<span class='featured-artist'>The Jimi Hendrix Experience (3)</span>
+<span class='featured-artist'>Led Zeppelin (3)</span>
+<span class='featured-artist'>The Doors (3)</span>
+<span class='featured-artist'>The Who (3)</span>
+<span class='featured-artist'>Creedence Clearwater Revival (3)</span>
+<span class='featured-artist'>Cream (2)</span>
+</div>
+
+<h3>Track List</h3>
+<ol class="track-list">
+    <li><span class='track-title'>Like a Rolling Stone</span> <span class='artist-name'>— Bob Dylan</span></li>
+<li><span class='track-title'>i cant get no satisfaction</span> <span class='artist-name'>— The Rolling Stones</span></li>
+<li><span class='track-title'>purple haze</span> <span class='artist-name'>— The Jimi Hendrix Experience</span></li>
+<li><span class='track-title'>stairway to heaven</span> <span class='artist-name'>— Led Zeppelin</span></li>
+<li><span class='track-title'>light my fire</span> <span class='artist-name'>— The Doors</span></li>
+<li><span class='track-title'>Blowin&#x27; in the Wind</span> <span class='artist-name'>— Bob Dylan</span></li>
+<li><span class='track-title'>my generation</span> <span class='artist-name'>— The Who</span></li>
+<li><span class='track-title'>whole lotta love</span> <span class='artist-name'>— Led Zeppelin</span></li>
+<li><span class='track-title'>paint it black</span> <span class='artist-name'>— The Rolling Stones</span></li>
+<li><span class='track-title'>fortunate son</span> <span class='artist-name'>— Creedence Clearwater Revival</span></li>
+<li><span class='track-title'>all along the watchtower</span> <span class='artist-name'>— The Jimi Hendrix Experience</span></li>
+<li><span class='track-title'>the times they are achangin</span> <span class='artist-name'>— Bob Dylan</span></li>
+<li><span class='track-title'>sympathy for the devil</span> <span class='artist-name'>— The Rolling Stones</span></li>
+<li><span class='track-title'>pinball wizard</span> <span class='artist-name'>— The Who</span></li>
+<li><span class='track-title'>gimme shelter</span> <span class='artist-name'>— The Rolling Stones</span></li>
+<li><span class='track-title'>hey joe</span> <span class='artist-name'>— The Jimi Hendrix Experience</span></li>
+<li><span class='track-title'>you cant always get what you want</span> <span class='artist-name'>— The Rolling Stones</span></li>
+<li><span class='track-title'>Mr. Tambourine Man</span> <span class='artist-name'>— Bob Dylan</span></li>
+<li><span class='track-title'>proud mary</span> <span class='artist-name'>— Creedence Clearwater Revival</span></li>
+<li><span class='track-title'>sunshine of your love</span> <span class='artist-name'>— Cream</span></li>
+<li><span class='track-title'>immigrant song</span> <span class='artist-name'>— Led Zeppelin</span></li>
+<li><span class='track-title'>honky tonk women</span> <span class='artist-name'>— The Rolling Stones</span></li>
+<li><span class='track-title'>i can see for miles</span> <span class='artist-name'>— The Who</span></li>
+<li><span class='track-title'>bad moon rising</span> <span class='artist-name'>— Creedence Clearwater Revival</span></li>
+<li><span class='track-title'>house of the rising sun</span> <span class='artist-name'>— The Animals</span></li>
+<li><span class='track-title'>break on through to the other side</span> <span class='artist-name'>— The Doors</span></li>
+<li><span class='track-title'>get off of my cloud</span> <span class='artist-name'>— The Rolling Stones</span></li>
+<li><span class='track-title'>white rabbit</span> <span class='artist-name'>— Jefferson Airplane</span></li>
+<li><span class='track-title'>Subterranean Homesick Blues</span> <span class='artist-name'>— Bob Dylan</span></li>
+<li><span class='track-title'>riders on the storm</span> <span class='artist-name'>— The Doors</span></li>
+<li><span class='track-title'>white room</span> <span class='artist-name'>— Cream</span></li>
+<li><span class='track-title'>born to be wild</span> <span class='artist-name'>— Steppenwolf</span></li>
+<li><span class='track-title'>For What It&#x27;s Worth</span> <span class='artist-name'>— Buffalo Springfield</span></li>
+<li><span class='track-title'>Mr. Tambourine Man</span> <span class='artist-name'>— The Byrds</span></li>
+<li><span class='track-title'>piece of my heart</span> <span class='artist-name'>— Big Brother</span></li>
+<li><span class='track-title'>wild thing</span> <span class='artist-name'>— The Troggs</span></li>
+<li><span class='track-title'>somebody to love</span> <span class='artist-name'>— Jefferson Airplane</span></li>
+<li><span class='track-title'>Turn! Turn! Turn! (To Everything There Is a Season)</span> <span class='artist-name'>— The Byrds</span></li>
+<li><span class='track-title'>california dreamin</span> <span class='artist-name'>— The Mamas</span></li>
+<li><span class='track-title'>im waiting for the man</span> <span class='artist-name'>— The Velvet Underground</span></li>
+<li><span class='track-title'>gloria</span> <span class='artist-name'>— Them</span></li>
+<li><span class='track-title'>sunday morning</span> <span class='artist-name'>— The Velvet Underground</span></li>
+<li><span class='track-title'>heart full of soul</span> <span class='artist-name'>— The Yardbirds</span></li>
+<li><span class='track-title'>im a man</span> <span class='artist-name'>— The Spencer Davis Group</span></li>
+</ol>
+</section>
+<section class="catalog-page" data-source="nostalgia/1970s-pop.html">
+<div class="nav">
+    <a href="../index.html">TopSpot40 Catalog</a>
+    <a href="../nostalgia_index.html">Nostalgia Library</a>
+    <a href="1970s.html">1970s</a>
+</div>
+
+<div class="program-line">
+    Nostalgia Program: 1970s / pop
+</div>
+
+<div class="program-name">
+    1970S POP
+</div>
+
+<div class="stats">
+    45 tracks • 30 artists • 1972–1982
+</div>
+
+<p class="description">Pop is the big‑tent promise that a melody can unite a room. Its engine is immediacy:
+verse‑pre‑chorus‑chorus and an emotional truth delivered with polish. From 1950s crooners and
+girl‑group harmonies, to 1960s studio wizardry, 1970s glamour and soft‑rock ease, 1980s synth
+sheen and video spectacle, 1990s teen‑pop hooks, 2000s global collaborations, 2010s intimate
+confessionals, and 2020s hybrid beats—pop always mirrors the broader culture. Technology shapes it
+(from four‑tracks to phones), as do fashion, film, and dance. If a song is the year’s signature
+selfie, pop is the front camera. For the stars and sounds that defined each decade, see the
+decade‑genre breakdowns.</p>
+
+<h3>Top Artists in This Program</h3>
+<div class="featured-artists-line">
+    <span class='featured-artist'>Bee Gees (3)</span>
+<span class='featured-artist'>Stevie Wonder (3)</span>
+<span class='featured-artist'>Barry Manilow (3)</span>
+<span class='featured-artist'>Donna Summer (2)</span>
+<span class='featured-artist'>Earth, Wind (2)</span>
+<span class='featured-artist'>Kool (2)</span>
+<span class='featured-artist'>Elton John (2)</span>
+<span class='featured-artist'>Billy Joel (2)</span>
+</div>
+
+<h3>Track List</h3>
+<ol class="track-list">
+    <li><span class='track-title'>stayin alive</span> <span class='artist-name'>— Bee Gees</span></li>
+<li><span class='track-title'>dancing queen</span> <span class='artist-name'>— ABBA</span></li>
+<li><span class='track-title'>dont stop til you get enough</span> <span class='artist-name'>— Michael Jackson</span></li>
+<li><span class='track-title'>i will survive</span> <span class='artist-name'>— Gloria Gaynor</span></li>
+<li><span class='track-title'>superstition</span> <span class='artist-name'>— Stevie Wonder</span></li>
+<li><span class='track-title'>le freak</span> <span class='artist-name'>— Chic</span></li>
+<li><span class='track-title'>ymca</span> <span class='artist-name'>— Village People</span></li>
+<li><span class='track-title'>hot stuff</span> <span class='artist-name'>— Donna Summer</span></li>
+<li><span class='track-title'>how deep is your love</span> <span class='artist-name'>— Bee Gees</span></li>
+<li><span class='track-title'>september</span> <span class='artist-name'>— Earth, Wind</span></li>
+<li><span class='track-title'>you are the sunshine of my life</span> <span class='artist-name'>— Stevie Wonder</span></li>
+<li><span class='track-title'>we are family</span> <span class='artist-name'>— Sister Sledge</span></li>
+<li><span class='track-title'>bad girls</span> <span class='artist-name'>— Donna Summer</span></li>
+<li><span class='track-title'>sir duke</span> <span class='artist-name'>— Stevie Wonder</span></li>
+<li><span class='track-title'>night fever</span> <span class='artist-name'>— Bee Gees</span></li>
+<li><span class='track-title'>celebration</span> <span class='artist-name'>— Kool</span></li>
+<li><span class='track-title'>bennie and the jets</span> <span class='artist-name'>— Elton John</span></li>
+<li><span class='track-title'>you light up my life</span> <span class='artist-name'>— Debby Boone</span></li>
+<li><span class='track-title'>You’re the One That I Want</span> <span class='artist-name'>— John Travolta and Olivia Newton-John</span></li>
+<li><span class='track-title'>boogie wonderland</span> <span class='artist-name'>— Earth, Wind</span></li>
+<li><span class='track-title'>just the way you are</span> <span class='artist-name'>— Billy Joel</span></li>
+<li><span class='track-title'>funky town</span> <span class='artist-name'>— Lipps Inc.</span></li>
+<li><span class='track-title'>i wanna be your lover</span> <span class='artist-name'>— Prince</span></li>
+<li><span class='track-title'>Don&#x27;t Go Breaking My Heart</span> <span class='artist-name'>— Elton John and Kiki Dee</span></li>
+<li><span class='track-title'>summer nights</span> <span class='artist-name'>— John Travolta</span></li>
+<li><span class='track-title'>disco inferno</span> <span class='artist-name'>— The Trammps</span></li>
+<li><span class='track-title'>crocodile rock</span> <span class='artist-name'>— Elton John</span></li>
+<li><span class='track-title'>thats the way i like it</span> <span class='artist-name'>— KC and the Sunshine Band</span></li>
+<li><span class='track-title'>my life</span> <span class='artist-name'>— Billy Joel</span></li>
+<li><span class='track-title'>brick house</span> <span class='artist-name'>— Commodores</span></li>
+<li><span class='track-title'>hopelessly devoted to you</span> <span class='artist-name'>— Olivia Newton-John</span></li>
+<li><span class='track-title'>the rose</span> <span class='artist-name'>— Bette Midler</span></li>
+<li><span class='track-title'>car wash</span> <span class='artist-name'>— Rose Royce</span></li>
+<li><span class='track-title'>three times a lady</span> <span class='artist-name'>— Commodores</span></li>
+<li><span class='track-title'>the way we were</span> <span class='artist-name'>— Barbra Streisand</span></li>
+<li><span class='track-title'>get down on it</span> <span class='artist-name'>— Kool</span></li>
+<li><span class='track-title'>mandy</span> <span class='artist-name'>— Barry Manilow</span></li>
+<li><span class='track-title'>evergreen love theme from a star is born</span> <span class='artist-name'>— Barbra Streisand</span></li>
+<li><span class='track-title'>shadow dancing</span> <span class='artist-name'>— Andy Gibb</span></li>
+<li><span class='track-title'>copacabana at the copa</span> <span class='artist-name'>— Barry Manilow</span></li>
+<li><span class='track-title'>if i cant have you</span> <span class='artist-name'>— Yvonne Elliman</span></li>
+<li><span class='track-title'>i write the songs</span> <span class='artist-name'>— Barry Manilow</span></li>
+<li><span class='track-title'>i just want to be your everything</span> <span class='artist-name'>— Andy Gibb</span></li>
+<li><span class='track-title'>loves theme</span> <span class='artist-name'>— Love Unlimited Orchestra</span></li>
+<li><span class='track-title'>love me</span> <span class='artist-name'>— Yvonne Elliman</span></li>
+</ol>
+</section>
+<section class="catalog-page" data-source="nostalgia/1980s-rnb_soul.html">
+<div class="nav">
+    <a href="../index.html">TopSpot40 Catalog</a>
+    <a href="../nostalgia_index.html">Nostalgia Library</a>
+    <a href="1980s.html">1980s</a>
+</div>
+
+<div class="program-line">
+    Nostalgia Program: 1980s / RnB Soul
+</div>
+
+<div class="program-name">
+    1980S RNB SOUL
+</div>
+
+<div class="stats">
+    45 tracks • 19 artists • 1979–1990
+</div>
+
+<p class="description">R&amp;B / Soul is emotion in high fidelity—gospel‑taught phrasing, sensual grooves, and melodic
+storytelling. The 1950s and 1960s brought church to the charts; the 1970s layered strings and
+grit; the 1980s soared on powerhouse vocals and drum‑machine precision; the 1990s married
+harmonies to hip‑hop swing; the 2000s kept R&amp;B near pop’s center; the 2010s explored minimalism
+and alt‑soul palettes; and the 2020s stretch from throwback warmth to futuristic shimmer. Through
+every turn, the genre centers feeling—love, longing, and lift. For decade‑specific standouts and
+innovators, check the decade‑genre sections.</p>
+
+<h3>Top Artists in This Program</h3>
+<div class="featured-artists-line">
+    <span class='featured-artist'>Michael Jackson (7)</span>
+<span class='featured-artist'>Whitney Houston (5)</span>
+<span class='featured-artist'>Stevie Wonder (4)</span>
+<span class='featured-artist'>Prince (4)</span>
+<span class='featured-artist'>Prince and The Revolution (3)</span>
+<span class='featured-artist'>Anita Baker (3)</span>
+<span class='featured-artist'>Sade (3)</span>
+<span class='featured-artist'>Tina Turner (3)</span>
+</div>
+
+<h3>Track List</h3>
+<ol class="track-list">
+    <li><span class='track-title'>billie jean</span> <span class='artist-name'>— Michael Jackson</span></li>
+<li><span class='track-title'>purple rain</span> <span class='artist-name'>— Prince and The Revolution</span></li>
+<li><span class='track-title'>i wanna dance with somebody</span> <span class='artist-name'>— Whitney Houston</span></li>
+<li><span class='track-title'>superstition</span> <span class='artist-name'>— Stevie Wonder</span></li>
+<li><span class='track-title'>when doves cry</span> <span class='artist-name'>— Prince</span></li>
+<li><span class='track-title'>sweet love</span> <span class='artist-name'>— Anita Baker</span></li>
+<li><span class='track-title'>endless love</span> <span class='artist-name'>— Diana Ross and Lionel Richie</span></li>
+<li><span class='track-title'>i just called to say i love you</span> <span class='artist-name'>— Stevie Wonder</span></li>
+<li><span class='track-title'>how will i know</span> <span class='artist-name'>— Whitney Houston</span></li>
+<li><span class='track-title'>kiss</span> <span class='artist-name'>— Prince and The Revolution</span></li>
+<li><span class='track-title'>the way you make me feel</span> <span class='artist-name'>— Michael Jackson</span></li>
+<li><span class='track-title'>saving all my love for you</span> <span class='artist-name'>— Whitney Houston</span></li>
+<li><span class='track-title'>thats what friends are for</span> <span class='artist-name'>— Dionne Warwick</span></li>
+<li><span class='track-title'>man in the mirror</span> <span class='artist-name'>— Michael Jackson</span></li>
+<li><span class='track-title'>lets go crazy</span> <span class='artist-name'>— Prince and The Revolution</span></li>
+<li><span class='track-title'>caught up in the rapture</span> <span class='artist-name'>— Anita Baker</span></li>
+<li><span class='track-title'>On My Own</span> <span class='artist-name'>— Patti LaBelle and Michael McDonald</span></li>
+<li><span class='track-title'>parttime lover</span> <span class='artist-name'>— Stevie Wonder</span></li>
+<li><span class='track-title'>beat it</span> <span class='artist-name'>— Michael Jackson</span></li>
+<li><span class='track-title'>raspberry beret</span> <span class='artist-name'>— Prince</span></li>
+<li><span class='track-title'>greatest love of all</span> <span class='artist-name'>— Whitney Houston</span></li>
+<li><span class='track-title'>bad</span> <span class='artist-name'>— Michael Jackson</span></li>
+<li><span class='track-title'>sign o the times</span> <span class='artist-name'>— Prince</span></li>
+<li><span class='track-title'>giving you the best that i got</span> <span class='artist-name'>— Anita Baker</span></li>
+<li><span class='track-title'>i feel for you</span> <span class='artist-name'>— Chaka Khan</span></li>
+<li><span class='track-title'>smooth operator</span> <span class='artist-name'>— Sade</span></li>
+<li><span class='track-title'>whats love got to do with it</span> <span class='artist-name'>— Tina Turner</span></li>
+<li><span class='track-title'>freeway of love</span> <span class='artist-name'>— Aretha Franklin</span></li>
+<li><span class='track-title'>the sweetest taboo</span> <span class='artist-name'>— Sade</span></li>
+<li><span class='track-title'>nightshift</span> <span class='artist-name'>— Commodores</span></li>
+<li><span class='track-title'>private dancer</span> <span class='artist-name'>— Tina Turner</span></li>
+<li><span class='track-title'>human</span> <span class='artist-name'>— The Human League</span></li>
+<li><span class='track-title'>you give good love</span> <span class='artist-name'>— Whitney Houston</span></li>
+<li><span class='track-title'>if i was your girlfriend</span> <span class='artist-name'>— Prince</span></li>
+<li><span class='track-title'>whos zoomin who</span> <span class='artist-name'>— Aretha Franklin</span></li>
+<li><span class='track-title'>pyt pretty young thing</span> <span class='artist-name'>— Michael Jackson</span></li>
+<li><span class='track-title'>better be good to me</span> <span class='artist-name'>— Tina Turner</span></li>
+<li><span class='track-title'>no ordinary love</span> <span class='artist-name'>— Sade</span></li>
+<li><span class='track-title'>overjoyed</span> <span class='artist-name'>— Stevie Wonder</span></li>
+<li><span class='track-title'>aint nobody</span> <span class='artist-name'>— Rufus and Chaka Khan</span></li>
+<li><span class='track-title'>rock with you</span> <span class='artist-name'>— Michael Jackson</span></li>
+<li><span class='track-title'>im so excited</span> <span class='artist-name'>— The Pointer Sisters</span></li>
+<li><span class='track-title'>jump for my love</span> <span class='artist-name'>— The Pointer Sisters</span></li>
+<li><span class='track-title'>higher love</span> <span class='artist-name'>— Steve Winwood</span></li>
+<li><span class='track-title'>celebration</span> <span class='artist-name'>— Kool</span></li>
+</ol>
+</section>
+<section class="catalog-page" data-source="nostalgia/1990s-country.html">
+<div class="nav">
+    <a href="../index.html">TopSpot40 Catalog</a>
+    <a href="../nostalgia_index.html">Nostalgia Library</a>
+    <a href="1990s.html">1990s</a>
+</div>
+
+<div class="program-line">
+    Nostalgia Program: 1990s / country
+</div>
+
+<div class="program-name">
+    1990S COUNTRY
+</div>
+
+<div class="stats">
+    43 tracks • 28 artists • 1982–1999
+</div>
+
+<p class="description">Country is storytelling you can hum—front‑porch wisdom set to steel, fiddle, and a pocket that
+walks steady. In the 1950s, honky‑tonk grit and Nashville polish defined its twin identities; the
+1960s refined studio craft and radio‑friendly choruses; the 1970s split lanes between outlaw
+rebellion and soft‑focus crossover; the 1980s codified the modern radio sound; the 1990s turned
+arena‑sized narratives into mainstream spectacles; the 2000s and 2010s mixed pop textures and
+roots revivals; and the 2020s favor honest writing that travels from TikTok to tailgates. What
+persists is voice—plainspoken but poetic—and songs that feel like family stories. For how country
+flexes in each era and who carried the torch decade by decade, check the decade‑genre
+descriptions.</p>
+
+<h3>Top Artists in This Program</h3>
+<div class="featured-artists-line">
+    <span class='featured-artist'>George Strait (4)</span>
+<span class='featured-artist'>Brooks &amp; Dunn (3)</span>
+<span class='featured-artist'>John Michael Montgomery (3)</span>
+<span class='featured-artist'>Alan Jackson (3)</span>
+<span class='featured-artist'>Mary Chapin Carpenter (3)</span>
+<span class='featured-artist'>Martina McBride (2)</span>
+<span class='featured-artist'>Shania Twain (2)</span>
+<span class='featured-artist'>Toby Keith (2)</span>
+</div>
+
+<h3>Track List</h3>
+<ol class="track-list">
+    <li><span class='track-title'>achy breaky heart</span> <span class='artist-name'>— Billy Ray Cyrus</span></li>
+<li><span class='track-title'>boot scootin boogie</span> <span class='artist-name'>— Brooks &amp; Dunn</span></li>
+<li><span class='track-title'>i swear</span> <span class='artist-name'>— John Michael Montgomery</span></li>
+<li><span class='track-title'>strawberry wine</span> <span class='artist-name'>— Deana Carter</span></li>
+<li><span class='track-title'>chattahoochee</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>shes in love with the boy</span> <span class='artist-name'>— Trisha Yearwood</span></li>
+<li><span class='track-title'>dont rock the jukebox</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>i still believe in you</span> <span class='artist-name'>— Vince Gill</span></li>
+<li><span class='track-title'>check yes or no</span> <span class='artist-name'>— George Strait</span></li>
+<li><span class='track-title'>independence day</span> <span class='artist-name'>— Martina McBride</span></li>
+<li><span class='track-title'>sold the grundy county auction incident</span> <span class='artist-name'>— John Michael Montgomery</span></li>
+<li><span class='track-title'>any man of mine</span> <span class='artist-name'>— Shania Twain</span></li>
+<li><span class='track-title'>carrying your love with me</span> <span class='artist-name'>— George Strait</span></li>
+<li><span class='track-title'>how do i live</span> <span class='artist-name'>— LeAnn Rimes</span></li>
+<li><span class='track-title'>amazed</span> <span class='artist-name'>— Lonestar</span></li>
+<li><span class='track-title'>this kiss</span> <span class='artist-name'>— Faith Hill</span></li>
+<li><span class='track-title'>meet in the middle</span> <span class='artist-name'>— Diamond Rio</span></li>
+<li><span class='track-title'>love without end amen</span> <span class='artist-name'>— George Strait</span></li>
+<li><span class='track-title'>id love you all over again</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>brand new man</span> <span class='artist-name'>— Brooks &amp; Dunn</span></li>
+<li><span class='track-title'>baby baby</span> <span class='artist-name'>— Amy Grant</span></li>
+<li><span class='track-title'>no one else on earth</span> <span class='artist-name'>— Wynonna</span></li>
+<li><span class='track-title'>i cross my heart</span> <span class='artist-name'>— George Strait</span></li>
+<li><span class='track-title'>whats it to you</span> <span class='artist-name'>— Clay Walker</span></li>
+<li><span class='track-title'>she thinks my tractors sexy</span> <span class='artist-name'>— Kenny Chesney</span></li>
+<li><span class='track-title'>wild angels</span> <span class='artist-name'>— Martina McBride</span></li>
+<li><span class='track-title'>its your love</span> <span class='artist-name'>— Tim McGraw and Faith Hill</span></li>
+<li><span class='track-title'>youre still the one</span> <span class='artist-name'>— Shania Twain</span></li>
+<li><span class='track-title'>my maria</span> <span class='artist-name'>— Brooks &amp; Dunn</span></li>
+<li><span class='track-title'>i will always love you</span> <span class='artist-name'>— Dolly Parton</span></li>
+<li><span class='track-title'>when you say nothing at all</span> <span class='artist-name'>— Keith Whitley</span></li>
+<li><span class='track-title'>forever and ever amen</span> <span class='artist-name'>— Randy Travis</span></li>
+<li><span class='track-title'>shouldve been a cowboy</span> <span class='artist-name'>— Toby Keith</span></li>
+<li><span class='track-title'>walkaway joe</span> <span class='artist-name'>— Trisha Yearwood and Don Henley</span></li>
+<li><span class='track-title'>tender when i want to be</span> <span class='artist-name'>— Mary Chapin Carpenter</span></li>
+<li><span class='track-title'>two sparrows in a hurricane</span> <span class='artist-name'>— Tanya Tucker</span></li>
+<li><span class='track-title'>i can love you like that</span> <span class='artist-name'>— John Michael Montgomery</span></li>
+<li><span class='track-title'>shameless</span> <span class='artist-name'>— Garth Brooks</span></li>
+<li><span class='track-title'>to make you feel my love</span> <span class='artist-name'>— Garth Brooks</span></li>
+<li><span class='track-title'>we danced</span> <span class='artist-name'>— Brad Paisley</span></li>
+<li><span class='track-title'>he aint worth missing</span> <span class='artist-name'>— Toby Keith</span></li>
+<li><span class='track-title'>down at the twist and shout</span> <span class='artist-name'>— Mary Chapin Carpenter</span></li>
+<li><span class='track-title'>i feel lucky</span> <span class='artist-name'>— Mary Chapin Carpenter</span></li>
+</ol>
+</section>
+<section class="catalog-page" data-source="nostalgia/2000s-latin_global.html">
+<div class="nav">
+    <a href="../index.html">TopSpot40 Catalog</a>
+    <a href="../nostalgia_index.html">Nostalgia Library</a>
+    <a href="2000s.html">2000s</a>
+</div>
+
+<div class="program-line">
+    Nostalgia Program: 2000s / Latin Global
+</div>
+
+<div class="program-name">
+    2000S LATIN GLOBAL
+</div>
+
+<div class="stats">
+    45 tracks • 26 artists • 1999–2020
+</div>
+
+<p class="description">Latin Global is the sound of continents in conversation. Mid‑century mambo, bolero, and bossa
+carried elegance worldwide; ’70s salsa electrified city nights; ’80s and ’90s pop crossovers
+brought bilingual hooks to the mainstream; 2000s reggaetón and rock en español cemented rhythmic
+swagger; the 2010s pushed urbano to the global forefront; and the 2020s keep widening the circle
+with regional Mexican, dembow, and beyond. It’s percussion, melody, and identity—danced, sung,
+streamed, and shared across borders. For who defined each era’s pulse, see the decade‑genre deep
+dives.</p>
+
+<h3>Top Artists in This Program</h3>
+<div class="featured-artists-line">
+    <span class='featured-artist'>Shakira (6)</span>
+<span class='featured-artist'>Daddy Yankee (4)</span>
+<span class='featured-artist'>Juanes (3)</span>
+<span class='featured-artist'>Pitbull (3)</span>
+<span class='featured-artist'>Don Omar (2)</span>
+<span class='featured-artist'>Aventura (2)</span>
+<span class='featured-artist'>Manu Chao (2)</span>
+<span class='featured-artist'>Maná (2)</span>
+</div>
+
+<h3>Track List</h3>
+<ol class="track-list">
+    <li><span class='track-title'>hips dont lie</span> <span class='artist-name'>— Shakira</span></li>
+<li><span class='track-title'>la tortura</span> <span class='artist-name'>— Shakira</span></li>
+<li><span class='track-title'>gasolina</span> <span class='artist-name'>— Daddy Yankee</span></li>
+<li><span class='track-title'>despacito</span> <span class='artist-name'>— Luis Fonsi</span></li>
+<li><span class='track-title'>bailando</span> <span class='artist-name'>— Enrique Iglesias</span></li>
+<li><span class='track-title'>livin la vida loca</span> <span class='artist-name'>— Ricky Martin</span></li>
+<li><span class='track-title'>whenever wherever</span> <span class='artist-name'>— Shakira</span></li>
+<li><span class='track-title'>dile</span> <span class='artist-name'>— Don Omar</span></li>
+<li><span class='track-title'>obsesion</span> <span class='artist-name'>— Aventura</span></li>
+<li><span class='track-title'>lo que paso paso</span> <span class='artist-name'>— Daddy Yankee</span></li>
+<li><span class='track-title'>te quiero</span> <span class='artist-name'>— Flex</span></li>
+<li><span class='track-title'>ella y yo</span> <span class='artist-name'>— Aventura</span></li>
+<li><span class='track-title'>rompe</span> <span class='artist-name'>— Daddy Yankee</span></li>
+<li><span class='track-title'>ciega sordomuda</span> <span class='artist-name'>— Shakira</span></li>
+<li><span class='track-title'>lamento boliviano</span> <span class='artist-name'>— Enanitos Verdes</span></li>
+<li><span class='track-title'>amor prohibido</span> <span class='artist-name'>— Selena</span></li>
+<li><span class='track-title'>danza kuduro</span> <span class='artist-name'>— Don Omar</span></li>
+<li><span class='track-title'>me enamora</span> <span class='artist-name'>— Juanes</span></li>
+<li><span class='track-title'>la camisa negra</span> <span class='artist-name'>— Juanes</span></li>
+<li><span class='track-title'>a dios le pido</span> <span class='artist-name'>— Juanes</span></li>
+<li><span class='track-title'>eres</span> <span class='artist-name'>— Café Tacvba</span></li>
+<li><span class='track-title'>clandestino</span> <span class='artist-name'>— Manu Chao</span></li>
+<li><span class='track-title'>me gustas tu</span> <span class='artist-name'>— Manu Chao</span></li>
+<li><span class='track-title'>labios compartidos</span> <span class='artist-name'>— Maná</span></li>
+<li><span class='track-title'>manda una senal</span> <span class='artist-name'>— Maná</span></li>
+<li><span class='track-title'>bailar contigo</span> <span class='artist-name'>— Carlos Vives</span></li>
+<li><span class='track-title'>fruta fresca</span> <span class='artist-name'>— Carlos Vives</span></li>
+<li><span class='track-title'>loca</span> <span class='artist-name'>— Shakira</span></li>
+<li><span class='track-title'>pintame</span> <span class='artist-name'>— Elvis Crespo</span></li>
+<li><span class='track-title'>suavemente</span> <span class='artist-name'>— Elvis Crespo</span></li>
+<li><span class='track-title'>rakata</span> <span class='artist-name'>— Wisin</span></li>
+<li><span class='track-title'>noche de entierro</span> <span class='artist-name'>— Daddy Yankee</span></li>
+<li><span class='track-title'>abusadora</span> <span class='artist-name'>— Wisin</span></li>
+<li><span class='track-title'>voce nao soube me amar</span> <span class='artist-name'>— Blitz</span></li>
+<li><span class='track-title'>mas que nada</span> <span class='artist-name'>— Sergio Mendes</span></li>
+<li><span class='track-title'>voce</span> <span class='artist-name'>— Tim Maia</span></li>
+<li><span class='track-title'>ai se eu te pego</span> <span class='artist-name'>— Michel Teló</span></li>
+<li><span class='track-title'>balada tche tcherere tche tche</span> <span class='artist-name'>— Gusttavo Lima</span></li>
+<li><span class='track-title'>calle ocho i know you want me</span> <span class='artist-name'>— Pitbull</span></li>
+<li><span class='track-title'>hotel room service</span> <span class='artist-name'>— Pitbull</span></li>
+<li><span class='track-title'>bon bon</span> <span class='artist-name'>— Pitbull</span></li>
+<li><span class='track-title'>que te la pongo</span> <span class='artist-name'>— Garibaldi</span></li>
+<li><span class='track-title'>no me dejes de querer</span> <span class='artist-name'>— Gloria Estefan</span></li>
+<li><span class='track-title'>corazon espinado</span> <span class='artist-name'>— Santana</span></li>
+<li><span class='track-title'>suerte whenever wherever</span> <span class='artist-name'>— Shakira</span></li>
+</ol>
+</section>
+<section class="catalog-page" data-source="nostalgia_index.html">
+<div class="nav">
+        <a href="index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>Nostalgia Library</h1>
+
+    <div class="subtitle">
+        Explore TopSpot40 nostalgia programs organized by decade and genre,
+        from the 1950s through the 2020s.
+    </div>
+
+    <div class="summary">
+        8 decades • 64 programs • 2826 tracks
+    </div>
+
+    
+            <div class="decade-card">
+                <h2>
+                    <a href="nostalgia/1950s.html">
+                        1950s
+                    </a>
+                </h2>
+                <p>The 1950s ignited modern music and youth culture. Country told kitchen‑table stories as
+Nashville’s studios refined twang into nationwide hits; pop polished melodies for radio and TV
+variety shows; rock burst out of R&amp;B shuffles with guitar bite and dance‑floor swagger. Blues and
+jazz traded club‑room smoke for LP hi‑fi clarity, while folk/acoustic voices refreshed tradition
+with new protest and poetry. Latin global scenes—mambo, cha‑cha, and bolero—pulsed in ballrooms
+from New York to Los Angeles. TV themes established the power of a 30‑second hook that could
+travel into every living room, branding characters before a word was spoken. R&amp;B/Soul fused gospel
+urgency with pop craft, launching crossover stars and setting the stage for the civil‑rights era’s
+soundtrack. Postwar prosperity, car culture, transistor radios, and the rise of teen identity made
+songs feel like secret handshakes. To see how each style landed in this decade—who shaped the
+sound and where it moved dance floors—check out the 1950s decade‑genre descriptions.</p>
+                <div class="stats">
+                    8 programs • 347 tracks
+                </div>
+            </div>
+            
+            <div class="decade-card">
+                <h2>
+                    <a href="nostalgia/1960s.html">
+                        1960s
+                    </a>
+                </h2>
+                <p>The 1960s rewired taste at high speed. Rock sprinted from Merseybeat to psychedelia, while pop
+perfected lush studio craft and global stardom. Country sharpened storytelling as countrypolitan
+polish met rough‑hewn outlaw edges. R&amp;B/Soul carried the civil‑rights heartbeat from church pews
+to chart‑toppers, and blues/jazz pushed forms outward—from hard bop to modal adventures—without
+losing the late‑night glow. Latin global crossed borders with bossa nova and boogaloo, setting
+cosmopolitan moods, and folk/acoustic became a megaphone for protest, coffeehouses turning into
+campuses with guitars. TV themes became cultural shorthand: spies, sitcoms, and sci‑fi all got
+immortal motifs. Across festivals, fashion, and broadcasts, youth movements internationalized the
+charts. To dive into how each genre surfed this decade’s waves—key songs, artists, and
+scenes—check the 1960s decade‑genre entries.</p>
+                <div class="stats">
+                    8 programs • 351 tracks
+                </div>
+            </div>
+            
+            <div class="decade-card">
+                <h2>
+                    <a href="nostalgia/1970s.html">
+                        1970s
+                    </a>
+                </h2>
+                <p>The 1970s expanded everything. Rock scaled arenas and concept albums; pop leaned glamorous with
+radio‑ready sheen; R&amp;B/Soul deepened into sophisticated grooves; and country split lanes between
+outlaw grit and crossover charm. Blues/jazz experimented—electric blues, fusion, and virtuosic
+ensembles—while folk/acoustic softened edges into singer‑songwriter intimacy. Latin global salsa
+bands put brass and clave at the party’s center, and TV themes sent bold riffs and silky choruses
+into weeknight rituals. Studio technology—multi‑track consoles, synthesizers, and tape
+wizardry—turned producers into auteurs, and FM radio made long songs a virtue. Oil shocks,
+Watergate, and shifting social norms colored the mood, but the dance floor kept glowing. For the
+decade’s genre‑by‑genre detail—who led, which records defined the sound—see the 1970s decade‑genre
+descriptions.</p>
+                <div class="stats">
+                    8 programs • 364 tracks
+                </div>
+            </div>
+            
+            <div class="decade-card">
+                <h2>
+                    <a href="nostalgia/1980s.html">
+                        1980s
+                    </a>
+                </h2>
+                <p>The 1980s came in neon and digital. Pop fused irresistible hooks with music‑video iconography;
+rock balanced stadium grandeur with underground grit; R&amp;B/Soul delivered skyscraper vocals over
+clock‑precise drums; and country mixed roots sincerity with a radio‑friendly shine. Blues/jazz
+navigated from slick fusion and smooth textures to resurgent traditionalism, while folk/acoustic
+kept storytelling close and intimate. Latin global and bilingual hits crossed into primetime, and
+TV themes became earworms for a generation raised on cable. Drum machines, samplers, and
+synthesizers refreshed palettes across genres, while blockbuster soundtracks blurred lines between
+the small screen, big screen, and the charts. To see how each style glowed in this era—artists,
+records, and innovations—check the 1980s decade‑genre notes.</p>
+                <div class="stats">
+                    8 programs • 352 tracks
+                </div>
+            </div>
+            
+            <div class="decade-card">
+                <h2>
+                    <a href="nostalgia/1990s.html">
+                        1990s
+                    </a>
+                </h2>
+                <p>The 1990s were a crossroads. Rock’s alternative wave and grunge reset mainstream taste; pop
+toggled from dancefloor sparkle to singer‑songwriter candor; R&amp;B/Soul blended hip‑hop’s swing with
+velvet harmonies; and country megastars took arena storytelling nationwide. Blues/jazz alternated
+between tradition‑minded revivals and coffeehouse cool; folk/acoustic blossomed in indie circles.
+Latin global surged with crossover momentum, and TV themes found new life via sitcom ensembles and
+prestige dramas. CDs dominated, MTV scripted the look of hits, and the early internet hinted at a
+new music economy. For a genre‑specific tour of the decade’s sounds—leaders, landmark tracks, and
+scene geography—see the 1990s decade‑genre descriptions.</p>
+                <div class="stats">
+                    8 programs • 356 tracks
+                </div>
+            </div>
+            
+            <div class="decade-card">
+                <h2>
+                    <a href="nostalgia/2000s.html">
+                        2000s
+                    </a>
+                </h2>
+                <p>The 2000s pressed shuffle on culture. Pop went maximal and global, rock interwove indie textures,
+R&amp;B/Soul stayed chart central, and country widened collaborations. Blues/jazz enjoyed festival
+lifelines and crossover ballads, while folk/acoustic found intimacy in laptop studios. Latin
+global’s reggaetón and pop urbano moved from niche to necessity, and TV themes navigated prestige
+television’s golden age with cinematic palettes. MP3s, file sharing, and early streaming redefined
+discovery; DAWs and Auto‑Tune reshaped production aesthetics across every lane. To explore who
+drove each genre, and how the studio itself became an instrument, read the 2000s decade‑genre
+breakdowns.</p>
+                <div class="stats">
+                    8 programs • 359 tracks
+                </div>
+            </div>
+            
+            <div class="decade-card">
+                <h2>
+                    <a href="nostalgia/2010s.html">
+                        2010s
+                    </a>
+                </h2>
+                <p>The 2010s belonged to the feed and the festival. Pop grew confessional; rock thrived at scale even
+when guitars ebbed on radio; R&amp;B/Soul stretched from retro warmth to spacious, nocturnal
+minimalism; and country toggled between glossy hooks and rootsy honesty. Blues/jazz found new
+audiences via crossover collaborations and streaming discovery, while folk/acoustic sparked
+campfire anthems that went global. Latin global cemented urbano dominance, and TV themes became
+appointment listening again thanks to prestige serials. Playlists, challenges, and algorithmic
+discovery meant songs traveled as stories. For the micro‑scenes and landmark releases in each
+style, see the 2010s decade‑genre entries.</p>
+                <div class="stats">
+                    8 programs • 352 tracks
+                </div>
+            </div>
+            
+            <div class="decade-card">
+                <h2>
+                    <a href="nostalgia/2020s.html">
+                        2020s
+                    </a>
+                </h2>
+                <p>The 2020s rewired creation in real time. Pop and rock freely trade textures; country balances
+porchlight sincerity with chart‑ready shine; R&amp;B/Soul keeps bending time between analog nostalgia
+and DSP‑shaped futurism. Blues/jazz artists jump formats—from concert hall to viral clip—while
+folk/acoustic continues its intimate renaissance. Latin global and Afrobeats reshape mainstream
+rhythm, and TV theme music enjoys auteur‑level attention in the streaming wars. Remote
+collaboration, short‑form video, and global fandoms erase boundaries; authenticity and a great
+hook still rule. For the freshest names and sounds in each lane, dive into the 2020s decade‑genre
+details.</p>
+                <div class="stats">
+                    8 programs • 345 tracks
+                </div>
+            </div>
+            
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="part4_collections.html">
+<section class="page">
+    <div class="part">PART IV</div>
+    <h1>Collections</h1>
+    <div class="text">Music organized by stories, themes, heritage, memories, and shared experiences.</div>
+
+    <div class="footer">
+        TopSpot40.com — Discovery Never Ends
+    </div>
+</section>
+</section>
+<section class="catalog-page" data-source="collections/railroad_train_songs.html">
+<div class="group-line">
+    Collection Group: American Heritage Favorites
+</div>
+
+<div class="collection-name">
+    RAILROAD &AMP; TRAIN SONGS
+</div>
+
+    <p class="description">A collection of classic songs inspired by the railroads, locomotives, and the journeys that helped connect and build America.</p>
+
+    <h3>Featured Artists</h3>
+    <div class="featured-artists-line">
+        <span class='featured-artist'>Johnny Cash (4)</span>
+<span class='featured-artist'>Jimmie Rodgers (4)</span>
+<span class='featured-artist'>Gordon Lightfoot (2)</span>
+<span class='featured-artist'>Roy Acuff (1)</span>
+<span class='featured-artist'>Arlo Guthrie (1)</span>
+<span class='featured-artist'>The Grateful Dead (1)</span>
+<span class='featured-artist'>Lead Belly (1)</span>
+<span class='featured-artist'>The Impressions (1)</span>
+    </div>
+
+    <h3>Track List</h3>
+    <ol class="track-list">
+        <li><span class='track-title'>Wabash Cannonball</span> <span class='artist-name'>— Roy Acuff</span></li>
+<li><span class='track-title'>City of New Orleans</span> <span class='artist-name'>— Arlo Guthrie</span></li>
+<li><span class='track-title'>Orange Blossom Special</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>Rock Island Line</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>folsom prison blues</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>Hey Porter</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>Casey Jones</span> <span class='artist-name'>— The Grateful Dead</span></li>
+<li><span class='track-title'>Midnight Special</span> <span class='artist-name'>— Lead Belly</span></li>
+<li><span class='track-title'>people get ready</span> <span class='artist-name'>— The Impressions</span></li>
+<li><span class='track-title'>Mystery Train</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>Freight Train</span> <span class='artist-name'>— Elizabeth Cotten</span></li>
+<li><span class='track-title'>Long Black Train</span> <span class='artist-name'>— Josh Turner</span></li>
+<li><span class='track-title'>Train Train</span> <span class='artist-name'>— Blackfoot</span></li>
+<li><span class='track-title'>Last Train to Clarksville</span> <span class='artist-name'>— The Monkees</span></li>
+<li><span class='track-title'>Peace Train</span> <span class='artist-name'>— Cat Stevens</span></li>
+<li><span class='track-title'>Love Train</span> <span class='artist-name'>— The O&#x27;Jays</span></li>
+<li><span class='track-title'>Take the A Train</span> <span class='artist-name'>— Duke Ellington</span></li>
+<li><span class='track-title'>Night Train</span> <span class='artist-name'>— James Brown</span></li>
+<li><span class='track-title'>Downbound Train</span> <span class='artist-name'>— Bruce Springsteen</span></li>
+<li><span class='track-title'>This Train</span> <span class='artist-name'>— Sister Rosetta Tharpe</span></li>
+<li><span class='track-title'>Mule Train</span> <span class='artist-name'>— Frankie Laine</span></li>
+<li><span class='track-title'>The L&amp;N Don&#x27;t Stop Here Anymore</span> <span class='artist-name'>— Jean Ritchie</span></li>
+<li><span class='track-title'>Waiting for a Train</span> <span class='artist-name'>— Jimmie Rodgers</span></li>
+<li><span class='track-title'>Blue Yodel No. 1</span> <span class='artist-name'>— Jimmie Rodgers</span></li>
+<li><span class='track-title'>Hobo&#x27;s Meditation</span> <span class='artist-name'>— Jimmie Rodgers</span></li>
+<li><span class='track-title'>Pan American</span> <span class='artist-name'>— Hank Williams</span></li>
+<li><span class='track-title'>Canadian Railroad Trilogy</span> <span class='artist-name'>— Gordon Lightfoot</span></li>
+<li><span class='track-title'>Steel Rail Blues</span> <span class='artist-name'>— Gordon Lightfoot</span></li>
+<li><span class='track-title'>Driver 8</span> <span class='artist-name'>— R.E.M.</span></li>
+<li><span class='track-title'>Big Train From Memphis</span> <span class='artist-name'>— John Fogerty</span></li>
+<li><span class='track-title'>500 Miles</span> <span class='artist-name'>— Peter, Paul and Mary</span></li>
+<li><span class='track-title'>Chattanooga Choo Choo</span> <span class='artist-name'>— Glenn Miller</span></li>
+<li><span class='track-title'>The Wreck of the Old 97</span> <span class='artist-name'>— Vernon Dalhart</span></li>
+<li><span class='track-title'>Southbound Train</span> <span class='artist-name'>— Nashville Bluegrass Band</span></li>
+<li><span class='track-title'>Train Whistle Blues</span> <span class='artist-name'>— Jimmie Rodgers</span></li>
+<li><span class='track-title'>Railroad Bill</span> <span class='artist-name'>— Cisco Houston</span></li>
+<li><span class='track-title'>The Train That Carried My Girl From Town</span> <span class='artist-name'>— Doc Watson</span></li>
+<li><span class='track-title'>Nine Hundred Miles</span> <span class='artist-name'>— Odetta</span></li>
+<li><span class='track-title'>Life&#x27;s Railway to Heaven</span> <span class='artist-name'>— Patsy Cline</span></li>
+<li><span class='track-title'>Gospel Train</span> <span class='artist-name'>— The Carter Family</span></li>
+<li><span class='track-title'>Long Train Runnin&#x27;</span> <span class='artist-name'>— The Doobie Brothers</span></li>
+<li><span class='track-title'>New River Train</span> <span class='artist-name'>— The Monroe Brothers</span></li>
+<li><span class='track-title'>Waiting for the Robert E. Lee</span> <span class='artist-name'>— Al Jolson</span></li>
+<li><span class='track-title'>Last Train Home</span> <span class='artist-name'>— Pat Metheny Group</span></li>
+<li><span class='track-title'>Peace Train</span> <span class='artist-name'>— Dolly Parton</span></li>
+    </ol>
+</section>
+<section class="catalog-page" data-source="collections/mexican_american_favorites.html">
+<div class="group-line">
+    Collection Group: World Heritage Favorites
+</div>
+
+<div class="collection-name">
+    MEXICAN-AMERICAN FAVORITES
+</div>
+
+    <p class="description">A collection celebrating the artists and songs that helped unite Mexican and American musical traditions, reflecting generations of family, culture, pride, and musical influence.</p>
+
+    <h3>Featured Artists</h3>
+    <div class="featured-artists-line">
+        <span class='featured-artist'>Selena (4)</span>
+<span class='featured-artist'>Vicente Fernández (4)</span>
+<span class='featured-artist'>Los Lobos (4)</span>
+<span class='featured-artist'>Ramón Ayala (4)</span>
+<span class='featured-artist'>Juan Gabriel (4)</span>
+<span class='featured-artist'>Ritchie Valens (3)</span>
+<span class='featured-artist'>Los Tigres Del Norte (3)</span>
+<span class='featured-artist'>Conjunto Primavera (3)</span>
+    </div>
+
+    <h3>Track List</h3>
+    <ol class="track-list">
+        <li><span class='track-title'>la bamba</span> <span class='artist-name'>— Ritchie Valens</span></li>
+<li><span class='track-title'>Before the Next Teardrop Falls</span> <span class='artist-name'>— Freddy Fender</span></li>
+<li><span class='track-title'>Wasted Days and Wasted Nights</span> <span class='artist-name'>— Freddy Fender</span></li>
+<li><span class='track-title'>Wooly Bully</span> <span class='artist-name'>— Sam the Sham &amp; The Pharaohs</span></li>
+<li><span class='track-title'>Donna</span> <span class='artist-name'>— Ritchie Valens</span></li>
+<li><span class='track-title'>Come On Let&#x27;s Go</span> <span class='artist-name'>— Ritchie Valens</span></li>
+<li><span class='track-title'>Volver Volver</span> <span class='artist-name'>— Selena</span></li>
+<li><span class='track-title'>bidi bidi bom bom</span> <span class='artist-name'>— Selena</span></li>
+<li><span class='track-title'>como la flor</span> <span class='artist-name'>— Selena</span></li>
+<li><span class='track-title'>Amor Prohibido</span> <span class='artist-name'>— Selena</span></li>
+<li><span class='track-title'>El Rey</span> <span class='artist-name'>— Vicente Fernández</span></li>
+<li><span class='track-title'>Las Mañanitas</span> <span class='artist-name'>— Vicente Fernández</span></li>
+<li><span class='track-title'>De Colores</span> <span class='artist-name'>— Joan Baez</span></li>
+<li><span class='track-title'>Guantanamera</span> <span class='artist-name'>— The Sandpipers</span></li>
+<li><span class='track-title'>Sabor A Mí</span> <span class='artist-name'>— Los Lobos</span></li>
+<li><span class='track-title'>La Pistola y El Corazón</span> <span class='artist-name'>— Los Lobos</span></li>
+<li><span class='track-title'>Will the Wolf Survive?</span> <span class='artist-name'>— Los Lobos</span></li>
+<li><span class='track-title'>Anselma</span> <span class='artist-name'>— Los Lobos</span></li>
+<li><span class='track-title'>Las Nubes</span> <span class='artist-name'>— Little Joe y La Familia</span></li>
+<li><span class='track-title'>Que Bonito Es El Amor</span> <span class='artist-name'>— Little Joe y La Familia</span></li>
+<li><span class='track-title'>Las Tres Tumbas</span> <span class='artist-name'>— Los Tigres Del Norte</span></li>
+<li><span class='track-title'>Contrabando y Traición</span> <span class='artist-name'>— Los Tigres Del Norte</span></li>
+<li><span class='track-title'>La Puerta Negra</span> <span class='artist-name'>— Los Tigres Del Norte</span></li>
+<li><span class='track-title'>Tragos Amargos</span> <span class='artist-name'>— Ramón Ayala</span></li>
+<li><span class='track-title'>Un Rinconcito En El Cielo</span> <span class='artist-name'>— Ramón Ayala</span></li>
+<li><span class='track-title'>Chaparra De Mi Amor</span> <span class='artist-name'>— Ramón Ayala</span></li>
+<li><span class='track-title'>Mi Tesoro</span> <span class='artist-name'>— Ramón Ayala</span></li>
+<li><span class='track-title'>El Ausente</span> <span class='artist-name'>— Conjunto Primavera</span></li>
+<li><span class='track-title'>Necesito Decirte</span> <span class='artist-name'>— Conjunto Primavera</span></li>
+<li><span class='track-title'>No Te Podías Quedar</span> <span class='artist-name'>— Conjunto Primavera</span></li>
+<li><span class='track-title'>Flor De Capomo</span> <span class='artist-name'>— Carlos y José</span></li>
+<li><span class='track-title'>El Chubasco</span> <span class='artist-name'>— Carlos y José</span></li>
+<li><span class='track-title'>El Sinaloense</span> <span class='artist-name'>— Banda El Recodo</span></li>
+<li><span class='track-title'>Y Llegaste Tú</span> <span class='artist-name'>— Banda El Recodo</span></li>
+<li><span class='track-title'>Te Presumo</span> <span class='artist-name'>— Banda El Recodo</span></li>
+<li><span class='track-title'>suavemente</span> <span class='artist-name'>— Elvis Crespo</span></li>
+<li><span class='track-title'>La Chona</span> <span class='artist-name'>— Los Tucanes De Tijuana</span></li>
+<li><span class='track-title'>El Tucanazo</span> <span class='artist-name'>— Los Tucanes De Tijuana</span></li>
+<li><span class='track-title'>El Noa Noa</span> <span class='artist-name'>— Juan Gabriel</span></li>
+<li><span class='track-title'>Querida</span> <span class='artist-name'>— Juan Gabriel</span></li>
+<li><span class='track-title'>Amor Eterno</span> <span class='artist-name'>— Juan Gabriel</span></li>
+<li><span class='track-title'>Noa Noa</span> <span class='artist-name'>— Juan Gabriel</span></li>
+<li><span class='track-title'>La Diferencia</span> <span class='artist-name'>— Vicente Fernández</span></li>
+<li><span class='track-title'>México Lindo y Querido</span> <span class='artist-name'>— Vicente Fernández</span></li>
+<li><span class='track-title'>Cielito Lindo</span> <span class='artist-name'>— Mariachi Vargas De Tecalitlán</span></li>
+    </ol>
+</section>
+<section class="catalog-page" data-source="collections/great_american_songbook.html">
+<div class="group-line">
+    Collection Group: Traditional Favorites
+</div>
+
+<div class="collection-name">
+    GREAT AMERICAN SONGBOOK
+</div>
+
+    <p class="description">A collection of timeless standards that helped define American popular music and continue to inspire performers and audiences around the world.</p>
+
+    <h3>Featured Artists</h3>
+    <div class="featured-artists-line">
+        <span class='featured-artist'>Ella Fitzgerald (11)</span>
+<span class='featured-artist'>Fred Astaire (8)</span>
+<span class='featured-artist'>Frank Sinatra (5)</span>
+<span class='featured-artist'>Bing Crosby (2)</span>
+<span class='featured-artist'>Andy Williams (2)</span>
+<span class='featured-artist'>Nat King Cole (2)</span>
+<span class='featured-artist'>Judy Garland (2)</span>
+<span class='featured-artist'>Ethel Merman (1)</span>
+    </div>
+
+    <h3>Track List</h3>
+    <ol class="track-list">
+        <li><span class='track-title'>Someone to Watch Over Me</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>Embraceable You</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>They Can&#x27;t Take That Away From Me</span> <span class='artist-name'>— Fred Astaire</span></li>
+<li><span class='track-title'>Love Is Here to Stay</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>I&#x27;ve Got a Crush on You</span> <span class='artist-name'>— Frank Sinatra</span></li>
+<li><span class='track-title'>Fascinating Rhythm</span> <span class='artist-name'>— Fred Astaire</span></li>
+<li><span class='track-title'>I&#x27;ve Got Rhythm</span> <span class='artist-name'>— Ethel Merman</span></li>
+<li><span class='track-title'>A Foggy Day</span> <span class='artist-name'>— Fred Astaire</span></li>
+<li><span class='track-title'>summertime</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>But Not for Me</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>Night and Day</span> <span class='artist-name'>— Fred Astaire</span></li>
+<li><span class='track-title'>I&#x27;ve Got You Under My Skin</span> <span class='artist-name'>— Frank Sinatra</span></li>
+<li><span class='track-title'>Begin the Beguine</span> <span class='artist-name'>— Artie Shaw</span></li>
+<li><span class='track-title'>Let&#x27;s Do It</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>Anything Goes</span> <span class='artist-name'>— Cole Porter</span></li>
+<li><span class='track-title'>Easy to Love</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>Just One of Those Things</span> <span class='artist-name'>— Frank Sinatra</span></li>
+<li><span class='track-title'>True Love</span> <span class='artist-name'>— Bing Crosby</span></li>
+<li><span class='track-title'>Cheek to Cheek</span> <span class='artist-name'>— Fred Astaire</span></li>
+<li><span class='track-title'>Blue Skies</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>Always</span> <span class='artist-name'>— Frank Sinatra</span></li>
+<li><span class='track-title'>Let&#x27;s Face the Music and Dance</span> <span class='artist-name'>— Fred Astaire</span></li>
+<li><span class='track-title'>Alexander&#x27;s Ragtime Band</span> <span class='artist-name'>— Bing Crosby</span></li>
+<li><span class='track-title'>Puttin&#x27; on the Ritz</span> <span class='artist-name'>— Fred Astaire</span></li>
+<li><span class='track-title'>The Way You Look Tonight</span> <span class='artist-name'>— Fred Astaire</span></li>
+<li><span class='track-title'>All the Things You Are</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>Smoke Gets in Your Eyes</span> <span class='artist-name'>— The Platters</span></li>
+<li><span class='track-title'>Long Ago and Far Away</span> <span class='artist-name'>— Jo Stafford</span></li>
+<li><span class='track-title'>My Funny Valentine</span> <span class='artist-name'>— Chet Baker</span></li>
+<li><span class='track-title'>My Romance</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>The Lady Is a Tramp</span> <span class='artist-name'>— Frank Sinatra</span></li>
+<li><span class='track-title'>Where or When</span> <span class='artist-name'>— Dion and The Belmonts</span></li>
+<li><span class='track-title'>Bewitched Bothered and Bewildered</span> <span class='artist-name'>— Ella Fitzgerald</span></li>
+<li><span class='track-title'>Moon River</span> <span class='artist-name'>— Andy Williams</span></li>
+<li><span class='track-title'>Skylark</span> <span class='artist-name'>— Hoagy Carmichael</span></li>
+<li><span class='track-title'>Autumn Leaves</span> <span class='artist-name'>— Nat King Cole</span></li>
+<li><span class='track-title'>Days of Wine and Roses</span> <span class='artist-name'>— Andy Williams</span></li>
+<li><span class='track-title'>Over the Rainbow</span> <span class='artist-name'>— Judy Garland</span></li>
+<li><span class='track-title'>Stormy Weather</span> <span class='artist-name'>— Lena Horne</span></li>
+<li><span class='track-title'>Come Rain or Come Shine</span> <span class='artist-name'>— Judy Garland</span></li>
+<li><span class='track-title'>That Old Black Magic</span> <span class='artist-name'>— Louis Prima</span></li>
+<li><span class='track-title'>Stardust</span> <span class='artist-name'>— Nat King Cole</span></li>
+<li><span class='track-title'>georgia on my mind</span> <span class='artist-name'>— Ray Charles</span></li>
+<li><span class='track-title'>The Nearness of You</span> <span class='artist-name'>— Norah Jones</span></li>
+<li><span class='track-title'>As Time Goes By</span> <span class='artist-name'>— Dooley Wilson</span></li>
+    </ol>
+</section>
+<section class="catalog-page" data-source="collections/patriotic_favorites.html">
+<div class="group-line">
+    Collection Group: American Heritage Favorites
+</div>
+
+<div class="collection-name">
+    PATRIOTIC FAVORITES
+</div>
+
+    <p class="description">A collection of songs that celebrate America&#x27;s history, ideals, service, sacrifice, and national pride.</p>
+
+    <h3>Featured Artists</h3>
+    <div class="featured-artists-line">
+        <span class='featured-artist'>John Philip Sousa (3)</span>
+<span class='featured-artist'>Tennessee Ernie Ford (2)</span>
+<span class='featured-artist'>Toby Keith (2)</span>
+<span class='featured-artist'>John Mellencamp (2)</span>
+<span class='featured-artist'>Neil Diamond (2)</span>
+<span class='featured-artist'>Lee Greenwood (1)</span>
+<span class='featured-artist'>Johnny Cash (1)</span>
+<span class='featured-artist'>Ray Charles (1)</span>
+    </div>
+
+    <h3>Track List</h3>
+    <ol class="track-list">
+        <li><span class='track-title'>God Bless the U.S.A.</span> <span class='artist-name'>— Lee Greenwood</span></li>
+<li><span class='track-title'>Ragged Old Flag</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>America the Beautiful</span> <span class='artist-name'>— Ray Charles</span></li>
+<li><span class='track-title'>This Land Is Your Land</span> <span class='artist-name'>— Woody Guthrie</span></li>
+<li><span class='track-title'>The Star-Spangled Banner</span> <span class='artist-name'>— Whitney Houston</span></li>
+<li><span class='track-title'>God Bless America</span> <span class='artist-name'>— Kate Smith</span></li>
+<li><span class='track-title'>My Country &#x27;Tis of Thee</span> <span class='artist-name'>— Tennessee Ernie Ford</span></li>
+<li><span class='track-title'>Battle Hymn of the Republic</span> <span class='artist-name'>— The Mormon Tabernacle Choir</span></li>
+<li><span class='track-title'>Yankee Doodle</span> <span class='artist-name'>— The Countdown Kids</span></li>
+<li><span class='track-title'>You&#x27;re a Grand Old Flag</span> <span class='artist-name'>— The American Patriots</span></li>
+<li><span class='track-title'>Stars and Stripes Forever</span> <span class='artist-name'>— John Philip Sousa</span></li>
+<li><span class='track-title'>The Washington Post March</span> <span class='artist-name'>— John Philip Sousa</span></li>
+<li><span class='track-title'>Semper Fidelis</span> <span class='artist-name'>— John Philip Sousa</span></li>
+<li><span class='track-title'>The Battle Cry of Freedom</span> <span class='artist-name'>— Tennessee Ernie Ford</span></li>
+<li><span class='track-title'>When Johnny Comes Marching Home</span> <span class='artist-name'>— Mitch Miller</span></li>
+<li><span class='track-title'>Over There</span> <span class='artist-name'>— Billy Murray</span></li>
+<li><span class='track-title'>This Is My Country</span> <span class='artist-name'>— The Impressions</span></li>
+<li><span class='track-title'>Living in America</span> <span class='artist-name'>— James Brown</span></li>
+<li><span class='track-title'>American Soldier</span> <span class='artist-name'>— Toby Keith</span></li>
+<li><span class='track-title'>courtesy of the red white and blue the angry american</span> <span class='artist-name'>— Toby Keith</span></li>
+<li><span class='track-title'>Arlington</span> <span class='artist-name'>— Trace Adkins</span></li>
+<li><span class='track-title'>Some Gave All</span> <span class='artist-name'>— Billy Ray Cyrus</span></li>
+<li><span class='track-title'>where were you when the world stopped turning</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>Only in America</span> <span class='artist-name'>— brooks and dunn</span></li>
+<li><span class='track-title'>born in the usa</span> <span class='artist-name'>— Bruce Springsteen</span></li>
+<li><span class='track-title'>American Heart</span> <span class='artist-name'>— Faith Hill</span></li>
+<li><span class='track-title'>american saturday night</span> <span class='artist-name'>— Brad Paisley</span></li>
+<li><span class='track-title'>Back in the U.S.A.</span> <span class='artist-name'>— Chuck Berry</span></li>
+<li><span class='track-title'>Surfin&#x27; U.S.A.</span> <span class='artist-name'>— The Beach Boys</span></li>
+<li><span class='track-title'>american pie</span> <span class='artist-name'>— Don McLean</span></li>
+<li><span class='track-title'>Pink Houses</span> <span class='artist-name'>— John Mellencamp</span></li>
+<li><span class='track-title'>Small Town</span> <span class='artist-name'>— John Mellencamp</span></li>
+<li><span class='track-title'>America</span> <span class='artist-name'>— Neil Diamond</span></li>
+<li><span class='track-title'>Coming to America</span> <span class='artist-name'>— Neil Diamond</span></li>
+<li><span class='track-title'>The House I Live In</span> <span class='artist-name'>— Frank Sinatra</span></li>
+<li><span class='track-title'>Ballad of the Green Berets</span> <span class='artist-name'>— Sgt. Barry Sadler</span></li>
+<li><span class='track-title'>Letters from Home</span> <span class='artist-name'>— John Michael Montgomery</span></li>
+<li><span class='track-title'>Have You Forgotten</span> <span class='artist-name'>— Darryl Worley</span></li>
+<li><span class='track-title'>Travelin&#x27; Soldier</span> <span class='artist-name'>— The Chicks</span></li>
+<li><span class='track-title'>Where the Stars and Stripes and the Eagle Fly</span> <span class='artist-name'>— Aaron Tippin</span></li>
+<li><span class='track-title'>american kids</span> <span class='artist-name'>— Kenny Chesney</span></li>
+<li><span class='track-title'>In America</span> <span class='artist-name'>— The Charlie Daniels Band</span></li>
+<li><span class='track-title'>America Will Survive</span> <span class='artist-name'>— Hank Williams Jr.</span></li>
+<li><span class='track-title'>The Stars and Stripes Forever</span> <span class='artist-name'>— United States Marine Band</span></li>
+<li><span class='track-title'>God Bless America</span> <span class='artist-name'>— LeAnn Rimes</span></li>
+    </ol>
+</section>
+<section class="catalog-page" data-source="collections/traditional_hymns.html">
+<div class="group-line">
+    Collection Group: Traditional Favorites
+</div>
+
+<div class="collection-name">
+    TRADITIONAL HYMNS
+</div>
+
+    <p class="description">A collection of cherished hymns that have inspired generations through faith, worship, hope, and fellowship.</p>
+
+    <h3>Featured Artists</h3>
+    <div class="featured-artists-line">
+        <span class='featured-artist'>Alan Jackson (6)</span>
+<span class='featured-artist'>Elvis Presley (6)</span>
+<span class='featured-artist'>Carrie Underwood (6)</span>
+<span class='featured-artist'>Johnny Cash (6)</span>
+<span class='featured-artist'>Randy Travis (6)</span>
+<span class='featured-artist'>Josh Turner (6)</span>
+<span class='featured-artist'>Jim Reeves (4)</span>
+<span class='featured-artist'>Patsy Cline (1)</span>
+    </div>
+
+    <h3>Track List</h3>
+    <ol class="track-list">
+        <li><span class='track-title'>How Great Thou Art</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>The Old Rugged Cross</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>In the Garden</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>I Love to Tell the Story</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>Softly and Tenderly</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>Blessed Assurance</span> <span class='artist-name'>— Alan Jackson</span></li>
+<li><span class='track-title'>How Great Thou Art</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>Peace in the Valley</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>Crying in the Chapel</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>Known Only to Him</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>He Touched Me</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>Amazing Grace</span> <span class='artist-name'>— Elvis Presley</span></li>
+<li><span class='track-title'>How Great Thou Art</span> <span class='artist-name'>— Carrie Underwood</span></li>
+<li><span class='track-title'>Softly and Tenderly</span> <span class='artist-name'>— Carrie Underwood</span></li>
+<li><span class='track-title'>Nothing but the Blood of Jesus</span> <span class='artist-name'>— Carrie Underwood</span></li>
+<li><span class='track-title'>The Old Rugged Cross</span> <span class='artist-name'>— Carrie Underwood</span></li>
+<li><span class='track-title'>Just as I Am</span> <span class='artist-name'>— Carrie Underwood</span></li>
+<li><span class='track-title'>Amazing Grace</span> <span class='artist-name'>— Carrie Underwood</span></li>
+<li><span class='track-title'>Peace in the Valley</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>Were You There When They Crucified My Lord</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>The Old Account</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>Swing Low Sweet Chariot</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>How Great Thou Art</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>I Saw the Light</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>Amazing Grace</span> <span class='artist-name'>— Randy Travis</span></li>
+<li><span class='track-title'>Just a Closer Walk with Thee</span> <span class='artist-name'>— Randy Travis</span></li>
+<li><span class='track-title'>In the Garden</span> <span class='artist-name'>— Randy Travis</span></li>
+<li><span class='track-title'>Blessed Assurance</span> <span class='artist-name'>— Randy Travis</span></li>
+<li><span class='track-title'>Softly and Tenderly</span> <span class='artist-name'>— Randy Travis</span></li>
+<li><span class='track-title'>Peace in the Valley</span> <span class='artist-name'>— Randy Travis</span></li>
+<li><span class='track-title'>How Great Thou Art</span> <span class='artist-name'>— Josh Turner</span></li>
+<li><span class='track-title'>I Serve a Savior</span> <span class='artist-name'>— Josh Turner</span></li>
+<li><span class='track-title'>Amazing Grace</span> <span class='artist-name'>— Josh Turner</span></li>
+<li><span class='track-title'>Great Is Thy Faithfulness</span> <span class='artist-name'>— Josh Turner</span></li>
+<li><span class='track-title'>The Old Rugged Cross</span> <span class='artist-name'>— Josh Turner</span></li>
+<li><span class='track-title'>Swing Low Sweet Chariot</span> <span class='artist-name'>— Josh Turner</span></li>
+<li><span class='track-title'>Precious Memories</span> <span class='artist-name'>— Jim Reeves</span></li>
+<li><span class='track-title'>Whispering Hope</span> <span class='artist-name'>— Jim Reeves</span></li>
+<li><span class='track-title'>How Long Has It Been</span> <span class='artist-name'>— Jim Reeves</span></li>
+<li><span class='track-title'>Take My Hand Precious Lord</span> <span class='artist-name'>— Jim Reeves</span></li>
+<li><span class='track-title'>Just a Closer Walk with Thee</span> <span class='artist-name'>— Patsy Cline</span></li>
+<li><span class='track-title'>Life&#x27;s Railway to Heaven</span> <span class='artist-name'>— Loretta Lynn</span></li>
+<li><span class='track-title'>Will the Circle Be Unbroken</span> <span class='artist-name'>— Nitty Gritty Dirt Band</span></li>
+<li><span class='track-title'>Farther Along</span> <span class='artist-name'>— Dolly Parton</span></li>
+<li><span class='track-title'>Because He Lives</span> <span class='artist-name'>— Gaither Vocal Band</span></li>
+    </ol>
+</section>
+<section class="catalog-page" data-source="collections/cowboy_songs_western_favorites.html">
+<div class="group-line">
+    Collection Group: Traditional Favorites
+</div>
+
+<div class="collection-name">
+    COWBOY SONGS &AMP; WESTERN FAVORITES
+</div>
+
+    <p class="description">A collection celebrating the music, stories, and traditions of cowboys, ranchers, and life on the American frontier.</p>
+
+    <h3>Featured Artists</h3>
+    <div class="featured-artists-line">
+        <span class='featured-artist'>Marty Robbins (8)</span>
+<span class='featured-artist'>Gene Autry (7)</span>
+<span class='featured-artist'>Bing Crosby (4)</span>
+<span class='featured-artist'>Sons of the Pioneers (3)</span>
+<span class='featured-artist'>Tex Ritter (3)</span>
+<span class='featured-artist'>Roy Rogers (3)</span>
+<span class='featured-artist'>Johnny Cash (2)</span>
+<span class='featured-artist'>Eddy Arnold (2)</span>
+    </div>
+
+    <h3>Track List</h3>
+    <ol class="track-list">
+        <li><span class='track-title'>Ghost Riders in the Sky</span> <span class='artist-name'>— Vaughn Monroe</span></li>
+<li><span class='track-title'>Cool Water</span> <span class='artist-name'>— Sons of the Pioneers</span></li>
+<li><span class='track-title'>Tumbling Tumbleweeds</span> <span class='artist-name'>— Sons of the Pioneers</span></li>
+<li><span class='track-title'>Home on the Range</span> <span class='artist-name'>— Gene Autry</span></li>
+<li><span class='track-title'>Back in the Saddle Again</span> <span class='artist-name'>— Gene Autry</span></li>
+<li><span class='track-title'>Don&#x27;t Fence Me In</span> <span class='artist-name'>— Bing Crosby</span></li>
+<li><span class='track-title'>I&#x27;m an Old Cowhand</span> <span class='artist-name'>— Bing Crosby</span></li>
+<li><span class='track-title'>Rawhide</span> <span class='artist-name'>— Frankie Laine</span></li>
+<li><span class='track-title'>High Noon</span> <span class='artist-name'>— Tex Ritter</span></li>
+<li><span class='track-title'>The Streets of Laredo</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>el paso</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>Big Iron</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>Cool Water</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>Red River Valley</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>The Cowboy in the Continental Suit</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>Happy Trails</span> <span class='artist-name'>— Roy Rogers</span></li>
+<li><span class='track-title'>Don&#x27;t Take Your Guns to Town</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>Bury Me Not on the Lone Prairie</span> <span class='artist-name'>— Johnny Cash</span></li>
+<li><span class='track-title'>The Man Who Shot Liberty Valance</span> <span class='artist-name'>— Gene Pitney</span></li>
+<li><span class='track-title'>The Ballad of Davy Crockett</span> <span class='artist-name'>— Fess Parker</span></li>
+<li><span class='track-title'>The Yellow Rose of Texas</span> <span class='artist-name'>— Mitch Miller</span></li>
+<li><span class='track-title'>Cattle Call</span> <span class='artist-name'>— Eddy Arnold</span></li>
+<li><span class='track-title'>I Want to Be a Cowboy&#x27;s Sweetheart</span> <span class='artist-name'>— Patsy Montana</span></li>
+<li><span class='track-title'>Ragtime Cowboy Joe</span> <span class='artist-name'>— The Hilltoppers</span></li>
+<li><span class='track-title'>Sioux City Sue</span> <span class='artist-name'>— Bing Crosby</span></li>
+<li><span class='track-title'>Along the Navajo Trail</span> <span class='artist-name'>— Roy Rogers</span></li>
+<li><span class='track-title'>Mexicali Rose</span> <span class='artist-name'>— Gene Autry</span></li>
+<li><span class='track-title'>Deep in the Heart of Texas</span> <span class='artist-name'>— Gene Autry</span></li>
+<li><span class='track-title'>Cowpoke</span> <span class='artist-name'>— Eddy Arnold</span></li>
+<li><span class='track-title'>My Rifle My Pony and Me</span> <span class='artist-name'>— Dean Martin</span></li>
+<li><span class='track-title'>The Hanging Tree</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>A Hundred and Sixty Acres</span> <span class='artist-name'>— Marty Robbins</span></li>
+<li><span class='track-title'>Riders in the Sky</span> <span class='artist-name'>— The Sons of the Pioneers</span></li>
+<li><span class='track-title'>The Last Round-Up</span> <span class='artist-name'>— Gene Autry</span></li>
+<li><span class='track-title'>South of the Border</span> <span class='artist-name'>— Gene Autry</span></li>
+<li><span class='track-title'>Cimarron Roll On</span> <span class='artist-name'>— Jimmy Wakely</span></li>
+<li><span class='track-title'>There&#x27;s a Gold Mine in the Sky</span> <span class='artist-name'>— Gene Autry</span></li>
+<li><span class='track-title'>Silver on the Sage</span> <span class='artist-name'>— Bing Crosby</span></li>
+<li><span class='track-title'>Blue Shadows on the Trail</span> <span class='artist-name'>— Roy Rogers</span></li>
+<li><span class='track-title'>Whoopie Ti Yi Yo</span> <span class='artist-name'>— Sons of the Pioneers</span></li>
+<li><span class='track-title'>The Old Chisholm Trail</span> <span class='artist-name'>— Tex Ritter</span></li>
+<li><span class='track-title'>Git Along Little Dogies</span> <span class='artist-name'>— Tex Ritter</span></li>
+<li><span class='track-title'>Jingle Jangle Jingle</span> <span class='artist-name'>— Kay Kyser</span></li>
+<li><span class='track-title'>Cowboy&#x27;s Lament</span> <span class='artist-name'>— Burl Ives</span></li>
+<li><span class='track-title'>The Wayward Wind</span> <span class='artist-name'>— Gogi Grant</span></li>
+    </ol>
+</section>
+<section class="catalog-page" data-source="collections_index.html">
+<div class="nav">
+        <a href="index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>Collection Library</h1>
+
+    <div class="subtitle">
+        Explore curated TopSpot40 collections organized by heritage, tradition,
+        musical trends, legendary artists, stage and screen favorites, classical music,
+        and specialty listening experiences.
+    </div>
+
+    <div class="summary">
+        9 collection groups • 52 collections • 2333 tracks
+    </div>
+
+    
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/american_heritage_favorites.html">
+                            American Heritage Favorites
+                        </a>
+                    </h2>
+                    <p>Songs that tell stories of American memory, patriotism, travel, working life, folk heroes, railroads, western life, and shared national experience.</p>
+                    <div class="stats">
+                        5 collections • 225 tracks
+                    </div>
+                    
+                </div>
+                
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/traditional_favorites.html">
+                            Traditional Favorites
+                        </a>
+                    </h2>
+                    <p>Timeless favorites rooted in familiar traditions, including hymns, gospel, bluegrass, cowboy songs, crooners, and classic American standards.</p>
+                    <div class="stats">
+                        6 collections • 270 tracks
+                    </div>
+                    
+                </div>
+                
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/world_heritage_favorites.html">
+                            World Heritage Favorites
+                        </a>
+                    </h2>
+                    <p>Music that celebrates cultural roots and global traditions, including Mexican, Brazilian, Celtic, Italian, German, and African-American heritage favorites.</p>
+                    <div class="stats">
+                        7 collections • 315 tracks
+                    </div>
+                    
+                </div>
+                
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/soft_rock_70s_90s.html">
+                            Soft Rock 70s-90s
+                        </a>
+                    </h2>
+                    <p>Soft rock favorites from the 1970s through the 1990s, including road trip songs, singer-songwriters, yacht rock, easy listening, and love songs.</p>
+                    <div class="stats">
+                        5 collections • 224 tracks
+                    </div>
+                    
+                </div>
+                
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/music_trends.html">
+                            Music Trends
+                        </a>
+                    </h2>
+                    <p>Popular music movements, styles, and cultural moments, including Motown, disco, dance anthems, power ballads, protest songs, and one-hit wonders.</p>
+                    <div class="stats">
+                        6 collections • 268 tracks
+                    </div>
+                    
+                </div>
+                
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/music_legends.html">
+                            Music Legends
+                        </a>
+                    </h2>
+                    <p>Featured collections built around legendary artists and performers across major TopSpot genres.</p>
+                    <div class="stats">
+                        8 collections • 354 tracks
+                    </div>
+                    
+                <div class="special-note">
+                    Music Legends collections feature one defining recording from each artist,
+                    creating a survey of influential performers across major TopSpot genres.
+                </div>
+                
+                </div>
+                
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/stage_and_screen.html">
+                            Stage &amp; Screen
+                        </a>
+                    </h2>
+                    <p>Memorable songs and themes from movies, Broadway, Disney, television, and video games.</p>
+                    <div class="stats">
+                        5 collections • 222 tracks
+                    </div>
+                    
+                </div>
+                
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/classical_music.html">
+                            Classical Music
+                        </a>
+                    </h2>
+                    <p>Curated classical selections organized by major musical periods, including Baroque, Classical, and Romantic era favorites.</p>
+                    <div class="stats">
+                        3 collections • 135 tracks
+                    </div>
+                    
+                </div>
+                
+                <div class="group-card">
+                    <h2>
+                        <a href="collection-groups/specialty_mixes.html">
+                            Specialty Mixes
+                        </a>
+                    </h2>
+                    <p>Specially curated mixes built around themes, missing favorites, holidays, duets, novelty songs, and crossovers.</p>
+                    <div class="stats">
+                        7 collections • 320 tracks
+                    </div>
+                    
+                </div>
+                
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="part5_getting_started.html">
+<section class="page">
+    <div class="part">PART V</div>
+    <h1>Getting Started</h1>
+    <div class="text">How to listen, explore, and use TopSpot40 as a guided music discovery experience.</div>
+
+    <div class="footer">
+        TopSpot40.com — Discovery Never Ends
+    </div>
+</section>
+</section>
+<section class="catalog-page" data-source="four_ways_to_listen.html">
+<div class="nav">
+        <a href="index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>Four Ways to Listen</h1>
+
+    <div class="subtitle">
+        TopSpot40 offers four distinct listening experiences, each designed to help listeners discover music in a different way.
+    </div>
+
+    <h2>1. Nostalgia Programs</h2>
+    <p>
+        Nostalgia Programs recreate the experience of classic countdown radio by organizing music by decade and genre.
+        Each program contains ranked songs, narrated introductions, artist information, historical context, and Spotify-integrated music playback.
+    </p>
+    <p>Examples include:</p>
+    <ul>
+        <li>1950s Country</li>
+        <li>1960s Rock</li>
+        <li>1970s Pop</li>
+        <li>1980s Country</li>
+        <li>1990s Latin Global</li>
+        <li>2000s R&amp;B Soul</li>
+    </ul>
+
+    <h2>2. Collections</h2>
+    <p>
+        Collections organize music around themes, traditions, cultures, historical topics, and shared experiences.
+        Unlike Nostalgia Programs, Collections are not limited to a single decade or genre. Instead, they bring together songs connected by a common story.
+    </p>
+    <p>Examples include:</p>
+    <ul>
+        <li>Railroad &amp; Train Songs</li>
+        <li>Traditional Hymns</li>
+        <li>Patriotic Favorites</li>
+        <li>Great American Songbook</li>
+        <li>Mexican-American Favorites</li>
+        <li>Cowboy Songs &amp; Western Favorites</li>
+    </ul>
+
+    <h2>3. Artist Spotlight</h2>
+    <p>
+        Artist Spotlight focuses on individual artists. Featured Artists include narrated biographies, historical background,
+        career highlights, and curated track selections designed to tell the story of an artist's life and music.
+    </p>
+    <p>
+        TopSpot40 includes more than 329 Featured Artists with narrated biographies available in English, Spanish, and Portuguese.
+    </p>
+    <p>Examples include:</p>
+    <ul>
+        <li>B.B. King</li>
+        <li>Johnny Cash</li>
+        <li>Selena</li>
+        <li>Willie Nelson</li>
+        <li>Loretta Lynn</li>
+        <li>Frank Sinatra</li>
+    </ul>
+
+    <h2>4. Radio Modes</h2>
+    <p>
+        Radio Modes combine narration, artist information, storytelling, rankings, and Spotify playback into a continuous listening experience.
+        The goal is to recreate some of the magic of traditional radio while taking advantage of modern streaming technology.
+    </p>
+
+    <div class="quote">
+        TopSpot40 is not designed to help people listen to more music.
+        It is designed to help people connect more deeply with the music they already love.
+    </div>
+
+    <div class="note">
+        Spotify provides the licensed music streaming experience. TopSpot40 enhances the experience through rankings,
+        artist biographies, storytelling, music history, and music discovery.
+    </div>
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="using_topspot40.html">
+<div class="nav">
+        <a href="index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>Using TopSpot40</h1>
+
+    <div class="subtitle">
+        Important information about Spotify integration, playback requirements, languages, and the TopSpot40 listening experience.
+    </div>
+
+    <h2>Spotify Integration</h2>
+    <p>
+        TopSpot40 is a music discovery and storytelling platform that integrates with Spotify for music playback.
+        TopSpot40 does not host, distribute, or provide music files.
+    </p>
+
+    <p>
+        Spotify provides the licensed music streaming experience. TopSpot40 enhances that experience through
+        rankings, artist biographies, narrated stories, music history, curated collections, and music discovery.
+    </p>
+
+    <div class="note">
+        Spotify provides music playback. TopSpot40 provides the storytelling, rankings, artist information,
+        historical context, and discovery features that help listeners connect more deeply with the music.
+    </div>
+
+    <h2>Spotify Premium Required</h2>
+    <p>
+        To use Spotify playback features through TopSpot40, users need an active Spotify Premium account.
+        A Spotify Free account may not support the playback features required for the full TopSpot40 experience.
+    </p>
+
+    <p>
+        Users sign in with their own Spotify account and are responsible for maintaining that account in good standing.
+    </p>
+
+    <h2>Spotify Terms of Service</h2>
+    <p>
+        Users are responsible for complying with Spotify's Terms of Service and all applicable Spotify policies.
+        TopSpot40 is designed to work with Spotify's authorized playback services and does not replace or bypass Spotify.
+    </p>
+
+    <h2>Supported Languages</h2>
+    <p>
+        TopSpot40 includes narrated content in English, Spanish, and Portuguese. Artist stories and discovery content
+        are designed to help listeners experience the same music history and storytelling across all three supported languages.
+    </p>
+
+    <ul>
+        <li>English</li>
+        <li>Spanish</li>
+        <li>Portuguese</li>
+    </ul>
+
+    <h2>What TopSpot40 Adds</h2>
+    <p>
+        TopSpot40 adds a storytelling layer around Spotify playback. Depending on the listening mode, users may hear
+        narrated introductions, song details, artist biographies, historical background, collection introductions,
+        and radio-style transitions.
+    </p>
+
+    <ul>
+        <li>Ranked nostalgia programs</li>
+        <li>Curated themed collections</li>
+        <li>Featured artist biographies</li>
+        <li>Artist Spotlight listening experiences</li>
+        <li>Radio-style continuous playback modes</li>
+        <li>Music history and cultural context</li>
+    </ul>
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="listening_experience.html">
+<div class="nav">
+        <a href="index.html">TopSpot40 Catalog</a>
+    </div>
+
+    <h1>TopSpot40 Listening Experience</h1>
+
+    <div class="subtitle">
+        TopSpot40 combines Spotify playback with original narration, artist biographies,
+        music history, and storytelling. These examples show how TopSpot40 adds context
+        before the music begins.
+    </div>
+
+    
+        <section class="example">
+            <h2>Nostalgia Program Example</h2>
+            <div class="example-meta">
+                1980s Country • Rank #2
+            </div>
+            <h3>Forever And Ever Amen</h3>
+            <div class="artist-name">Randy Travis</div>
+
+            
+    <div class="text-box">
+        <div class="box-label">Intro</div>
+        <p>Dramatic and soulful, &#x27;Forever and Ever Amen&#x27; by Randy Travis, ranked #2, from &#x27;Always &amp; Forever&#x27;, became an anthem of eternal love in the &#x27;80s country scene.</p>
+    </div>
+    
+            
+    <div class="text-box">
+        <div class="box-label">Song Detail</div>
+        <p>Now, let&#x27;s take a stroll down memory lane with Randy Travis&#x27;s &#x27;Forever and Ever Amen.&#x27; This gem was penned by the talented Paul Overstreet and Don Schlitz, who wove a tapestry of love and commitment that resonated deeply with fans. Did you know that the song&#x27;s iconic steel guitar was played by none other than Paul Franklin, adding that extra layer of warmth to the track? It soared to the top of the charts, staying there for three weeks, a testament to its universal appeal. And here&#x27;s a fun fact: during recording sessions, Randy insisted on doing multiple takes to get the emotion just right, showcasing his dedication to his craft. So, from all of us here, keep those love songs spinning, and remember, you&#x27;re always number one with us!</p>
+    </div>
+    
+            
+    <div class="text-box">
+        <div class="box-label">Artist Text</div>
+        <p>Randy Travis is a pivotal figure in country music, known for his deep, resonant voice and traditional style. He rose to fame in the 1980s with hits like &#x27;Forever and Ever, Amen&#x27; and &#x27;On The Other Hand,&#x27; which helped revive the genre&#x27;s focus on traditional country sounds. Travis has won seven Grammy Awards and was inducted into the Country Music Hall of Fame in 2016, cementing his legacy as a cornerstone of country music.</p>
+    </div>
+    
+
+            <div class="play-box">Then Spotify track playback begins.</div>
+        </section>
+        
+    
+        <section class="example">
+            <h2>Collection Program Example</h2>
+            <div class="example-meta">
+                Railroad &amp; Train Songs • Rank #5
+            </div>
+            <h3>Folsom Prison Blues</h3>
+            <div class="artist-name">Johnny Cash</div>
+
+            
+    <div class="text-box">
+        <div class="box-label">Collection Intro</div>
+        <p>Coming in at number 5 in Railroad &amp; Train Songs, here is folsom prison blues by johnny cash.</p>
+    </div>
+    
+            
+    <div class="text-box">
+        <div class="box-label">Song Detail</div>
+        <p>Let&#x27;s take a stroll down memory lane with &#x27;Folsom Prison Blues&#x27;. Johnny Cash wrote this classic while stationed in Germany, inspired by the film &#x27;Inside the Walls of Folsom Prison&#x27;. The song&#x27;s iconic line, &#x27;I shot a man in Reno just to watch him die&#x27;, was crafted to capture the raw essence of prison life. Recorded live at Folsom Prison, the energy of the inmates can be felt through the recording, making it a landmark moment in music history. And that, my friends, is the power of a song that speaks straight to the heart!</p>
+    </div>
+    
+            
+    <div class="text-box">
+        <div class="box-label">Artist Text</div>
+        <p>Johnny Cash, known as the &#x27;Man in Black,&#x27; was a legendary singer-songwriter whose career spanned over five decades. His deep, resonant voice and songs like &#x27;Ring of Fire&#x27; and &#x27;Folsom Prison Blues&#x27; made him a cultural icon. Cash&#x27;s influence extended beyond music, as he was also known for his advocacy for the marginalized.</p>
+    </div>
+    
+
+            <div class="play-box">Then Spotify track playback begins.</div>
+        </section>
+        
+    
+        <section class="example">
+            <h2>Artist Spotlight Example</h2>
+            <div class="example-meta">
+                B.B. King • 8 minute artist story
+            </div>
+            <h3>The Thrill Is Gone</h3>
+            <div class="artist-name">B.B. King</div>
+
+            
+    <div class="text-box">
+        <div class="box-label">Artist Bio Opening</div>
+        <p>B.B. King never just played the blues—he seemed to carry on a conversation with them, one note at a time. You’d watch him on stage, swaying gently side to side, eyes half-closed, and it was clear the guitar wasn’t just an instrument. It was a partner. And nothing tells you more about who he was than the night that partner got her name.
+
+It was the winter of 1949 in a little place called Twist, Arkansas. The dance hall was packed, the music was loud, and two men got into it over a woman. In the scuffle they knocked over a barrel of kerosene that was being used to heat the room. Flames raced across the floor. Everyone stampeded for the exits, including B.B. But halfway across the parking lot he realized he’d left his guitar inside. Without hesitating he ran back into the burning building, dodging flames, coughing through smoke, and came out with the instrument tucked under his arm like a rescued child. The next morning he learned the fight had been about a woman named Lucille. From that day forward every guitar he ever owned would bear her name—a private joke, a cautionary tale, and a love story all at once. “Lucille taught me a lesson,” he’d say with that rich chuckle of his. “Don’t...</p>
+    </div>
+    
+            
+    <div class="text-box">
+        <div class="box-label">Short Song Detail</div>
+        <p>The Thrill Is Gone, a soulful lament recorded at New York&#x27;s Hit Factory featuring smooth vocals and iconic guitar Lucille, earned a place in the Grammy Hall of Fame.</p>
+    </div>
+    
+
+            <div class="play-box">Then Spotify track playback begins.</div>
+        </section>
+        
+
+    <div class="footer">
+        TopSpot40.com — Music Discovery Through the Decades
+    </div>
+</section>
+<section class="catalog-page" data-source="invitation_to_discover.html">
+<div class="nav">
+    <a href="index.html">TopSpot40 Catalog</a>
+</div>
+
+<h1>An Invitation To Discover</h1>
+
+<div class="subtitle">
+    A personal note from the creator of TopSpot40.
+</div>
+
+<p>
+Thank you for taking the time to explore TopSpot40.
+</p>
+
+<p>
+What began as a software project eventually became something much more personal. Along the way, I discovered artists, cultures, musical traditions, and stories that I might never have encountered otherwise. Every collection seemed to open another door. Every artist biography led to another artist. Every song revealed another piece of history waiting to be explored.
+</p>
+
+<p>
+When I started this journey, I was inspired by memories of listening to radio programs as a young boy growing up on an Indiana farm. I hoped to recreate some of the anticipation, storytelling, and excitement that made those experiences so memorable.
+</p>
+
+<p>
+What I found instead was something even more meaningful. Music has an extraordinary ability to connect people across generations, cultures, languages, and life experiences. A familiar song can bring back a forgotten memory. An artist biography can create a new appreciation for music we have heard for decades. A collection can introduce us to traditions and stories that expand our understanding of the world.
+</p>
+
+<p>
+TopSpot40 has taught me that curiosity does not have an age limit. Whether we are eighteen or eighty, there is always something new to discover.
+</p>
+
+<p>
+My hope is that this project encourages listeners not only to enjoy the music they already know, but also to remain curious about the artists, stories, cultures, and history behind it.
+</p>
+
+<div class="quote">
+Discovery Never Ends.
+</div>
+
+<p>
+Thank you for joining me on this journey.
+</p>
+
+<div class="signature">
+Gary W. Steele<br>
+Founder, TopSpot40
+</div>
+
+<div class="footer">
+TopSpot40.com — Music Discovery Through the Decades
+</div>
+</section>
+</body></html>
