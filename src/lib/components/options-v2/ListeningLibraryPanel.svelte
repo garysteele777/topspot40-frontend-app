@@ -99,6 +99,9 @@
     export let collapsed = false;
     export let initialTab: LibraryMode = 'nostalgia';
 
+    export let title = 'TopSpot40 Listening Library';
+    export let description = 'Browse saved programs and curated collections.';
+
     let libraryMode: LibraryMode = 'nostalgia';
 
     $: if (initialTab && libraryMode !== initialTab) {
@@ -270,19 +273,19 @@
                 }
             }}
     >
-        <h3 class="section-title">🎧 TopSpot40 Listening Library 🎧</h3>
+        <h3 class="section-title">🎧 {title} 🎧</h3>
         <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
     </div>
 
     <div class="library-description">
-        Browse saved programs and curated collections.
+        {description}
     </div>
 
     {#if !collapsed}
 
 
         <div class="library-description">
-            Interactive Mode • Resume • Favorites • Jump to Tracks
+            {description}
         </div>
 
         <div class="library-buttons">
