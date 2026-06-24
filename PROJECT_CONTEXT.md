@@ -37,6 +37,17 @@ Spotify OAuth is NOT implemented in this repository.
 
 Authentication logic resides entirely in the backend.
 
+Active Spotify OAuth routes are:
+
+* `/api/auth/spotify/login`
+* `/api/auth/spotify/callback`
+
+Legacy backend `/spotify/*` authentication routes are no longer registered by backend `main.py` and should not be used by the frontend.
+
+Frontend requests that depend on backend authentication or session state should include credentials:
+
+* `credentials: "include"`
+
 The frontend responsibilities include:
 
 * Initiating login requests to backend endpoints.
@@ -75,6 +86,12 @@ Users should clearly understand:
 * How to switch between available playback options.
 
 Playback interactions should feel immediate.
+
+Playback backend state is user-scoped.
+
+The backend scopes playback runtime, playback flags, narration events, track events, background tasks, and Spotify playback helper calls to the authenticated user.
+
+Frontend playback calls should rely on the authenticated backend JWT/session cookie for identity. The frontend should not provide `user_id` as the source of playback identity.
 
 ---
 
@@ -173,5 +190,9 @@ When working in this repository:
 * Generate tests for new behaviors whenever practical.
 * Consider accessibility implications.
 * Ask questions rather than making assumptions about business requirements.
+* Treat the backend and frontend as separate repositories.
+* Do not reintroduce legacy `/spotify/*` authentication routes.
+* Do not design frontend playback calls that depend on frontend-supplied `user_id` for backend identity.
+* Use `credentials: "include"` for backend calls that require authenticated session context.
 
 The frontend prioritizes clarity and usability over novelty.
