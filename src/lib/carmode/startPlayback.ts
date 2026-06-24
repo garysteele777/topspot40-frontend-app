@@ -53,6 +53,7 @@ export async function startPlayback() {
 
         await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
+            credentials: 'include',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
@@ -126,7 +127,8 @@ export async function startPlayback() {
         await fetch(
             `${API_BASE}/artist-spotlight/play-radio?${artistParams.toString()}`,
             {
-                method: 'POST'
+                method: 'POST',
+                credentials: 'include'
             }
         );
 
@@ -144,7 +146,10 @@ export async function startPlayback() {
         params.set('genre', sel.context?.genre ?? '');
 
         await fetch(
-            `${API_BASE}/supabase/decade-genre/play-first?${params.toString()}`
+            `${API_BASE}/supabase/decade-genre/play-first?${params.toString()}`,
+            {
+                credentials: 'include'
+            }
         );
         return;
     }
@@ -153,7 +158,10 @@ export async function startPlayback() {
         params.set('slug', sel.context?.collection_slug ?? '');
 
         await fetch(
-            `${API_BASE}/supabase/collections/play-collection-sequence?${params.toString()}`
+            `${API_BASE}/supabase/collections/play-collection-sequence?${params.toString()}`,
+            {
+                credentials: 'include'
+            }
         );
         return;
     }

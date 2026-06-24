@@ -113,7 +113,7 @@
 
             await fetch(
                 `${API_BASE}/artist-spotlight/play-radio?${artistParams.toString()}`,
-                {method: 'POST'}
+                {method: 'POST', credentials: 'include'}
             );
 
             return;
@@ -201,7 +201,7 @@
 
             await fetch(
                 `${API_BASE}/supabase/decade-genre/play-sequence?${radioParams.toString()}`,
-                {method: 'GET'}
+                {method: 'GET', credentials: 'include'}
             );
 
             return;
@@ -209,6 +209,7 @@
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
+            credentials: 'include',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
@@ -222,7 +223,7 @@
     // Backend owns playback now. Frontend only signals stop.
     async function clearAllPlayback() {
         try {
-            await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
+            await fetch(`${API_BASE}/playback/stop`, {method: 'POST', credentials: 'include'});
         } catch {
             console.warn("Backend stop failed (probably already stopped)");
         }
@@ -230,7 +231,7 @@
 
     async function stopPlayback() {
         stopNarrationAudio();
-        await fetch(`${API_BASE}/playback/stop`, {method: 'POST'});
+        await fetch(`${API_BASE}/playback/stop`, {method: 'POST', credentials: 'include'});
     }
 
     async function handleJumpToTrack(track: CarModeTrack) {
@@ -489,7 +490,7 @@
 
         // 🧹 Step 0: Reset backend transport safely
         try {
-            await fetch(`${API_BASE}/playback/reset`, {method: 'POST'});
+            await fetch(`${API_BASE}/playback/reset`, {method: 'POST', credentials: 'include'});
         } catch (err) {
             console.warn('⚠️ Backend reset failed (continuing anyway):', err);
         }
@@ -653,7 +654,8 @@ if (playing) {
     }
 
     await fetch(`${API_BASE}/playback/pause`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
     });
 
     return;
@@ -675,7 +677,8 @@ if (
 ) {
 
     const res = await fetch(`${API_BASE}/playback/resume`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
     });
 
     const data = await res.json().catch(() => null);

@@ -36,7 +36,8 @@ export async function loadForSelection(
 
     try {
         await fetch(`${import.meta.env.VITE_API_BASE_URL}/playback/reset`, {
-            method: 'POST'
+            method: 'POST',
+            credentials: 'include'
         });
     } catch (err) {
         console.warn('Playback reset failed', err);
