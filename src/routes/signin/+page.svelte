@@ -9,7 +9,7 @@
 	// Redirect user to Spotify OAuth
 	function signInWithSpotify() {
 		// The backend route that starts the Spotify OAuth flow
-		window.location.href = `${getBackendUrl()}/auth/spotify/login`;
+		window.location.href = `${getBackendUrl()}/api/auth/spotify/login`;
 	}
 
 </script>
