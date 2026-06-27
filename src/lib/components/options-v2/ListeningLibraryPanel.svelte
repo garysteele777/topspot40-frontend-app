@@ -104,8 +104,11 @@
 
     let libraryMode: LibraryMode = 'nostalgia';
 
-    $: if (initialTab && libraryMode !== initialTab) {
+    let appliedInitialTab = false;
+
+    $: if (!appliedInitialTab && initialTab) {
         libraryMode = initialTab;
+        appliedInitialTab = true;
 
         if (initialTab === 'artists' && artistSpotlightItems.length === 0) {
             loadArtistSpotlights('all');
