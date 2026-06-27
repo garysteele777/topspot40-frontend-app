@@ -22,6 +22,9 @@
         items: { name: string; slug: string }[];
     }[] = [];
 
+    export let title = 'My TopSpot40 Music Journey';
+    export let description = 'Track your music journey and favorite discoveries.';
+
     let selectedJourneyCollectionGroup: string | null = null;
 
     let musicJourneyMode:
@@ -235,12 +238,12 @@
                 }
             }}
     >
-        <h3 class="section-title">🎵 My TopSpot40 Music Journey</h3>
+        <h3 class="section-title">🎵 {title}</h3>
         <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
     </div>
 
     <div class="radio-description">
-        Track your music journey and favorite discoveries.
+        {description}
     </div>
 
     {#if !collapsed}

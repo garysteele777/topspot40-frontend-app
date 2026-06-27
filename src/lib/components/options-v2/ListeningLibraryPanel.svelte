@@ -23,6 +23,19 @@
         artist_name: string;
         genre_track_count: number;
         total_track_count: number;
+        has_story: boolean;
+    };
+
+    type ArtistStoryInfo = {
+        ok: boolean;
+        has_story: boolean;
+        story_id?: number;
+        artist_id?: number;
+        title?: string;
+        story_type?: string;
+        duration_seconds?: number;
+        tts_bucket?: string;
+        tts_key?: string;
     };
 
     type ArtistTrackItem = {
@@ -34,14 +47,40 @@
         artist_name: string;
     };
 
+    type DocuseriesCollection = {
+        id: number;
+        slug: string;
+        name: string;
+        description?: string;
+        sort_order: number;
+    };
+
+    type DocuseriesItem = {
+        id: number;
+        slug: string;
+        title: string;
+        short_description?: string | null;
+        artwork_url?: string | null;
+        target_length?: string | null;
+        sort_order: number;
+    };
+
     let selectedArtist: ArtistSpotlightItem | null = null;
     let artistTracks: ArtistTrackItem[] = [];
     let artistTracksLoading = false;
     let artistTracksError: string | null = null;
+    let artistStoryInfo: ArtistStoryInfo | null = null;
+    let artistRange = 'A-D';
 
     let artistSpotlightItems: ArtistSpotlightItem[] = [];
     let artistSpotlightLoading = false;
     let artistSpotlightError: string | null = null;
+
+    let docuseriesCollections: DocuseriesCollection[] = [];
+    let selectedDocuseriesCollection: string | null = null;
+    let docuseriesItems: DocuseriesItem[] = [];
+    let docuseriesLoading = false;
+    let docuseriesError: string | null = null;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -58,16 +97,57 @@
     export let skipPlayed = false;
     export let onActivate: (() => void) | undefined = undefined;
     export let collapsed = false;
+    export let initialTab: LibraryMode = 'nostalgia';
+
+    export let title = 'TopSpot40 Listening Library';
+    export let description = 'Browse saved programs and curated collections.';
 
     let libraryMode: LibraryMode = 'nostalgia';
 
+    let appliedInitialTab = false;
+
+    $: if (!appliedInitialTab && initialTab) {
+        libraryMode = initialTab;
+        appliedInitialTab = true;
+
+        if (initialTab === 'artists' && artistSpotlightItems.length === 0) {
+            loadArtistSpotlights('all');
+        }
+    }
+
     let selectedDecade: string | null = null;
     let selectedCollectionGroup: string | null = null;
-    let selectedArtistGenre: string | null = null;
+    let selectedArtistGenre: string | null = 'all';
+    let artistCategory = 'featured';
+
+    $: filteredArtists = artistSpotlightItems
+        .filter((artist) => {
+
+            // Category filter
+            if (artistCategory === 'featured' && !artist.has_story) return false;
+            if (artistCategory === 'other' && artist.has_story) return false;
+            if (artistCategory === 'single' && artist.total_track_count !== 1) return false;
+
+            // Alphabet filter
+            const first = artist.artist_name.charAt(0).toUpperCase();
+
+            if (artistRange === 'A-D') return first >= 'A' && first <= 'D';
+            if (artistRange === 'E-H') return first >= 'E' && first <= 'H';
+            if (artistRange === 'I-L') return first >= 'I' && first <= 'L';
+            if (artistRange === 'M-P') return first >= 'M' && first <= 'P';
+            if (artistRange === 'Q-T') return first >= 'Q' && first <= 'T';
+            if (artistRange === 'U-Z') return first >= 'U' && first <= 'Z';
+
+            return false;
+        })
+        .sort((a, b) =>
+            titleCaseName(a.artist_name).localeCompare(titleCaseName(b.artist_name))
+        );
 
     async function loadArtistTracks(artist: ArtistSpotlightItem) {
         selectedArtist = artist;
         artistTracks = [];
+        artistStoryInfo = null;
         artistTracksError = null;
         artistTracksLoading = true;
 
@@ -81,6 +161,14 @@
             }
 
             artistTracks = await res.json();
+
+            const storyRes = await fetch(
+                `${API_BASE}/artist-spotlight/artist-story?artist_id=${artist.artist_id}&language=${language}`
+            );
+
+            if (storyRes.ok) {
+                artistStoryInfo = await storyRes.json();
+            }
         } catch (err) {
             artistTracksError = err instanceof Error ? err.message : 'Failed to load artist tracks.';
         } finally {
@@ -92,15 +180,27 @@
         return name.replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    async function loadArtistSpotlights(genreId: string) {
+    async function loadArtistSpotlights(
+        genreId: string,
+        featured: boolean = artistCategory === 'featured',
+        minTracks: number = 2,
+        maxTracks: number | null = null
+    ) {
         selectedArtistGenre = genreId;
         artistSpotlightItems = [];
         artistSpotlightError = null;
         artistSpotlightLoading = true;
 
         try {
+            const maxTracksParam =
+                maxTracks !== null ? `&max_tracks=${maxTracks}` : '';
+
             const res = await fetch(
-                `${API_BASE}/artist-spotlight/artists-by-genre?genre=${genreId}&min_tracks=2`
+                `${API_BASE}/artist-spotlight/artists-by-genre` +
+                `?genre=${genreId}` +
+                `&min_tracks=${minTracks}` +
+                maxTracksParam +
+                `&featured_only=${featured}`
             );
 
             if (!res.ok) {
@@ -112,6 +212,50 @@
             artistSpotlightError = err instanceof Error ? err.message : 'Failed to load artists.';
         } finally {
             artistSpotlightLoading = false;
+        }
+    }
+
+    async function loadDocuseriesCollections() {
+        docuseriesLoading = true;
+        docuseriesError = null;
+        docuseriesItems = [];
+        selectedDocuseriesCollection = null;
+
+        try {
+            const res = await fetch(`${API_BASE}/music-docuseries/collections`);
+
+            if (!res.ok) {
+                throw new Error(`Request failed: ${res.status}`);
+            }
+
+            docuseriesCollections = await res.json();
+        } catch (err) {
+            docuseriesError = err instanceof Error ? err.message : 'Failed to load Music Docuseries.';
+        } finally {
+            docuseriesLoading = false;
+        }
+    }
+
+    async function loadDocuseriesItems(collectionSlug: string) {
+        selectedDocuseriesCollection = collectionSlug;
+        docuseriesLoading = true;
+        docuseriesError = null;
+        docuseriesItems = [];
+
+        try {
+            const res = await fetch(
+                `${API_BASE}/music-docuseries/items?collection_slug=${collectionSlug}`
+            );
+
+            if (!res.ok) {
+                throw new Error(`Request failed: ${res.status}`);
+            }
+
+            docuseriesItems = await res.json();
+        } catch (err) {
+            docuseriesError = err instanceof Error ? err.message : 'Failed to load Docuseries items.';
+        } finally {
+            docuseriesLoading = false;
         }
     }
 
@@ -132,19 +276,19 @@
                 }
             }}
     >
-        <h3 class="section-title">🎧 TopSpot40 Listening Library 🎧</h3>
+        <h3 class="section-title">🎧 {title} 🎧</h3>
         <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
     </div>
 
     <div class="library-description">
-        Browse saved programs and curated collections.
+        {description}
     </div>
 
     {#if !collapsed}
 
 
         <div class="library-description">
-            Interactive Mode • Resume • Favorites • Jump to Tracks
+            {description}
         </div>
 
         <div class="library-buttons">
@@ -171,9 +315,13 @@
             <button
                     class:active={!collapsed && libraryMode === 'artists'}
                     on:click|stopPropagation={() => {
-            if (collapsed) onActivate?.();
-            libraryMode = 'artists';
-        }}
+                        if (collapsed) onActivate?.();
+                        libraryMode = 'artists';
+
+                        if (artistSpotlightItems.length === 0) {
+                            loadArtistSpotlights('all');
+                        }
+                    }}
             >
                 Artist Spotlight
             </button>
@@ -264,8 +412,75 @@ goto(`/car-page?${params.toString()}`);
                         </button>
                     {/each}
 
+                    <button
+                            class:selected={selectedCollectionGroup === 'music_docuseries'}
+                            on:click={() => {
+                                selectedCollectionGroup = 'music_docuseries';
+                                loadDocuseriesCollections();
+                            }}
+                    >
+                        🎙 Music Docuseries
+                    </button>
+
                 </div>
-                {#if selectedCollectionGroup && selectedCollectionGroup !== 'ALL'}
+
+                {#if selectedCollectionGroup === 'music_docuseries'}
+
+                    <div class="genre-section">
+
+                        <div class="genre-title">
+                            Music Docuseries Collections • Select a Collection
+                        </div>
+
+                        {#if docuseriesLoading}
+                            <div class="library-description">
+                                Loading Music Docuseries...
+                            </div>
+                        {:else if docuseriesError}
+                            <div class="library-description">
+                                {docuseriesError}
+                            </div>
+                        {:else}
+                            <div class="genre-grid">
+                                {#each docuseriesCollections as collection}
+                                    <button
+                                            class="genre-btn"
+                                            class:selected={selectedDocuseriesCollection === collection.slug}
+                                            on:click={() => loadDocuseriesItems(collection.slug)}
+                                    >
+                                        {collection.name}
+                                    </button>
+                                {/each}
+                            </div>
+
+                            {#if docuseriesItems.length}
+                                <div class="genre-title" style="margin-top:16px;">
+                                    {docuseriesCollections.find(c => c.slug === selectedDocuseriesCollection)?.name}
+                                    • Select a Story
+                                </div>
+
+                                <div class="genre-grid">
+                                    {#each docuseriesItems as item}
+                                        <button
+                                                class="genre-btn"
+                                                on:click={() => {
+                                    goto(
+                                        `/story-player?type=music_docuseries` +
+                                        `&slug=${item.slug}` +
+                                        `&language=${language}`
+                                    );
+                                }}
+                                        >
+                                            {item.title}
+                                        </button>
+                                    {/each}
+                                </div>
+                            {/if}
+                        {/if}
+
+                    </div>
+
+                {:else if selectedCollectionGroup && selectedCollectionGroup !== 'ALL'}
 
                     <div class="genre-section">
 
@@ -275,31 +490,27 @@ goto(`/car-page?${params.toString()}`);
                         </div>
 
                         <div class="genre-grid">
-
                             {#each collectionGroups.find(g => g.slug === selectedCollectionGroup)?.items ?? [] as collection}
-
                                 <button
                                         class="genre-btn"
                                         on:click={() => {
-                                        goto(
-                                            `/car-page?mode=collection` +
-                                            `&collection=${collection.slug}` +
-                                            `&collection_group=${selectedCollectionGroup}` +
-                                            `&language=${language}` +
-                                            `&languages=${languages.join(',')}` +
-                                            `&voices=${voices.join(',')}` +
-                                            `&playbackOrder=${playbackOrder}` +
-                                            `&voicePlayMode=${voicePlayMode}` +
-                                            `&pauseMode=${pauseMode}` +
-                                            `&skipPlayed=${skipPlayed}`
-                                        );
-                                                                            }}
+                            goto(
+                                `/car-page?mode=collection` +
+                                `&collection=${collection.slug}` +
+                                `&collection_group=${selectedCollectionGroup}` +
+                                `&language=${language}` +
+                                `&languages=${languages.join(',')}` +
+                                `&voices=${voices.join(',')}` +
+                                `&playbackOrder=${playbackOrder}` +
+                                `&voicePlayMode=${voicePlayMode}` +
+                                `&pauseMode=${pauseMode}` +
+                                `&skipPlayed=${skipPlayed}`
+                            );
+                        }}
                                 >
                                     {collection.name}
                                 </button>
-
                             {/each}
-
                         </div>
 
                     </div>
@@ -309,11 +520,96 @@ goto(`/car-page?${params.toString()}`);
 
             {:else}
 
+                <div class="library-buttons artist-category-buttons">
+                    <button
+                            class:selected={artistCategory === 'featured'}
+                            on:click={() => {
+                                artistCategory = 'featured';
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all');
+                            }}
+                    >
+                        ⭐ Featured Artists
+                    </button>
+
+                    <button
+                            class:selected={artistCategory === 'other'}
+                            on:click={() => {
+                                artistCategory = 'other';
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all');
+                            }}
+                    >
+                        🎵 Other Artists
+                    </button>
+
+                    <button
+                            class:selected={artistCategory === 'single'}
+                            on:click={() => {
+                                artistCategory = 'single';
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all', false, 1, 1);
+                            }}
+                    >
+                        🎵 Single Track Artists
+                    </button>
+                </div>
+
+                <div class="alphabet-grid" style="margin-bottom:12px;">
+
+                    <button
+                            class:selected={artistRange === 'A-D'}
+                            on:click={() => artistRange = 'A-D'}
+                    >
+                        A-D
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'E-H'}
+                            on:click={() => artistRange = 'E-H'}
+                    >
+                        E-H
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'I-L'}
+                            on:click={() => artistRange = 'I-L'}
+                    >
+                        I-L
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'M-P'}
+                            on:click={() => artistRange = 'M-P'}
+                    >
+                        M-P
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'Q-T'}
+                            on:click={() => artistRange = 'Q-T'}
+                    >
+                        Q-T
+                    </button>
+
+                    <button
+                            class:selected={artistRange === 'U-Z'}
+                            on:click={() => artistRange = 'U-Z'}
+                    >
+                        U-Z
+                    </button>
+                </div>
+
                 <div class="genre-title">
-                    Pick a Genre Below to See Artist Spotlights
+                    Browse All Artists or Filter by Genre
                 </div>
 
                 <div class="genre-grid">
+                    <button
+                            class="genre-btn"
+                            class:selected={selectedArtistGenre === 'all'}
+                            on:click={() => loadArtistSpotlights('all')}
+                    >
+                        All Genres
+                    </button>
+
                     {#each genreOptions.filter(g => g.id !== 'tv_themes') as genre}
 
                         <button
@@ -331,8 +627,14 @@ goto(`/car-page?${params.toString()}`);
                     <div class="genre-section">
 
                         <div class="genre-title">
-                            {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
-                            Artists • Select an Artist to Start Listening
+                            {#if artistCategory === 'featured'}
+                                Featured Artists
+                            {:else if artistCategory === 'other'}
+                                Other Artists
+                            {:else}
+                                Single Track Artists
+                            {/if}
+                            • Select an Artist to Start Listening
                         </div>
 
                         {#if artistSpotlightLoading}
@@ -363,30 +665,57 @@ goto(`/car-page?${params.toString()}`);
                                         ← Back to Artists
                                     </button>
 
-                                    <div class="genre-title">
+                                    <div class="spotlight-artist-title">
+                                        Spotlight Artist
+                                    </div>
+
+                                    <div class="spotlight-artist-name">
                                         {titleCaseName(selectedArtist.artist_name)}
-                                        • Artist Spotlight Tracks
                                     </div>
 
                                     <div class="artist-play-row">
+
+                                        {#if artistStoryInfo?.has_story}
+                                            <button
+                                                    class="play-artist-btn"
+                                                    on:click={() => {
+                    const artist = selectedArtist;
+                    if (!artist) return;
+
+                    goto(
+                        `/story-player?type=artist_story` +
+                        `&artist_id=${artist.artist_id}` +
+                        `&artist=${encodeURIComponent(artist.artist_name)}` +
+                        `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}` +
+                        `&language=${language}`
+                    );
+                }}
+                                            >
+                                                ▶ Play Artist Story
+                                                {artistStoryInfo.duration_seconds
+                                                    ? ` (${Math.max(1, Math.round(artistStoryInfo.duration_seconds / 60))} min)`
+                                                    : ''}
+                                            </button>
+                                        {/if}
+
                                         <button
                                                 class="play-artist-btn"
                                                 on:click={() => {
-                                                const artist = selectedArtist;
-                                                if (!artist) return;
+                const artist = selectedArtist;
+                if (!artist) return;
 
-                                                    goto(
-                                                        `/car-page?mode=artist_spotlight` +
-                                                        `&artist_id=${artist.artist_id}` +
-                                                        `&artist=${encodeURIComponent(artist.artist_name)}` +
-                                                        `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
-                                                    );
-                                                    }}
+                goto(
+                    `/car-page?mode=artist_spotlight` +
+                    `&artist_id=${artist.artist_id}` +
+                    `&artist=${encodeURIComponent(artist.artist_name)}` +
+                    `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
+                );
+            }}
                                         >
                                             ▶ Play Artist Spotlight
                                         </button>
-                                    </div>
 
+                                    </div>
                                     {#if artistTracksLoading}
                                         <div class="library-description">Loading tracks...</div>
                                     {:else if artistTracksError}
@@ -408,20 +737,26 @@ goto(`/car-page?${params.toString()}`);
                             {:else}
 
                                 <div class="artist-grid">
-                                    {#each artistSpotlightItems as artist}
+                                    {#each filteredArtists as artist}
                                         <button
                                                 class="artist-btn"
                                                 on:click={() => loadArtistTracks(artist)}
                                         >
                                             <div class="artist-name">
+                                                {#if artist.has_story}
+                                                    <span class="story-star">⭐</span>
+                                                {/if}
                                                 {titleCaseName(artist.artist_name)}
                                             </div>
-
                                             <div class="artist-count">
-                                                {artist.genre_track_count}
-                                                {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
-                                                •
-                                                {artist.total_track_count} Total
+                                                {#if selectedArtistGenre === 'all'}
+                                                    {artist.total_track_count} Total
+                                                {:else}
+                                                    {artist.genre_track_count}
+                                                    {genreOptions.find(g => g.id === selectedArtistGenre)?.label}
+                                                    •
+                                                    {artist.total_track_count} Total
+                                                {/if}
                                             </div>
                                         </button>
                                     {/each}
@@ -466,10 +801,19 @@ goto(`/car-page?${params.toString()}`);
         line-height: 1.3;
     }
 
+    .library-buttons button.active,
+    .library-buttons button.selected {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 600;
+    }
+
     .library-buttons {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
+        gap: 8px;
+        margin-bottom: 12px;
     }
 
     .library-buttons button {
@@ -703,6 +1047,64 @@ goto(`/car-page?${params.toString()}`);
 
     .section-header-clickable {
         cursor: pointer;
+    }
+
+    .spotlight-artist-title {
+        text-align: center;
+        color: #cfb87c;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .spotlight-artist-name {
+        text-align: center;
+        color: #ffffff;
+        font-size: 2.2rem; /* was 2.0 */
+        font-weight: 800;
+        margin-bottom: 18px; /* was 14 */
+    }
+
+    .story-star {
+        margin-right: 6px;
+    }
+
+    .alphabet-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .alphabet-grid button {
+        border-radius: 999px;
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #ddd;
+        padding: 7px 10px;
+        cursor: pointer;
+        font-size: 0.82rem;
+    }
+
+    .alphabet-grid button.selected {
+        background: #cfb87c;
+        color: #000;
+        border-color: #cfb87c;
+        font-weight: 700;
+    }
+
+    .artist-category-buttons {
+        margin-bottom: 12px;
+    }
+
+    .artist-category-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+        width: 100%;
     }
 
 </style>

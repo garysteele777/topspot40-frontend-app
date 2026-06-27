@@ -75,6 +75,7 @@ let narrationLock = false;
 let narrationQueue: NarrationQueueItem[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
+let lastNarrationKey: string | null = null;
 let trackFinalized = false;
 let narrationSignaled = false;
 
@@ -95,6 +96,17 @@ export function stopCurrentNarrationPhase(
         narrationPausedAtBoundary = true;
     }
 
+    const preservedResolve = options.preserveResolve
+        ? activeNarrationResolve
+        : null;
+
+    if (activeNarrationAudio) {
+        narrationInterrupting = true;
+        activeNarrationAudio.pause();
+        activeNarrationAudio.currentTime = 0;
+        activeNarrationAudio.src = '';
+        activeNarrationAudio.load();
+    }
     cleanupNarrationAudio({
         timer: activeNarrationTimer,
         setTimer: value => {
@@ -108,12 +120,21 @@ export function stopCurrentNarrationPhase(
         }
     });
 
+    if (options.preserveResolve) {
+        activeNarrationResolve = preservedResolve;
+        return;
+    }
+
     if (options.resolvePhase !== false && activeNarrationResolve) {
         const resolve = activeNarrationResolve;
         activeNarrationResolve = null;
         resolve();
-    } else if (!options.preserveResolve) {
+    } else {
         activeNarrationResolve = null;
+    }
+
+    if (options.resolvePhase === false && !options.preserveResolve) {
+        narrationLock = false;
     }
 }
 
@@ -151,6 +172,10 @@ function playOneAudio(
         const audio = new Audio(url);
         audio.volume = 0.60;
 
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
+
         activeNarrationAudio = audio;
         activeNarrationResolve = resolve;
 
@@ -158,11 +183,6 @@ function playOneAudio(
         playbackPhase.set(phase);
 
         audio.onloadedmetadata = () => {
-            console.log('🎧 narration metadata', {
-                duration: audio.duration,
-                phase,
-                url
-            });
 
             duration.set(audio.duration);
             elapsed.set(0);
@@ -221,6 +241,12 @@ function playOneAudio(
             resolve();
         };
 
+        dlog(
+            '🎤 START AUDIO',
+            phase,
+            url
+        );
+
         audio.play().catch((err: unknown) => {
             console.warn('🔇 Narration could not play, skipping:', url, err);
 
@@ -242,6 +268,7 @@ function playOneAudio(
 }
 
 export function continueStoppedNarrationPhase(): void {
+
     narrationPausedAtBoundary = false;
 
     if (activeNarrationResolve) {
@@ -274,6 +301,14 @@ async function playNarrationQueue() {
         }
 
         dlog('🔔 Narration finished');
+
+
+        dlog(
+            '🔔 SIGNAL NARRATION FINISHED',
+            get(currentTrack)?.trackName
+        );
+
+        console.log('🔔 SIGNAL FINISHED', get(currentTrack)?.trackName, get(playbackPhase));
 
         await signalNarrationFinished();
     } catch (err) {
@@ -369,7 +404,7 @@ export function startPlaybackPolling() {
                 dlog('🎯 UI track switch:', next?.trackName ?? data.track_name);
             }
 
-            dlog('⏱ Poll data:', data);
+            // dlog('⏱ Poll data:', data);
 
             const rankingId =
                 data.context?.ranking_id != null
@@ -380,7 +415,6 @@ export function startPlaybackPolling() {
                             ? Number(data.context.collection_ranking_id)
                             : null;
 
-            dlog('🎯 rankingId:', rankingId);
 
             playbackPhase.set(phase);
 
@@ -415,11 +449,26 @@ export function startPlaybackPolling() {
                 (data.context?.audio_url || data.context?.audio_queue)
             ) {
 
-                if (phase !== lastNarrationPhase) {
+                const narrationKey =
+                    `${phase}:${data.context?.audio_url ?? JSON.stringify(data.context?.audio_queue ?? '')}`;
+
+                if (narrationKey !== lastNarrationKey) {
                     dlog(`🎤 Narration phase: ${phase}`);
 
                     narrationSignaled = false;
                     lastNarrationPhase = phase;
+                    lastNarrationKey = narrationKey;
+
+                    if (phase === 'intro') {
+                        lastSpotifyId = null;
+                    }
+
+                    dlog(
+                        '🎤 NARRATION FRAME',
+                        phase,
+                        data.context?.spotify_track_id,
+                        data.track_name
+                    );
 
                     const narrationItems = buildNarrationQueue(
                         phase,
@@ -435,12 +484,6 @@ export function startPlaybackPolling() {
                         typeof data.context?.bed_audio_url === 'string'
                             ? data.context.bed_audio_url
                             : null;
-
-                    console.log(
-                        '🎧 BED DEBUG',
-                        phase,
-                        data.context?.bed_audio_url
-                    );
 
                     if (bedAudioUrl && !isBedPlaying()) {
                         dlog('🎧 BED start:', bedAudioUrl);
@@ -566,6 +609,15 @@ export function startPlaybackPolling() {
             console.warn('⚠️ Playback poll error', err);
         }
     }, POLL_INTERVAL_MS);
+}
+
+export function resetNarrationPhaseState(): void {
+    narrationQueue = [];
+    narrationLock = false;
+    lastNarrationPhase = null;
+    lastNarrationKey = null;
+    narrationSignaled = false;
+    narrationPausedAtBoundary = false;
 }
 
 export async function skipToNextTrack(): Promise<void> {
