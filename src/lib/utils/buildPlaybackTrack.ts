@@ -18,6 +18,8 @@ type PlaybackBaseTrack = Record<string, unknown> & {
     setNumber?: number | null;
     blockPosition?: number | null;
     blockSize?: number | null;
+    collectionIntro?: string | null;
+    collectionIntroAudioUrl?: string | null;
 };
 
 type FallbackTrackInput = {
@@ -60,6 +62,12 @@ export function buildFallbackPlaybackTrack({
 
         collection_group_slug:
             normalizedCtx.collection_group_slug ?? null,
+
+        collectionIntro:
+            normalizedCtx.collection_intro ?? null,
+
+        collectionIntroAudioUrl:
+            normalizedCtx.collection_intro_audio_url ?? null,
 
         intro:
             normalizedCtx.intro ?? null,
@@ -125,6 +133,12 @@ export function buildEnrichedPlaybackTrack({
 
         collection_group_slug:
             normalizedCtx.collection_group_slug ?? null,
+
+        collectionIntro:
+            normalizedCtx.collection_intro ?? baseTrack.collectionIntro,
+
+        collectionIntroAudioUrl:
+            normalizedCtx.collection_intro_audio_url ?? baseTrack.collectionIntroAudioUrl,
 
         intro:
             normalizedCtx.intro ?? baseTrack.intro,

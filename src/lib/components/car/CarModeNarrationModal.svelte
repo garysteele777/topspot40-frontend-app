@@ -21,6 +21,53 @@
        ────────────────────────────── */
     let scrollY = 0;
 
+    let manualAudio: HTMLAudioElement | null = null;
+    let manualAudioPlaying = false;
+
+    function closeModal() {
+        stopManualAudio();
+        onClose();
+    }
+
+    function stopManualAudio() {
+        if (manualAudio) {
+            manualAudio.pause();
+            manualAudio.currentTime = 0;
+            manualAudio = null;
+        }
+
+        manualAudioPlaying = false;
+    }
+
+    function playCurrentNarration() {
+        if (manualAudioPlaying) {
+            stopManualAudio();
+            return;
+        }
+
+        const url = currentAudioUrl();
+        if (!url) return;
+
+        manualAudio = new Audio(url);
+        manualAudio.volume = 0.85;
+        manualAudioPlaying = true;
+
+        manualAudio.onended = () => {
+            manualAudioPlaying = false;
+            manualAudio = null;
+        };
+
+        manualAudio.onerror = () => {
+            manualAudioPlaying = false;
+            manualAudio = null;
+        };
+
+        manualAudio.play().catch(() => {
+            manualAudioPlaying = false;
+            manualAudio = null;
+        });
+    }
+
     function handleScroll() {
         if (!modalEl) return;
         scrollY = modalEl.scrollTop;
@@ -43,7 +90,7 @@
         isDragging = false;
 
         if (translateY > 120) {
-            onClose();
+            closeModal();
         } else {
             if (modalEl) {
                 modalEl.style.transition = 'transform 0.25s ease-out';
@@ -56,11 +103,23 @@
         translateY = 0;
     }
 
+    function currentAudioUrl(): string | null {
+        if (mode === 'collection') return track?.collectionIntroAudioUrl ?? null;
+
+        // Coming next after backend exposes these:
+        // if (mode === 'intro') return track?.introAudioUrl ?? null;
+        // if (mode === 'detail') return track?.detailAudioUrl ?? null;
+        // if (mode === 'artist') return track?.artistAudioUrl ?? null;
+
+        return null;
+    }
+
     /* ──────────────────────────────
        Info navigation (Intro / Detail / Artist)
        ────────────────────────────── */
-    type InfoMode = 'intro' | 'detail' | 'artist';
+    type InfoMode = 'collection' | 'intro' | 'detail' | 'artist';
     type LanguageTexts = {
+        collection?: string | null;
         intro?: string | null;
         detail?: string | null;
         artist?: string | null;
@@ -71,7 +130,7 @@
 
     // Reset whenever modal opens
     $: if (open) {
-        mode = 'intro';
+        mode = 'collection';
     }
 
     // $: if (open && track) {
@@ -85,23 +144,30 @@
 
 
     function prevMode() {
+        stopManualAudio();
+
         mode =
-            mode === 'intro' ? 'artist' :
-                mode === 'detail' ? 'intro' :
-                    'detail';
+            mode === 'collection' ? 'artist' :
+                mode === 'intro' ? 'collection' :
+                    mode === 'detail' ? 'intro' :
+                        'detail';
     }
 
     function nextMode() {
+        stopManualAudio();
+
         mode =
-            mode === 'intro' ? 'detail' :
-                mode === 'detail' ? 'artist' :
-                    'intro';
+            mode === 'collection' ? 'intro' :
+                mode === 'intro' ? 'detail' :
+                    mode === 'detail' ? 'artist' :
+                        'collection';
     }
 
     $: headerLabel =
-        mode === 'intro' ? 'Intro' :
-            mode === 'detail' ? 'Detail' :
-                'Artist';
+        mode === 'collection' ? 'Collection Intro' :
+            mode === 'intro' ? 'Track Intro' :
+                mode === 'detail' ? 'Track Detail' :
+                    'Artist Bio';
 
     $: textsByLanguage =
         ((track as typeof track & {
@@ -114,6 +180,7 @@
         texts: LanguageTexts,
         mode: InfoMode
     ): string | null | undefined {
+        if (mode === 'collection') return texts.collection ?? track?.collectionIntro;
         if (mode === 'intro') return texts.intro;
         if (mode === 'detail') return texts.detail;
         return texts.artist;
@@ -133,7 +200,11 @@
     <!-- Backdrop -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="modal-backdrop" on:click={onClose} transition:fade></div>
+    <div
+            class="modal-backdrop"
+            on:click={closeModal}
+            transition:fade
+    ></div>
 
     <!-- Modal -->
     <div
@@ -178,6 +249,16 @@
                 <button class="nav-btn" on:click|stopPropagation={nextMode}>›</button>
             </div>
 
+            {#if currentAudioUrl()}
+                <button
+                        class="play-narration-btn"
+                        type="button"
+                        on:click|stopPropagation={playCurrentNarration}
+                >
+                    {manualAudioPlaying ? '■ Stop Narration' : '▶ Play Narration'}
+                </button>
+            {/if}
+
             {#if languageEntries.length > 0}
                 <div class="language-texts" transition:fade>
                     {#each languageEntries as [lang, texts]}
@@ -192,18 +273,20 @@
                 </div>
             {:else}
                 <p transition:fade>
-                    {mode === 'intro'
-                        ? (track?.intro ?? 'No narration available for this track.')
-                        : mode === 'detail'
-                            ? (track?.detail ?? 'No narration available for this track.')
-                            : (track?.artistText ?? 'No narration available for this track.')}
+                    {mode === 'collection'
+                        ? (track?.collectionIntro ?? 'Collection overview text is not available yet.')
+                        : mode === 'intro'
+                            ? (track?.intro ?? 'No narration available for this track.')
+                            : mode === 'detail'
+                                ? (track?.detail ?? 'No narration available for this track.')
+                                : (track?.artistText ?? 'No narration available for this track.')}
                 </p>
             {/if}
 
         </div>
 
         <!-- Close button -->
-        <button class="close-btn" on:click={onClose}>✕</button>
+        <button class="close-btn" on:click={closeModal}>✕</button>
     </div>
 {/if}
 
@@ -341,6 +424,18 @@
         margin-top: 12px;
         text-align: center; /* 🔥 center it */
         padding: 0 8px;
+    }
+
+    .play-narration-btn {
+        display: block;
+        margin: 0.45rem auto 1rem;
+        padding: 0.5rem 1rem;
+        border: 0;
+        border-radius: 999px;
+        background: #d8bf78;
+        color: #111;
+        font-weight: 700;
+        cursor: pointer;
     }
 
 

@@ -20,6 +20,9 @@ export type NormalizedPlaybackContext = {
     collection_slug?: string | null;
     collection_group_slug?: string | null;
 
+    collection_intro?: string | null;
+    collection_intro_audio_url?: string | null;
+
     decade_slug?: string | null;
     decade_name?: string | null;
 
@@ -77,6 +80,12 @@ export function normalizePlaybackContext(
         collection_group_slug:
             (ctx.collection_group_slug as string | null) ?? null,
 
+        collection_intro:
+            (ctx.collection_intro as string | null) ?? null,
+
+        collection_intro_audio_url:
+            (ctx.collection_intro_audio_url as string | null) ?? null,
+
         decade_slug:
             (ctx.decade_slug as string | null) ?? null,
 
@@ -118,6 +127,7 @@ export function playbackContextHasFreshText(
     const normalized = normalizePlaybackContext(ctx);
 
     return Boolean(
+        normalized.collection_intro ||
         normalized.intro ||
         normalized.detail ||
         normalized.artistText

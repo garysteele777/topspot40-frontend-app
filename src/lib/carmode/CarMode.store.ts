@@ -18,6 +18,7 @@ export type CarModeTrack = LoadedTrack & {
     artistText?: string | null;
     spotifyArtistId?: string | null;
 
+
     textsByLanguage?: Record<
         string,
         {
@@ -39,6 +40,10 @@ export type CarModeTrack = LoadedTrack & {
     // Collections radio metadata
     collection_name?: string | null;
     collection_group_name?: string | null;
+
+    // More Info collection overview
+    collectionIntro?: string | null;
+    collectionIntroAudioUrl?: string | null;
 };
 
 
