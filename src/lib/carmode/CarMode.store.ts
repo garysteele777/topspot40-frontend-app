@@ -44,6 +44,9 @@ export type CarModeTrack = LoadedTrack & {
     // More Info collection overview
     collectionIntro?: string | null;
     collectionIntroAudioUrl?: string | null;
+    introAudioUrl?: string | null;
+    detailAudioUrl?: string | null;
+    artistAudioUrl?: string | null;
 };
 
 

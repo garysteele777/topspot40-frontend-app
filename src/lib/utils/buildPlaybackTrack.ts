@@ -20,6 +20,9 @@ type PlaybackBaseTrack = Record<string, unknown> & {
     blockSize?: number | null;
     collectionIntro?: string | null;
     collectionIntroAudioUrl?: string | null;
+    introAudioUrl?: string | null;
+    detailAudioUrl?: string | null;
+    artistAudioUrl?: string | null;
 };
 
 type FallbackTrackInput = {
@@ -139,6 +142,15 @@ export function buildEnrichedPlaybackTrack({
 
         collectionIntroAudioUrl:
             normalizedCtx.collection_intro_audio_url ?? baseTrack.collectionIntroAudioUrl,
+
+        introAudioUrl:
+            normalizedCtx.intro_audio_url ?? null,
+
+        detailAudioUrl:
+            normalizedCtx.detail_audio_url ?? null,
+
+        artistAudioUrl:
+            normalizedCtx.artist_audio_url ?? null,
 
         intro:
             normalizedCtx.intro ?? baseTrack.intro,

@@ -22,6 +22,9 @@ export type NormalizedPlaybackContext = {
 
     collection_intro?: string | null;
     collection_intro_audio_url?: string | null;
+    intro_audio_url?: string | null;
+    detail_audio_url?: string | null;
+    artist_audio_url?: string | null;
 
     decade_slug?: string | null;
     decade_name?: string | null;
@@ -85,6 +88,15 @@ export function normalizePlaybackContext(
 
         collection_intro_audio_url:
             (ctx.collection_intro_audio_url as string | null) ?? null,
+
+        intro_audio_url:
+            (ctx.intro_audio_url as string | null) ?? null,
+
+        detail_audio_url:
+            (ctx.detail_audio_url as string | null) ?? null,
+
+        artist_audio_url:
+            (ctx.artist_audio_url as string | null) ?? null,
 
         decade_slug:
             (ctx.decade_slug as string | null) ?? null,

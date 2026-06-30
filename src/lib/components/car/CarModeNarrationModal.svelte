@@ -105,11 +105,9 @@
 
     function currentAudioUrl(): string | null {
         if (mode === 'collection') return track?.collectionIntroAudioUrl ?? null;
-
-        // Coming next after backend exposes these:
-        // if (mode === 'intro') return track?.introAudioUrl ?? null;
-        // if (mode === 'detail') return track?.detailAudioUrl ?? null;
-        // if (mode === 'artist') return track?.artistAudioUrl ?? null;
+        if (mode === 'intro') return track?.introAudioUrl ?? null;
+        if (mode === 'detail') return track?.detailAudioUrl ?? null;
+        if (mode === 'artist') return track?.artistAudioUrl ?? null;
 
         return null;
     }
