@@ -49,15 +49,17 @@
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
     import {saveResumeState} from '$lib/utils/smartResume';
 
+    import {
+        playbackView,
+        setPlaybackView,
+        togglePlaybackView
+    } from '$lib/studio/playbackView.store';
+
+
     let collectionNameMap: Record<string, string> = {};
     let lastProgramKey: string | null = null;
     let nextTrackLock = false;
     let artistBioPlayedThisSet = false;
-
-    type PlaybackView = 'car' | 'studio';
-
-    let playbackView: PlaybackView = 'car';
-
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -70,6 +72,13 @@
             a.pause();
             a.currentTime = 0;
         });
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
+            e.preventDefault();
+            togglePlaybackView();
+        }
     }
 
 
@@ -499,6 +508,8 @@
     // ─────────────────────────────────────────────
     onMount(async () => {
 
+        window.addEventListener('keydown', handleKeyDown);
+
         // 🧹 Step 0: Reset backend transport safely
         try {
             await fetch(`${API_BASE}/playback/reset`, {method: 'POST', credentials: 'include'});
@@ -515,9 +526,11 @@
         const url = new URL(window.location.href);
         const hasParams = url.searchParams.toString().length > 0;
 
-        playbackView = url.searchParams.get('view') === 'studio'
-            ? 'studio'
-            : 'car';
+        setPlaybackView(
+            url.searchParams.get('view') === 'studio'
+                ? 'studio'
+                : 'car'
+        );
 
         let sel;
         let initialRank: number | null = null;
@@ -601,19 +614,24 @@
         void clearAllPlayback();
     });
 
+    window.addEventListener('keydown', handleKeyDown);
+
 </script>
 
 
-<div class:car-mode-root={playbackView === 'car'} class:studio-view-root={playbackView === 'studio'}>
-
-    {#if playbackView === 'studio'}
+<div
+        class:car-mode-root={$playbackView === 'car'}
+        class:studio-view-root={$playbackView === 'studio'}
+>
+    {#if $playbackView === 'studio'}
         <div class="studio-placeholder">
             <div class="studio-kicker">🎬 Studio View</div>
             <h1>Present the Story Behind the Music</h1>
             <p>Hidden placeholder view. Playback engine is still running unchanged.</p>
-            <a href="/car-page{window.location.search.replace('view=studio', 'view=car')}">
+
+            <button type="button" on:click={() => setPlaybackView('car')}>
                 Return to Car View
-            </a>
+            </button>
         </div>
     {:else}
 
