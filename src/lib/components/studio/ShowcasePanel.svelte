@@ -1,10 +1,19 @@
 <script lang="ts">
-    export let albumArtwork: string | null | undefined = null;
+    import {
+        currentTrack,
+        playbackPhase
+    } from '$lib/carmode/CarMode.store';
+
+    $: image =
+        $playbackPhase === 'artist'
+            ? ($currentTrack?.artistArtwork ??
+                $currentTrack?.albumArtwork)
+            : $currentTrack?.albumArtwork;
 </script>
 
 <section class="showcase-panel">
-    {#if albumArtwork}
-        <img class="artwork" src={albumArtwork} alt="Album artwork" />
+    {#if image}
+        <img class="artwork" src={image} alt="Now playing artwork"/>
     {:else}
         <div class="placeholder">No Artwork</div>
     {/if}

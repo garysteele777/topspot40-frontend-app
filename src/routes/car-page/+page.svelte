@@ -635,11 +635,11 @@
 
             <ProgramBanner/>
 
-            <PhaseBar />
+            <PhaseBar/>
 
             <main class="studio-grid">
 
-                <ShowcasePanel albumArtwork={$currentTrack?.albumArtwork}/>
+                <ShowcasePanel/>
 
                 <aside class="studio-side">
                     <ContextPanel/>
