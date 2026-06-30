@@ -3,6 +3,12 @@
 const API_BASE =
     import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
+export type SpotifyDevice = {
+    id: string;
+    is_active?: boolean;
+    name?: string;
+};
+
 export async function fetchPlaybackStatus(): Promise<Response> {
     return fetch(`${API_BASE}/playback/status`, {
         credentials: 'include'
@@ -16,12 +22,40 @@ export async function signalNarrationFinishedApi(): Promise<void> {
     });
 }
 
-export async function playSpotifyTrackApi(spotifyTrackId: string): Promise<void> {
+export async function fetchSpotifyDevices(): Promise<SpotifyDevice[]> {
+    const res = await fetch(`${API_BASE}/playback/devices`, {
+        credentials: 'include'
+    });
+
+    if (!res.ok) {
+        return [];
+    }
+
+    const data = await res.json().catch(() => null);
+    return Array.isArray(data?.devices) ? data.devices : [];
+}
+
+export async function transferSpotifyPlayback(deviceId: string): Promise<void> {
+    await fetch(`${API_BASE}/playback/transfer/${encodeURIComponent(deviceId)}`, {
+        method: 'POST',
+        credentials: 'include'
+    });
+}
+
+export async function playSpotifyTrackApi(spotifyTrackId: string, deviceId?: string): Promise<void> {
+    const body: { spotify_track_id: string; device_id?: string } = {
+        spotify_track_id: spotifyTrackId
+    };
+
+    if (deviceId) {
+        body.device_id = deviceId;
+    }
+
     await fetch(`${API_BASE}/playback/play-spotify`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spotify_track_id: spotifyTrackId })
+        body: JSON.stringify(body)
     });
 }
 

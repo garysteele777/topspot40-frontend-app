@@ -11,7 +11,9 @@ import {
     signalNarrationFinishedApi,
     playSpotifyTrackApi,
     signalTrackFinishedApi,
-    stopPlaybackApi
+    stopPlaybackApi,
+    fetchSpotifyDevices,
+    transferSpotifyPlayback
 } from '$lib/api/playbackApi';
 
 
@@ -534,7 +536,16 @@ export function startPlaybackPolling() {
 
                             return;
                         }
-                        await playSpotifyTrackApi(spotifyTrackId);
+                        const devices = await fetchSpotifyDevices();
+                        const device = devices.find(d => d.is_active) ?? devices[0];
+
+                        if (!device) {
+                            console.warn('No Spotify devices found. Open Spotify on a device to continue.');
+                            return;
+                        }
+
+                        await transferSpotifyPlayback(device.id);
+                        await playSpotifyTrackApi(spotifyTrackId, device.id);
                         stopBed();
                     } catch (err) {
                         console.error('❌ Spotify start failed', err);
