@@ -3,6 +3,7 @@
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
     import {derived} from 'svelte/store';
     import {PROGRAM_TYPES} from '$lib/types/program';
+    import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
 
     import ProgramBanner from '$lib/components/studio/ProgramBanner.svelte';
     import ShowcasePanel from '$lib/components/studio/ShowcasePanel.svelte';
@@ -633,6 +634,8 @@
         <div class="studio-shell">
 
             <ProgramBanner/>
+
+            <PhaseBar />
 
             <main class="studio-grid">
 
