@@ -1,17 +1,48 @@
-<section class="panel feature-panel">
-    <div>Feature Panel</div>
+<section class="feature-panel">
+    <div class="logo-mark">🐶</div>
+    <div class="brand">Old Dog</div>
+    <div class="tagline">New Tracks</div>
+    <div class="site">TopSpot40.com</div>
 </section>
 
 <style>
-    .panel {
+    .feature-panel {
         border: 1px solid rgba(207, 184, 124, 0.35);
         border-radius: 22px;
         background: rgba(255, 255, 255, 0.04);
+        min-height: 170px;
         display: grid;
         place-items: center;
-        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        padding: 1.25rem;
+    }
+
+    .logo-mark {
+        font-size: 2.4rem;
+        line-height: 1;
+    }
+
+    .brand {
+        margin-top: 0.35rem;
+        color: #cfb87c;
+        font-size: 1.35rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        letter-spacing: 0.14em;
-        min-height: 170px;
+    }
+
+    .tagline {
+        margin-top: 0.1rem;
+        color: white;
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+
+    .site {
+        margin-top: 0.55rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
     }
 </style>
