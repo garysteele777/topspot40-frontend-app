@@ -4,6 +4,12 @@
     import {derived} from 'svelte/store';
     import {PROGRAM_TYPES} from '$lib/types/program';
 
+    import ProgramBanner from '$lib/components/studio/ProgramBanner.svelte';
+    import ShowcasePanel from '$lib/components/studio/ShowcasePanel.svelte';
+    import ContextPanel from '$lib/components/studio/ContextPanel.svelte';
+    import FeaturePanel from '$lib/components/studio/FeaturePanel.svelte';
+    import PlaybackBanner from '$lib/components/studio/PlaybackBanner.svelte';
+
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
@@ -624,15 +630,25 @@
         class:studio-view-root={$playbackView === 'studio'}
 >
     {#if $playbackView === 'studio'}
-        <div class="studio-placeholder">
-            <div class="studio-kicker">🎬 Studio View</div>
-            <h1>Present the Story Behind the Music</h1>
-            <p>Hidden placeholder view. Playback engine is still running unchanged.</p>
+        <div class="studio-shell">
 
-            <button type="button" on:click={() => setPlaybackView('car')}>
-                Return to Car View
-            </button>
+            <ProgramBanner/>
+
+            <main class="studio-grid">
+
+                <ShowcasePanel/>
+
+                <aside class="studio-side">
+                    <ContextPanel/>
+                    <FeaturePanel/>
+                </aside>
+
+            </main>
+
+            <PlaybackBanner/>
+
         </div>
+
     {:else}
 
         {#if $currentSelection}
@@ -851,6 +867,26 @@ if (trackToPlay) {
 
     .studio-placeholder a {
         color: #cfb87c;
+    }
+
+    .studio-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .studio-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+        gap: 1.25rem;
+        padding: 1.25rem 2rem;
+    }
+
+    .studio-side {
+        display: grid;
+        grid-template-rows: 1fr auto;
+        gap: 1.25rem;
     }
 
 </style>
