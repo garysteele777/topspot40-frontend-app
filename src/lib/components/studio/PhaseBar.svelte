@@ -43,6 +43,7 @@
         text-transform: uppercase;
         letter-spacing: 0.12em;
         font-size: 0.72rem;
+        transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
     }
 
     .dot {
@@ -53,6 +54,7 @@
         place-items: center;
         border: 1px solid rgba(255, 255, 255, 0.35);
         font-size: 0.75rem;
+        transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
     }
 
     .phase-step.active {

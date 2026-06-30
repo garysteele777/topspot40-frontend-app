@@ -55,6 +55,7 @@
         color: rgba(255, 255, 255, 0.86);
         font-size: 1rem;
         line-height: 1.55;
+        transition: opacity 0.25s ease;
     }
 
     .placeholder {

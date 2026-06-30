@@ -37,6 +37,7 @@
         object-fit: contain;
         border-radius: 18px;
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        transition: opacity 0.25s ease, transform 0.25s ease;
     }
 
     .placeholder {
