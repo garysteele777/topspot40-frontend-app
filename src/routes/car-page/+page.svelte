@@ -636,16 +636,24 @@
 
             <main class="studio-grid">
 
-                <ShowcasePanel/>
+                <ShowcasePanel albumArtwork={$currentTrack?.albumArtwork}/>
 
                 <aside class="studio-side">
                     <ContextPanel/>
+
                     <FeaturePanel/>
                 </aside>
 
             </main>
 
-            <PlaybackBanner/>
+            <PlaybackBanner
+                    trackName={$currentTrack?.trackName}
+                    artistName={$currentTrack?.artistName}
+                    yearReleased={$currentTrack?.yearReleased}
+                    rank={$currentTrack?.rank}
+                    totalTracks={$tracks.length}
+                    progress={$progress}
+            />
 
         </div>
 
