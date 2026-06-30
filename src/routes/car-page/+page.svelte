@@ -54,6 +54,11 @@
     let nextTrackLock = false;
     let artistBioPlayedThisSet = false;
 
+    type PlaybackView = 'car' | 'studio';
+
+    let playbackView: PlaybackView = 'car';
+
+
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
     $: settings = $playbackSettingsStore;
@@ -510,6 +515,10 @@
         const url = new URL(window.location.href);
         const hasParams = url.searchParams.toString().length > 0;
 
+        playbackView = url.searchParams.get('view') === 'studio'
+            ? 'studio'
+            : 'car';
+
         let sel;
         let initialRank: number | null = null;
 
@@ -595,40 +604,52 @@
 </script>
 
 
-<div class="car-mode-root">
-    {#if $currentSelection}
-        <CarModeHeader
-                decade={uiDecade}
-                genre={uiGenre}
-                collection={headerMode === 'collection' ? uiDecade : undefined}
-                mode={headerMode}
-                programType={$currentSelection.programType}
-                languages={$currentSelection.languages ?? [$currentSelection.language]}
-                voices={settings.voices}
-                playbackOrder={$currentSelection.playbackOrder}
-                voicePlayMode={settings.voicePlayMode}
-                pauseMode={settings.pauseMode}
-                skipPlayed={settings.skipPlayed}
-                categoryMode="single"
-        />
-    {/if}
+<div class:car-mode-root={playbackView === 'car'} class:studio-view-root={playbackView === 'studio'}>
 
-    {#if $currentTrack}
+    {#if playbackView === 'studio'}
+        <div class="studio-placeholder">
+            <div class="studio-kicker">🎬 Studio View</div>
+            <h1>Present the Story Behind the Music</h1>
+            <p>Hidden placeholder view. Playback engine is still running unchanged.</p>
+            <a href="/car-page{window.location.search.replace('view=studio', 'view=car')}">
+                Return to Car View
+            </a>
+        </div>
+    {:else}
 
-        <CarModePlayerPanel
-                currentTrack={$currentTrack}
-                tracks={$tracks}
-                isPlaying={$isPlaying}
-                elapsed={$elapsed}
-                duration={$duration}
-                progress={$progress}
-                phase={$playbackPhase}
-                showNarrationModal={$showNarrationModal}
-                setShowNarrationModal={setNarrationModalOpen}
-                onPrev={prevTrack}
-                onNext={nextTrack}
-                onJumpToTrack={handleJumpToTrack}
-                onPlayPause={async () => {
+        {#if $currentSelection}
+            <CarModeHeader
+                    decade={uiDecade}
+                    genre={uiGenre}
+                    collection={headerMode === 'collection' ? uiDecade : undefined}
+                    mode={headerMode}
+                    programType={$currentSelection.programType}
+                    languages={$currentSelection.languages ?? [$currentSelection.language]}
+                    voices={settings.voices}
+                    playbackOrder={$currentSelection.playbackOrder}
+                    voicePlayMode={settings.voicePlayMode}
+                    pauseMode={settings.pauseMode}
+                    skipPlayed={settings.skipPlayed}
+                    categoryMode="single"
+            />
+        {/if}
+
+        {#if $currentTrack}
+
+            <CarModePlayerPanel
+                    currentTrack={$currentTrack}
+                    tracks={$tracks}
+                    isPlaying={$isPlaying}
+                    elapsed={$elapsed}
+                    duration={$duration}
+                    progress={$progress}
+                    phase={$playbackPhase}
+                    showNarrationModal={$showNarrationModal}
+                    setShowNarrationModal={setNarrationModalOpen}
+                    onPrev={prevTrack}
+                    onNext={nextTrack}
+                    onJumpToTrack={handleJumpToTrack}
+                    onPlayPause={async () => {
     if (!$currentTrack) return;
 
     const playing = get(isPlaying);
@@ -714,18 +735,20 @@ if (trackToPlay) {
     await playTrack(trackToPlay);
 }
 }}
-                onBackToOptions={backToOptions}
-        />
+                    onBackToOptions={backToOptions}
+            />
 
 
-    {:else}
-        <p class="text-gray-400 italic text-center mt-10">{$status}</p>
-    {/if}
+        {:else}
+            <p class="text-gray-400 italic text-center mt-10">{$status}</p>
+        {/if}
 
-    {#if $pauseMessage}
-        <div class="pause-banner">
-            {$pauseMessage}
-        </div>
+        {#if $pauseMessage}
+            <div class="pause-banner">
+                {$pauseMessage}
+            </div>
+        {/if}
+
     {/if}
 
 </div>
@@ -768,6 +791,48 @@ if (trackToPlay) {
         to {
             opacity: 1;
         }
+    }
+
+    .studio-view-root {
+        min-height: 100vh;
+        width: 100%;
+        background: #050505;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+    }
+
+    .studio-placeholder {
+        max-width: 900px;
+        text-align: center;
+        border: 1px solid rgba(207, 184, 124, 0.45);
+        border-radius: 24px;
+        padding: 3rem;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .studio-kicker {
+        color: #cfb87c;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .studio-placeholder h1 {
+        font-size: clamp(2.5rem, 6vw, 5rem);
+        line-height: 1;
+        margin: 0 0 1rem;
+    }
+
+    .studio-placeholder p {
+        opacity: 0.75;
+        margin-bottom: 2rem;
+    }
+
+    .studio-placeholder a {
+        color: #cfb87c;
     }
 
 </style>
