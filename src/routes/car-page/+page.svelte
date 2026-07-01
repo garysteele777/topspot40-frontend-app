@@ -5,7 +5,6 @@
     import {PROGRAM_TYPES} from '$lib/types/program';
     import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
 
-    import ProgramBanner from '$lib/components/studio/ProgramBanner.svelte';
     import ShowcasePanel from '$lib/components/studio/ShowcasePanel.svelte';
     import ContextPanel from '$lib/components/studio/ContextPanel.svelte';
     import FeaturePanel from '$lib/components/studio/FeaturePanel.svelte';
@@ -64,6 +63,20 @@
 
 
     let collectionNameMap: Record<string, string> = {};
+
+    let collectionGroupNameMap: Record<string, string> = {
+        american_heritage_favorites: 'American Heritage Favorites',
+        traditional_favorites: 'Traditional Favorites',
+        soft_rock_70s_90s: 'Soft Rock 70s–90s',
+        music_legends: 'Music Legends',
+        music_trends: 'Music Trends',
+        stage_and_screen: 'Stage & Screen',
+        world_heritage_favorites: 'World Heritage Favorites',
+        classical_music: 'Classical Music',
+        specialty_mixes: 'Specialty Mixes'
+    };
+
+
     let lastProgramKey: string | null = null;
     let nextTrackLock = false;
     let artistBioPlayedThisSet = false;
@@ -463,6 +476,23 @@
             )
             : '';
 
+    $: bannerTitle =
+        headerMode === 'artist_spotlight'
+            ? ($currentSelection?.context?.artist_name ?? $currentTrack?.artistName ?? '')
+            : uiDecade;
+
+    $: bannerSubtitle =
+        headerMode === 'collection'
+            ? (
+                collectionGroupNameMap[
+                $currentSelection?.context?.collection_group_slug ?? ''
+                    ] ?? ''
+            )
+            : headerMode === 'artist_spotlight'
+                ? 'Artist Spotlight'
+                : uiGenre;
+
+
     $: headerMode =
         $currentSelection?.mode === 'decade_genre' ||
         $currentSelection?.mode === 'collection' ||
@@ -616,12 +646,11 @@
 
 
     onDestroy(() => {
+        window.removeEventListener('keydown', handleKeyDown);
         window.removeEventListener('ts-next-track', handleAutoNextTrack);
         stopPlaybackPolling();
         void clearAllPlayback();
     });
-
-    window.addEventListener('keydown', handleKeyDown);
 
 </script>
 
@@ -633,7 +662,12 @@
     {#if $playbackView === 'studio'}
         <div class="studio-shell">
 
-            <ProgramBanner/>
+            <div class="studio-program-banner">
+                <h1>{bannerTitle}</h1>
+                {#if bannerSubtitle}
+                    <div class="studio-program-subtitle">{bannerSubtitle}</div>
+                {/if}
+            </div>
 
             <PhaseBar/>
 
@@ -843,26 +877,6 @@ if (trackToPlay) {
         width: 100%;
         background: #050505;
         color: #fff;
-        display: grid;
-        place-items: center;
-        padding: 2rem;
-    }
-
-    .studio-placeholder {
-        max-width: 900px;
-        text-align: center;
-        border: 1px solid rgba(207, 184, 124, 0.45);
-        border-radius: 24px;
-        padding: 3rem;
-        background: rgba(255, 255, 255, 0.04);
-    }
-
-    .studio-kicker {
-        color: #cfb87c;
-        text-transform: uppercase;
-        letter-spacing: 0.18em;
-        font-size: 0.9rem;
-        margin-bottom: 1rem;
     }
 
     .studio-placeholder h1 {
@@ -888,16 +902,40 @@ if (trackToPlay) {
 
     .studio-grid {
         flex: 1;
+        min-height: 0;
         display: grid;
         grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
-        gap: 1.25rem;
-        padding: 1.25rem 2rem;
+        gap: 1rem;
+        padding: 0.75rem 2rem 0.4rem;
     }
 
     .studio-side {
         display: grid;
         grid-template-rows: 1fr auto;
         gap: 1.25rem;
+    }
+
+    .studio-program-banner {
+        border-bottom: 1px solid rgba(207, 184, 124, 0.35);
+        padding: 0.55rem 2rem 0.5rem;
+        text-align: center;
+    }
+
+    .studio-program-banner h1 {
+        margin: 0;
+        color: #fff;
+        font-size: clamp(2rem, 3.5vw, 3.2rem);
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .studio-program-subtitle {
+        margin-top: 0.4rem;
+        color: #cfb87c;
+        font-size: clamp(0.9rem, 1.5vw, 1.15rem);
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        line-height: 1.2;
     }
 
 </style>

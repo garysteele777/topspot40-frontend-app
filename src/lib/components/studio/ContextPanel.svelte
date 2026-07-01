@@ -5,7 +5,7 @@
     } from '$lib/carmode/CarMode.store';
 
     $: title =
-        $playbackPhase === 'artist'
+        $playbackPhase === 'artist' || $playbackPhase === 'track'
             ? 'Meet the Artist'
             : $playbackPhase === 'detail'
                 ? 'Behind the Music'
@@ -14,7 +14,7 @@
                     : 'Now Playing';
 
     $: body =
-        $playbackPhase === 'artist'
+        $playbackPhase === 'artist' || $playbackPhase === 'track'
             ? $currentTrack?.artistText
             : $playbackPhase === 'detail'
                 ? $currentTrack?.detail
@@ -52,9 +52,10 @@
     }
 
     .context-body {
-        color: rgba(255, 255, 255, 0.86);
-        font-size: 1rem;
-        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.90);
+        font-size: clamp(1.1rem, 1.25vw, 1.35rem);
+        line-height: 1.7;
+        font-weight: 400;
         transition: opacity 0.25s ease;
     }
 

@@ -29,37 +29,37 @@
 <style>
     .playback-banner {
         border-top: 1px solid rgba(207, 184, 124, 0.35);
-        padding: 1.1rem 2rem 1.35rem;
+        padding: 0.75rem 2rem 0.8rem;
         text-align: center;
     }
 
     .track-title {
-        font-size: clamp(1.6rem, 3vw, 3rem);
+        font-size: clamp(1.35rem, 2.5vw, 2.5rem);
         font-weight: 800;
         line-height: 1.05;
     }
 
     .track-artist {
-        margin-top: 0.25rem;
-        font-size: clamp(1rem, 1.6vw, 1.5rem);
+        margin-top: 0.15rem;
+        font-size: clamp(0.95rem, 1.4vw, 1.3rem);
         color: rgba(255, 255, 255, 0.85);
     }
 
     .track-meta {
-        margin-top: 0.45rem;
+        margin-top: 0.3rem;
         display: flex;
         justify-content: center;
         gap: 1rem;
         color: #cfb87c;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;
     }
 
     .progress-shell {
-        margin: 0.9rem auto 0;
+        margin: 0.55rem auto 0;
         width: min(720px, 80vw);
-        height: 8px;
+        height: 7px;
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.12);
         overflow: hidden;

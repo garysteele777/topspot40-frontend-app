@@ -31,7 +31,7 @@
         display: flex;
         justify-content: center;
         gap: 1rem;
-        padding: 0.8rem 1rem;
+        padding: 0.45rem 0;
         border-bottom: 1px solid rgba(207, 184, 124, 0.25);
     }
 

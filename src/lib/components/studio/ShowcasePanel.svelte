@@ -26,14 +26,15 @@
         background: rgba(255, 255, 255, 0.04);
         display: grid;
         place-items: center;
-        min-height: 460px;
-        padding: 1.5rem;
+        min-height: 400px;
+        padding: 1rem;
         overflow: hidden;
     }
 
     .artwork {
-        width: min(100%, 560px);
-        max-height: 100%;
+        width: min(94%, 680px);
+        height: auto;
+        max-height: 92%;
         object-fit: contain;
         border-radius: 18px;
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
