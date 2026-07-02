@@ -4,7 +4,8 @@ export type AudioKey = { bucket: string; key: string };
 export type LoadedTrack = {
     id?: number | string | null;
 
-    rankingId?: number | null;   // ⭐ NEW
+    rankingId?: number | null;
+    artistId?: number | null;
 
     rank: number;
 

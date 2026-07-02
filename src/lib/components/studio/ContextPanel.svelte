@@ -1,8 +1,50 @@
 <script lang="ts">
+    import { onDestroy } from 'svelte';
     import {
         currentTrack,
         playbackPhase
     } from '$lib/carmode/CarMode.store';
+
+    import {
+        artistSummary,
+        type ArtistSummary
+    } from '$lib/studio/artistSummary.store';
+
+    let lastArtistId: number | null = null;
+
+    $: artistId =
+        ($currentTrack as any)?.artist_id ??
+        ($currentTrack as any)?.artistId ??
+        null;
+
+    $: if (artistId && artistId !== lastArtistId) {
+        lastArtistId = artistId;
+        loadArtistSummary(artistId);
+    }
+
+    $: console.log('CURRENT TRACK IN CONTEXT PANEL', $currentTrack);
+
+    async function loadArtistSummary(id: number) {
+        try {
+            const res = await fetch(
+                `${import.meta.env.VITE_API_BASE_URL}/artist-spotlight/artist-summary?artist_id=${id}&language=en`
+            );
+
+            if (!res.ok) {
+                artistSummary.set(null);
+                return;
+            }
+
+            const data: ArtistSummary = await res.json();
+            artistSummary.set(data);
+        } catch {
+            artistSummary.set(null);
+        }
+    }
+
+    onDestroy(() => {
+        artistSummary.set(null);
+    });
 
     $: title =
         $playbackPhase === 'artist' || $playbackPhase === 'track'
@@ -15,7 +57,7 @@
 
     $: body =
         $playbackPhase === 'artist' || $playbackPhase === 'track'
-            ? $currentTrack?.artistText
+            ? ($artistSummary?.artist.artist_description ?? $currentTrack?.artistText)
             : $playbackPhase === 'detail'
                 ? $currentTrack?.detail
                 : $playbackPhase === 'intro'
@@ -27,44 +69,40 @@
     <div class="context-title">{title}</div>
 
     {#if body}
-        <div class="context-body">{body}</div>
+        <div class="context-body">
+            {#if ($playbackPhase === 'artist' || $playbackPhase === 'track') && $artistSummary}
+                <h2>{$artistSummary.artist.artist_name}</h2>
+            {/if}
+
+            <p>{body}</p>
+
+            {#if ($playbackPhase === 'artist' || $playbackPhase === 'track') && $artistSummary}
+                <div class="appearances">
+                    <div class="appearance-count">
+                        Appears in {$artistSummary.appearanceCount} TopSpot40 programs
+                    </div>
+
+                    {#if $artistSummary.nostalgiaAppearances.length}
+                        <h3>Nostalgia</h3>
+                        <ul>
+                            {#each $artistSummary.nostalgiaAppearances as item}
+                                <li>{item.program_name} #{item.rank} — {item.track_name}</li>
+                            {/each}
+                        </ul>
+                    {/if}
+
+                    {#if $artistSummary.collectionAppearances.length}
+                        <h3>Collections</h3>
+                        <ul>
+                            {#each $artistSummary.collectionAppearances as item}
+                                <li>{item.program_name} #{item.rank} — {item.track_name}</li>
+                            {/each}
+                        </ul>
+                    {/if}
+                </div>
+            {/if}
+        </div>
     {:else}
         <div class="placeholder">Waiting for narration...</div>
     {/if}
 </section>
-
-<style>
-    .context-panel {
-        border: 1px solid rgba(207, 184, 124, 0.35);
-        border-radius: 22px;
-        background: rgba(255, 255, 255, 0.04);
-        min-height: 270px;
-        padding: 1.5rem;
-        overflow: hidden;
-    }
-
-    .context-title {
-        color: #cfb87c;
-        font-size: 0.8rem;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        margin-bottom: 1rem;
-    }
-
-    .context-body {
-        color: rgba(255, 255, 255, 0.90);
-        font-size: clamp(1.1rem, 1.25vw, 1.35rem);
-        line-height: 1.7;
-        font-weight: 400;
-        transition: opacity 0.25s ease;
-    }
-
-    .placeholder {
-        height: 100%;
-        display: grid;
-        place-items: center;
-        color: rgba(255, 255, 255, 0.7);
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-    }
-</style>

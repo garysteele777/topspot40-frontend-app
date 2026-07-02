@@ -19,6 +19,7 @@ type ArtistRadioApiTrack = {
     track_id: number;
     track_name: string;
     artist_name: string;
+    artist_id?: number | null;
     spotify_track_id: string;
     spotify_artist_id?: string | null;
     album_artwork?: string | null;
@@ -158,7 +159,7 @@ export async function loadForSelection(
                     rank: index + 1,
 
                     trackName: track.track_name,
-                    artistName: track.artist_name,
+                    artistId: track.artist_id ?? null,
 
                     spotifyTrackId: track.spotify_track_id,
                     spotifyArtistId: track.spotify_artist_id ?? null,
@@ -212,6 +213,7 @@ export async function loadForSelection(
 
             trackName: track.track_name,
             artistName: track.artist_name,
+            artistId: track.artist_id ?? null,
 
             spotifyTrackId: track.spotify_track_id,
             spotifyArtistId: track.spotify_artist_id ?? null,
@@ -602,6 +604,10 @@ function toCarModeTrack(t: LoadedTrack): CarModeTrack {
     return {
         ...t,
         rankingId: t.rankingId ?? null,
+        artistId:
+            (t as any).artistId ??
+            (t as any).artist_id ??
+            null,
 
         // 🔥 ADD THESE
         intro: (t as any).intro ?? null,

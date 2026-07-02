@@ -4,6 +4,8 @@
     import {derived} from 'svelte/store';
     import {PROGRAM_TYPES} from '$lib/types/program';
     import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
+    import CameraPanel from '$lib/components/studio/CameraPanel.svelte';
+    import {showCamera} from '$lib/studio/studio.store';
 
     import ShowcasePanel from '$lib/components/studio/ShowcasePanel.svelte';
     import ContextPanel from '$lib/components/studio/ContextPanel.svelte';
@@ -94,12 +96,24 @@
         });
     }
 
-    function handleKeyDown(e: KeyboardEvent) {
-        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
-            e.preventDefault();
-            togglePlaybackView();
-        }
+function handleKeyDown(e: KeyboardEvent) {
+    const key = e.key.toLowerCase();
+
+    console.log('KEY:', key);
+
+    if (key === 'v') {
+        e.preventDefault();
+        console.log('Toggle Studio');
+        togglePlaybackView();
+        return;
     }
+
+    if (key === 'c') {
+        e.preventDefault();
+        console.log('Toggle Camera');
+        showCamera.update(v => !v);
+    }
+}
 
 
     const pauseMessage = derived(
@@ -419,6 +433,8 @@
 
     let playedRanks: number[] = [];
 
+    $: console.log('showCamera =', $showCamera);
+
     $: {
         const sel = $currentSelection;
 
@@ -540,10 +556,12 @@
         await nextTrack();
     }
 
+
     // ─────────────────────────────────────────────
     // Lifecycle
     // ─────────────────────────────────────────────
     onMount(async () => {
+
 
         window.addEventListener('keydown', handleKeyDown);
 
@@ -678,7 +696,11 @@
                 <aside class="studio-side">
                     <ContextPanel/>
 
-                    <FeaturePanel/>
+                    {#if $showCamera}
+                        <CameraPanel/>
+                    {:else}
+                        <FeaturePanel/>
+                    {/if}
                 </aside>
 
             </main>
