@@ -89,6 +89,13 @@
         const settings = get(playbackSettingsStore);
 
         if (sel.mode === 'artist_spotlight' && sel.programType === 'RADIO_ARTIST') {
+            console.info('[car-page] playTrack artist_spotlight branch', {
+                mode: sel.mode,
+                programType: sel.programType,
+                genre: sel.context?.genre,
+                rank: trackObj.rank
+            });
+
             const firstTrack = $tracks[0] as unknown as {
                 spotifyArtistId?: string;
                 spotify_artist_id?: string;
@@ -189,6 +196,14 @@
 
 
         if (sel.mode === 'decade_genre' && sel.programType === 'RADIO_DG') {
+            console.info('[car-page] playTrack RADIO_DG play-sequence branch', {
+                mode: sel.mode,
+                programType: sel.programType,
+                decade: sel.context?.decade,
+                genre: sel.context?.genre,
+                rank: trackObj.rank
+            });
+
             const radioParams = new URLSearchParams({
                 decade: sel.context?.decade ?? 'ALL',
                 genre: sel.context?.genre ?? 'ALL',
@@ -207,6 +222,14 @@
 
             return;
         }
+
+        console.info('[car-page] playTrack normal play-track branch', {
+            mode: sel.mode,
+            programType: sel.programType,
+            decade: sel.context?.decade,
+            genre: sel.context?.genre,
+            rank: trackObj.rank
+        });
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -629,7 +652,26 @@
                 onNext={nextTrack}
                 onJumpToTrack={handleJumpToTrack}
                 onPlayPause={async () => {
-    if (!$currentTrack) return;
+    console.info('[car-page] onPlayPause entered', {
+        hasCurrentTrack: Boolean($currentTrack),
+        playing: get(isPlaying),
+        phase: get(playbackPhase),
+        mode: $currentSelection?.mode,
+        programType: $currentSelection?.programType,
+        decade: $currentSelection?.context?.decade,
+        genre: $currentSelection?.context?.genre,
+        rank: $currentTrack?.rank
+    });
+
+    if (!$currentTrack) {
+        console.info('[car-page] onPlayPause no currentTrack early return', {
+            mode: $currentSelection?.mode,
+            programType: $currentSelection?.programType,
+            decade: $currentSelection?.context?.decade,
+            genre: $currentSelection?.context?.genre
+        });
+        return;
+    }
 
     const playing = get(isPlaying);
 
@@ -671,6 +713,13 @@ if (playing) {
     const phase = get(playbackPhase);
 
 if (phase === 'paused') {
+    console.info('[car-page] onPlayPause paused branch', {
+        mode: $currentSelection?.mode,
+        programType: $currentSelection?.programType,
+        decade: $currentSelection?.context?.decade,
+        genre: $currentSelection?.context?.genre,
+        rank: $currentTrack?.rank
+    });
     continueStoppedNarrationPhase();
     return;
 }
@@ -699,6 +748,13 @@ const isRadio =
 
 if (data?.restart_track && $currentTrack && !isRadio) {
     markUserStartedPlayback();
+    console.info('[car-page] onPlayPause playTrack called from resume restart', {
+        mode: sel?.mode,
+        programType: sel?.programType,
+        decade: sel?.context?.decade,
+        genre: sel?.context?.genre,
+        rank: $currentTrack.rank
+    });
     await playTrack($currentTrack);
 }
 
@@ -711,6 +767,18 @@ markUserStartedPlayback();
 const trackToPlay = $currentTrack ?? $tracks[0];
 
 if (trackToPlay) {
+    console.info('[car-page] onPlayPause initial play branch', {
+        mode: $currentSelection?.mode,
+        programType: $currentSelection?.programType,
+        decade: $currentSelection?.context?.decade,
+        genre: $currentSelection?.context?.genre,
+        rank: trackToPlay.rank
+    });
+    console.info('[car-page] onPlayPause playTrack called', {
+        trackId: trackToPlay.id,
+        rankingId: trackToPlay.rankingId,
+        rank: trackToPlay.rank
+    });
     await playTrack(trackToPlay);
 }
 }}
