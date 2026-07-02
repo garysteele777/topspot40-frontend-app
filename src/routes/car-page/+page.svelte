@@ -53,8 +53,31 @@
     let lastProgramKey: string | null = null;
     let nextTrackLock = false;
     let artistBioPlayedThisSet = false;
+    let userStartedPlaybackThisSession = false;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
+    type ClientDiagnosticPayload = {
+        event: string;
+        phase: string | null | undefined;
+        mode: string | null | undefined;
+        programType: string | null | undefined;
+        hasCurrentTrack: boolean;
+        trackRank: number | null | undefined;
+        decade: string | null | undefined;
+        genre: string | null | undefined;
+    };
+
+    function sendClientDiagnostic(payload: ClientDiagnosticPayload): void {
+        void fetch(`${API_BASE}/playback/client-diagnostic`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        }).catch(() => {
+            // Diagnostic failures should not affect playback.
+        });
+    }
 
     $: settings = $playbackSettingsStore;
 
@@ -94,6 +117,16 @@
                 programType: sel.programType,
                 genre: sel.context?.genre,
                 rank: trackObj.rank
+            });
+            sendClientDiagnostic({
+                event: 'playTrack artist_spotlight branch',
+                phase: get(playbackPhase),
+                mode: sel.mode,
+                programType: sel.programType,
+                hasCurrentTrack: Boolean($currentTrack),
+                trackRank: trackObj.rank,
+                decade: sel.context?.decade,
+                genre: sel.context?.genre
             });
 
             const firstTrack = $tracks[0] as unknown as {
@@ -203,6 +236,16 @@
                 genre: sel.context?.genre,
                 rank: trackObj.rank
             });
+            sendClientDiagnostic({
+                event: 'playTrack RADIO_DG play-sequence branch',
+                phase: get(playbackPhase),
+                mode: sel.mode,
+                programType: sel.programType,
+                hasCurrentTrack: Boolean($currentTrack),
+                trackRank: trackObj.rank,
+                decade: sel.context?.decade,
+                genre: sel.context?.genre
+            });
 
             const radioParams = new URLSearchParams({
                 decade: sel.context?.decade ?? 'ALL',
@@ -229,6 +272,16 @@
             decade: sel.context?.decade,
             genre: sel.context?.genre,
             rank: trackObj.rank
+        });
+        sendClientDiagnostic({
+            event: 'playTrack normal play-track branch',
+            phase: get(playbackPhase),
+            mode: sel.mode,
+            programType: sel.programType,
+            hasCurrentTrack: Boolean($currentTrack),
+            trackRank: trackObj.rank,
+            decade: sel.context?.decade,
+            genre: sel.context?.genre
         });
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
@@ -264,6 +317,8 @@
         currentTrack.set(track);
         currentRank.set(track.rank);
 
+        userStartedPlaybackThisSession = true;
+        markUserStartedPlayback();
         await playTrack(track);
     }
 
@@ -363,6 +418,8 @@
 
             await new Promise(r => setTimeout(r, 50));
 
+            userStartedPlaybackThisSession = true;
+            markUserStartedPlayback();
             await playTrack(next);
         }
 
@@ -396,6 +453,8 @@
 
         await new Promise(r => setTimeout(r, 50));
 
+        userStartedPlaybackThisSession = true;
+        markUserStartedPlayback();
         await playTrack(prev);
     }
 
@@ -525,6 +584,13 @@
         }
 
 // ⏱ Step 1: Start polling AFTER reset
+        userStartedPlaybackThisSession = false;
+        isPlaying.set(false);
+        playbackPhase.set('idle');
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
+
         startPlaybackPolling();
 
         window.addEventListener('ts-next-track', handleAutoNextTrack);
@@ -662,11 +728,31 @@
         genre: $currentSelection?.context?.genre,
         rank: $currentTrack?.rank
     });
+    sendClientDiagnostic({
+        event: 'onPlayPause entered',
+        phase: get(playbackPhase),
+        mode: $currentSelection?.mode,
+        programType: $currentSelection?.programType,
+        hasCurrentTrack: Boolean($currentTrack),
+        trackRank: $currentTrack?.rank,
+        decade: $currentSelection?.context?.decade,
+        genre: $currentSelection?.context?.genre
+    });
 
     if (!$currentTrack) {
         console.info('[car-page] onPlayPause no currentTrack early return', {
             mode: $currentSelection?.mode,
             programType: $currentSelection?.programType,
+            decade: $currentSelection?.context?.decade,
+            genre: $currentSelection?.context?.genre
+        });
+        sendClientDiagnostic({
+            event: 'onPlayPause no currentTrack early return',
+            phase: get(playbackPhase),
+            mode: $currentSelection?.mode,
+            programType: $currentSelection?.programType,
+            hasCurrentTrack: false,
+            trackRank: null,
             decade: $currentSelection?.context?.decade,
             genre: $currentSelection?.context?.genre
         });
@@ -676,6 +762,7 @@
     const playing = get(isPlaying);
 
     const startInitialPlay = async (reason: string) => {
+        userStartedPlaybackThisSession = true;
         markUserStartedPlayback();
 
         // 🚀 Start from the loader-selected track, not always $tracks[0]
@@ -690,14 +777,48 @@
                 genre: $currentSelection?.context?.genre,
                 rank: trackToPlay.rank
             });
+            sendClientDiagnostic({
+                event: `onPlayPause initial play branch: ${reason}`,
+                phase: get(playbackPhase),
+                mode: $currentSelection?.mode,
+                programType: $currentSelection?.programType,
+                hasCurrentTrack: Boolean($currentTrack),
+                trackRank: trackToPlay.rank,
+                decade: $currentSelection?.context?.decade,
+                genre: $currentSelection?.context?.genre
+            });
             console.info('[car-page] onPlayPause playTrack called', {
                 trackId: trackToPlay.id,
                 rankingId: trackToPlay.rankingId,
                 rank: trackToPlay.rank
             });
+            sendClientDiagnostic({
+                event: 'onPlayPause before playTrack(trackToPlay)',
+                phase: get(playbackPhase),
+                mode: $currentSelection?.mode,
+                programType: $currentSelection?.programType,
+                hasCurrentTrack: Boolean($currentTrack),
+                trackRank: trackToPlay.rank,
+                decade: $currentSelection?.context?.decade,
+                genre: $currentSelection?.context?.genre
+            });
             await playTrack(trackToPlay);
         }
     };
+
+    if (!userStartedPlaybackThisSession) {
+        console.info('[car-page] onPlayPause first user tap; forcing initial play branch', {
+            playing,
+            phase: get(playbackPhase),
+            mode: $currentSelection?.mode,
+            programType: $currentSelection?.programType,
+            decade: $currentSelection?.context?.decade,
+            genre: $currentSelection?.context?.genre,
+            rank: $currentTrack?.rank
+        });
+        await startInitialPlay('first user tap in page session');
+        return;
+    }
 
 if (playing) {
 
@@ -734,6 +855,16 @@ if (playing) {
             genre: $currentSelection?.context?.genre,
             rank: $currentTrack?.rank
         });
+        sendClientDiagnostic({
+            event: 'onPlayPause playing without active backend phase fallback',
+            phase,
+            mode: $currentSelection?.mode,
+            programType: $currentSelection?.programType,
+            hasCurrentTrack: Boolean($currentTrack),
+            trackRank: $currentTrack?.rank,
+            decade: $currentSelection?.context?.decade,
+            genre: $currentSelection?.context?.genre
+        });
         await startInitialPlay('playing without active backend phase');
         return;
     }
@@ -756,6 +887,16 @@ if (phase === 'paused') {
         decade: $currentSelection?.context?.decade,
         genre: $currentSelection?.context?.genre,
         rank: $currentTrack?.rank
+    });
+    sendClientDiagnostic({
+        event: 'onPlayPause paused branch',
+        phase,
+        mode: $currentSelection?.mode,
+        programType: $currentSelection?.programType,
+        hasCurrentTrack: Boolean($currentTrack),
+        trackRank: $currentTrack?.rank,
+        decade: $currentSelection?.context?.decade,
+        genre: $currentSelection?.context?.genre
     });
 
     const res = await fetch(`${API_BASE}/playback/resume`, {
@@ -817,6 +958,7 @@ const isRadio =
     sel?.programType === 'RADIO_ARTIST';
 
 if (data?.restart_track && $currentTrack && !isRadio) {
+    userStartedPlaybackThisSession = true;
     markUserStartedPlayback();
     console.info('[car-page] onPlayPause playTrack called from resume restart', {
         mode: sel?.mode,
