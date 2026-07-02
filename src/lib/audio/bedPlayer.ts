@@ -1,7 +1,28 @@
 let bedAudio: HTMLAudioElement | null = null;
 let currentBedUrl: string | null = null;
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 const SILENT_AUDIO_DATA_URI =
     'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+
+function sendBedDiagnostic(event: string): void {
+    void fetch(`${API_BASE}/playback/client-diagnostic`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            event,
+            phase: null,
+            mode: null,
+            programType: null,
+            hasCurrentTrack: false,
+            trackRank: null,
+            decade: null,
+            genre: null
+        })
+    }).catch(() => {
+        // Temporary diagnostic only; never affect playback.
+    });
+}
 
 export function isBedPlaying(): boolean {
     return bedAudio !== null && !bedAudio.paused;
@@ -27,6 +48,7 @@ export async function unlockBedAudio(): Promise<void> {
 }
 
 export async function startBedUrl(url: string): Promise<void> {
+    sendBedDiagnostic('bed start called');
     console.info('[bedPlayer] startBedUrl called', {
         url,
         currentBedUrl,
@@ -64,11 +86,13 @@ export async function startBedUrl(url: string): Promise<void> {
 
     try {
         await bedAudio.play();
+        sendBedDiagnostic('bed play succeeded');
         console.info('[bedPlayer] bed audio play() succeeded', {
             url,
             volume: bedAudio.volume
         });
     } catch (err) {
+        sendBedDiagnostic('bed play failed');
         console.warn('[bedPlayer] bed audio play() failed', {
             url,
             err
@@ -94,6 +118,7 @@ export async function startBedUrl(url: string): Promise<void> {
 }
 
 export function stopBed(): void {
+    sendBedDiagnostic('bed stop called');
     console.info('[bedPlayer] stopBed called', {
         currentBedUrl,
         hasBedAudio: Boolean(bedAudio),
