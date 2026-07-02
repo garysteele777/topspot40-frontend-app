@@ -575,6 +575,7 @@
     // Lifecycle
     // ─────────────────────────────────────────────
     onMount(async () => {
+        console.info('[car-page] build marker main@3ce2b0b mini-player-tap-diagnostic');
 
         // 🧹 Step 0: Reset backend transport safely
         try {
