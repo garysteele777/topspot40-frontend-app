@@ -675,6 +675,30 @@
 
     const playing = get(isPlaying);
 
+    const startInitialPlay = async (reason: string) => {
+        markUserStartedPlayback();
+
+        // 🚀 Start from the loader-selected track, not always $tracks[0]
+        const trackToPlay = $currentTrack ?? $tracks[0];
+
+        if (trackToPlay) {
+            console.info('[car-page] onPlayPause initial play branch', {
+                reason,
+                mode: $currentSelection?.mode,
+                programType: $currentSelection?.programType,
+                decade: $currentSelection?.context?.decade,
+                genre: $currentSelection?.context?.genre,
+                rank: trackToPlay.rank
+            });
+            console.info('[car-page] onPlayPause playTrack called', {
+                trackId: trackToPlay.id,
+                rankingId: trackToPlay.rankingId,
+                rank: trackToPlay.rank
+            });
+            await playTrack(trackToPlay);
+        }
+    };
+
 if (playing) {
 
     const phase = get(playbackPhase);
@@ -701,6 +725,19 @@ if (playing) {
         return;
     }
 
+    if (phase !== 'track') {
+        console.info('[car-page] onPlayPause playing without active backend phase; falling back to initial play', {
+            phase,
+            mode: $currentSelection?.mode,
+            programType: $currentSelection?.programType,
+            decade: $currentSelection?.context?.decade,
+            genre: $currentSelection?.context?.genre,
+            rank: $currentTrack?.rank
+        });
+        await startInitialPlay('playing without active backend phase');
+        return;
+    }
+
     await fetch(`${API_BASE}/playback/pause`, {
         method: 'POST',
         credentials: 'include'
@@ -720,7 +757,40 @@ if (phase === 'paused') {
         genre: $currentSelection?.context?.genre,
         rank: $currentTrack?.rank
     });
-    continueStoppedNarrationPhase();
+
+    const res = await fetch(`${API_BASE}/playback/resume`, {
+        method: 'POST',
+        credentials: 'include'
+    });
+
+    const data = await res.json().catch(() => null);
+    const backendPhase = data?.phase;
+    const hasBackendPlaybackPhase =
+        backendPhase === 'track' ||
+        backendPhase === 'intro' ||
+        backendPhase === 'detail' ||
+        backendPhase === 'artist' ||
+        backendPhase === 'set_intro' ||
+        backendPhase === 'collection_intro' ||
+        backendPhase === 'liner';
+
+    if (!hasBackendPlaybackPhase) {
+        console.info('[car-page] onPlayPause paused branch without backend phase; falling back to initial play', {
+            backendPhase,
+            mode: $currentSelection?.mode,
+            programType: $currentSelection?.programType,
+            decade: $currentSelection?.context?.decade,
+            genre: $currentSelection?.context?.genre,
+            rank: $currentTrack?.rank
+        });
+        await startInitialPlay('paused without backend phase');
+        return;
+    }
+
+    if (backendPhase !== 'track') {
+        continueStoppedNarrationPhase();
+    }
+
     return;
 }
 
@@ -761,26 +831,7 @@ if (data?.restart_track && $currentTrack && !isRadio) {
     return;
 }
 
-markUserStartedPlayback();
-
-// 🚀 Start from the loader-selected track, not always $tracks[0]
-const trackToPlay = $currentTrack ?? $tracks[0];
-
-if (trackToPlay) {
-    console.info('[car-page] onPlayPause initial play branch', {
-        mode: $currentSelection?.mode,
-        programType: $currentSelection?.programType,
-        decade: $currentSelection?.context?.decade,
-        genre: $currentSelection?.context?.genre,
-        rank: trackToPlay.rank
-    });
-    console.info('[car-page] onPlayPause playTrack called', {
-        trackId: trackToPlay.id,
-        rankingId: trackToPlay.rankingId,
-        rank: trackToPlay.rank
-    });
-    await playTrack(trackToPlay);
-}
+await startInitialPlay('initial play');
 }}
                 onBackToOptions={backToOptions}
         />
