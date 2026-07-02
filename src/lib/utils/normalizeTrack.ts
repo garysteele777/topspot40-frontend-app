@@ -195,6 +195,10 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         trackName: asString(trackNameVal, '') ?? '',
         artistName:
             asString(artistNameVal, 'Unknown Artist') ?? 'Unknown Artist',
+        artistId:
+            asNumber(raw.artistId, undefined) ??
+            asNumber(raw.artist_id, undefined) ??
+            null,
 
         albumName: asString(albumNameVal, null),
         albumArtwork: asString(albumArtworkVal, null),

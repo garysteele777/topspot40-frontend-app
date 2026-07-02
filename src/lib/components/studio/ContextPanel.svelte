@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from 'svelte';
+    import {onDestroy} from 'svelte';
     import {
         currentTrack,
         playbackPhase
@@ -19,10 +19,11 @@
 
     $: if (artistId && artistId !== lastArtistId) {
         lastArtistId = artistId;
+        artistSummary.set(null);
         loadArtistSummary(artistId);
     }
 
-    $: console.log('CURRENT TRACK IN CONTEXT PANEL', $currentTrack);
+    // $: console.log('CURRENT TRACK IN CONTEXT PANEL', $currentTrack);
 
     async function loadArtistSummary(id: number) {
         try {
@@ -36,6 +37,9 @@
             }
 
             const data: ArtistSummary = await res.json();
+            if (data.artist.artist_id !== id) {
+                return;
+            }
             artistSummary.set(data);
         } catch {
             artistSummary.set(null);
