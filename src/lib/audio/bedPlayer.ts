@@ -27,15 +27,33 @@ export async function unlockBedAudio(): Promise<void> {
 }
 
 export async function startBedUrl(url: string): Promise<void> {
+    console.info('[bedPlayer] startBedUrl called', {
+        url,
+        currentBedUrl,
+        hasBedAudio: Boolean(bedAudio),
+        isPaused: bedAudio?.paused
+    });
+
     if (bedAudio && currentBedUrl === url && !bedAudio.paused) {
         return;
     }
 
     if (bedAudio && currentBedUrl && currentBedUrl !== url) {
-        stopBed(); // fade out old one
+        console.info('[bedPlayer] currentBedUrl changing', {
+            from: currentBedUrl,
+            to: url
+        });
+        bedAudio.pause();
+        bedAudio.currentTime = 0;
+        bedAudio.src = '';
         bedAudio = null;
+        currentBedUrl = null;
     }
 
+    console.info('[bedPlayer] currentBedUrl set', {
+        from: currentBedUrl,
+        to: url
+    });
     currentBedUrl = url;
     bedAudio = bedAudio ?? new Audio();
     bedAudio.src = url;
@@ -44,10 +62,22 @@ export async function startBedUrl(url: string): Promise<void> {
     bedAudio.preload = 'auto';
     bedAudio.setAttribute('playsinline', '');
 
-    await bedAudio.play();
+    try {
+        await bedAudio.play();
+        console.info('[bedPlayer] bed audio play() succeeded', {
+            url,
+            volume: bedAudio.volume
+        });
+    } catch (err) {
+        console.warn('[bedPlayer] bed audio play() failed', {
+            url,
+            err
+        });
+        throw err;
+    }
 
     // 🎧 Fade in
-    const targetVolume = 0.065;
+    const targetVolume = 0.18;
     const step = 0.02;
 
     const fadeIn = setInterval(() => {
@@ -64,6 +94,13 @@ export async function startBedUrl(url: string): Promise<void> {
 }
 
 export function stopBed(): void {
+    console.info('[bedPlayer] stopBed called', {
+        currentBedUrl,
+        hasBedAudio: Boolean(bedAudio),
+        isPaused: bedAudio?.paused,
+        volume: bedAudio?.volume
+    });
+
     if (!bedAudio) return;
 
     const audioRef = bedAudio; // capture reference
@@ -83,6 +120,9 @@ export function stopBed(): void {
 
             if (bedAudio === audioRef) {
                 bedAudio = null;
+                console.info('[bedPlayer] currentBedUrl cleared', {
+                    from: currentBedUrl
+                });
                 currentBedUrl = null;
             }
         }
