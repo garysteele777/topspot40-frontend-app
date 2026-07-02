@@ -19,7 +19,7 @@ import {
 
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
-import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
+import {startBedUrl, stopBed, isBedPlaying, unlockBedAudio} from '$lib/audio/bedPlayer';
 import {calculatePlaybackTiming} from '$lib/utils/calculatePlaybackTiming';
 import {isWithinTrackSwitchProtectionWindow} from '$lib/utils/playbackSwitchTiming';
 import {
@@ -64,6 +64,9 @@ const dlog = (...args: unknown[]) => {
 const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
 );
+
+const SILENT_AUDIO_DATA_URI =
+    'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 
 let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
@@ -171,8 +174,11 @@ function playOneAudio(
     return new Promise<void>((resolve) => {
         stopCurrentNarrationPhase({resolvePhase: false});
 
-        const audio = new Audio(url);
+        const audio = activeNarrationAudio ?? new Audio();
+        audio.src = url;
         audio.volume = 0.60;
+        audio.muted = false;
+        audio.setAttribute('playsinline', '');
 
         elapsed.set(0);
         duration.set(0);
@@ -250,7 +256,7 @@ function playOneAudio(
         );
 
         audio.play().catch((err: unknown) => {
-            console.warn('🔇 Narration could not play, skipping:', url, err);
+            console.warn('🔇 Narration audio.play() failed; resolving narration phase after failure:', url, err);
 
             cleanupNarrationAudio({
                 timer: activeNarrationTimer,
@@ -489,7 +495,9 @@ export function startPlaybackPolling() {
 
                     if (bedAudioUrl && !isBedPlaying()) {
                         dlog('🎧 BED start:', bedAudioUrl);
-                        startBedUrl(bedAudioUrl);
+                        startBedUrl(bedAudioUrl).catch((err: unknown) => {
+                            console.warn('Bed audio.play() failed:', bedAudioUrl, err);
+                        });
                     }
 
                     narrationQueue.push(...narrationItems);
@@ -669,5 +677,27 @@ export function stopPlaybackPolling() {
 }
 
 export function markUserStartedPlayback() {
-    // compatibility export
+    if (!browser) return;
+
+    if (!activeNarrationAudio) {
+        activeNarrationAudio = new Audio();
+    }
+
+    activeNarrationAudio.muted = true;
+    activeNarrationAudio.setAttribute('playsinline', '');
+    activeNarrationAudio.src = SILENT_AUDIO_DATA_URI;
+
+    activeNarrationAudio.play()
+        .then(() => {
+            activeNarrationAudio?.pause();
+            if (activeNarrationAudio) {
+                activeNarrationAudio.currentTime = 0;
+                activeNarrationAudio.muted = false;
+            }
+        })
+        .catch((err: unknown) => {
+            console.warn('Narration audio unlock failed:', err);
+        });
+
+    void unlockBedAudio();
 }

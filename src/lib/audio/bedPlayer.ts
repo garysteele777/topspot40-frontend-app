@@ -1,8 +1,29 @@
 let bedAudio: HTMLAudioElement | null = null;
 let currentBedUrl: string | null = null;
+const SILENT_AUDIO_DATA_URI =
+    'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 
 export function isBedPlaying(): boolean {
     return bedAudio !== null && !bedAudio.paused;
+}
+
+export async function unlockBedAudio(): Promise<void> {
+    if (!bedAudio) {
+        bedAudio = new Audio();
+    }
+
+    try {
+        bedAudio.muted = true;
+        bedAudio.setAttribute('playsinline', '');
+        bedAudio.src = SILENT_AUDIO_DATA_URI;
+        await bedAudio.play();
+        bedAudio.pause();
+        bedAudio.currentTime = 0;
+        bedAudio.muted = false;
+        currentBedUrl = null;
+    } catch (err) {
+        console.warn('Bed audio unlock failed:', err);
+    }
 }
 
 export async function startBedUrl(url: string): Promise<void> {
@@ -10,13 +31,18 @@ export async function startBedUrl(url: string): Promise<void> {
         return;
     }
 
-    stopBed(); // fade out old one
+    if (bedAudio && currentBedUrl && currentBedUrl !== url) {
+        stopBed(); // fade out old one
+        bedAudio = null;
+    }
 
     currentBedUrl = url;
-    bedAudio = new Audio(url);
+    bedAudio = bedAudio ?? new Audio();
+    bedAudio.src = url;
     bedAudio.loop = true;
     bedAudio.volume = 0;           // start silent
     bedAudio.preload = 'auto';
+    bedAudio.setAttribute('playsinline', '');
 
     await bedAudio.play();
 
