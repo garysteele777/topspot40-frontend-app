@@ -317,9 +317,9 @@
         currentTrack.set(track);
         currentRank.set(track.rank);
 
-        userStartedPlaybackThisSession = true;
         markUserStartedPlayback();
         await playTrack(track);
+        userStartedPlaybackThisSession = true;
     }
 
     async function nextTrack() {
@@ -418,9 +418,9 @@
 
             await new Promise(r => setTimeout(r, 50));
 
-            userStartedPlaybackThisSession = true;
             markUserStartedPlayback();
             await playTrack(next);
+            userStartedPlaybackThisSession = true;
         }
 
         setTimeout(() => {
@@ -453,9 +453,9 @@
 
         await new Promise(r => setTimeout(r, 50));
 
-        userStartedPlaybackThisSession = true;
         markUserStartedPlayback();
         await playTrack(prev);
+        userStartedPlaybackThisSession = true;
     }
 
     // ─────────────────────────────────────────────
@@ -578,6 +578,7 @@
         console.info('[car-page] build marker main@3ce2b0b mini-player-tap-diagnostic');
 
         // 🧹 Step 0: Reset backend transport safely
+        userStartedPlaybackThisSession = false;
         try {
             await fetch(`${API_BASE}/playback/reset`, {method: 'POST', credentials: 'include'});
         } catch (err) {
@@ -668,6 +669,12 @@
             return;
         }
         await loadForSelection(sel, initialRank);
+        userStartedPlaybackThisSession = false;
+        isPlaying.set(false);
+        playbackPhase.set('idle');
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
 
         /// ─────────────────────────────────────────────
         // Prepare Spotify playback (warmup)
@@ -763,7 +770,6 @@
     const playing = get(isPlaying);
 
     const startInitialPlay = async (reason: string) => {
-        userStartedPlaybackThisSession = true;
         markUserStartedPlayback();
 
         // 🚀 Start from the loader-selected track, not always $tracks[0]
@@ -804,6 +810,7 @@
                 genre: $currentSelection?.context?.genre
             });
             await playTrack(trackToPlay);
+            userStartedPlaybackThisSession = true;
         }
     };
 
@@ -959,7 +966,6 @@ const isRadio =
     sel?.programType === 'RADIO_ARTIST';
 
 if (data?.restart_track && $currentTrack && !isRadio) {
-    userStartedPlaybackThisSession = true;
     markUserStartedPlayback();
     console.info('[car-page] onPlayPause playTrack called from resume restart', {
         mode: sel?.mode,
@@ -969,6 +975,7 @@ if (data?.restart_track && $currentTrack && !isRadio) {
         rank: $currentTrack.rank
     });
     await playTrack($currentTrack);
+    userStartedPlaybackThisSession = true;
 }
 
     return;
