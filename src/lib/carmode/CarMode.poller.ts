@@ -520,6 +520,17 @@ export function startPlaybackPolling() {
                 narrationPhase &&
                 (data.context?.audio_url || data.context?.audio_queue)
             ) {
+                const bedAudioUrl =
+                    typeof data.context?.bed_audio_url === 'string'
+                        ? data.context.bed_audio_url
+                        : null;
+
+                if (bedAudioUrl) {
+                    dlog('ðŸŽ§ BED start:', bedAudioUrl);
+                    startBedUrl(bedAudioUrl).catch((err: unknown) => {
+                        console.warn('Bed audio.play() failed:', bedAudioUrl, err);
+                    });
+                }
 
                 const narrationKey =
                     `${phase}:${data.context?.audio_url ?? JSON.stringify(data.context?.audio_queue ?? '')}`;
@@ -551,18 +562,6 @@ export function startPlaybackPolling() {
                         '🎤 Queue:',
                         narrationItems.map(item => item.url)
                     );
-
-                    const bedAudioUrl =
-                        typeof data.context?.bed_audio_url === 'string'
-                            ? data.context.bed_audio_url
-                            : null;
-
-                    if (bedAudioUrl) {
-                        dlog('🎧 BED start:', bedAudioUrl);
-                        startBedUrl(bedAudioUrl).catch((err: unknown) => {
-                            console.warn('Bed audio.play() failed:', bedAudioUrl, err);
-                        });
-                    }
 
                     if (narrationItems.length === 0) {
                         sendClientDiagnostic('narration queue empty', phase);
