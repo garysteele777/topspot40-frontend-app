@@ -54,6 +54,7 @@
     let nextTrackLock = false;
     let artistBioPlayedThisSet = false;
     let userStartedPlaybackThisSession = false;
+    let playbackStartInFlight = false;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -578,6 +579,7 @@
         console.info('[car-page] build marker main@3ce2b0b mini-player-tap-diagnostic');
 
         // 🧹 Step 0: Reset backend transport safely
+        playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
         try {
             await fetch(`${API_BASE}/playback/reset`, {method: 'POST', credentials: 'include'});
@@ -586,6 +588,7 @@
         }
 
 // ⏱ Step 1: Start polling AFTER reset
+        playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
         isPlaying.set(false);
         playbackPhase.set('idle');
@@ -669,6 +672,7 @@
             return;
         }
         await loadForSelection(sel, initialRank);
+        playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
         isPlaying.set(false);
         playbackPhase.set('idle');
@@ -770,12 +774,26 @@
     const playing = get(isPlaying);
 
     const startInitialPlay = async (reason: string) => {
+        if (playbackStartInFlight) {
+            console.info('[car-page] onPlayPause initial play skipped; playback start already in flight', {
+                reason,
+                mode: $currentSelection?.mode,
+                programType: $currentSelection?.programType,
+                decade: $currentSelection?.context?.decade,
+                genre: $currentSelection?.context?.genre,
+                rank: $currentTrack?.rank
+            });
+            return;
+        }
+
         markUserStartedPlayback();
 
         // 🚀 Start from the loader-selected track, not always $tracks[0]
         const trackToPlay = $currentTrack ?? $tracks[0];
 
         if (trackToPlay) {
+            playbackStartInFlight = true;
+            userStartedPlaybackThisSession = true;
             console.info('[car-page] onPlayPause initial play branch', {
                 reason,
                 mode: $currentSelection?.mode,
@@ -809,8 +827,11 @@
                 decade: $currentSelection?.context?.decade,
                 genre: $currentSelection?.context?.genre
             });
-            await playTrack(trackToPlay);
-            userStartedPlaybackThisSession = true;
+            try {
+                await playTrack(trackToPlay);
+            } finally {
+                playbackStartInFlight = false;
+            }
         }
     };
 
@@ -924,14 +945,22 @@ if (phase === 'paused') {
         backendPhase === 'liner';
 
     if (!hasBackendPlaybackPhase) {
-        console.info('[car-page] onPlayPause paused branch without backend phase; falling back to initial play', {
+        console.info('[car-page] onPlayPause paused branch without backend phase', {
             backendPhase,
+            userStartedPlaybackThisSession,
+            playbackStartInFlight,
             mode: $currentSelection?.mode,
             programType: $currentSelection?.programType,
             decade: $currentSelection?.context?.decade,
             genre: $currentSelection?.context?.genre,
             rank: $currentTrack?.rank
         });
+        if (userStartedPlaybackThisSession || playbackStartInFlight) {
+            playbackPhase.set('idle');
+            isPlaying.set(false);
+            return;
+        }
+
         await startInitialPlay('paused without backend phase');
         return;
     }
