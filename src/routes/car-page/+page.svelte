@@ -853,6 +853,27 @@ if (playing) {
 
     const phase = get(playbackPhase);
 
+    if (phase === 'loading') {
+        console.info('[car-page] onPlayPause playing during loading startup; waiting for polling', {
+            mode: $currentSelection?.mode,
+            programType: $currentSelection?.programType,
+            decade: $currentSelection?.context?.decade,
+            genre: $currentSelection?.context?.genre,
+            rank: $currentTrack?.rank
+        });
+        sendClientDiagnostic({
+            event: 'onPlayPause playing during loading startup',
+            phase,
+            mode: $currentSelection?.mode,
+            programType: $currentSelection?.programType,
+            hasCurrentTrack: Boolean($currentTrack),
+            trackRank: $currentTrack?.rank,
+            decade: $currentSelection?.context?.decade,
+            genre: $currentSelection?.context?.genre
+        });
+        return;
+    }
+
     if (
         phase === 'intro' ||
         phase === 'detail' ||
@@ -894,6 +915,20 @@ if (playing) {
             decade: $currentSelection?.context?.decade,
             genre: $currentSelection?.context?.genre
         });
+        if (userStartedPlaybackThisSession || playbackStartInFlight) {
+            console.info('[car-page] onPlayPause fallback suppressed; playback already started or starting', {
+                phase,
+                userStartedPlaybackThisSession,
+                playbackStartInFlight,
+                mode: $currentSelection?.mode,
+                programType: $currentSelection?.programType,
+                decade: $currentSelection?.context?.decade,
+                genre: $currentSelection?.context?.genre,
+                rank: $currentTrack?.rank
+            });
+            return;
+        }
+
         await startInitialPlay('playing without active backend phase');
         return;
     }
