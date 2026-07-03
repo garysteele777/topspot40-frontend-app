@@ -557,7 +557,7 @@ export function startPlaybackPolling() {
                             ? data.context.bed_audio_url
                             : null;
 
-                    if (bedAudioUrl && !isBedPlaying()) {
+                    if (bedAudioUrl) {
                         dlog('🎧 BED start:', bedAudioUrl);
                         startBedUrl(bedAudioUrl).catch((err: unknown) => {
                             console.warn('Bed audio.play() failed:', bedAudioUrl, err);

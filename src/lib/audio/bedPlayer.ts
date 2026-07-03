@@ -25,7 +25,7 @@ function sendBedDiagnostic(event: string): void {
 }
 
 export function isBedPlaying(): boolean {
-    return bedAudio !== null && !bedAudio.paused;
+    return currentBedUrl !== null && bedAudio !== null && !bedAudio.paused;
 }
 
 export async function unlockBedAudio(): Promise<void> {
