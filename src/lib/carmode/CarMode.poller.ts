@@ -121,7 +121,7 @@ let narrationInterrupting = false;
 let narrationPausedAtBoundary = false;
 
 export function stopCurrentNarrationPhase(
-    options: { resolvePhase?: boolean; preserveResolve?: boolean } = {}
+    options: { resolvePhase?: boolean; preserveResolve?: boolean; preserveAudioElement?: boolean } = {}
 ): void {
     if (options.preserveResolve) {
         narrationPausedAtBoundary = true;
@@ -135,8 +135,10 @@ export function stopCurrentNarrationPhase(
         narrationInterrupting = true;
         activeNarrationAudio.pause();
         activeNarrationAudio.currentTime = 0;
-        activeNarrationAudio.src = '';
-        activeNarrationAudio.load();
+        if (!options.preserveAudioElement) {
+            activeNarrationAudio.src = '';
+            activeNarrationAudio.load();
+        }
     }
     cleanupNarrationAudio({
         timer: activeNarrationTimer,
@@ -148,7 +150,8 @@ export function stopCurrentNarrationPhase(
         },
         setResolve: value => {
             activeNarrationResolve = value;
-        }
+        },
+        preserveAudio: options.preserveAudioElement
     });
 
     if (options.preserveResolve) {
@@ -198,7 +201,10 @@ function playOneAudio(
     if (!browser) return Promise.resolve();
 
     return new Promise<void>((resolve, reject) => {
-        stopCurrentNarrationPhase({resolvePhase: false});
+        stopCurrentNarrationPhase({
+            resolvePhase: false,
+            preserveAudioElement: true
+        });
 
         const audio = activeNarrationAudio ?? new Audio();
         audio.src = url;
@@ -247,7 +253,8 @@ function playOneAudio(
                 },
                 setResolve: value => {
                     activeNarrationResolve = value;
-                }
+                },
+                preserveAudio: true
             });
             resolve();
         };
@@ -270,7 +277,8 @@ function playOneAudio(
                 },
                 setResolve: value => {
                     activeNarrationResolve = value;
-                }
+                },
+                preserveAudio: true
             });
             resolve();
         };
@@ -295,7 +303,8 @@ function playOneAudio(
                 },
                 setResolve: value => {
                     activeNarrationResolve = value;
-                }
+                },
+                preserveAudio: true
             });
             reject(err);
         });
