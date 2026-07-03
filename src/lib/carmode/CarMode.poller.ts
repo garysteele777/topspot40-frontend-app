@@ -61,6 +61,31 @@ const dlog = (...args: unknown[]) => {
     if (DEBUG) console.log(...args);
 };
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
+function sendClientDiagnostic(
+    event: string,
+    phase: PlaybackPhase | null | undefined
+): void {
+    void fetch(`${API_BASE}/playback/client-diagnostic`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            event,
+            phase,
+            mode: null,
+            programType: null,
+            hasCurrentTrack: Boolean(get(currentTrack)),
+            trackRank: null,
+            decade: null,
+            genre: null
+        })
+    }).catch(() => {
+        // Temporary diagnostic only; never affect playback.
+    });
+}
+
 const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
 );
@@ -81,6 +106,7 @@ let narrationQueue: NarrationQueueItem[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
 let lastNarrationKey: string | null = null;
+let lastNarrationIntakeKey: string | null = null;
 let trackFinalized = false;
 let narrationSignaled = false;
 
@@ -171,7 +197,7 @@ function playOneAudio(
 ): Promise<void> {
     if (!browser) return Promise.resolve();
 
-    return new Promise<void>((resolve) => {
+    return new Promise<void>((resolve, reject) => {
         stopCurrentNarrationPhase({resolvePhase: false});
 
         const audio = activeNarrationAudio ?? new Audio();
@@ -256,7 +282,8 @@ function playOneAudio(
         );
 
         audio.play().catch((err: unknown) => {
-            console.warn('🔇 Narration audio.play() failed; resolving narration phase after failure:', url, err);
+            sendClientDiagnostic('narration play failed', phase);
+            console.warn('Narration audio.play() failed; not resolving narration phase as finished:', url, err);
 
             cleanupNarrationAudio({
                 timer: activeNarrationTimer,
@@ -270,7 +297,7 @@ function playOneAudio(
                     activeNarrationResolve = value;
                 }
             });
-            resolve();
+            reject(err);
         });
     });
 }
@@ -350,6 +377,34 @@ export function startPlaybackPolling() {
             const playbackStarted = hasPlaybackStarted(phase);
 
             const narrationPhase = isNarrationPhase(phase);
+
+            if (narrationPhase) {
+                const audioQueue = data.context?.audio_queue;
+                const firstQueueItem =
+                    Array.isArray(audioQueue) && audioQueue.length > 0
+                        ? audioQueue[0]
+                        : null;
+                const firstQueueItemKeys =
+                    firstQueueItem && typeof firstQueueItem === 'object'
+                        ? Object.keys(firstQueueItem as Record<string, unknown>)
+                        : [];
+                const narrationIntakeKey =
+                    `${phase}:${data.context?.audio_url ?? JSON.stringify(audioQueue ?? '')}`;
+
+                if (narrationIntakeKey !== lastNarrationIntakeKey) {
+                    lastNarrationIntakeKey = narrationIntakeKey;
+                    sendClientDiagnostic('narration phase received', phase);
+                    console.info('[car-page] narration intake', {
+                        phase,
+                        hasAudioUrl: typeof data.context?.audio_url === 'string',
+                        audioQueueIsArray: Array.isArray(audioQueue),
+                        audioQueueLength: Array.isArray(audioQueue) ? audioQueue.length : 0,
+                        firstQueueItemKeys,
+                        hasBedAudioUrl: typeof data.context?.bed_audio_url === 'string',
+                        hasCurrentTrack: Boolean(get(currentTrack))
+                    });
+                }
+            }
 
             if (
                 playbackStarted &&
@@ -500,9 +555,16 @@ export function startPlaybackPolling() {
                         });
                     }
 
-                    narrationQueue.push(...narrationItems);
+                    if (narrationItems.length === 0) {
+                        sendClientDiagnostic('narration queue empty', phase);
+                        console.warn('[car-page] narration queue empty; not signaling narration-finished', {
+                            phase
+                        });
+                    } else {
+                        narrationQueue.push(...narrationItems);
 
-                    void playNarrationQueue();
+                        void playNarrationQueue();
+                    }
                 }
             } else if (!narrationPhase) {
                 lastNarrationPhase = null;
@@ -635,6 +697,7 @@ export function resetNarrationPhaseState(): void {
     narrationLock = false;
     lastNarrationPhase = null;
     lastNarrationKey = null;
+    lastNarrationIntakeKey = null;
     narrationSignaled = false;
     narrationPausedAtBoundary = false;
 }
@@ -674,6 +737,7 @@ export function stopPlaybackPolling() {
     narrationQueue = [];
     narrationLock = false;
     lastNarrationPhase = null;
+    lastNarrationIntakeKey = null;
 }
 
 export function markUserStartedPlayback() {

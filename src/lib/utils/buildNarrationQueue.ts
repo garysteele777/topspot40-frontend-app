@@ -12,6 +12,28 @@ type NarrationContext = {
     audio_queue?: unknown;
 };
 
+function getQueueItemUrl(item: unknown): string | null {
+    if (typeof item === 'string') {
+        return item.length > 0 ? item : null;
+    }
+
+    if (!item || typeof item !== 'object') {
+        return null;
+    }
+
+    const record = item as { url?: unknown; audio_url?: unknown };
+
+    if (typeof record.url === 'string' && record.url.length > 0) {
+        return record.url;
+    }
+
+    if (typeof record.audio_url === 'string' && record.audio_url.length > 0) {
+        return record.audio_url;
+    }
+
+    return null;
+}
+
 export function buildNarrationQueue(
     phase: NarrationPhase,
     context: NarrationContext | null | undefined
@@ -22,11 +44,9 @@ export function buildNarrationQueue(
     const urls =
         Array.isArray(context.audio_queue)
             ? context.audio_queue
-                .map((item: { url?: unknown }) => item.url)
+                .map(getQueueItemUrl)
                 .filter(
-                    (url: unknown): url is string =>
-                        typeof url === 'string' &&
-                        url.length > 0
+                    (url: string | null): url is string => url !== null
                 )
             : typeof context.audio_url === 'string'
                 ? [context.audio_url]
