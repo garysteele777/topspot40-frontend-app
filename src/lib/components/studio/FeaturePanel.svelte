@@ -6,16 +6,20 @@
 </section>
 
 <style>
-    .feature-panel {
-        border: 1px solid rgba(207, 184, 124, 0.35);
-        border-radius: 22px;
-        background: rgba(255, 255, 255, 0.04);
-        min-height: 170px;
-        display: grid;
-        place-items: center;
-        text-align: center;
-        padding: 1.25rem;
-    }
+.feature-panel {
+    border: 1px solid rgba(207, 184, 124, 0.35);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    min-height: 140px;
+
+    width: 40%;
+    margin: 0 auto;
+
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 1.25rem;
+}
 
     .logo-mark {
         font-size: 2.4rem;

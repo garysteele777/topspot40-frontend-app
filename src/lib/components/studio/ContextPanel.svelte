@@ -12,8 +12,8 @@
 
     let lastArtistId: number | null = null;
 
-    const BIO_TIME = 12000;          // 12 seconds
-    const APPEARANCE_TIME = 12000;    // 12 seconds
+    const BIO_TIME = 9000;          // 9 seconds
+    const APPEARANCE_TIME = 9000;    // 9 seconds
 
     let artistPanelView: 'bio' | 'appearances' = 'bio';
     let artistPanelTimer: ReturnType<typeof setTimeout> | null = null;

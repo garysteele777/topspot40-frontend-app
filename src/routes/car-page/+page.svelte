@@ -805,11 +805,13 @@
                 <aside class="studio-side">
                     <ContextPanel/>
 
-                    {#if $showCamera}
-                        <CameraPanel/>
-                    {:else}
-                        <FeaturePanel/>
-                    {/if}
+                    <div class="studio-feature-slot">
+                        {#if $showCamera}
+                            <CameraPanel/>
+                        {:else}
+                            <FeaturePanel/>
+                        {/if}
+                    </div>
                 </aside>
 
             </main>
@@ -952,13 +954,13 @@
         display: grid;
         grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
         gap: 1rem;
-        padding: 0.75rem 2rem 0.4rem;
+        padding: 0.75rem 2rem 1.25rem;
     }
 
     .studio-side {
         display: grid;
         grid-template-rows: 1fr auto;
-        gap: 1.25rem;
+        gap: 0.5rem; /* was probably 1rem or 1.25rem */
     }
 
     .studio-program-banner {
@@ -982,6 +984,12 @@
         font-weight: 500;
         letter-spacing: 0.03em;
         line-height: 1.2;
+    }
+
+    .studio-feature-slot {
+        height: 180px;
+        width: 100%;
+        overflow: hidden;
     }
 
 </style>

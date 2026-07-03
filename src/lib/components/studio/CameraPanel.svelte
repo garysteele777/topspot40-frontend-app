@@ -56,19 +56,22 @@
     .camera-panel {
         border: 1px solid rgba(207, 184, 124, 0.35);
         border-radius: 22px;
-        background: #111;
-        min-height: 180px;
-        height: 100%;
-        width: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        min-height: 140px;
+
+        width: 40%;
+        margin: 0 auto;
+
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 1.25rem;
         overflow: hidden;
-        display: block;
     }
 
     video {
-        width: 82%;
-        height: 82%;
-        object-fit: cover;
-        margin: auto;
+        width: 100%;
+        height: auto;
         display: block;
         border-radius: 14px;
     }
