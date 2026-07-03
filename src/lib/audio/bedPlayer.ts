@@ -1,6 +1,9 @@
 let bedAudio: HTMLAudioElement | null = null;
 let currentBedUrl: string | null = null;
+let bedStartInFlight = false;
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+const BED_PLAY_TIMEOUT_MS = 3000;
+const BED_PLAY_TIMEOUT_MESSAGE = 'bed audio play() timeout';
 const SILENT_AUDIO_DATA_URI =
     'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 
@@ -28,6 +31,31 @@ export function isBedPlaying(): boolean {
     return currentBedUrl !== null && bedAudio !== null && !bedAudio.paused;
 }
 
+async function playWithTimeout(audio: HTMLAudioElement): Promise<void> {
+    const playPromise = audio.play();
+    void playPromise.catch(() => {
+        // The awaited race handles the failure path; prevent a late rejection from surfacing separately.
+    });
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+        await Promise.race([
+            playPromise,
+            new Promise<never>((_, reject) => {
+                timeoutId = setTimeout(
+                    () => reject(new Error(BED_PLAY_TIMEOUT_MESSAGE)),
+                    BED_PLAY_TIMEOUT_MS
+                );
+            })
+        ]);
+    } finally {
+        if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+        }
+    }
+}
+
 export async function unlockBedAudio(): Promise<void> {
     if (!bedAudio) {
         bedAudio = new Audio();
@@ -48,6 +76,10 @@ export async function unlockBedAudio(): Promise<void> {
 }
 
 export async function startBedUrl(url: string): Promise<void> {
+    if (bedStartInFlight && currentBedUrl === url) {
+        return;
+    }
+
     sendBedDiagnostic('bed start called');
     console.info('[bedPlayer] startBedUrl called', {
         url,
@@ -85,19 +117,23 @@ export async function startBedUrl(url: string): Promise<void> {
     bedAudio.setAttribute('playsinline', '');
 
     try {
-        await bedAudio.play();
+        bedStartInFlight = true;
+        await playWithTimeout(bedAudio);
         sendBedDiagnostic('bed play succeeded');
         console.info('[bedPlayer] bed audio play() succeeded', {
             url,
             volume: bedAudio.volume
         });
     } catch (err) {
-        sendBedDiagnostic('bed play failed');
-        console.warn('[bedPlayer] bed audio play() failed', {
+        const didTimeout = err instanceof Error && err.message === BED_PLAY_TIMEOUT_MESSAGE;
+        sendBedDiagnostic(didTimeout ? 'bed play timeout' : 'bed play failed');
+        console.warn(didTimeout ? '[bedPlayer] bed audio play() timed out' : '[bedPlayer] bed audio play() failed', {
             url,
             err
         });
         throw err;
+    } finally {
+        bedStartInFlight = false;
     }
 
     // 🎧 Fade in
