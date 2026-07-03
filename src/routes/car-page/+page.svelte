@@ -96,24 +96,65 @@
         });
     }
 
-function handleKeyDown(e: KeyboardEvent) {
-    const key = e.key.toLowerCase();
+    async function restartProgram() {
+        const sel = $currentSelection;
+        if (!sel) return;
 
-    console.log('KEY:', key);
+        await stopPlayback();
 
-    if (key === 'v') {
-        e.preventDefault();
-        console.log('Toggle Studio');
-        togglePlaybackView();
-        return;
+        currentTrack.set(null);
+        currentRank.set(1);
+        artistBioPlayedThisSet = false;
+        playedRanks = [];
+
+        await loadForSelection(sel, 1);
     }
 
-    if (key === 'c') {
-        e.preventDefault();
-        console.log('Toggle Camera');
-        showCamera.update(v => !v);
+    function handleKeyDown(e: KeyboardEvent) {
+        const target = e.target as HTMLElement | null;
+
+        if (
+            target?.tagName === 'INPUT' ||
+            target?.tagName === 'TEXTAREA' ||
+            target?.isContentEditable
+        ) {
+            return;
+        }
+
+        switch (e.code) {
+            case 'KeyV':
+                e.preventDefault();
+                togglePlaybackView();
+                break;
+
+            case 'KeyC':
+                e.preventDefault();
+                showCamera.update(v => !v);
+                break;
+
+            case 'KeyN':
+                e.preventDefault();
+                nextTrack();
+                break;
+
+            case 'Space':
+                e.preventDefault();
+                void handlePlayPause();
+                break;
+
+            case 'KeyB':
+                e.preventDefault();
+                backToOptions();
+                break;
+
+            case 'KeyR':
+                e.preventDefault();
+                void restartProgram();
+                break;
+        }
+
+
     }
-}
 
 
     const pauseMessage = derived(
@@ -268,6 +309,74 @@ function handleKeyDown(e: KeyboardEvent) {
         }
     }
 
+    async function handlePlayPause() {
+        if (!$currentTrack) return;
+
+        const playing = get(isPlaying);
+
+        if (playing) {
+            const phase = get(playbackPhase);
+
+            if (phase === 'intro' || phase === 'detail' || phase === 'artist') {
+                stopNarrationAudio();
+
+                stopCurrentNarrationPhase({
+                    resolvePhase: false,
+                    preserveResolve: true
+                });
+
+                stopBed();
+                isPlaying.set(false);
+                playbackPhase.set('paused');
+                return;
+            }
+
+            await fetch(`${API_BASE}/playback/pause`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            return;
+        }
+
+        const phase = get(playbackPhase);
+
+        if (phase === 'paused') {
+            continueStoppedNarrationPhase();
+            return;
+        }
+
+        if (phase === 'track' || phase === 'intro' || phase === 'detail' || phase === 'artist') {
+            const res = await fetch(`${API_BASE}/playback/resume`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            const data = await res.json().catch(() => null);
+
+            const sel = $currentSelection;
+
+            const isRadio =
+                sel?.programType === 'RADIO_DG' ||
+                sel?.programType === 'RADIO_COL' ||
+                sel?.programType === 'RADIO_ARTIST';
+
+            if (data?.restart_track && $currentTrack && !isRadio) {
+                markUserStartedPlayback();
+                await playTrack($currentTrack);
+            }
+
+            return;
+        }
+
+        markUserStartedPlayback();
+
+        const trackToPlay = $currentTrack ?? $tracks[0];
+
+        if (trackToPlay) {
+            await playTrack(trackToPlay);
+        }
+    }
 
     // Backend owns playback now. Frontend only signals stop.
     async function clearAllPlayback() {
@@ -750,92 +859,7 @@ function handleKeyDown(e: KeyboardEvent) {
                     onPrev={prevTrack}
                     onNext={nextTrack}
                     onJumpToTrack={handleJumpToTrack}
-                    onPlayPause={async () => {
-    if (!$currentTrack) return;
-
-    const playing = get(isPlaying);
-
-if (playing) {
-
-    const phase = get(playbackPhase);
-
-    if (
-        phase === 'intro' ||
-        phase === 'detail' ||
-        phase === 'artist'
-    ) {
-
-        stopNarrationAudio();
-
-        stopCurrentNarrationPhase({
-            resolvePhase: false,
-            preserveResolve: true
-        });
-
-        stopBed();
-
-        isPlaying.set(false);
-
-        playbackPhase.set('paused');
-
-        return;
-    }
-
-    await fetch(`${API_BASE}/playback/pause`, {
-        method: 'POST',
-        credentials: 'include'
-    });
-
-    return;
-}
-
-    // If NOT playing → decide resume vs new play
-    const phase = get(playbackPhase);
-
-if (phase === 'paused') {
-    continueStoppedNarrationPhase();
-    return;
-}
-
-if (
-    phase === 'track' ||
-    phase === 'intro' ||
-    phase === 'detail' ||
-    phase === 'artist'
-) {
-
-    const res = await fetch(`${API_BASE}/playback/resume`, {
-        method: 'POST',
-        credentials: 'include'
-    });
-
-    const data = await res.json().catch(() => null);
-
-
-const sel = $currentSelection;
-
-const isRadio =
-    sel?.programType === 'RADIO_DG' ||
-    sel?.programType === 'RADIO_COL' ||
-    sel?.programType === 'RADIO_ARTIST';
-
-if (data?.restart_track && $currentTrack && !isRadio) {
-    markUserStartedPlayback();
-    await playTrack($currentTrack);
-}
-
-    return;
-}
-
-markUserStartedPlayback();
-
-// 🚀 Start from the loader-selected track, not always $tracks[0]
-const trackToPlay = $currentTrack ?? $tracks[0];
-
-if (trackToPlay) {
-    await playTrack(trackToPlay);
-}
-}}
+                    onPlayPause={handlePlayPause}
                     onBackToOptions={backToOptions}
             />
 

@@ -12,6 +12,54 @@
 
     let lastArtistId: number | null = null;
 
+    const BIO_TIME = 12000;          // 12 seconds
+    const APPEARANCE_TIME = 12000;    // 12 seconds
+
+    let artistPanelView: 'bio' | 'appearances' = 'bio';
+    let artistPanelTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function scheduleNextArtistPanel() {
+        if (artistPanelTimer) {
+            clearTimeout(artistPanelTimer);
+        }
+
+        const delay =
+            artistPanelView === 'bio'
+                ? BIO_TIME
+                : APPEARANCE_TIME;
+
+        artistPanelTimer = setTimeout(() => {
+            artistPanelView =
+                artistPanelView === 'bio'
+                    ? 'appearances'
+                    : 'bio';
+
+            scheduleNextArtistPanel();
+        }, delay);
+    }
+
+    function startArtistPanelRotation() {
+        if (artistPanelTimer) return;
+
+        artistPanelView = 'bio';
+        scheduleNextArtistPanel();
+    }
+
+    function stopArtistPanelRotation() {
+        if (artistPanelTimer) {
+            clearTimeout(artistPanelTimer);
+            artistPanelTimer = null;
+        }
+
+        artistPanelView = 'bio';
+    }
+
+    $: if (($playbackPhase === 'artist' || $playbackPhase === 'track') && $artistSummary) {
+        startArtistPanelRotation();
+    } else {
+        stopArtistPanelRotation();
+    }
+
     $: artistId =
         ($currentTrack as any)?.artist_id ??
         ($currentTrack as any)?.artistId ??
@@ -74,39 +122,55 @@
 
     {#if body}
         <div class="context-body">
-            {#if ($playbackPhase === 'artist' || $playbackPhase === 'track') && $artistSummary}
-                <h2>{$artistSummary.artist.artist_name}</h2>
-            {/if}
-
-            <p>{body}</p>
 
             {#if ($playbackPhase === 'artist' || $playbackPhase === 'track') && $artistSummary}
-                <div class="appearances">
-                    <div class="appearance-count">
-                        Appears in {$artistSummary.appearanceCount} TopSpot40 programs
+
+                {#if artistPanelView === 'bio'}
+
+                    <div class="fade-card">
+                        <h2>{$artistSummary.artist.artist_name}</h2>
+                        <p>{body}</p>
                     </div>
 
-                    {#if $artistSummary.nostalgiaAppearances.length}
-                        <h3>Nostalgia</h3>
-                        <ul>
-                            {#each $artistSummary.nostalgiaAppearances as item}
-                                <li>{item.program_name} #{item.rank} — {item.track_name}</li>
-                            {/each}
-                        </ul>
-                    {/if}
+                {:else}
 
-                    {#if $artistSummary.collectionAppearances.length}
-                        <h3>Collections</h3>
-                        <ul>
-                            {#each $artistSummary.collectionAppearances as item}
-                                <li>{item.program_name} #{item.rank} — {item.track_name}</li>
-                            {/each}
-                        </ul>
-                    {/if}
-                </div>
+                    <div class="appearances fade-card">
+                        <div class="appearance-count">
+                            Appears in {$artistSummary.appearanceCount} TopSpot40 programs
+                        </div>
+
+                        {#if $artistSummary.nostalgiaAppearances.length}
+                            <h3>Nostalgia</h3>
+                            <ul>
+                                {#each $artistSummary.nostalgiaAppearances as item}
+                                    <li>{item.program_name} #{item.rank} — {item.track_name}</li>
+                                {/each}
+                            </ul>
+                        {/if}
+
+                        {#if $artistSummary.collectionAppearances.length}
+                            <h3>Collections</h3>
+                            <ul>
+                                {#each $artistSummary.collectionAppearances as item}
+                                    <li>{item.program_name} #{item.rank} — {item.track_name}</li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
+
+                {/if}
+
+            {:else}
+
+                <p>{body}</p>
+
             {/if}
+
         </div>
+
     {:else}
+
         <div class="placeholder">Waiting for narration...</div>
+
     {/if}
 </section>
