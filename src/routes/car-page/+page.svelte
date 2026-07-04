@@ -110,6 +110,23 @@
         await loadForSelection(sel, 1);
     }
 
+    function showMoreInfo() {
+        console.log('Shortcut M: More Info');
+    }
+
+    function showTrackList() {
+        console.log('Shortcut T: Track List');
+    }
+
+
+    async function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen();
+        } else {
+            await document.exitFullscreen();
+        }
+    }
+
     function handleKeyDown(e: KeyboardEvent) {
         const target = e.target as HTMLElement | null;
 
@@ -121,35 +138,88 @@
             return;
         }
 
+// ============================================================
+// Studio Keyboard Shortcuts
+//
+// Space  = Play / Pause
+// P      = Previous Track
+// N      = Next Track
+// R      = Restart Current Program
+// C      = Toggle Camera
+// V      = Toggle Playback View
+// M      = Show "More Info" panel
+// T      = Show "Track List" panel
+// B      = Back to Options screen
+// F      = Toggle Full Screen
+// Esc    = Stop Playback (optional future feature)
+// ============================================================
+
         switch (e.code) {
+
+            // Toggle between Studio View and Playback View
             case 'KeyV':
                 e.preventDefault();
                 togglePlaybackView();
                 break;
 
+            // Show / Hide the camera window
             case 'KeyC':
                 e.preventDefault();
                 showCamera.update(v => !v);
                 break;
 
+            // Play the previous track in the current sequence
+            case 'KeyP':
+                e.preventDefault();
+                void prevTrack();
+                break;
+
+            // Play the next track in the current sequence
             case 'KeyN':
                 e.preventDefault();
                 nextTrack();
                 break;
 
+            // Play / Pause
             case 'Space':
                 e.preventDefault();
                 void handlePlayPause();
                 break;
 
+            // Display the "More Info" tab
+            case 'KeyM':
+                e.preventDefault();
+                showMoreInfo();
+                break;
+
+            // Display the "Track List" tab
+            case 'KeyT':
+                e.preventDefault();
+                showTrackList();
+                break;
+
+            // Restart the current program from the beginning
+            case 'KeyR':
+                e.preventDefault();
+                void restartProgram();
+                break;
+
+            // Return to the TopSpot40 Options page
             case 'KeyB':
                 e.preventDefault();
                 backToOptions();
                 break;
 
-            case 'KeyR':
+            // Toggle browser full-screen mode (future)
+            case 'KeyF':
                 e.preventDefault();
-                void restartProgram();
+                toggleFullscreen();
+                break;
+
+            // Emergency stop (future)
+            case 'Escape':
+                e.preventDefault();
+                stopPlayback();
                 break;
         }
 

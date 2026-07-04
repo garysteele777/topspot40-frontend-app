@@ -535,7 +535,7 @@ goto(`/car-page?${params.toString()}`);
                             class:selected={artistCategory === 'other'}
                             on:click={() => {
                                 artistCategory = 'other';
-                                loadArtistSpotlights(selectedArtistGenre ?? 'all');
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all', false, 2, null);
                             }}
                     >
                         🎵 Other Artists
