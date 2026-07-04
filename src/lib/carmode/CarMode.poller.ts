@@ -359,6 +359,10 @@ async function playNarrationQueue() {
         console.error('❌ Narration playback failed:', err);
     } finally {
         narrationLock = false;
+
+        if (narrationQueue.length > 0) {
+            void Promise.resolve().then(playNarrationQueue);
+        }
     }
 }
 

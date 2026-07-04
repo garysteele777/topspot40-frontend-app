@@ -312,6 +312,21 @@
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST', credentials: 'include'});
     }
 
+    function resetSelectionPlaybackState(): void {
+        stopCurrentNarrationPhase({resolvePhase: false});
+        stopBed();
+        resetNarrationPhaseState();
+        playbackStartInFlight = false;
+        userStartedPlaybackThisSession = false;
+        currentTrack.set(null);
+        tracks.set([]);
+        playbackPhase.set('idle');
+        isPlaying.set(false);
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
+    }
+
     async function handleJumpToTrack(track: CarModeTrack) {
         await stopPlayback();
 
@@ -639,6 +654,7 @@
             }
 
             console.log('🎯 URL selection before currentSelection.set:', sel);
+            resetSelectionPlaybackState();
             currentSelection.set(sel);
 
             const cr = url.searchParams.get('currentRank');
