@@ -1,9 +1,17 @@
 <script lang="ts">
     import {onDestroy} from 'svelte';
     import {
+        currentSelection,
         currentTrack,
+        tracks,
         playbackPhase
     } from '$lib/carmode/CarMode.store';
+
+    import {programHistoryStore} from '$lib/carmode/programHistory';
+    import type {ProgramType} from '$lib/favorites/favorites';
+
+    import TrackListPanel from '$lib/components/shared/TrackListPanel.svelte';
+    import {contextMode} from '$lib/studio/contextMode.store';
 
     import {
         artistSummary,
@@ -12,35 +20,66 @@
 
     let lastArtistId: number | null = null;
 
-    const BIO_TIME = 9000;          // 9 seconds
-    const APPEARANCE_TIME = 9000;    // 9 seconds
+    const BIO_TIME = 12000;
+    const APPEARANCE_TIME = 12000;
 
     let artistPanelView: 'bio' | 'appearances' = 'bio';
     let artistPanelTimer: ReturnType<typeof setTimeout> | null = null;
 
-    function scheduleNextArtistPanel() {
-        if (artistPanelTimer) {
-            clearTimeout(artistPanelTimer);
+    let programType: ProgramType | null = null;
+    let programGroup: string | null = null;
+
+    $: programType =
+        $currentSelection?.mode === 'decade_genre'
+            ? 'DG'
+            : $currentSelection?.mode === 'collection'
+                ? 'COL'
+                : null;
+
+    $: programGroup =
+        programType === 'DG'
+            ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
+            : programType === 'COL'
+                ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
+                : null;
+
+    function isPlayed(rank: number): boolean {
+        const sel = $currentSelection;
+        if (!sel) return false;
+
+        let key: string | null = null;
+
+        if (sel.mode === 'decade_genre') {
+            const decade = sel.context?.decade;
+            const genre = sel.context?.genre;
+            if (decade && genre) key = `DG|${decade}|${genre}`;
         }
 
-        const delay =
-            artistPanelView === 'bio'
-                ? BIO_TIME
-                : APPEARANCE_TIME;
+        if (sel.mode === 'collection') {
+            const collection = sel.context?.collection_slug ?? sel.context?.collection;
+            const group = sel.context?.collection_group_slug ?? sel.context?.collectionCategory;
+            if (collection && group) key = `COL|${collection}|${group}`;
+        }
+
+        if (!key) return false;
+
+        const program = $programHistoryStore.find(p => p.key === key);
+        return program?.playedRanks.includes(rank) ?? false;
+    }
+
+    function scheduleNextArtistPanel() {
+        if (artistPanelTimer) clearTimeout(artistPanelTimer);
+
+        const delay = artistPanelView === 'bio' ? BIO_TIME : APPEARANCE_TIME;
 
         artistPanelTimer = setTimeout(() => {
-            artistPanelView =
-                artistPanelView === 'bio'
-                    ? 'appearances'
-                    : 'bio';
-
+            artistPanelView = artistPanelView === 'bio' ? 'appearances' : 'bio';
             scheduleNextArtistPanel();
         }, delay);
     }
 
     function startArtistPanelRotation() {
         if (artistPanelTimer) return;
-
         artistPanelView = 'bio';
         scheduleNextArtistPanel();
     }
@@ -71,8 +110,6 @@
         loadArtistSummary(artistId);
     }
 
-    // $: console.log('CURRENT TRACK IN CONTEXT PANEL', $currentTrack);
-
     async function loadArtistSummary(id: number) {
         try {
             const res = await fetch(
@@ -85,9 +122,8 @@
             }
 
             const data: ArtistSummary = await res.json();
-            if (data.artist.artist_id !== id) {
-                return;
-            }
+            if (data.artist.artist_id !== id) return;
+
             artistSummary.set(data);
         } catch {
             artistSummary.set(null);
@@ -99,13 +135,15 @@
     });
 
     $: title =
-        $playbackPhase === 'artist' || $playbackPhase === 'track'
-            ? 'Meet the Artist'
-            : $playbackPhase === 'detail'
-                ? 'Behind the Music'
-                : $playbackPhase === 'intro'
-                    ? 'About This Song'
-                    : 'Now Playing';
+        $contextMode === 'tracks'
+            ? 'Track List'
+            : $playbackPhase === 'artist' || $playbackPhase === 'track'
+                ? 'Meet the Artist'
+                : $playbackPhase === 'detail'
+                    ? 'Behind the Music'
+                    : $playbackPhase === 'intro'
+                        ? 'About This Song'
+                        : 'Now Playing';
 
     $: body =
         $playbackPhase === 'artist' || $playbackPhase === 'track'
@@ -120,20 +158,26 @@
 <section class="context-panel">
     <div class="context-title">{title}</div>
 
-    {#if body}
+    {#if $contextMode === 'tracks'}
+
+        <TrackListPanel
+                tracks={$tracks}
+                currentTrack={$currentTrack}
+                onJumpToTrack={undefined}
+                isPlayed={isPlayed}
+                {programType}
+                {programGroup}
+        />
+    {:else if body}
+
         <div class="context-body">
-
             {#if ($playbackPhase === 'artist' || $playbackPhase === 'track') && $artistSummary}
-
                 {#if artistPanelView === 'bio'}
-
                     <div class="fade-card">
                         <h2>{$artistSummary.artist.artist_name}</h2>
                         <p>{body}</p>
                     </div>
-
                 {:else}
-
                     <div class="appearances fade-card">
                         <div class="appearance-count">
                             Appears in {$artistSummary.appearanceCount} TopSpot40 programs
@@ -157,15 +201,10 @@
                             </ul>
                         {/if}
                     </div>
-
                 {/if}
-
             {:else}
-
                 <p>{body}</p>
-
             {/if}
-
         </div>
 
     {:else}

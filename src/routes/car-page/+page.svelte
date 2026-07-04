@@ -11,6 +11,7 @@
     import ContextPanel from '$lib/components/studio/ContextPanel.svelte';
     import FeaturePanel from '$lib/components/studio/FeaturePanel.svelte';
     import PlaybackBanner from '$lib/components/studio/PlaybackBanner.svelte';
+    import {contextMode} from '$lib/studio/contextMode.store';
 
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
@@ -111,11 +112,11 @@
     }
 
     function showMoreInfo() {
-        console.log('Shortcut M: More Info');
+        contextMode.set('info');
     }
 
     function showTrackList() {
-        console.log('Shortcut T: Track List');
+        contextMode.set('tracks');
     }
 
 
@@ -947,6 +948,7 @@
         {/if}
 
     {/if}
+
 
 </div>
 
