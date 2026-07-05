@@ -170,7 +170,16 @@ function playOneAudio(
         stopCurrentNarrationPhase({resolvePhase: false});
 
         const audio = new Audio(url);
-        audio.volume = 0.60;
+        const volumeByPhase: Record<typeof phase, number> = {
+            set_intro: 0.60,
+            collection_intro: 0.60,
+            liner: 0.60,
+            intro: 0.25,
+            detail: 0.60,
+            artist: 0.60
+        };
+
+        audio.volume = volumeByPhase[phase] ?? 0.60;
 
         elapsed.set(0);
         duration.set(0);

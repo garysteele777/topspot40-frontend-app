@@ -60,13 +60,13 @@
         min-height: 140px;
 
         width: 40%;
-        margin: 0 auto;
+        margin: -20px auto 0;
 
         display: grid;
         place-items: center;
         text-align: center;
         padding: 1.25rem;
-        overflow: hidden;
+        overflow: visible;
     }
 
     video {

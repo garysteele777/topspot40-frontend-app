@@ -9,6 +9,7 @@
 
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import type {ProgramType} from '$lib/favorites/favorites';
+    import {showCamera} from '$lib/studio/studio.store';
 
     import TrackListPanel from '$lib/components/shared/TrackListPanel.svelte';
     import {contextMode} from '$lib/studio/contextMode.store';
@@ -93,7 +94,11 @@
         artistPanelView = 'bio';
     }
 
-    $: if (($playbackPhase === 'artist' || $playbackPhase === 'track') && $artistSummary) {
+    $: if (
+        !$showCamera &&
+        ($playbackPhase === 'artist' || $playbackPhase === 'track') &&
+        $artistSummary
+    ) {
         startArtistPanelRotation();
     } else {
         stopArtistPanelRotation();
@@ -158,7 +163,7 @@
 <section class="context-panel">
     <div class="context-title">{title}</div>
 
-    {#if $contextMode === 'tracks'}
+    {#if $contextMode === 'tracks' && !$showCamera}
 
         <TrackListPanel
                 tracks={$tracks}

@@ -9,7 +9,6 @@
 
     import ShowcasePanel from '$lib/components/studio/ShowcasePanel.svelte';
     import ContextPanel from '$lib/components/studio/ContextPanel.svelte';
-    import FeaturePanel from '$lib/components/studio/FeaturePanel.svelte';
     import PlaybackBanner from '$lib/components/studio/PlaybackBanner.svelte';
     import {contextMode} from '$lib/studio/contextMode.store';
 
@@ -166,7 +165,8 @@
             // Show / Hide the camera window
             case 'KeyC':
                 e.preventDefault();
-                showCamera.update(v => !v);
+                showCamera.update(value => !value);
+                contextMode.set('info');
                 break;
 
             // Play the previous track in the current sequence
@@ -876,13 +876,11 @@
                 <aside class="studio-side">
                     <ContextPanel/>
 
-                    <div class="studio-feature-slot">
-                        {#if $showCamera}
+                    {#if $showCamera}
+                        <div class="studio-feature-slot">
                             <CameraPanel/>
-                        {:else}
-                            <FeaturePanel/>
-                        {/if}
-                    </div>
+                        </div>
+                    {/if}
                 </aside>
 
             </main>
@@ -1058,11 +1056,17 @@
         line-height: 1.2;
     }
 
-    .studio-feature-slot {
-        height: 180px;
-        width: 100%;
-        overflow: hidden;
-    }
+.studio-feature-slot {
+    height: 180px;
+    width: 100%;
+    overflow: hidden;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    padding-top: 8px;   /* adjust to taste */
+}
 
 </style>
 
