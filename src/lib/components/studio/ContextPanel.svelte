@@ -118,7 +118,7 @@
     async function loadArtistSummary(id: number) {
         try {
             const res = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL}/artist-spotlight/artist-summary?artist_id=${id}&language=en`
+                `${import.meta.env.VITE_API_BASE_URL}/artist-spotlight/artist-summary?artist_id=${id}&language=${$currentSelection?.language ?? 'en'}`
             );
 
             if (!res.ok) {
@@ -150,13 +150,25 @@
                         ? 'About This Song'
                         : 'Now Playing';
 
+
+    $: selectedLanguage = $currentSelection?.language ?? 'en';
+
+    function localizedText(
+        kind: 'intro' | 'detail' | 'artist'
+    ): string | null {
+        const texts = $currentTrack?.textsByLanguage;
+        if (!texts) return null;
+
+        return texts[selectedLanguage]?.[kind] ?? null;
+    }
+
     $: body =
         $playbackPhase === 'artist' || $playbackPhase === 'track'
-            ? ($artistSummary?.artist.artist_description ?? $currentTrack?.artistText)
+            ? (localizedText('artist') ?? $artistSummary?.artist.artist_description ?? $currentTrack?.artistText)
             : $playbackPhase === 'detail'
-                ? $currentTrack?.detail
+                ? (localizedText('detail') ?? $currentTrack?.detail)
                 : $playbackPhase === 'intro'
-                    ? $currentTrack?.intro
+                    ? (localizedText('intro') ?? $currentTrack?.intro)
                     : null;
 </script>
 
