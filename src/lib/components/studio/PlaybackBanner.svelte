@@ -8,29 +8,74 @@
 </script>
 
 <section class="playback-banner">
-    <div class="track-title">{trackName ?? 'No track selected'}</div>
-    <div class="track-artist">{artistName ?? 'Unknown Artist'}</div>
 
-    <div class="track-meta">
-        {#if yearReleased}
-            <span>{yearReleased}</span>
-        {/if}
+    <div class="playback-main">
 
-        {#if rank}
-            <span>Track {rank}{totalTracks ? ` of ${totalTracks}` : ''}</span>
-        {/if}
+        <div class="playback-center">
+
+            <div class="track-title">
+                {trackName ?? 'No track selected'}
+            </div>
+
+            <div class="track-artist">
+                {artistName ?? 'Unknown Artist'}
+            </div>
+
+            <div class="track-meta">
+                {#if yearReleased}
+                    <span>{yearReleased}</span>
+                {/if}
+
+                {#if rank}
+                    <span>Track {rank}{totalTracks ? ` of ${totalTracks}` : ''}</span>
+                {/if}
+            </div>
+
+            <div class="progress-shell">
+                <div
+                        class="progress-fill"
+                        style={`width:${Math.max(0, Math.min(progress,100))}%`}
+                ></div>
+            </div>
+
+        </div>
+
+        <div class="studio-brand">
+
+            <div class="brand-line">
+                🎵 Your Music.&nbsp;&nbsp;&nbsp;🐶 Your Memories.
+            </div>
+
+            <div class="brand-bottom">
+                <div class="brand-dog">🐶</div>
+                <div class="brand-site">
+                    TopSpot40.com
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
-    <div class="progress-shell">
-        <div class="progress-fill" style={`width: ${Math.max(0, Math.min(progress, 100))}%`}></div>
-    </div>
 </section>
 
 <style>
     .playback-banner {
-        border-top: 1px solid rgba(207, 184, 124, 0.35);
-        padding: 0.75rem 2rem 0.8rem;
-        text-align: center;
+        border-top: 1px solid rgba(207, 184, 124, .35);
+        padding: .75rem 2rem .8rem;
+    }
+
+    .playback-main {
+        display: grid;
+        grid-template-columns: 1fr 270px;
+        align-items: end;
+        gap: 2rem;
+    }
+
+    .playback-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .track-title {
@@ -70,5 +115,37 @@
         border-radius: inherit;
         background: #cfb87c;
         transition: width 0.25s ease;
+    }
+
+    .studio-brand {
+        justify-self: end;
+        align-self: center;
+        text-align: right;
+    }
+
+    .brand-line {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    .brand-bottom {
+        margin-top: 2px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .brand-dog {
+        font-size: 1.8rem;
+        line-height: 1;
+    }
+
+    .brand-site {
+        color: #cfb87c;
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
     }
 </style>
