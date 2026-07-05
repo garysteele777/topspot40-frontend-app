@@ -229,6 +229,11 @@ export async function loadForSelection(
                 track.artist_description ??
                 null,
 
+            textsByLanguage:
+                track.texts_by_language ??
+                track.textsByLanguage ??
+                null,
+
             durationSeconds: Math.floor((track.duration_ms ?? 0) / 1000)
         }));
 

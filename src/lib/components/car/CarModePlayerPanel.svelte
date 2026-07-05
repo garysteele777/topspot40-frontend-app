@@ -326,6 +326,7 @@
 
     <CarModeNarrationModal
             track={currentTrack}
+            languages={$currentSelection?.languages ?? [$currentSelection?.language ?? 'en']}
             open={showNarrationModal}
             onClose={() => setShowNarrationModal(false)}
     />
