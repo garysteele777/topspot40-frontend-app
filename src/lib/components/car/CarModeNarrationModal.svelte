@@ -75,11 +75,6 @@
         mode = 'intro';
     }
 
-    $: if (open && track) {
-        console.log("🎭 MODAL TRACK:", track);
-        console.log("🎭 MODAL textsByLanguage:", track.textsByLanguage);
-    }
-
     $: headerImage =
         track?.artistArtwork ??
         track?.albumArtwork ??
