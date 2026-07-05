@@ -708,7 +708,8 @@ goto(`/car-page?${params.toString()}`);
                     `/car-page?mode=artist_spotlight` +
                     `&artist_id=${artist.artist_id}` +
                     `&artist=${encodeURIComponent(artist.artist_name)}` +
-                    `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
+                    `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}` +
+                        `&language=${language}`
                 );
             }}
                                         >

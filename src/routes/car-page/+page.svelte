@@ -298,54 +298,56 @@
         }
 
         const payload = {
-            track: {
-                track_id: trackObj.id,
-                ranking_id: trackObj.rankingId,
-                spotify_track_id: trackObj.spotifyTrackId,
-                rank: trackObj.rank,
-                track_name: trackObj.trackName,
-                artist_name: trackObj.artistName,
-                intro: trackObj.intro,
-                detail: trackObj.detail
-            },
-            selection: {
-                ...sel,
-                languages: sel.languages ?? [sel.language],
-                playbackOrder: settings.playbackOrder,
-                voices: settings.voices,
-                voicePlayMode: settings.voicePlayMode,
-                pauseMode: settings.pauseMode,
-                continuous: settings.pauseMode === 'continuous'
-            },
-            context:
-                sel.mode === 'artist_spotlight'
-                    ? {
-                        type: 'artist_spotlight',
-                        programType: sel.programType,
-                        artist_id: sel.context?.artist_id,
-                        artist_name: sel.context?.artist_name ?? trackObj.artistName,
-                        spotify_artist_id: trackObj.spotifyArtistId,
-                        genre: sel.context?.genre ?? trackObj.genreSlug,
-                        play_artist_bio: !artistBioPlayedThisSet
-                    }
-                    : sel.mode === 'collection'
-                        ? (
-                            sel.programType === 'RADIO_COL'
-                                ? {
-                                    type: 'collection_radio',
-                                    collection_group_slug: sel.context?.collection_group_slug
-                                }
-                                : {
-                                    type: 'collection',
-                                    collection_slug: sel.context?.collection_slug
-                                }
-                        )
-                        : {
-                            type: 'decade_genre',
-                            decade: decadeForPlayback,
-                            genre: genreForPlayback
+                track: {
+                    track_id: trackObj.id,
+                    ranking_id: trackObj.rankingId,
+                    spotify_track_id: trackObj.spotifyTrackId,
+                    rank: trackObj.rank,
+                    track_name: trackObj.trackName,
+                    artist_name: trackObj.artistName,
+                    intro: trackObj.intro,
+                    detail: trackObj.detail
+                },
+                selection: {
+                    ...sel,
+                    languages: sel.languages ?? [sel.language],
+                    playbackOrder: settings.playbackOrder,
+                    voices: settings.voices,
+                    voicePlayMode: settings.voicePlayMode,
+                    pauseMode: settings.pauseMode,
+                    continuous: settings.pauseMode === 'continuous'
+                },
+                context:
+                    sel.mode === 'artist_spotlight'
+                        ? {
+                            type: 'artist_spotlight',
+                            programType: sel.programType,
+                            artist_id: sel.context?.artist_id,
+                            artist_name: sel.context?.artist_name ?? trackObj.artistName,
+                            spotify_artist_id: trackObj.spotifyArtistId,
+                            genre: sel.context?.genre ?? trackObj.genreSlug,
+                            language: sel.language ?? 'en',
+                            play_artist_bio: !artistBioPlayedThisSet
                         }
-        };
+                        : sel.mode === 'collection'
+                            ? (
+                                sel.programType === 'RADIO_COL'
+                                    ? {
+                                        type: 'collection_radio',
+                                        collection_group_slug: sel.context?.collection_group_slug
+                                    }
+                                    : {
+                                        type: 'collection',
+                                        collection_slug: sel.context?.collection_slug
+                                    }
+                            )
+                            : {
+                                type: 'decade_genre',
+                                decade: decadeForPlayback,
+                                genre: genreForPlayback
+                            }
+            }
+        ;
 
 
         if (sel.mode === 'decade_genre' && sel.programType === 'RADIO_DG') {
@@ -1056,17 +1058,17 @@
         line-height: 1.2;
     }
 
-.studio-feature-slot {
-    height: 180px;
-    width: 100%;
-    overflow: hidden;
+    .studio-feature-slot {
+        height: 180px;
+        width: 100%;
+        overflow: hidden;
 
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
 
-    padding-top: 8px;   /* adjust to taste */
-}
+        padding-top: 8px; /* adjust to taste */
+    }
 
 </style>
 
