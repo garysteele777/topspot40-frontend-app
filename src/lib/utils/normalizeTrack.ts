@@ -24,6 +24,7 @@ export type LoadedTrack = {
     durationSeconds?: number | null;
 
     spotifyTrackId?: string | null;
+    spotifyArtistId?: string | null;
 
     intro?: string | null;
     detail?: string | null;
@@ -164,6 +165,11 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         'track_spotify_id'
     ]);
 
+    const spotifyArtistIdVal = firstDefined(raw, [
+        'spotifyArtistId',
+        'spotify_artist_id'
+    ]);
+
     const introVal = firstDefined(raw, ['intro']);
     const detailVal = firstDefined(raw, ['detail', 'detail_text']);
     const artistDescVal = firstDefined(raw, [
@@ -223,6 +229,7 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
             : null,
 
         spotifyTrackId: asString(spotifyTrackIdVal, null),
+        spotifyArtistId: asString(spotifyArtistIdVal, null),
 
         intro: asString(introVal, null),
         detail: asString(detailVal, null),

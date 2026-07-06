@@ -6,6 +6,7 @@
     import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
     import CameraPanel from '$lib/components/studio/CameraPanel.svelte';
     import {showCamera} from '$lib/studio/studio.store';
+    import {playNarrationUrl, stopNarration} from '$lib/audio/narrationPlayer';
 
     import ShowcasePanel from '$lib/components/studio/ShowcasePanel.svelte';
     import ContextPanel from '$lib/components/studio/ContextPanel.svelte';
@@ -127,6 +128,51 @@
         }
     }
 
+    type NarrationKind = 'intro' | 'detail' | 'artist';
+
+    async function previewNarration(kind: NarrationKind) {
+        const track = $currentTrack;
+        const sel = $currentSelection;
+        if (!track || !sel) return;
+
+        if (get(isPlaying)) {
+            await fetch(`${API_BASE}/playback/pause`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            isPlaying.set(false);
+        }
+
+        stopNarration();
+
+        const language = sel.language ?? 'en';
+        const bucket = language === 'ptbr' ? 'audio-ptbr' : `audio-${language}`;
+
+        let url: string | null = null;
+
+        if (kind === 'detail' && track.spotifyTrackId) {
+            url = `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/detail/${track.spotifyTrackId}.mp3`;
+        }
+
+        if (kind === 'artist') {
+            console.log('🎙 preview artist track:', track);
+            console.log('🎙 preview artist spotifyArtistId:', track.spotifyArtistId);
+        }
+
+        if (kind === 'artist' && track.spotifyArtistId) {
+            url = `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/artist/${track.spotifyArtistId}.mp3`;
+        }
+
+        if (kind === 'intro') {
+            console.warn('Intro preview needs ranking-specific URL support.');
+            return;
+        }
+
+        if (!url) return;
+
+        await playNarrationUrl(url);
+    }
+
     function handleKeyDown(e: KeyboardEvent) {
         const target = e.target as HTMLElement | null;
 
@@ -141,17 +187,28 @@
 // ============================================================
 // Studio Keyboard Shortcuts
 //
+// Playback Controls
+// -----------------
 // Space  = Play / Pause
 // P      = Previous Track
 // N      = Next Track
 // R      = Restart Current Program
+// Esc    = Stop Playback
+//
+// Narration Preview
+// -----------------
+// I      = Play Intro Narration
+// D      = Play Detail Narration
+// A      = Play Artist Narration
+//
+// Studio Controls
+// ---------------
 // C      = Toggle Camera
 // V      = Toggle Playback View
 // M      = Show "More Info" panel
 // T      = Show "Track List" panel
 // B      = Back to Options screen
 // F      = Toggle Full Screen
-// Esc    = Stop Playback (optional future feature)
 // ============================================================
 
         switch (e.code) {
@@ -185,6 +242,21 @@
             case 'Space':
                 e.preventDefault();
                 void handlePlayPause();
+                break;
+
+            case 'KeyI':
+                e.preventDefault();
+                void previewNarration('intro');
+                break;
+
+            case 'KeyD':
+                e.preventDefault();
+                void previewNarration('detail');
+                break;
+
+            case 'KeyA':
+                e.preventDefault();
+                void previewNarration('artist');
                 break;
 
             // Display the "More Info" tab

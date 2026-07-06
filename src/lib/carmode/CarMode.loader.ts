@@ -608,15 +608,22 @@ function toCarModeTrack(t: LoadedTrack): CarModeTrack {
 
     return {
         ...t,
+
         rankingId: t.rankingId ?? null,
+
         artistId:
             (t as any).artistId ??
             (t as any).artist_id ??
             null,
 
-        // 🔥 ADD THESE
+        spotifyArtistId:
+            (t as any).spotifyArtistId ??
+            (t as any).spotify_artist_id ??
+            null,
+
         intro: (t as any).intro ?? null,
         detail: (t as any).detail ?? null,
+
         artistText:
             (t as any).artistText ??
             (t as any).artistDescription ??
