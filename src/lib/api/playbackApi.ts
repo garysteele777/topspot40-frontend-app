@@ -15,10 +15,18 @@ export async function fetchPlaybackStatus(): Promise<Response> {
     });
 }
 
-export async function signalNarrationFinishedApi(): Promise<void> {
+export async function signalNarrationFinishedApi(
+    playbackSessionId: string,
+    phase: string
+): Promise<void> {
     await fetch(`${API_BASE}/playback/narration-finished`, {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            playbackSessionId,
+            phase
+        })
     });
 }
 

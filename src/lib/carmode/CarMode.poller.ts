@@ -95,6 +95,7 @@ const SILENT_AUDIO_DATA_URI =
 
 type QueuedNarrationItem = NarrationQueueItem & {
     key: string;
+    playbackSessionId: string;
 };
 
 let pollTimer: number | null = null;
@@ -330,14 +331,18 @@ export function continueStoppedNarrationPhase(): void {
     }
 }
 
-export async function signalNarrationFinished() {
+export async function signalNarrationFinished(
+    playbackSessionId: string,
+    phase: string
+) {
     if (narrationSignaled) return;
+    if (!playbackSessionId) return;
 
     narrationSignaled = true;
 
     dlog('📡 track-finished');
 
-    await signalNarrationFinishedApi();
+    await signalNarrationFinishedApi(playbackSessionId, phase);
 }
 
 async function playNarrationQueue() {
@@ -348,6 +353,8 @@ async function playNarrationQueue() {
     try {
         while (narrationQueue.length > 0) {
             const narrationKey = narrationQueue[0].key;
+            const playbackSessionId = narrationQueue[0].playbackSessionId;
+            const completedPhase = narrationQueue[0].phase;
             activeNarrationKey = narrationKey;
             queuedNarrationKeys.delete(narrationKey);
             narrationSignaled = false;
@@ -368,7 +375,7 @@ async function playNarrationQueue() {
 
         console.log('🔔 SIGNAL FINISHED', get(currentTrack)?.trackName, get(playbackPhase));
 
-        await signalNarrationFinished();
+        await signalNarrationFinished(playbackSessionId, completedPhase);
         completedNarrationKeys.add(narrationKey);
 
         if (activeNarrationKey === narrationKey) {
@@ -564,10 +571,15 @@ export function startPlaybackPolling() {
                     });
                 }
 
+                const playbackSessionId =
+                    typeof data.playbackSessionId === 'string' && data.playbackSessionId.length > 0
+                        ? data.playbackSessionId
+                        : null;
                 const narrationKey =
-                    `${phase}:${data.context?.audio_url ?? JSON.stringify(data.context?.audio_queue ?? '')}`;
+                    `${playbackSessionId ?? 'missing-session'}:${phase}:${data.context?.audio_url ?? JSON.stringify(data.context?.audio_queue ?? '')}`;
 
                 if (
+                    playbackSessionId &&
                     activeNarrationKey !== narrationKey &&
                     !queuedNarrationKeys.has(narrationKey) &&
                     !completedNarrationKeys.has(narrationKey)
@@ -613,7 +625,8 @@ export function startPlaybackPolling() {
                         narrationQueue.push(
                             ...narrationItems.map(item => ({
                                 ...item,
-                                key: narrationKey
+                                key: narrationKey,
+                                playbackSessionId
                             }))
                         );
 
