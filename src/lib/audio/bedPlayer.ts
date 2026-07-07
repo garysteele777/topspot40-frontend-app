@@ -18,10 +18,12 @@ export async function startBedUrl(url: string): Promise<void> {
     bedAudio.volume = 0;           // start silent
     bedAudio.preload = 'auto';
 
+    console.log('🎧 BED URL:', url);
+
     await bedAudio.play();
 
     // 🎧 Fade in
-    const targetVolume = 0.065;
+    const targetVolume = 0.035;
     const step = 0.02;
 
     const fadeIn = setInterval(() => {
