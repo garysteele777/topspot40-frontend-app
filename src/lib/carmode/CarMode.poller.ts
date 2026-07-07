@@ -590,6 +590,9 @@ export function startPlaybackPolling() {
                 const isContinuous = settings.pauseMode === 'continuous';
 
                 if (isContinuous) {
+                    finishedTrackId = spotifyId;
+                    trackFinalized = true;
+
                     window.dispatchEvent(new CustomEvent('ts-next-track'));
 
                     try {

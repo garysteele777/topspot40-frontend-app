@@ -135,14 +135,6 @@
         const sel = $currentSelection;
         if (!track || !sel) return;
 
-        if (get(isPlaying)) {
-            await fetch(`${API_BASE}/playback/pause`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-            isPlaying.set(false);
-        }
-
         stopNarration();
 
         const language = sel.language ?? 'en';
@@ -159,17 +151,27 @@
             console.log('🎙 preview artist spotifyArtistId:', track.spotifyArtistId);
         }
 
+
         if (kind === 'artist' && track.spotifyArtistId) {
             url = `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/artist/${track.spotifyArtistId}.mp3`;
         }
 
         if (kind === 'intro') {
-            console.warn('Intro preview needs ranking-specific URL support.');
-            return;
+            const decade = track.decadeSlug;
+            const genre = track.genreSlug;
+            const rank = track.rank;
+
+            if (decade && genre && rank) {
+                const rankText = String(rank).padStart(2, '0');
+
+                url =
+                    `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/intro/${decade}_${genre}_${rankText}.mp3`;
+            }
         }
 
         if (!url) return;
 
+        console.log('🎙 preview url:', url);
         await playNarrationUrl(url);
     }
 
