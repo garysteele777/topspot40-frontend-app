@@ -44,6 +44,7 @@
     } from '$lib/carmode/CarMode.store';
 
     import {loadForSelection} from '$lib/carmode/CarMode.loader';
+    import {warmupPlaybackApi} from '$lib/api/playbackApi';
 
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
@@ -55,6 +56,7 @@
     let artistBioPlayedThisSet = false;
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
+    let playbackWarmupMessage = '';
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -809,6 +811,16 @@
 
         if (trackToPlay) {
             playbackStartInFlight = true;
+            const warmup = await warmupPlaybackApi();
+
+            if (!warmup.ready) {
+                playbackWarmupMessage = warmup.message;
+                playbackStartInFlight = false;
+                userStartedPlaybackThisSession = false;
+                return;
+            }
+
+            playbackWarmupMessage = '';
             userStartedPlaybackThisSession = true;
             console.info('[car-page] onPlayPause initial play branch', {
                 reason,
@@ -1077,6 +1089,12 @@ await startInitialPlay('initial play');
         </div>
     {/if}
 
+    {#if playbackWarmupMessage}
+        <div class="playback-warning-banner">
+            {playbackWarmupMessage}
+        </div>
+    {/if}
+
 </div>
 
 <style>
@@ -1109,6 +1127,26 @@ await startInitialPlay('initial play');
     }
 
     .pause-banner {
+        opacity: 0;
+        animation: fadeIn 0.3s forwards;
+    }
+
+    .playback-warning-banner {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        max-width: min(420px, calc(100vw - 32px));
+        background: rgba(24, 24, 28, 0.92);
+        color: white;
+
+        padding: 10px 16px;
+        border-radius: 10px;
+
+        font-size: 14px;
+        line-height: 1.35;
+        text-align: center;
         opacity: 0;
         animation: fadeIn 0.3s forwards;
     }
