@@ -9,58 +9,10 @@ export type SpotifyDevice = {
     name?: string;
 };
 
-export type PlaybackWarmupResponse =
-    | {
-        ready: true;
-        device_id?: string;
-        device_name?: string;
-        volume?: number;
-    }
-    | {
-        ready: false;
-        reason?: string;
-        message: string;
-    };
-
 export async function fetchPlaybackStatus(): Promise<Response> {
     return fetch(`${API_BASE}/playback/status`, {
         credentials: 'include'
     });
-}
-
-export async function warmupPlaybackApi(): Promise<PlaybackWarmupResponse> {
-    try {
-        const res = await fetch(`${API_BASE}/playback/warmup`, {
-            method: 'POST',
-            credentials: 'include'
-        });
-
-        const data = await res.json().catch(() => null);
-
-        if (data?.ready === true) {
-            return {
-                ready: true,
-                device_id: data.device_id,
-                device_name: data.device_name,
-                volume: data.volume
-            };
-        }
-
-        return {
-            ready: false,
-            reason: typeof data?.reason === 'string' ? data.reason : undefined,
-            message:
-                typeof data?.message === 'string' && data.message.length > 0
-                    ? data.message
-                    : 'Open Spotify on a device to continue.'
-        };
-    } catch {
-        return {
-            ready: false,
-            reason: 'request_failed',
-            message: 'Unable to check Spotify readiness. Open Spotify on a device and try again.'
-        };
-    }
 }
 
 export async function signalNarrationFinishedApi(
