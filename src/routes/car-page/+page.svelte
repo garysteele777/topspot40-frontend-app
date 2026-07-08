@@ -191,26 +191,31 @@
 //
 // Playback Controls
 // -----------------
-// Space  = Play / Pause
-// P      = Previous Track
-// N      = Next Track
-// R      = Restart Current Program
-// Esc    = Stop Playback
+// Space     = Play / Pause
+// N         = Next Track
+// R         = Restart Current Program
+// Esc       = Stop Playback
 //
 // Narration Preview
 // -----------------
-// I      = Play Intro Narration
-// D      = Play Detail Narration
-// A      = Play Artist Narration
+// I         = Play Intro Narration
+// D         = Play Detail Narration
+// A         = Play Artist Narration
+//
+// Information Panels
+// ------------------
+// Shift+I   = Show Intro Text
+// Shift+D   = Show Detail Text
+// Shift+A   = Show Artist Bio
+// P         = Show Artist Program Appearances
+// T         = Show Track List
 //
 // Studio Controls
 // ---------------
-// C      = Toggle Camera
-// V      = Toggle Playback View
-// M      = Show "More Info" panel
-// T      = Show "Track List" panel
-// B      = Back to Options screen
-// F      = Toggle Full Screen
+// C         = Toggle Camera
+// V         = Toggle Playback View
+// B         = Back to Options screen
+// F         = Toggle Full Screen
 // ============================================================
 
         switch (e.code) {
@@ -228,12 +233,6 @@
                 contextMode.set('info');
                 break;
 
-            // Play the previous track in the current sequence
-            case 'KeyP':
-                e.preventDefault();
-                void prevTrack();
-                break;
-
             // Play the next track in the current sequence
             case 'KeyN':
                 e.preventDefault();
@@ -246,31 +245,46 @@
                 void handlePlayPause();
                 break;
 
+            // Intro narration / Intro text
             case 'KeyI':
                 e.preventDefault();
-                void previewNarration('intro');
+                if (e.shiftKey) {
+                    contextMode.set('intro');
+                } else {
+                    void previewNarration('intro');
+                }
                 break;
 
+            // Detail narration / Detail text
             case 'KeyD':
                 e.preventDefault();
-                void previewNarration('detail');
+                if (e.shiftKey) {
+                    contextMode.set('detail');
+                } else {
+                    void previewNarration('detail');
+                }
                 break;
 
+            // Artist narration / Artist bio
             case 'KeyA':
                 e.preventDefault();
-                void previewNarration('artist');
+                if (e.shiftKey) {
+                    contextMode.set('artist');
+                } else {
+                    void previewNarration('artist');
+                }
                 break;
 
-            // Display the "More Info" tab
-            case 'KeyM':
+            // Artist program appearances
+            case 'KeyP':
                 e.preventDefault();
-                showMoreInfo();
+                contextMode.set('appearances');
                 break;
 
-            // Display the "Track List" tab
+            // Track list
             case 'KeyT':
                 e.preventDefault();
-                showTrackList();
+                contextMode.set('tracks');
                 break;
 
             // Restart the current program from the beginning
@@ -285,13 +299,13 @@
                 backToOptions();
                 break;
 
-            // Toggle browser full-screen mode (future)
+            // Toggle browser full-screen mode
             case 'KeyF':
                 e.preventDefault();
                 toggleFullscreen();
                 break;
 
-            // Emergency stop (future)
+            // Emergency stop
             case 'Escape':
                 e.preventDefault();
                 stopPlayback();

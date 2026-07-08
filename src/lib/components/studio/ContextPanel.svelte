@@ -19,16 +19,10 @@
         type ArtistSummary
     } from '$lib/studio/artistSummary.store';
 
-    let lastArtistId: number | null = null;
-
-    const BIO_TIME = 12000;
-    const APPEARANCE_TIME = 12000;
-
-    let artistPanelView: 'bio' | 'appearances' = 'bio';
-    let artistPanelTimer: ReturnType<typeof setTimeout> | null = null;
-
     let programType: ProgramType | null = null;
     let programGroup: string | null = null;
+
+    let lastArtistId: number | null = null;
 
     $: programType =
         $currentSelection?.mode === 'decade_genre'
@@ -66,42 +60,6 @@
 
         const program = $programHistoryStore.find(p => p.key === key);
         return program?.playedRanks.includes(rank) ?? false;
-    }
-
-    function scheduleNextArtistPanel() {
-        if (artistPanelTimer) clearTimeout(artistPanelTimer);
-
-        const delay = artistPanelView === 'bio' ? BIO_TIME : APPEARANCE_TIME;
-
-        artistPanelTimer = setTimeout(() => {
-            artistPanelView = artistPanelView === 'bio' ? 'appearances' : 'bio';
-            scheduleNextArtistPanel();
-        }, delay);
-    }
-
-    function startArtistPanelRotation() {
-        if (artistPanelTimer) return;
-        artistPanelView = 'bio';
-        scheduleNextArtistPanel();
-    }
-
-    function stopArtistPanelRotation() {
-        if (artistPanelTimer) {
-            clearTimeout(artistPanelTimer);
-            artistPanelTimer = null;
-        }
-
-        artistPanelView = 'bio';
-    }
-
-    $: if (
-        !$showCamera &&
-        ($playbackPhase === 'artist' || $playbackPhase === 'track') &&
-        $artistSummary
-    ) {
-        startArtistPanelRotation();
-    } else {
-        stopArtistPanelRotation();
     }
 
     $: artistId =
@@ -142,13 +100,21 @@
     $: title =
         $contextMode === 'tracks'
             ? 'Track List'
-            : $playbackPhase === 'artist' || $playbackPhase === 'track'
-                ? 'Meet the Artist'
-                : $playbackPhase === 'detail'
-                    ? 'Behind the Music'
-                    : $playbackPhase === 'intro'
-                        ? 'About This Song'
-                        : 'Now Playing';
+            : $contextMode === 'appearances'
+                ? 'Artist Appearances'
+                : $contextMode === 'artist'
+                    ? 'Meet the Artist'
+                    : $contextMode === 'detail'
+                        ? 'Behind the Music'
+                        : $contextMode === 'intro'
+                            ? 'About This Song'
+                            : $playbackPhase === 'artist' || $playbackPhase === 'track'
+                                ? 'Meet the Artist'
+                                : $playbackPhase === 'detail'
+                                    ? 'Behind the Music'
+                                    : $playbackPhase === 'intro'
+                                        ? 'About This Song'
+                                        : 'Now Playing';
 
 
     $: selectedLanguage = $currentSelection?.language ?? 'en';
@@ -163,13 +129,25 @@
     }
 
     $: body =
-        $playbackPhase === 'artist' || $playbackPhase === 'track'
+        $contextMode === 'artist'
             ? (localizedText('artist') ?? $artistSummary?.artist.artist_description ?? $currentTrack?.artistText)
-            : $playbackPhase === 'detail'
+
+            : $contextMode === 'detail'
                 ? (localizedText('detail') ?? $currentTrack?.detail)
-                : $playbackPhase === 'intro'
+
+                : $contextMode === 'intro'
                     ? (localizedText('intro') ?? $currentTrack?.intro)
-                    : null;
+
+                    : $playbackPhase === 'artist' || $playbackPhase === 'track'
+                        ? (localizedText('artist') ?? $artistSummary?.artist.artist_description ?? $currentTrack?.artistText)
+
+                        : $playbackPhase === 'detail'
+                            ? (localizedText('detail') ?? $currentTrack?.detail)
+
+                            : $playbackPhase === 'intro'
+                                ? (localizedText('intro') ?? $currentTrack?.intro)
+
+                                : null;
 </script>
 
 <section class="context-panel">
@@ -185,11 +163,15 @@
                 {programType}
                 {programGroup}
         />
-    {:else if body}
+    {:else if body || $contextMode === 'appearances'}
 
         <div class="context-body">
-            {#if ($playbackPhase === 'artist' || $playbackPhase === 'track') && $artistSummary}
-                {#if artistPanelView === 'bio'}
+            {#if ($contextMode === 'appearances' ||
+                (($playbackPhase === 'artist' || $playbackPhase === 'track') &&
+                    $contextMode !== 'intro' &&
+                    $contextMode !== 'detail')) &&
+            $artistSummary}
+                {#if $contextMode !== 'appearances'}
                     <div class="fade-card">
                         <h2>{$artistSummary.artist.artist_name}</h2>
                         <p>{body}</p>
