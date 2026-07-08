@@ -830,6 +830,11 @@ export function startPlaybackPolling() {
 
                             return;
                         }
+                        if (isBedPlaying()) {
+                            dlog('ðŸŽ§ BED stop: track phase reached');
+                            stopBed();
+                        }
+
                         const devices = await fetchSpotifyDevices();
                         const device = devices.find(d => d.is_active) ?? devices[0];
 
