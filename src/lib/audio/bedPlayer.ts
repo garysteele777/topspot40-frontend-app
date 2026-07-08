@@ -188,6 +188,7 @@ export async function startBedUrl(url: string): Promise<void> {
     sendBedDiagnostic('bed start pre-src state', audioState(bedAudio));
     currentBedUrl = url;
     bedAudio = bedAudio ?? new Audio();
+    bedAudio.muted = false;
     bedAudio.src = url;
     bedAudio.loop = true;
     bedAudio.volume = 0;           // start silent
