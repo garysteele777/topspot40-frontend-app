@@ -65,7 +65,8 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 function sendClientDiagnostic(
     event: string,
-    phase: PlaybackPhase | null | undefined
+    phase: PlaybackPhase | null | undefined,
+    narrationAudioState?: NarrationAudioDiagnosticState
 ): void {
     void fetch(`${API_BASE}/playback/client-diagnostic`, {
         method: 'POST',
@@ -79,11 +80,89 @@ function sendClientDiagnostic(
             hasCurrentTrack: Boolean(get(currentTrack)),
             trackRank: null,
             decade: null,
-            genre: null
+            genre: null,
+            narrationAudioState
         })
     }).catch(() => {
         // Temporary diagnostic only; never affect playback.
     });
+}
+
+type NarrationAudioDiagnosticState = {
+    muted?: boolean;
+    paused?: boolean;
+    volumeBucket?: string;
+    currentTimeBucket?: string;
+    durationBucket?: string;
+    readyState?: number;
+    networkState?: number;
+    srcCategory?: string;
+    errorCode?: number | null;
+    playbackSessionIdPresent?: boolean;
+};
+
+function bucketNumber(value: number | undefined, buckets: Array<[number, string]>, fallback: string): string {
+    if (value == null || Number.isNaN(value)) return fallback;
+    if (!Number.isFinite(value)) return 'infinite';
+
+    for (const [limit, label] of buckets) {
+        if (value <= limit) return label;
+    }
+
+    return 'large';
+}
+
+function volumeBucket(value: number | undefined): string {
+    return bucketNumber(
+        value,
+        [
+            [0, '0'],
+            [0.1, '0-0.1'],
+            [0.3, '0.1-0.3'],
+            [0.6, '0.3-0.6'],
+            [1, '0.6-1']
+        ],
+        'unknown'
+    );
+}
+
+function secondsBucket(value: number | undefined): string {
+    return bucketNumber(
+        value,
+        [
+            [0, '0'],
+            [1, '0-1s'],
+            [5, '1-5s'],
+            [15, '5-15s'],
+            [60, '15-60s']
+        ],
+        'unknown'
+    );
+}
+
+function narrationSrcCategory(src: string | undefined): string {
+    if (!src) return 'empty';
+    if (src.startsWith('data:')) return 'other';
+    if (src.endsWith('.mp3') || src.includes('/audio-') || src.includes('/narration')) return 'narration-url';
+    return 'other';
+}
+
+function narrationAudioState(
+    audio: HTMLAudioElement | null,
+    playbackSessionIdPresent: boolean
+): NarrationAudioDiagnosticState {
+    return {
+        muted: audio?.muted,
+        paused: audio?.paused,
+        volumeBucket: volumeBucket(audio?.volume),
+        currentTimeBucket: secondsBucket(audio?.currentTime),
+        durationBucket: secondsBucket(audio?.duration),
+        readyState: audio?.readyState,
+        networkState: audio?.networkState,
+        srcCategory: narrationSrcCategory(audio?.src),
+        errorCode: audio?.error?.code ?? null,
+        playbackSessionIdPresent
+    };
 }
 
 const POLL_INTERVAL_MS = Number(
@@ -125,6 +204,7 @@ let trackSwitchTime = 0;
 let activeNarrationAudio: HTMLAudioElement | null = null;
 let activeNarrationTimer: number | null = null;
 let activeNarrationResolve: (() => void) | null = null;
+let activeNarrationPlaybackSessionIdPresent = false;
 let narrationInterrupting = false;
 
 let narrationPausedAtBoundary = false;
@@ -141,6 +221,11 @@ export function stopCurrentNarrationPhase(
         : null;
 
     if (activeNarrationAudio) {
+        sendClientDiagnostic(
+            'narration stop/cancel state',
+            get(playbackPhase),
+            narrationAudioState(activeNarrationAudio, activeNarrationPlaybackSessionIdPresent)
+        );
         narrationInterrupting = true;
         activeNarrationAudio.pause();
         activeNarrationAudio.currentTime = 0;
@@ -205,7 +290,8 @@ function finalizeTrackUI(): void {
 
 function playOneAudio(
     url: string,
-    phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist'
+    phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist',
+    playbackSessionIdPresent = false
 ): Promise<void> {
     if (!browser) return Promise.resolve();
 
@@ -215,11 +301,28 @@ function playOneAudio(
             preserveAudioElement: true
         });
 
+        const reusedAudio = Boolean(activeNarrationAudio);
         const audio = activeNarrationAudio ?? new Audio();
+        activeNarrationPlaybackSessionIdPresent = playbackSessionIdPresent;
+        sendClientDiagnostic(
+            reusedAudio ? 'narration audio reused' : 'narration audio created',
+            phase,
+            narrationAudioState(audio, playbackSessionIdPresent)
+        );
+        sendClientDiagnostic(
+            'narration pre-src state',
+            phase,
+            narrationAudioState(audio, playbackSessionIdPresent)
+        );
         audio.src = url;
         audio.volume = 0.60;
         audio.muted = false;
         audio.setAttribute('playsinline', '');
+        sendClientDiagnostic(
+            'narration pre-play state',
+            phase,
+            narrationAudioState(audio, playbackSessionIdPresent)
+        );
 
         elapsed.set(0);
         duration.set(0);
@@ -232,14 +335,46 @@ function playOneAudio(
         playbackPhase.set(phase);
 
         audio.onloadedmetadata = () => {
+            sendClientDiagnostic(
+                'narration loadedmetadata',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
 
             duration.set(audio.duration);
             elapsed.set(0);
             progress.set(0);
         };
 
+        audio.oncanplay = () => {
+            sendClientDiagnostic(
+                'narration canplay',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+        };
+
+        audio.onplaying = () => {
+            sendClientDiagnostic(
+                'narration playing',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+        };
+
+        let timeAdvancedSent = false;
+
         activeNarrationTimer = window.setInterval(() => {
             elapsed.set(audio.currentTime);
+
+            if (!timeAdvancedSent && audio.currentTime > 0) {
+                timeAdvancedSent = true;
+                sendClientDiagnostic(
+                    'narration time advanced',
+                    phase,
+                    narrationAudioState(audio, playbackSessionIdPresent)
+                );
+            }
 
             if (Number.isFinite(audio.duration) && audio.duration > 0) {
                 duration.set(audio.duration);
@@ -251,6 +386,11 @@ function playOneAudio(
 
         audio.onended = () => {
             narrationInterrupting = false;
+            sendClientDiagnostic(
+                'narration ended',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
 
             cleanupNarrationAudio({
                 timer: activeNarrationTimer,
@@ -269,6 +409,12 @@ function playOneAudio(
         };
 
         audio.onerror = () => {
+            sendClientDiagnostic(
+                'narration error',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+
             if (narrationInterrupting) {
                 narrationInterrupting = false;
                 return;
@@ -298,8 +444,19 @@ function playOneAudio(
             url
         );
 
-        audio.play().catch((err: unknown) => {
-            sendClientDiagnostic('narration play failed', phase);
+        const playPromise = audio.play();
+        playPromise.then(() => {
+            sendClientDiagnostic(
+                'narration play succeeded state',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+        }).catch((err: unknown) => {
+            sendClientDiagnostic(
+                'narration play failed',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
             console.warn('Narration audio.play() failed; not resolving narration phase as finished:', url, err);
 
             cleanupNarrationAudio({
@@ -362,7 +519,7 @@ async function playNarrationQueue() {
             while (narrationQueue.length > 0 && narrationQueue[0].key === narrationKey) {
                 const item = narrationQueue.shift()!;
             dlog('🎤 Playing:', item.phase);
-            await playOneAudio(item.url, item.phase);
+            await playOneAudio(item.url, item.phase, Boolean(item.playbackSessionId));
         }
 
         dlog('🔔 Narration finished');
