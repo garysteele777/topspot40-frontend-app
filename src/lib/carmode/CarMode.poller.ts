@@ -292,7 +292,7 @@ export async function signalNarrationFinished() {
 
     narrationSignaled = true;
 
-    dlog('📡 track-finished');
+    dlog('📡 narration-finished');
 
     await signalNarrationFinishedApi();
 }
@@ -576,6 +576,7 @@ export function startPlaybackPolling() {
                 spotifyId &&
                 finishedTrackId !== spotifyId &&
                 !trackFinalized &&
+                !justSwitched &&
                 durationSec > 1 &&
                 elapsedSec >= durationSec - 1 &&
                 elapsedSec > 2
@@ -596,7 +597,10 @@ export function startPlaybackPolling() {
                     window.dispatchEvent(new CustomEvent('ts-next-track'));
 
                     try {
-                        await signalTrackFinishedApi();
+                        await signalTrackFinishedApi({
+                            rankingId,
+                            spotifyTrackId: spotifyId
+                        });
                     } catch (err) {
                         console.error('❌ Failed to signal track-finished', err);
                     }
@@ -649,7 +653,10 @@ export async function skipToNextTrack(): Promise<void> {
     finalizeTrackUI();
 
     if (!isSingleMode()) {
-        await signalTrackFinishedApi().catch(() => {
+        await signalTrackFinishedApi({
+            rankingId: null,
+            spotifyTrackId: null
+        }).catch(() => {
             // ignore signal failure
         });
     }

@@ -175,6 +175,40 @@
         await playNarrationUrl(url);
     }
 
+    type StudioAction =
+        | 'intro'
+        | 'discovery'
+        | 'signoff'
+        | 'happy-trails';
+
+    async function triggerStudioAction(action: StudioAction): Promise<void> {
+        try {
+            const response = await fetch(
+                `${API_BASE}/playback/studio/${action}`,
+                {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                const message = await response.text();
+
+                throw new Error(
+                    `Studio action "${action}" failed: ${response.status} ${message}`
+                );
+            }
+
+            console.log(`🎙 Studio action started: ${action}`);
+        } catch (error) {
+            console.error(`❌ Studio action failed: ${action}`, error);
+        }
+    }
+
+
     function handleKeyDown(e: KeyboardEvent) {
         const target = e.target as HTMLElement | null;
 
@@ -185,6 +219,7 @@
         ) {
             return;
         }
+
 
 // ============================================================
 // Studio Keyboard Shortcuts
@@ -217,6 +252,39 @@
 // B         = Back to Options screen
 // F         = Toggle Full Screen
 // ============================================================
+
+// ------------------------------------------------------------
+// TopSpot40 Studio production shortcuts
+// Ctrl+Alt+I = Generic Studio Intro
+// Ctrl+Alt+D = Random Liner + Music Discovery
+// Ctrl+Alt+O = Outro followed by Happy Trails
+// Ctrl+Alt+H = Happy Trails only
+// ------------------------------------------------------------
+// ============================================================
+        if (e.ctrlKey && e.altKey) {
+
+            switch (e.code) {
+                case 'KeyI':
+                    e.preventDefault();
+                    void triggerStudioAction('intro');
+                    return;
+
+                case 'KeyD':
+                    e.preventDefault();
+                    void triggerStudioAction('discovery');
+                    return;
+
+                case 'KeyO':
+                    e.preventDefault();
+                    void triggerStudioAction('signoff');
+                    return;
+
+                case 'KeyH':
+                    e.preventDefault();
+                    void triggerStudioAction('happy-trails');
+                    return;
+            }
+        }
 
         switch (e.code) {
 

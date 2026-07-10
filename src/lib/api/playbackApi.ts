@@ -20,15 +20,23 @@ export async function playSpotifyTrackApi(spotifyTrackId: string): Promise<void>
     await fetch(`${API_BASE}/playback/play-spotify`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spotify_track_id: spotifyTrackId })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({spotify_track_id: spotifyTrackId})
     });
 }
 
-export async function signalTrackFinishedApi(): Promise<void> {
+export async function signalTrackFinishedApi(payload: {
+    rankingId: number | null;
+    spotifyTrackId: string | null;
+}): Promise<void> {
     await fetch(`${API_BASE}/playback/track-finished`, {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            ranking_id: payload.rankingId,
+            spotify_track_id: payload.spotifyTrackId
+        })
     });
 }
 
