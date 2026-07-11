@@ -23,7 +23,8 @@
         markUserStartedPlayback,
         stopCurrentNarrationPhase,
         continueStoppedNarrationPhase,
-        resetNarrationPhaseState
+        resetNarrationPhaseState,
+        resetSpotifyStartState
     } from '$lib/carmode/CarMode.poller';
 
     import {stopBed} from '$lib/audio/bedPlayer';
@@ -308,6 +309,7 @@
     }
 
     async function stopPlayback() {
+        resetSpotifyStartState();
         stopNarrationAudio();
         await fetch(`${API_BASE}/playback/stop`, {method: 'POST', credentials: 'include'});
     }

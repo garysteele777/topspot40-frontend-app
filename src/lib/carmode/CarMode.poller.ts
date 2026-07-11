@@ -169,6 +169,8 @@ const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
 );
 
+const SPOTIFY_START_RETRY_THROTTLE_MS = 3000;
+
 const SILENT_AUDIO_DATA_URI =
     'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 
@@ -183,6 +185,10 @@ let lastPhase: PlaybackPhase | null = null;
 let lastSpotifyId: string | null = null;
 let spotifyStartLock = false;
 let finishedTrackId: string | null = null;
+let failedSpotifyStartTrackId: string | null = null;
+let lastSpotifyStartRetryAt = 0;
+let spotifyStartAttemptGeneration = 0;
+let syncedUiSpotifyTrackId: string | null = null;
 
 let narrationLock = false;
 
@@ -612,14 +618,13 @@ export function startPlaybackPolling() {
                 spotifyId &&
                 !data.isPaused &&
                 (
-                    spotifyId !== activeSpotifyTrackId ||
+                    spotifyId !== syncedUiSpotifyTrackId ||
                     playbackContextHasFreshText(
                         data.context as Record<string, unknown> | null | undefined
                     )
                 )
             ) {
-                activeSpotifyTrackId = spotifyId;
-                trackSwitchTime = Date.now();
+                syncedUiSpotifyTrackId = spotifyId;
                 finishedTrackId = null;
 
                 const list = get(tracks);
@@ -662,8 +667,6 @@ export function startPlaybackPolling() {
                 if (!narrationPhase) {
                     resetPlaybackProgress();
                 }
-
-                trackFinalized = false;
 
                 dlog('🎯 UI track switch:', next?.trackName ?? data.track_name);
             }
@@ -802,20 +805,27 @@ export function startPlaybackPolling() {
                 data.context?.spotify_track_id
             ) {
                 const spotifyTrackId = data.context.spotify_track_id as string;
+                const now = Date.now();
+
+                if (failedSpotifyStartTrackId !== spotifyTrackId) {
+                    failedSpotifyStartTrackId = null;
+                    lastSpotifyStartRetryAt = 0;
+                }
+
+                const retryThrottled =
+                    failedSpotifyStartTrackId === spotifyTrackId &&
+                    now - lastSpotifyStartRetryAt < SPOTIFY_START_RETRY_THROTTLE_MS;
 
                 if (
                     lastSpotifyId !== spotifyTrackId &&
                     !spotifyStartLock &&
-                    !data.isPaused
+                    !data.isPaused &&
+                    !retryThrottled
                 ) {
                     spotifyStartLock = true;
+                    const spotifyStartAttempt = ++spotifyStartAttemptGeneration;
 
                     dlog('🎵 TRACK start:', spotifyTrackId);
-
-                    lastSpotifyId = spotifyTrackId;
-                    activeSpotifyTrackId = spotifyTrackId;
-                    trackSwitchTime = Date.now();
-                    trackFinalized = false;
 
                     try {
                         const sel = get(currentSelection);
@@ -828,6 +838,12 @@ export function startPlaybackPolling() {
                                 stopBed();
                             }
 
+                            lastSpotifyId = spotifyTrackId;
+                            activeSpotifyTrackId = spotifyTrackId;
+                            trackSwitchTime = Date.now();
+                            trackFinalized = false;
+                            failedSpotifyStartTrackId = null;
+                            lastSpotifyStartRetryAt = 0;
                             return;
                         }
                         if (isBedPlaying()) {
@@ -838,15 +854,39 @@ export function startPlaybackPolling() {
                         const devices = await fetchSpotifyDevices();
                         const device = devices.find(d => d.is_active) ?? devices[0];
 
+                        if (spotifyStartAttempt !== spotifyStartAttemptGeneration) {
+                            return;
+                        }
+
                         if (!device) {
                             console.warn('No Spotify devices found. Open Spotify on a device to continue.');
+                            if (spotifyStartAttempt === spotifyStartAttemptGeneration) {
+                                failedSpotifyStartTrackId = spotifyTrackId;
+                                lastSpotifyStartRetryAt = Date.now();
+                            }
                             return;
                         }
 
                         await transferSpotifyPlayback(device.id);
                         await playSpotifyTrackApi(spotifyTrackId, device.id);
+
+                        if (spotifyStartAttempt !== spotifyStartAttemptGeneration) {
+                            return;
+                        }
+
+                        lastSpotifyId = spotifyTrackId;
+                        activeSpotifyTrackId = spotifyTrackId;
+                        trackSwitchTime = Date.now();
+                        trackFinalized = false;
+                        failedSpotifyStartTrackId = null;
+                        lastSpotifyStartRetryAt = 0;
+
                         stopBed();
                     } catch (err) {
+                        if (spotifyStartAttempt === spotifyStartAttemptGeneration) {
+                            failedSpotifyStartTrackId = spotifyTrackId;
+                            lastSpotifyStartRetryAt = Date.now();
+                        }
                         console.error('❌ Spotify start failed', err);
                     } finally {
                         spotifyStartLock = false;
@@ -921,6 +961,15 @@ export function startPlaybackPolling() {
     }, POLL_INTERVAL_MS);
 }
 
+export function resetSpotifyStartState(): void {
+    spotifyStartAttemptGeneration += 1;
+    lastSpotifyId = null;
+    activeSpotifyTrackId = null;
+    syncedUiSpotifyTrackId = null;
+    failedSpotifyStartTrackId = null;
+    lastSpotifyStartRetryAt = 0;
+}
+
 export function resetNarrationPhaseState(): void {
     narrationQueue = [];
     narrationLock = false;
@@ -931,14 +980,14 @@ export function resetNarrationPhaseState(): void {
     queuedNarrationKeys.clear();
     completedNarrationKeys.clear();
     lastStartedBedUrl = null;
-    lastSpotifyId = null;
-    activeSpotifyTrackId = null;
+    resetSpotifyStartState();
     finishedTrackId = null;
     narrationSignaled = false;
     narrationPausedAtBoundary = false;
 }
 
 export async function skipToNextTrack(): Promise<void> {
+    resetSpotifyStartState();
     await stopPlaybackApi();
 
     const AUDIO_PIPELINE_CLEAR_DELAY_MS = 1200;
@@ -983,8 +1032,7 @@ export function stopPlaybackPolling() {
     queuedNarrationKeys.clear();
     completedNarrationKeys.clear();
     lastStartedBedUrl = null;
-    lastSpotifyId = null;
-    activeSpotifyTrackId = null;
+    resetSpotifyStartState();
     finishedTrackId = null;
 }
 

@@ -44,10 +44,14 @@ export async function fetchSpotifyDevices(): Promise<SpotifyDevice[]> {
 }
 
 export async function transferSpotifyPlayback(deviceId: string): Promise<void> {
-    await fetch(`${API_BASE}/playback/transfer/${encodeURIComponent(deviceId)}`, {
+    const res = await fetch(`${API_BASE}/playback/transfer/${encodeURIComponent(deviceId)}`, {
         method: 'POST',
         credentials: 'include'
     });
+
+    if (!res.ok) {
+        throw new Error(`Spotify transfer failed: ${res.status}`);
+    }
 }
 
 export async function playSpotifyTrackApi(spotifyTrackId: string, deviceId?: string): Promise<void> {
@@ -59,12 +63,16 @@ export async function playSpotifyTrackApi(spotifyTrackId: string, deviceId?: str
         body.device_id = deviceId;
     }
 
-    await fetch(`${API_BASE}/playback/play-spotify`, {
+    const res = await fetch(`${API_BASE}/playback/play-spotify`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
+
+    if (!res.ok) {
+        throw new Error(`Spotify play failed: ${res.status}`);
+    }
 }
 
 export async function signalTrackFinishedApi(): Promise<void> {
