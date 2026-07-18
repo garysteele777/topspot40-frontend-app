@@ -9,9 +9,33 @@
     export let onPlayPause: () => void;
     export let onNext: () => void;
 
+    const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
     function handleImgError(e: Event) {
         const img = e.currentTarget as HTMLImageElement;
         img.src = "/default_album.png";
+    }
+
+    function handlePlayClick(): void {
+        void fetch(`${API_BASE}/playback/client-diagnostic`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                event: 'MiniPlayer play button tapped',
+                phase: null,
+                mode: null,
+                programType: null,
+                hasCurrentTrack: false,
+                trackRank: null,
+                decade: null,
+                genre: null
+            })
+        }).catch(() => {
+            // Temporary diagnostic only; never block playback.
+        });
+
+        onPlayPause();
     }
 </script>
 
@@ -26,7 +50,7 @@
                 </svg>
             </button>
 
-            <button class="btn play" on:click={onPlayPause} aria-label="Play/Pause">
+            <button class="btn play" on:click={handlePlayClick} aria-label="Play/Pause">
                 {#if isPlaying}
                     <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
                         <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>

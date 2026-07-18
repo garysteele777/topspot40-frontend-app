@@ -37,7 +37,8 @@
         markUserStartedPlayback,
         stopCurrentNarrationPhase,
         continueStoppedNarrationPhase,
-        resetNarrationPhaseState
+        resetNarrationPhaseState,
+        resetSpotifyStartState
     } from '$lib/carmode/CarMode.poller';
 
     import {stopBed} from '$lib/audio/bedPlayer';
@@ -91,8 +92,32 @@
     let guidedReady = false;
     let guidedSpotifyOpened = false;
     let guidedSpotifyWindow: Window | null = null;
+    let userStartedPlaybackThisSession = false;
+    let playbackStartInFlight = false;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
+    type ClientDiagnosticPayload = {
+        event: string;
+        phase: string | null | undefined;
+        mode: string | null | undefined;
+        programType: string | null | undefined;
+        hasCurrentTrack: boolean;
+        trackRank: number | null | undefined;
+        decade: string | null | undefined;
+        genre: string | null | undefined;
+    };
+
+    function sendClientDiagnostic(payload: ClientDiagnosticPayload): void {
+        void fetch(`${API_BASE}/playback/client-diagnostic`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        }).catch(() => {
+            // Diagnostic failures should not affect playback.
+        });
+    }
 
     $: settings = $playbackSettingsStore;
 
@@ -586,6 +611,23 @@
         }
 
         if (sel.mode === 'artist_spotlight' && sel.programType === 'RADIO_ARTIST') {
+            console.info('[car-page] playTrack artist_spotlight branch', {
+                mode: sel.mode,
+                programType: sel.programType,
+                genre: sel.context?.genre,
+                rank: trackObj.rank
+            });
+            sendClientDiagnostic({
+                event: 'playTrack artist_spotlight branch',
+                phase: get(playbackPhase),
+                mode: sel.mode,
+                programType: sel.programType,
+                hasCurrentTrack: Boolean($currentTrack),
+                trackRank: trackObj.rank,
+                decade: sel.context?.decade,
+                genre: sel.context?.genre
+            });
+
             const firstTrack = $tracks[0] as unknown as {
                 spotifyArtistId?: string;
                 spotify_artist_id?: string;
@@ -688,6 +730,24 @@
 
 
         if (sel.mode === 'decade_genre' && sel.programType === 'RADIO_DG') {
+            console.info('[car-page] playTrack RADIO_DG play-sequence branch', {
+                mode: sel.mode,
+                programType: sel.programType,
+                decade: sel.context?.decade,
+                genre: sel.context?.genre,
+                rank: trackObj.rank
+            });
+            sendClientDiagnostic({
+                event: 'playTrack RADIO_DG play-sequence branch',
+                phase: get(playbackPhase),
+                mode: sel.mode,
+                programType: sel.programType,
+                hasCurrentTrack: Boolean($currentTrack),
+                trackRank: trackObj.rank,
+                decade: sel.context?.decade,
+                genre: sel.context?.genre
+            });
+
             const radioParams = new URLSearchParams({
                 decade: sel.context?.decade ?? 'ALL',
                 genre: sel.context?.genre ?? 'ALL',
@@ -706,6 +766,24 @@
 
             return;
         }
+
+        console.info('[car-page] playTrack normal play-track branch', {
+            mode: sel.mode,
+            programType: sel.programType,
+            decade: sel.context?.decade,
+            genre: sel.context?.genre,
+            rank: trackObj.rank
+        });
+        sendClientDiagnostic({
+            event: 'playTrack normal play-track branch',
+            phase: get(playbackPhase),
+            mode: sel.mode,
+            programType: sel.programType,
+            hasCurrentTrack: Boolean($currentTrack),
+            trackRank: trackObj.rank,
+            decade: sel.context?.decade,
+            genre: sel.context?.genre
+        });
 
         const res = await fetch(`${API_BASE}/playback/play-track`, {
             method: 'POST',
@@ -824,6 +902,7 @@
     }
 
     async function stopPlayback() {
+        resetSpotifyStartState();
         stopNarrationAudio();
 
         if (get(playbackSettingsStore).playbackMethod === 'guided') {
@@ -836,13 +915,30 @@
         });
     }
 
+    function resetSelectionPlaybackState(): void {
+        stopCurrentNarrationPhase({resolvePhase: false});
+        stopBed();
+        resetNarrationPhaseState();
+        playbackStartInFlight = false;
+        userStartedPlaybackThisSession = false;
+        currentTrack.set(null);
+        tracks.set([]);
+        playbackPhase.set('idle');
+        isPlaying.set(false);
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
+    }
+
     async function handleJumpToTrack(track: CarModeTrack) {
         await stopPlayback();
 
         currentTrack.set(track);
         currentRank.set(track.rank);
 
+        markUserStartedPlayback();
         await playTrack(track);
+        userStartedPlaybackThisSession = true;
     }
 
     async function nextTrack() {
@@ -941,7 +1037,9 @@
 
             await new Promise(r => setTimeout(r, 50));
 
+            markUserStartedPlayback();
             await playTrack(next);
+            userStartedPlaybackThisSession = true;
         }
 
         setTimeout(() => {
@@ -974,7 +1072,9 @@
 
         await new Promise(r => setTimeout(r, 50));
 
+        markUserStartedPlayback();
         await playTrack(prev);
+        userStartedPlaybackThisSession = true;
     }
 
     // ─────────────────────────────────────────────
@@ -1114,6 +1214,7 @@
     // Lifecycle
     // ─────────────────────────────────────────────
     onMount(async () => {
+        console.info('[car-page] build marker main@3ce2b0b mini-player-tap-diagnostic');
 
 
         window.addEventListener('keydown', handleKeyDown);
@@ -1186,6 +1287,7 @@
             }
 
             console.log('🎯 URL selection before currentSelection.set:', sel);
+            resetSelectionPlaybackState();
             currentSelection.set(sel);
 
             const cr = url.searchParams.get('currentRank');
@@ -1219,6 +1321,13 @@
             return;
         }
         await loadForSelection(sel, initialRank);
+        playbackStartInFlight = false;
+        userStartedPlaybackThisSession = false;
+        isPlaying.set(false);
+        playbackPhase.set('idle');
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
 
         /// ─────────────────────────────────────────────
         // Prepare Spotify playback (warmup)

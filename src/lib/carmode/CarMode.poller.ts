@@ -11,13 +11,15 @@ import {
     signalNarrationFinishedApi,
     playSpotifyTrackApi,
     signalTrackFinishedApi,
-    stopPlaybackApi
+    stopPlaybackApi,
+    fetchSpotifyDevices,
+    transferSpotifyPlayback
 } from '$lib/api/playbackApi';
 
 
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
-import {startBedUrl, stopBed, isBedPlaying} from '$lib/audio/bedPlayer';
+import {startBedUrl, stopBed, isBedPlaying, unlockBedAudio} from '$lib/audio/bedPlayer';
 import {calculatePlaybackTiming} from '$lib/utils/calculatePlaybackTiming';
 import {isWithinTrackSwitchProtectionWindow} from '$lib/utils/playbackSwitchTiming';
 import {
@@ -59,9 +61,123 @@ const dlog = (...args: unknown[]) => {
     if (DEBUG) console.log(...args);
 };
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+
+function sendClientDiagnostic(
+    event: string,
+    phase: PlaybackPhase | null | undefined,
+    narrationAudioState?: NarrationAudioDiagnosticState
+): void {
+    void fetch(`${API_BASE}/playback/client-diagnostic`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            event,
+            phase,
+            mode: null,
+            programType: null,
+            hasCurrentTrack: Boolean(get(currentTrack)),
+            trackRank: null,
+            decade: null,
+            genre: null,
+            narrationAudioState
+        })
+    }).catch(() => {
+        // Temporary diagnostic only; never affect playback.
+    });
+}
+
+type NarrationAudioDiagnosticState = {
+    muted?: boolean;
+    paused?: boolean;
+    volumeBucket?: string;
+    currentTimeBucket?: string;
+    durationBucket?: string;
+    readyState?: number;
+    networkState?: number;
+    srcCategory?: string;
+    errorCode?: number | null;
+    playbackSessionIdPresent?: boolean;
+};
+
+function bucketNumber(value: number | undefined, buckets: Array<[number, string]>, fallback: string): string {
+    if (value == null || Number.isNaN(value)) return fallback;
+    if (!Number.isFinite(value)) return 'infinite';
+
+    for (const [limit, label] of buckets) {
+        if (value <= limit) return label;
+    }
+
+    return 'large';
+}
+
+function volumeBucket(value: number | undefined): string {
+    return bucketNumber(
+        value,
+        [
+            [0, '0'],
+            [0.1, '0-0.1'],
+            [0.3, '0.1-0.3'],
+            [0.6, '0.3-0.6'],
+            [1, '0.6-1']
+        ],
+        'unknown'
+    );
+}
+
+function secondsBucket(value: number | undefined): string {
+    return bucketNumber(
+        value,
+        [
+            [0, '0'],
+            [1, '0-1s'],
+            [5, '1-5s'],
+            [15, '5-15s'],
+            [60, '15-60s']
+        ],
+        'unknown'
+    );
+}
+
+function narrationSrcCategory(src: string | undefined): string {
+    if (!src) return 'empty';
+    if (src.startsWith('data:')) return 'other';
+    if (src.endsWith('.mp3') || src.includes('/audio-') || src.includes('/narration')) return 'narration-url';
+    return 'other';
+}
+
+function narrationAudioState(
+    audio: HTMLAudioElement | null,
+    playbackSessionIdPresent: boolean
+): NarrationAudioDiagnosticState {
+    return {
+        muted: audio?.muted,
+        paused: audio?.paused,
+        volumeBucket: volumeBucket(audio?.volume),
+        currentTimeBucket: secondsBucket(audio?.currentTime),
+        durationBucket: secondsBucket(audio?.duration),
+        readyState: audio?.readyState,
+        networkState: audio?.networkState,
+        srcCategory: narrationSrcCategory(audio?.src),
+        errorCode: audio?.error?.code ?? null,
+        playbackSessionIdPresent
+    };
+}
+
 const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
 );
+
+const SPOTIFY_START_RETRY_THROTTLE_MS = 3000;
+
+const SILENT_AUDIO_DATA_URI =
+    'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+
+type QueuedNarrationItem = NarrationQueueItem & {
+    key: string;
+    playbackSessionId: string;
+};
 
 let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
@@ -69,13 +185,22 @@ let lastPhase: PlaybackPhase | null = null;
 let lastSpotifyId: string | null = null;
 let spotifyStartLock = false;
 let finishedTrackId: string | null = null;
+let failedSpotifyStartTrackId: string | null = null;
+let lastSpotifyStartRetryAt = 0;
+let spotifyStartAttemptGeneration = 0;
+let syncedUiSpotifyTrackId: string | null = null;
 
 let narrationLock = false;
 
-let narrationQueue: NarrationQueueItem[] = [];
+let narrationQueue: QueuedNarrationItem[] = [];
 
 let lastNarrationPhase: PlaybackPhase | null = null;
 let lastNarrationKey: string | null = null;
+let lastNarrationIntakeKey: string | null = null;
+let activeNarrationKey: string | null = null;
+let queuedNarrationKeys = new Set<string>();
+let completedNarrationKeys = new Set<string>();
+let lastStartedBedUrl: string | null = null;
 let trackFinalized = false;
 let narrationSignaled = false;
 
@@ -85,12 +210,13 @@ let trackSwitchTime = 0;
 let activeNarrationAudio: HTMLAudioElement | null = null;
 let activeNarrationTimer: number | null = null;
 let activeNarrationResolve: (() => void) | null = null;
+let activeNarrationPlaybackSessionIdPresent = false;
 let narrationInterrupting = false;
 
 let narrationPausedAtBoundary = false;
 
 export function stopCurrentNarrationPhase(
-    options: { resolvePhase?: boolean; preserveResolve?: boolean } = {}
+    options: { resolvePhase?: boolean; preserveResolve?: boolean; preserveAudioElement?: boolean } = {}
 ): void {
     if (options.preserveResolve) {
         narrationPausedAtBoundary = true;
@@ -101,11 +227,18 @@ export function stopCurrentNarrationPhase(
         : null;
 
     if (activeNarrationAudio) {
+        sendClientDiagnostic(
+            'narration stop/cancel state',
+            get(playbackPhase),
+            narrationAudioState(activeNarrationAudio, activeNarrationPlaybackSessionIdPresent)
+        );
         narrationInterrupting = true;
         activeNarrationAudio.pause();
         activeNarrationAudio.currentTime = 0;
-        activeNarrationAudio.src = '';
-        activeNarrationAudio.load();
+        if (!options.preserveAudioElement) {
+            activeNarrationAudio.src = '';
+            activeNarrationAudio.load();
+        }
     }
     cleanupNarrationAudio({
         timer: activeNarrationTimer,
@@ -117,7 +250,8 @@ export function stopCurrentNarrationPhase(
         },
         setResolve: value => {
             activeNarrationResolve = value;
-        }
+        },
+        preserveAudio: options.preserveAudioElement
     });
 
     if (options.preserveResolve) {
@@ -162,24 +296,39 @@ function finalizeTrackUI(): void {
 
 function playOneAudio(
     url: string,
-    phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist'
+    phase: 'set_intro' | 'collection_intro' | 'liner' | 'intro' | 'detail' | 'artist',
+    playbackSessionIdPresent = false
 ): Promise<void> {
     if (!browser) return Promise.resolve();
 
-    return new Promise<void>((resolve) => {
-        stopCurrentNarrationPhase({resolvePhase: false});
+    return new Promise<void>((resolve, reject) => {
+        stopCurrentNarrationPhase({
+            resolvePhase: false,
+            preserveAudioElement: true
+        });
 
-        const audio = new Audio(url);
-        const volumeByPhase: Record<typeof phase, number> = {
-            set_intro: 0.60,
-            collection_intro: 0.60,
-            liner: 0.60,
-            intro: 0.25,
-            detail: 0.60,
-            artist: 0.60
-        };
-
-        audio.volume = volumeByPhase[phase] ?? 0.60;
+        const reusedAudio = Boolean(activeNarrationAudio);
+        const audio = activeNarrationAudio ?? new Audio();
+        activeNarrationPlaybackSessionIdPresent = playbackSessionIdPresent;
+        sendClientDiagnostic(
+            reusedAudio ? 'narration audio reused' : 'narration audio created',
+            phase,
+            narrationAudioState(audio, playbackSessionIdPresent)
+        );
+        sendClientDiagnostic(
+            'narration pre-src state',
+            phase,
+            narrationAudioState(audio, playbackSessionIdPresent)
+        );
+        audio.src = url;
+        audio.volume = 0.60;
+        audio.muted = false;
+        audio.setAttribute('playsinline', '');
+        sendClientDiagnostic(
+            'narration pre-play state',
+            phase,
+            narrationAudioState(audio, playbackSessionIdPresent)
+        );
 
         elapsed.set(0);
         duration.set(0);
@@ -192,14 +341,46 @@ function playOneAudio(
         playbackPhase.set(phase);
 
         audio.onloadedmetadata = () => {
+            sendClientDiagnostic(
+                'narration loadedmetadata',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
 
             duration.set(audio.duration);
             elapsed.set(0);
             progress.set(0);
         };
 
+        audio.oncanplay = () => {
+            sendClientDiagnostic(
+                'narration canplay',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+        };
+
+        audio.onplaying = () => {
+            sendClientDiagnostic(
+                'narration playing',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+        };
+
+        let timeAdvancedSent = false;
+
         activeNarrationTimer = window.setInterval(() => {
             elapsed.set(audio.currentTime);
+
+            if (!timeAdvancedSent && audio.currentTime > 0) {
+                timeAdvancedSent = true;
+                sendClientDiagnostic(
+                    'narration time advanced',
+                    phase,
+                    narrationAudioState(audio, playbackSessionIdPresent)
+                );
+            }
 
             if (Number.isFinite(audio.duration) && audio.duration > 0) {
                 duration.set(audio.duration);
@@ -211,6 +392,11 @@ function playOneAudio(
 
         audio.onended = () => {
             narrationInterrupting = false;
+            sendClientDiagnostic(
+                'narration ended',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
 
             cleanupNarrationAudio({
                 timer: activeNarrationTimer,
@@ -222,12 +408,19 @@ function playOneAudio(
                 },
                 setResolve: value => {
                     activeNarrationResolve = value;
-                }
+                },
+                preserveAudio: true
             });
             resolve();
         };
 
         audio.onerror = () => {
+            sendClientDiagnostic(
+                'narration error',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+
             if (narrationInterrupting) {
                 narrationInterrupting = false;
                 return;
@@ -245,7 +438,8 @@ function playOneAudio(
                 },
                 setResolve: value => {
                     activeNarrationResolve = value;
-                }
+                },
+                preserveAudio: true
             });
             resolve();
         };
@@ -256,8 +450,20 @@ function playOneAudio(
             url
         );
 
-        audio.play().catch((err: unknown) => {
-            console.warn('🔇 Narration could not play, skipping:', url, err);
+        const playPromise = audio.play();
+        playPromise.then(() => {
+            sendClientDiagnostic(
+                'narration play succeeded state',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+        }).catch((err: unknown) => {
+            sendClientDiagnostic(
+                'narration play failed',
+                phase,
+                narrationAudioState(audio, playbackSessionIdPresent)
+            );
+            console.warn('Narration audio.play() failed; not resolving narration phase as finished:', url, err);
 
             cleanupNarrationAudio({
                 timer: activeNarrationTimer,
@@ -269,9 +475,10 @@ function playOneAudio(
                 },
                 setResolve: value => {
                     activeNarrationResolve = value;
-                }
+                },
+                preserveAudio: true
             });
-            resolve();
+            reject(err);
         });
     });
 }
@@ -287,14 +494,18 @@ export function continueStoppedNarrationPhase(): void {
     }
 }
 
-export async function signalNarrationFinished() {
+export async function signalNarrationFinished(
+    playbackSessionId: string,
+    phase: string
+) {
     if (narrationSignaled) return;
+    if (!playbackSessionId) return;
 
     narrationSignaled = true;
 
     dlog('📡 narration-finished');
 
-    await signalNarrationFinishedApi();
+    await signalNarrationFinishedApi(playbackSessionId, phase);
 }
 
 async function playNarrationQueue() {
@@ -304,9 +515,17 @@ async function playNarrationQueue() {
 
     try {
         while (narrationQueue.length > 0) {
-            const item = narrationQueue.shift()!;
+            const narrationKey = narrationQueue[0].key;
+            const playbackSessionId = narrationQueue[0].playbackSessionId;
+            const completedPhase = narrationQueue[0].phase;
+            activeNarrationKey = narrationKey;
+            queuedNarrationKeys.delete(narrationKey);
+            narrationSignaled = false;
+
+            while (narrationQueue.length > 0 && narrationQueue[0].key === narrationKey) {
+                const item = narrationQueue.shift()!;
             dlog('🎤 Playing:', item.phase);
-            await playOneAudio(item.url, item.phase);
+            await playOneAudio(item.url, item.phase, Boolean(item.playbackSessionId));
         }
 
         dlog('🔔 Narration finished');
@@ -319,11 +538,25 @@ async function playNarrationQueue() {
 
         console.log('🔔 SIGNAL FINISHED', get(currentTrack)?.trackName, get(playbackPhase));
 
-        await signalNarrationFinished();
+        await signalNarrationFinished(playbackSessionId, completedPhase);
+        completedNarrationKeys.add(narrationKey);
+
+        if (activeNarrationKey === narrationKey) {
+            activeNarrationKey = null;
+        }
+        }
     } catch (err) {
+        activeNarrationKey = null;
+        queuedNarrationKeys.clear();
+        completedNarrationKeys.clear();
+        narrationQueue = [];
         console.error('❌ Narration playback failed:', err);
     } finally {
         narrationLock = false;
+
+        if (narrationQueue.length > 0) {
+            void Promise.resolve().then(playNarrationQueue);
+        }
     }
 }
 
@@ -352,19 +585,46 @@ export function startPlaybackPolling() {
 
             const narrationPhase = isNarrationPhase(phase);
 
+            if (narrationPhase) {
+                const audioQueue = data.context?.audio_queue;
+                const firstQueueItem =
+                    Array.isArray(audioQueue) && audioQueue.length > 0
+                        ? audioQueue[0]
+                        : null;
+                const firstQueueItemKeys =
+                    firstQueueItem && typeof firstQueueItem === 'object'
+                        ? Object.keys(firstQueueItem as Record<string, unknown>)
+                        : [];
+                const narrationIntakeKey =
+                    `${phase}:${data.context?.audio_url ?? JSON.stringify(audioQueue ?? '')}`;
+
+                if (narrationIntakeKey !== lastNarrationIntakeKey) {
+                    lastNarrationIntakeKey = narrationIntakeKey;
+                    sendClientDiagnostic('narration phase received', phase);
+                    console.info('[car-page] narration intake', {
+                        phase,
+                        hasAudioUrl: typeof data.context?.audio_url === 'string',
+                        audioQueueIsArray: Array.isArray(audioQueue),
+                        audioQueueLength: Array.isArray(audioQueue) ? audioQueue.length : 0,
+                        firstQueueItemKeys,
+                        hasBedAudioUrl: typeof data.context?.bed_audio_url === 'string',
+                        hasCurrentTrack: Boolean(get(currentTrack))
+                    });
+                }
+            }
+
             if (
                 playbackStarted &&
                 spotifyId &&
                 !data.isPaused &&
                 (
-                    spotifyId !== activeSpotifyTrackId ||
+                    spotifyId !== syncedUiSpotifyTrackId ||
                     playbackContextHasFreshText(
                         data.context as Record<string, unknown> | null | undefined
                     )
                 )
             ) {
-                activeSpotifyTrackId = spotifyId;
-                trackSwitchTime = Date.now();
+                syncedUiSpotifyTrackId = spotifyId;
                 finishedTrackId = null;
 
                 const list = get(tracks);
@@ -407,8 +667,6 @@ export function startPlaybackPolling() {
                 if (!narrationPhase) {
                     resetPlaybackProgress();
                 }
-
-                trackFinalized = false;
 
                 dlog('🎯 UI track switch:', next?.trackName ?? data.track_name);
             }
@@ -457,14 +715,39 @@ export function startPlaybackPolling() {
                 narrationPhase &&
                 (data.context?.audio_url || data.context?.audio_queue)
             ) {
+                const bedAudioUrl =
+                    typeof data.context?.bed_audio_url === 'string'
+                        ? data.context.bed_audio_url
+                        : null;
 
+                if (
+                    bedAudioUrl &&
+                    (bedAudioUrl !== lastStartedBedUrl || !isBedPlaying())
+                ) {
+                    dlog('ðŸŽ§ BED start:', bedAudioUrl);
+                    lastStartedBedUrl = bedAudioUrl;
+                    startBedUrl(bedAudioUrl).catch((err: unknown) => {
+                        console.warn('Bed audio.play() failed:', bedAudioUrl, err);
+                    });
+                }
+
+                const playbackSessionId =
+                    typeof data.playbackSessionId === 'string' && data.playbackSessionId.length > 0
+                        ? data.playbackSessionId
+                        : null;
                 const narrationKey =
-                    `${phase}:${data.context?.audio_url ?? JSON.stringify(data.context?.audio_queue ?? '')}`;
+                    `${playbackSessionId ?? 'missing-session'}:${phase}:${data.context?.audio_url ?? JSON.stringify(data.context?.audio_queue ?? '')}`;
 
-                if (narrationKey !== lastNarrationKey) {
+                if (
+                    playbackSessionId &&
+                    activeNarrationKey !== narrationKey &&
+                    !queuedNarrationKeys.has(narrationKey) &&
+                    !completedNarrationKeys.has(narrationKey)
+                ) {
                     dlog(`🎤 Narration phase: ${phase}`);
 
-                    narrationSignaled = false;
+                    activeNarrationKey = narrationKey;
+                    queuedNarrationKeys.add(narrationKey);
                     lastNarrationPhase = phase;
                     lastNarrationKey = narrationKey;
 
@@ -489,19 +772,26 @@ export function startPlaybackPolling() {
                         narrationItems.map(item => item.url)
                     );
 
-                    const bedAudioUrl =
-                        typeof data.context?.bed_audio_url === 'string'
-                            ? data.context.bed_audio_url
-                            : null;
+                    if (narrationItems.length === 0) {
+                        if (activeNarrationKey === narrationKey) {
+                            activeNarrationKey = null;
+                        }
+                        queuedNarrationKeys.delete(narrationKey);
+                        sendClientDiagnostic('narration queue empty', phase);
+                        console.warn('[car-page] narration queue empty; not signaling narration-finished', {
+                            phase
+                        });
+                    } else {
+                        narrationQueue.push(
+                            ...narrationItems.map(item => ({
+                                ...item,
+                                key: narrationKey,
+                                playbackSessionId
+                            }))
+                        );
 
-                    if (bedAudioUrl && !isBedPlaying()) {
-                        dlog('🎧 BED start:', bedAudioUrl);
-                        startBedUrl(bedAudioUrl);
+                        void playNarrationQueue();
                     }
-
-                    narrationQueue.push(...narrationItems);
-
-                    void playNarrationQueue();
                 }
             } else if (!narrationPhase) {
                 lastNarrationPhase = null;
@@ -515,20 +805,27 @@ export function startPlaybackPolling() {
                 data.context?.spotify_track_id
             ) {
                 const spotifyTrackId = data.context.spotify_track_id as string;
+                const now = Date.now();
+
+                if (failedSpotifyStartTrackId !== spotifyTrackId) {
+                    failedSpotifyStartTrackId = null;
+                    lastSpotifyStartRetryAt = 0;
+                }
+
+                const retryThrottled =
+                    failedSpotifyStartTrackId === spotifyTrackId &&
+                    now - lastSpotifyStartRetryAt < SPOTIFY_START_RETRY_THROTTLE_MS;
 
                 if (
                     lastSpotifyId !== spotifyTrackId &&
                     !spotifyStartLock &&
-                    !data.isPaused
+                    !data.isPaused &&
+                    !retryThrottled
                 ) {
                     spotifyStartLock = true;
+                    const spotifyStartAttempt = ++spotifyStartAttemptGeneration;
 
                     dlog('🎵 TRACK start:', spotifyTrackId);
-
-                    lastSpotifyId = spotifyTrackId;
-                    activeSpotifyTrackId = spotifyTrackId;
-                    trackSwitchTime = Date.now();
-                    trackFinalized = false;
 
                     try {
                         const sel = get(currentSelection);
@@ -541,11 +838,55 @@ export function startPlaybackPolling() {
                                 stopBed();
                             }
 
+                            lastSpotifyId = spotifyTrackId;
+                            activeSpotifyTrackId = spotifyTrackId;
+                            trackSwitchTime = Date.now();
+                            trackFinalized = false;
+                            failedSpotifyStartTrackId = null;
+                            lastSpotifyStartRetryAt = 0;
                             return;
                         }
-                        await playSpotifyTrackApi(spotifyTrackId);
+                        if (isBedPlaying()) {
+                            dlog('ðŸŽ§ BED stop: track phase reached');
+                            stopBed();
+                        }
+
+                        const devices = await fetchSpotifyDevices();
+                        const device = devices.find(d => d.is_active) ?? devices[0];
+
+                        if (spotifyStartAttempt !== spotifyStartAttemptGeneration) {
+                            return;
+                        }
+
+                        if (!device) {
+                            console.warn('No Spotify devices found. Open Spotify on a device to continue.');
+                            if (spotifyStartAttempt === spotifyStartAttemptGeneration) {
+                                failedSpotifyStartTrackId = spotifyTrackId;
+                                lastSpotifyStartRetryAt = Date.now();
+                            }
+                            return;
+                        }
+
+                        await transferSpotifyPlayback(device.id);
+                        await playSpotifyTrackApi(spotifyTrackId, device.id);
+
+                        if (spotifyStartAttempt !== spotifyStartAttemptGeneration) {
+                            return;
+                        }
+
+                        lastSpotifyId = spotifyTrackId;
+                        activeSpotifyTrackId = spotifyTrackId;
+                        trackSwitchTime = Date.now();
+                        trackFinalized = false;
+                        failedSpotifyStartTrackId = null;
+                        lastSpotifyStartRetryAt = 0;
+
                         stopBed();
                     } catch (err) {
+                        if (spotifyStartAttempt === spotifyStartAttemptGeneration) {
+                            failedSpotifyStartTrackId = spotifyTrackId;
+                            lastSpotifyStartRetryAt = Date.now();
+                        }
                         console.error('❌ Spotify start failed', err);
                     } finally {
                         spotifyStartLock = false;
@@ -627,16 +968,33 @@ export function startPlaybackPolling() {
     }, POLL_INTERVAL_MS);
 }
 
+export function resetSpotifyStartState(): void {
+    spotifyStartAttemptGeneration += 1;
+    lastSpotifyId = null;
+    activeSpotifyTrackId = null;
+    syncedUiSpotifyTrackId = null;
+    failedSpotifyStartTrackId = null;
+    lastSpotifyStartRetryAt = 0;
+}
+
 export function resetNarrationPhaseState(): void {
     narrationQueue = [];
     narrationLock = false;
     lastNarrationPhase = null;
     lastNarrationKey = null;
+    lastNarrationIntakeKey = null;
+    activeNarrationKey = null;
+    queuedNarrationKeys.clear();
+    completedNarrationKeys.clear();
+    lastStartedBedUrl = null;
+    resetSpotifyStartState();
+    finishedTrackId = null;
     narrationSignaled = false;
     narrationPausedAtBoundary = false;
 }
 
 export async function skipToNextTrack(): Promise<void> {
+    resetSpotifyStartState();
     await stopPlaybackApi();
 
     const AUDIO_PIPELINE_CLEAR_DELAY_MS = 1200;
@@ -649,6 +1007,10 @@ export async function skipToNextTrack(): Promise<void> {
 
     narrationQueue = [];
     narrationLock = false;
+    activeNarrationKey = null;
+    queuedNarrationKeys.clear();
+    completedNarrationKeys.clear();
+    lastStartedBedUrl = null;
 
     finalizeTrackUI();
 
@@ -674,8 +1036,38 @@ export function stopPlaybackPolling() {
     narrationQueue = [];
     narrationLock = false;
     lastNarrationPhase = null;
+    lastNarrationKey = null;
+    lastNarrationIntakeKey = null;
+    activeNarrationKey = null;
+    queuedNarrationKeys.clear();
+    completedNarrationKeys.clear();
+    lastStartedBedUrl = null;
+    resetSpotifyStartState();
+    finishedTrackId = null;
 }
 
 export function markUserStartedPlayback() {
-    // compatibility export
+    if (!browser) return;
+
+    if (!activeNarrationAudio) {
+        activeNarrationAudio = new Audio();
+    }
+
+    activeNarrationAudio.muted = true;
+    activeNarrationAudio.setAttribute('playsinline', '');
+    activeNarrationAudio.src = SILENT_AUDIO_DATA_URI;
+
+    activeNarrationAudio.play()
+        .then(() => {
+            activeNarrationAudio?.pause();
+            if (activeNarrationAudio) {
+                activeNarrationAudio.currentTime = 0;
+                activeNarrationAudio.muted = false;
+            }
+        })
+        .catch((err: unknown) => {
+            console.warn('Narration audio unlock failed:', err);
+        });
+
+    void unlockBedAudio();
 }
