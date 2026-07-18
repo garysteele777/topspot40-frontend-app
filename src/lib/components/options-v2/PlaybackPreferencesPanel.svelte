@@ -13,7 +13,7 @@
     export let language: Language = 'en';
     export let languages: Language[] = ['en'];
     export let selectedVoices: VoicePart[] = ['intro'];
-    export let playbackMethod: 'automatic' | 'guided' = 'automatic';
+    export let playbackMethod: 'automatic' | 'guided' = 'guided';
     export let playbackOrder: PlaybackOrder = 'up';
     export let pauseMode: 'pause' | 'continuous' = 'pause';
     export let skipPlayed = false;

@@ -48,7 +48,7 @@
     let startRank = 1;
     let endRank = 9999;
 
-    let playbackMethod: 'automatic' | 'guided' = 'automatic';
+    let playbackMethod: 'automatic' | 'guided' = 'guided';
     let playbackOrder: PlaybackOrder = 'shuffle';
 
     let pauseMode: 'pause' | 'continuous' = 'continuous';

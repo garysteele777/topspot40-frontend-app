@@ -14,7 +14,7 @@ export type PlaybackSettings = {
 };
 
 export const playbackSettingsStore = writable<PlaybackSettings>({
-	playbackMethod: 'automatic',
+	playbackMethod: 'guided',
 	playbackOrder: 'shuffle',
 	skipPlayed: true,
 	pauseMode: 'continuous',
