@@ -5,6 +5,7 @@
     export let track: CarModeTrack | null = null;
     export let open = false;
     export let onClose: () => void;
+    export let languages: string[] = ['en'];
 
     /* ──────────────────────────────
        Swipe / drag physics
@@ -74,10 +75,6 @@
         mode = 'intro';
     }
 
-    // $: if (open && track) {
-    //     console.log("🎭 MODAL TRACK:", track);
-    // }
-
     $: headerImage =
         track?.artistArtwork ??
         track?.albumArtwork ??
@@ -108,7 +105,11 @@
             textsByLanguage?: TextsByLanguage;
         })?.textsByLanguage) ?? {};
 
-    $: languageEntries = Object.entries(textsByLanguage);
+    $: selectedLanguages = languages?.length ? languages : ['en'];
+
+    $: languageEntries = Object.entries(textsByLanguage).filter(([lang]) =>
+        selectedLanguages.includes(lang)
+    );
 
     function getModeText(
         texts: LanguageTexts,
@@ -122,7 +123,7 @@
     function languageLabel(lang: string): string {
         if (lang === 'en') return '🇺🇸 English';
         if (lang === 'es') return '🇪🇸 Español';
-        if (lang === 'ptbr') return '🇧🇷 Português';
+        if (lang === 'ptbr' || lang === 'pt-BR') return '🇧🇷 Português';
         return lang;
     }
 

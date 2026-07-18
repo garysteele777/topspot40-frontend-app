@@ -33,6 +33,7 @@
                     : 'up';
 
         playbackSettingsStore.set({
+            playbackMethod: 'automatic',
             playbackOrder,
             skipPlayed,
             pauseMode,

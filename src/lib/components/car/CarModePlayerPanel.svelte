@@ -5,6 +5,7 @@
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
     import CarModeTicker from './CarModeTicker.svelte';
     import {favoritesStore} from '$lib/favorites/favorites';
+    import TrackListPanel from '$lib/components/shared/TrackListPanel.svelte';
 
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
@@ -325,6 +326,7 @@
 
     <CarModeNarrationModal
             track={currentTrack}
+            languages={$currentSelection?.languages ?? [$currentSelection?.language ?? 'en']}
             open={showNarrationModal}
             onClose={() => setShowNarrationModal(false)}
     />
@@ -349,73 +351,15 @@
                     </button>
                 </div>
 
-                <div class="tracklist-scroll">
-
-                    <div class="track-row track-row-header">
-                        <span>Played</span>
-                        <span>Fav</span>
-                        <span>Rank</span>
-                        <span>Title</span>
-                        <span>Artist</span>
-                    </div>
-
-                    {#each [...tracks].sort((a, b) => a.rank - b.rank) as t}
-
-                        <div
-                                class="track-row"
-                                role="button"
-                                tabindex="0"
-                                class:active={currentTrack?.rankingId === t.rankingId}
-                                on:click={() => {
-                                    onJumpToTrack?.(t);
-                                    showTrackList = false;
-                                }}
-                                on:keydown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault();
-                                        onJumpToTrack?.(t);
-                                        showTrackList = false;
-                                    }
-                                }}
-                        >
-    <span class="played-col">
-        {#if isPlayed(t.rank)}
-            ✓
-        {/if}
-    </span>
-
-                            <button
-                                    type="button"
-                                    class="fav-col"
-                                    class:active={
-            favoriteRefresh &&
-            programType &&
-            programGroup &&
-            t.rankingId != null &&
-            isFavorite(programType, programGroup, t.rankingId)
-        }
-                                    on:click|stopPropagation={() => {
-                                        console.log('FAV CLICK', {
-                                            programType,
-                                            programGroup,
-                                            rankingId: t.rankingId,
-                                            track: t
-                                        });
-
-                                        if (programType && programGroup && t.rankingId != null) {
-                                            toggleFavorite(programType, programGroup, t.rankingId);
-                                        }
-                                    }}
-                            >
-                                ★
-                            </button>
-
-                            <span class="rank">#{t.rank}</span>
-                            <span class="title">{t.trackName}</span>
-                            <span class="artist">{t.artistName}</span>
-                        </div>
-                    {/each}
-                </div>
+                <TrackListPanel
+                        {tracks}
+                        {currentTrack}
+                        {onJumpToTrack}
+                        {isPlayed}
+                        {programType}
+                        {programGroup}
+                        closeOnJump={() => showTrackList = false}
+                />
             </div>
         </div>
     {/if}
@@ -583,14 +527,19 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 14px;
+        padding: 8px 14px 4px;
         border-bottom: 1px solid rgba(207, 184, 124, 0.25);
     }
 
     .tracklist-header h3 {
         margin: 0;
-        color: #cfb87c;
-        font-size: 1rem;
+        line-height: 1.1;
+    }
+
+    .tracklist-subtitle {
+        margin-top: 2px;
+        font-size: 0.8rem;
+        opacity: 0.7;
     }
 
     .close-btn {
@@ -602,82 +551,6 @@
         padding: 4px 10px;
     }
 
-    .tracklist-scroll {
-        max-height: 60vh;
-        overflow-y: auto;
-        padding: 8px;
-    }
-
-    .track-row {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 64px 44px 56px 1fr 1fr;
-        gap: 8px;
-        align-items: center;
-        text-align: left;
-        padding: 9px 10px;
-        border: none;
-        border-radius: 10px;
-        background: transparent;
-        color: #eee;
-        cursor: pointer;
-    }
-
-    .track-row:hover {
-        background: rgba(207, 184, 124, 0.12);
-    }
-
-    .track-row.active {
-        background: rgba(29, 185, 84, 0.18);
-        outline: 1px solid rgba(29, 185, 84, 0.45);
-    }
-
-    .rank {
-        color: #cfb87c;
-        font-weight: 700;
-    }
-
-    .title {
-        font-weight: 600;
-    }
-
-    .artist {
-        opacity: 0.75;
-    }
-
-    .track-row-header {
-        color: #cfb87c;
-        font-size: 0.75rem;
-        font-weight: 700;
-        opacity: 0.9;
-        cursor: default;
-    }
-
-    .played-col,
-    .fav-col {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        min-height: 24px;
-    }
-
-    .played-col {
-        opacity: 0.7;
-    }
-
-    .fav-col {
-        border: none;
-        background: transparent;
-        color: rgba(255, 255, 255, 0.35);
-        cursor: pointer;
-        font-size: 1rem;
-        width: 100%;
-    }
-
-    .fav-col.active {
-        color: #cfb87c;
-    }
 
     .tracklist-subtitle {
         margin-top: 2px;

@@ -139,7 +139,10 @@ export function buildEnrichedPlaybackTrack({
             normalizedCtx.artist_artwork ?? baseTrack.artistArtwork,
 
         textsByLanguage:
-            normalizedCtx.textsByLanguage ?? baseTrack.textsByLanguage,
+            normalizedCtx.textsByLanguage &&
+            Object.keys(normalizedCtx.textsByLanguage).length > 0
+                ? normalizedCtx.textsByLanguage
+                : baseTrack.textsByLanguage,
 
         decadeSlug:
             normalizedCtx.decade_slug ?? baseTrack.decadeSlug,

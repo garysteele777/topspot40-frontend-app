@@ -25,7 +25,7 @@
     };
     let audio: HTMLAudioElement | null = null;
     let bedAudio: HTMLAudioElement | null = null;
-    const BED_VOLUME = 0.002;
+    const BED_VOLUME = 0.035;
 
     let isPlaying = false;
     let currentTime = 0;
@@ -66,6 +66,7 @@
         bedAudio?.pause();
 
         audio = new Audio(narrationUrl);
+        audio.volume = 0.75;   // 75% volume
 
         if (bedUrl) {
             bedAudio = new Audio(bedUrl);

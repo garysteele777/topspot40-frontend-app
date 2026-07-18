@@ -535,7 +535,7 @@ goto(`/car-page?${params.toString()}`);
                             class:selected={artistCategory === 'other'}
                             on:click={() => {
                                 artistCategory = 'other';
-                                loadArtistSpotlights(selectedArtistGenre ?? 'all');
+                                loadArtistSpotlights(selectedArtistGenre ?? 'all', false, 2, null);
                             }}
                     >
                         🎵 Other Artists
@@ -708,7 +708,8 @@ goto(`/car-page?${params.toString()}`);
                     `/car-page?mode=artist_spotlight` +
                     `&artist_id=${artist.artist_id}` +
                     `&artist=${encodeURIComponent(artist.artist_name)}` +
-                    `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}`
+                    `&genre=${encodeURIComponent(selectedArtistGenre ?? '')}` +
+                        `&language=${language}`
                 );
             }}
                                         >

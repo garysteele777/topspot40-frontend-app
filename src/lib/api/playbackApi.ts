@@ -75,10 +75,18 @@ export async function playSpotifyTrackApi(spotifyTrackId: string, deviceId?: str
     }
 }
 
-export async function signalTrackFinishedApi(): Promise<void> {
+export async function signalTrackFinishedApi(payload: {
+    rankingId: number | null;
+    spotifyTrackId: string | null;
+}): Promise<void> {
     await fetch(`${API_BASE}/playback/track-finished`, {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            ranking_id: payload.rankingId,
+            spotify_track_id: payload.spotifyTrackId
+        })
     });
 }
 
