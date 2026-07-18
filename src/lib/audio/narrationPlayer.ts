@@ -16,3 +16,25 @@ export async function playNarrationUrl(url: string): Promise<void> {
 
 	await narrationAudio.play();
 }
+
+export function playNarrationUrlAndWait(url: string): Promise<void> {
+	stopNarration();
+
+	return new Promise((resolve) => {
+		const audio = new Audio(url);
+		narrationAudio = audio;
+		audio.preload = 'auto';
+
+		const finish = () => {
+			if (narrationAudio === audio) {
+				narrationAudio = null;
+			}
+			resolve();
+		};
+
+		audio.addEventListener('ended', finish, {once: true});
+		audio.addEventListener('error', finish, {once: true});
+
+		void audio.play().catch(finish);
+	});
+}

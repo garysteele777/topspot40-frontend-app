@@ -1,12 +1,17 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
+    import GuidedPlaybackPanel from '$lib/components/car/GuidedPlaybackPanel.svelte';
     import {derived} from 'svelte/store';
     import {PROGRAM_TYPES} from '$lib/types/program';
     import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
     import CameraPanel from '$lib/components/studio/CameraPanel.svelte';
     import {showCamera} from '$lib/studio/studio.store';
-    import {playNarrationUrl, stopNarration} from '$lib/audio/narrationPlayer';
+    import {
+        playNarrationUrl,
+        playNarrationUrlAndWait,
+        stopNarration
+    } from '$lib/audio/narrationPlayer';
 
     import ShowcasePanel from '$lib/components/studio/ShowcasePanel.svelte';
     import ContextPanel from '$lib/components/studio/ContextPanel.svelte';
@@ -83,6 +88,9 @@
     let lastProgramKey: string | null = null;
     let nextTrackLock = false;
     let artistBioPlayedThisSet = false;
+    let guidedReady = false;
+    let guidedSpotifyOpened = false;
+    let guidedSpotifyWindow: Window | null = null;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -182,6 +190,11 @@
         | 'happy-trails';
 
     async function triggerStudioAction(action: StudioAction): Promise<void> {
+        if (get(playbackSettingsStore).playbackMethod === 'guided') {
+            status.set('Studio Spotify controls are disabled during Guided Playback.');
+            return;
+        }
+
         try {
             const response = await fetch(
                 `${API_BASE}/playback/studio/${action}`,
@@ -398,11 +411,179 @@
         showNarrationModal.set(v);
     }
 
+    function publicAudioUrl(
+        audioKey: {bucket: string; key: string} | null | undefined
+    ): string | null {
+        if (!audioKey?.bucket || !audioKey.key) return null;
+
+        return `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${audioKey.bucket}/${audioKey.key}`;
+    }
+
+    function guidedNarrationUrls(trackObj: CarModeTrack): {
+        phase: 'intro' | 'detail' | 'artist';
+        url: string;
+    }[] {
+        const sel = get(currentSelection);
+        const settings = get(playbackSettingsStore);
+
+        if (!sel) return [];
+
+        const language = sel.language ?? 'en';
+        const bucket =
+            language === 'ptbr'
+                ? 'audio-ptbr'
+                : `audio-${language}`;
+
+        const result: {
+            phase: 'intro' | 'detail' | 'artist';
+            url: string;
+        }[] = [];
+
+        if (settings.voices.includes('intro')) {
+            let url = publicAudioUrl(trackObj.introKey);
+
+            if (
+                !url &&
+                sel.mode === 'decade_genre' &&
+                trackObj.decadeSlug &&
+                trackObj.genreSlug
+            ) {
+                const rankText = String(trackObj.rank).padStart(2, '0');
+
+                url =
+                    `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/` +
+                    `${bucket}/intro/${trackObj.decadeSlug}_${trackObj.genreSlug}_${rankText}.mp3`;
+            }
+
+            if (url) result.push({phase: 'intro', url});
+        }
+
+        if (settings.voices.includes('detail')) {
+            const url =
+                publicAudioUrl(trackObj.detailKey) ??
+                (
+                    trackObj.spotifyTrackId
+                        ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/detail/${trackObj.spotifyTrackId}.mp3`
+                        : null
+                );
+
+            if (url) result.push({phase: 'detail', url});
+        }
+
+        if (settings.voices.includes('artist')) {
+            const url =
+                publicAudioUrl(trackObj.artistKey) ??
+                (
+                    trackObj.spotifyArtistId
+                        ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/artist/${trackObj.spotifyArtistId}.mp3`
+                        : null
+                );
+
+            if (url) result.push({phase: 'artist', url});
+        }
+
+        return result;
+    }
+
+    async function startGuidedTrack(trackObj: CarModeTrack) {
+        guidedReady = false;
+        guidedSpotifyOpened = false;
+
+        const token =
+            `${trackObj.rankingId ?? trackObj.rank}|${trackObj.spotifyTrackId ?? ''}`;
+
+        const narrations = guidedNarrationUrls(trackObj);
+
+        isPlaying.set(true);
+
+        for (const narration of narrations) {
+            const activeTrack = get(currentTrack);
+            const activeToken = activeTrack
+                ? `${activeTrack.rankingId ?? activeTrack.rank}|${activeTrack.spotifyTrackId ?? ''}`
+                : '';
+
+            if (activeToken !== token) return;
+
+            playbackPhase.set(narration.phase);
+            await playNarrationUrlAndWait(narration.url);
+        }
+
+        const activeTrack = get(currentTrack);
+        const activeToken = activeTrack
+            ? `${activeTrack.rankingId ?? activeTrack.rank}|${activeTrack.spotifyTrackId ?? ''}`
+            : '';
+
+        if (activeToken !== token) return;
+
+        isPlaying.set(false);
+        playbackPhase.set('track');
+        guidedReady = true;
+    }
+
+    function openGuidedSpotify() {
+        const track = get(currentTrack);
+
+        if (!track?.spotifyTrackId) {
+            status.set('Spotify link is not available for this track.');
+            return;
+        }
+
+        guidedSpotifyOpened = true;
+
+        localStorage.setItem(
+            'ts-guided-playback-v1',
+            JSON.stringify({
+                rankingId: track.rankingId,
+                rank: track.rank,
+                spotifyTrackId: track.spotifyTrackId,
+                trackName: track.trackName,
+                artistName: track.artistName,
+                openedAt: new Date().toISOString()
+            })
+        );
+
+        const spotifyUrl =
+            `https://open.spotify.com/track/${track.spotifyTrackId}`;
+
+        guidedSpotifyWindow = window.open(
+            spotifyUrl,
+            'topspot40-guided-spotify'
+        );
+
+        guidedSpotifyWindow?.focus();
+    }
+
+    async function continueGuidedPlayback() {
+        guidedReady = false;
+        guidedSpotifyOpened = false;
+        await nextTrack();
+    }
+
+    async function skipGuidedTrack() {
+        guidedReady = false;
+        guidedSpotifyOpened = false;
+        await nextTrack();
+    }
+
     async function playTrack(trackObj: CarModeTrack) {
         const sel = $currentSelection;
         if (!sel) return;
 
         const settings = get(playbackSettingsStore);
+
+        const isRadioProgram =
+            sel.programType === 'RADIO_DG' ||
+            sel.programType === 'RADIO_COL' ||
+            sel.programType === 'RADIO_ARTIST';
+
+        const guidedSupported =
+            !isRadioProgram &&
+            sel.mode !== 'artist_spotlight';
+
+        if (settings.playbackMethod === 'guided' && guidedSupported) {
+            await startGuidedTrack(trackObj);
+            return;
+        }
 
         if (sel.mode === 'artist_spotlight' && sel.programType === 'RADIO_ARTIST') {
             const firstTrack = $tracks[0] as unknown as {
@@ -541,6 +722,24 @@
     async function handlePlayPause() {
         if (!$currentTrack) return;
 
+        const activeSettings = get(playbackSettingsStore);
+
+        if (activeSettings.playbackMethod === 'guided') {
+            if (guidedReady) {
+                return;
+            }
+
+            if (get(isPlaying)) {
+                stopNarration();
+                isPlaying.set(false);
+                playbackPhase.set('paused');
+                return;
+            }
+
+            await startGuidedTrack($currentTrack);
+            return;
+        }
+
         const playing = get(isPlaying);
 
         if (playing) {
@@ -609,8 +808,16 @@
 
     // Backend owns playback now. Frontend only signals stop.
     async function clearAllPlayback() {
+        if (get(playbackSettingsStore).playbackMethod === 'guided') {
+            stopNarrationAudio();
+            return;
+        }
+
         try {
-            await fetch(`${API_BASE}/playback/stop`, {method: 'POST', credentials: 'include'});
+            await fetch(`${API_BASE}/playback/stop`, {
+                method: 'POST',
+                credentials: 'include'
+            });
         } catch {
             console.warn("Backend stop failed (probably already stopped)");
         }
@@ -618,7 +825,15 @@
 
     async function stopPlayback() {
         stopNarrationAudio();
-        await fetch(`${API_BASE}/playback/stop`, {method: 'POST', credentials: 'include'});
+
+        if (get(playbackSettingsStore).playbackMethod === 'guided') {
+            return;
+        }
+
+        await fetch(`${API_BASE}/playback/stop`, {
+            method: 'POST',
+            credentials: 'include'
+        });
     }
 
     async function handleJumpToTrack(track: CarModeTrack) {
@@ -903,15 +1118,26 @@
 
         window.addEventListener('keydown', handleKeyDown);
 
-        // 🧹 Step 0: Reset backend transport safely
-        try {
-            await fetch(`${API_BASE}/playback/reset`, {method: 'POST', credentials: 'include'});
-        } catch (err) {
-            console.warn('⚠️ Backend reset failed (continuing anyway):', err);
-        }
+        const mountedSettings = get(playbackSettingsStore);
 
-// ⏱ Step 1: Start polling AFTER reset
-        startPlaybackPolling();
+        if (mountedSettings.playbackMethod === 'automatic') {
+            // Automatic Playback keeps the existing backend transport.
+            try {
+                await fetch(`${API_BASE}/playback/reset`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (err) {
+                console.warn('⚠️ Backend reset failed (continuing anyway):', err);
+            }
+
+            startPlaybackPolling();
+        } else {
+            // Guided Playback owns narration and Spotify handoff in the browser.
+            resetNarrationPhaseState();
+            playbackPhase.set('idle');
+            isPlaying.set(false);
+        }
 
         window.addEventListener('ts-next-track', handleAutoNextTrack);
 
@@ -1091,6 +1317,16 @@
                     onPlayPause={handlePlayPause}
                     onBackToOptions={backToOptions}
             />
+
+            {#if settings.playbackMethod === 'guided' && guidedReady}
+                <GuidedPlaybackPanel
+                        track={$currentTrack}
+                        opened={guidedSpotifyOpened}
+                        onOpenSpotify={openGuidedSpotify}
+                        onContinue={continueGuidedPlayback}
+                        onSkip={skipGuidedTrack}
+                />
+            {/if}
 
 
         {:else}

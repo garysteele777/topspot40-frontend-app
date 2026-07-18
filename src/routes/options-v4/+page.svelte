@@ -48,6 +48,7 @@
     let startRank = 1;
     let endRank = 9999;
 
+    let playbackMethod: 'automatic' | 'guided' = 'automatic';
     let playbackOrder: PlaybackOrder = 'shuffle';
 
     let pauseMode: 'pause' | 'continuous' = 'continuous';
@@ -473,6 +474,7 @@
     $: if (browser && hydrated) {
         playbackSettingsStore.set({
             voices: selectedVoices,
+            playbackMethod,
             playbackOrder,
             pauseMode,
             voicePlayMode: 'before',
@@ -521,6 +523,7 @@
                     bind:language
                     bind:languages
                     bind:selectedVoices
+                    bind:playbackMethod
                     bind:playbackOrder
                     bind:pauseMode
                     bind:skipPlayed
