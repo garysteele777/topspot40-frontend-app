@@ -2,7 +2,10 @@
 
 import { writable } from 'svelte/store';
 
+export type PlaybackMethod = 'automatic' | 'guided';
+
 export type PlaybackSettings = {
+	playbackMethod: PlaybackMethod;
 	playbackOrder: 'up' | 'down' | 'shuffle';
 	skipPlayed: boolean;
 	pauseMode: 'pause' | 'continuous';
@@ -11,6 +14,7 @@ export type PlaybackSettings = {
 };
 
 export const playbackSettingsStore = writable<PlaybackSettings>({
+	playbackMethod: 'automatic',
 	playbackOrder: 'shuffle',
 	skipPlayed: true,
 	pauseMode: 'continuous',

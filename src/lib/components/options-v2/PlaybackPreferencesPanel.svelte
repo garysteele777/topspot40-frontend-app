@@ -13,6 +13,7 @@
     export let language: Language = 'en';
     export let languages: Language[] = ['en'];
     export let selectedVoices: VoicePart[] = ['intro'];
+    export let playbackMethod: 'automatic' | 'guided' = 'automatic';
     export let playbackOrder: PlaybackOrder = 'up';
     export let pauseMode: 'pause' | 'continuous' = 'pause';
     export let skipPlayed = false;
@@ -23,6 +24,9 @@
 
     $: languageSummary =
         languages.map(l => l === 'ptbr' ? 'PT-BR' : l.toUpperCase()).join(' + ');
+
+    $: methodSummary =
+        playbackMethod === 'guided' ? 'Guided Spotify' : 'Automatic Spotify';
 
     $: orderSummary =
         playbackOrder === 'up' ? 'Up' : playbackOrder === 'down' ? 'Down' : 'Shuffle';
@@ -59,7 +63,7 @@
     </div>
 
     <div class="radio-description">
-        {languageSummary} • {orderSummary} • {flowSummary} • {trackStrategySummary} • {voiceSummary}
+        {languageSummary} • {methodSummary} • {orderSummary} • {flowSummary} • {trackStrategySummary} • {voiceSummary}
     </div>
 
     {#if !collapsed}
@@ -96,6 +100,26 @@
                     <h3 class="tile-title">Playback</h3>
 
                     <div class="playback-section">
+
+                        <div class="playback-group">
+                            <div class="label">Method</div>
+
+                            <div class="grid grid-2">
+                                <button
+                                        class:selected={playbackMethod === 'automatic'}
+                                        on:click|stopPropagation={() => playbackMethod = 'automatic'}
+                                >
+                                    Automatic Spotify
+                                </button>
+
+                                <button
+                                        class:selected={playbackMethod === 'guided'}
+                                        on:click|stopPropagation={() => playbackMethod = 'guided'}
+                                >
+                                    Guided Spotify
+                                </button>
+                            </div>
+                        </div>
 
                         <div class="playback-group">
                             <div class="label">Order</div>
