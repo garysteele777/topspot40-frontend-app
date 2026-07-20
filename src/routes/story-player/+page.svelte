@@ -22,6 +22,9 @@
         slug?: string;
         artwork_url?: string;
         target_length?: string;
+        has_youtube_video?: boolean;
+        youtube_video_id?: string;
+        youtube_url?: string;
     };
     let audio: HTMLAudioElement | null = null;
     let bedAudio: HTMLAudioElement | null = null;
@@ -156,6 +159,20 @@
         return `${minutes} min`;
     }
 
+    function youtubeButtonLabel(
+        languageCode: string
+    ): string {
+        if (languageCode === 'es') {
+            return '▶ Ver documental';
+        }
+
+        if (languageCode === 'pt-BR') {
+            return '▶ Assistir documentário';
+        }
+
+        return '▶ Watch Documentary';
+    }
+
     onMount(async () => {
         artistId = $page.url.searchParams.get('artist_id');
         artistName = $page.url.searchParams.get('artist') ?? '';
@@ -276,6 +293,21 @@
                     </button>
                 {/if}
             </div>
+
+            {#if
+                contentType === 'music_docuseries' &&
+                story.has_youtube_video &&
+                story.youtube_url
+            }
+                <a
+                    class="youtube-btn"
+                    href={story.youtube_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    {youtubeButtonLabel(language)}
+                </a>
+            {/if}
 
             {#if story.story_text}
                 <button
@@ -414,6 +446,26 @@
         height: 100%;
         background: #cfb87c;
         transition: width 0.25s linear;
+    }
+
+    .youtube-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 18px auto 0;
+        background: #cfb87c;
+        color: #000;
+        border: none;
+        border-radius: 999px;
+        padding: 12px 26px;
+        font-weight: 800;
+        font-size: 1rem;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .youtube-btn:hover {
+        background: #dfc98f;
     }
 
     .more-info-btn {
