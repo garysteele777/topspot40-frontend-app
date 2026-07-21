@@ -91,6 +91,7 @@
     let artistBioPlayedThisSet = false;
     let guidedReady = false;
     let guidedSpotifyOpened = false;
+    let guidedSpotifyReturned = false;
     let guidedSpotifyWindow: Window | null = null;
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
@@ -437,7 +438,7 @@
     }
 
     function publicAudioUrl(
-        audioKey: {bucket: string; key: string} | null | undefined
+        audioKey: { bucket: string; key: string } | null | undefined
     ): string | null {
         if (!audioKey?.bucket || !audioKey.key) return null;
 
@@ -513,6 +514,7 @@
     async function startGuidedTrack(trackObj: CarModeTrack) {
         guidedReady = false;
         guidedSpotifyOpened = false;
+        guidedSpotifyReturned = false;
 
         const token =
             `${trackObj.rankingId ?? trackObj.rank}|${trackObj.spotifyTrackId ?? ''}`;
@@ -545,6 +547,18 @@
         guidedReady = true;
     }
 
+    function handleGuidedReturn(): void {
+        if (
+            !guidedReady
+            || !guidedSpotifyOpened
+            || document.visibilityState === 'hidden'
+        ) {
+            return;
+        }
+
+        guidedSpotifyReturned = true;
+    }
+
     function openGuidedSpotify() {
         const track = get(currentTrack);
 
@@ -553,6 +567,7 @@
             return;
         }
 
+        guidedSpotifyReturned = false;
         guidedSpotifyOpened = true;
 
         localStorage.setItem(
@@ -581,13 +596,21 @@
     async function continueGuidedPlayback() {
         guidedReady = false;
         guidedSpotifyOpened = false;
+        guidedSpotifyReturned = false;
         await nextTrack();
     }
 
     async function skipGuidedTrack() {
         guidedReady = false;
         guidedSpotifyOpened = false;
+        guidedSpotifyReturned = false;
         await nextTrack();
+    }
+
+    function returnToGuidedCarPage(): void {
+        guidedReady = false;
+        guidedSpotifyOpened = false;
+        guidedSpotifyReturned = false;
     }
 
     async function playTrack(trackObj: CarModeTrack) {
@@ -1219,6 +1242,14 @@
 
         window.addEventListener('keydown', handleKeyDown);
 
+        document.addEventListener(
+            'visibilitychange',
+            handleGuidedReturn
+        );
+        window.addEventListener(
+            'focus',
+            handleGuidedReturn
+        );
         const mountedSettings = get(playbackSettingsStore);
 
         if (mountedSettings.playbackMethod === 'automatic') {
@@ -1337,8 +1368,26 @@
 
 
     onDestroy(() => {
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('ts-next-track', handleAutoNextTrack);
+        window.removeEventListener(
+            'keydown',
+            handleKeyDown
+        );
+
+        document.removeEventListener(
+            'visibilitychange',
+            handleGuidedReturn
+        );
+
+        window.removeEventListener(
+            'focus',
+            handleGuidedReturn
+        );
+
+        window.removeEventListener(
+            'ts-next-track',
+            handleAutoNextTrack
+        );
+
         stopPlaybackPolling();
         void clearAllPlayback();
     });
@@ -1431,9 +1480,11 @@
                 <GuidedPlaybackPanel
                         track={$currentTrack}
                         opened={guidedSpotifyOpened}
+                        returned={guidedSpotifyReturned}
                         onOpenSpotify={openGuidedSpotify}
                         onContinue={continueGuidedPlayback}
                         onSkip={skipGuidedTrack}
+                        onBackToCar={returnToGuidedCarPage}
                 />
             {/if}
 
