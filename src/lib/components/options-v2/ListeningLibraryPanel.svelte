@@ -36,6 +36,9 @@
         duration_seconds?: number;
         tts_bucket?: string;
         tts_key?: string;
+        has_youtube_video?: boolean;
+        youtube_video_id?: string;
+        youtube_url?: string;
     };
 
     type ArtistTrackItem = {
@@ -178,6 +181,20 @@
 
     function titleCaseName(name: string): string {
         return name.replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function documentaryButtonLabel(
+        languageCode: string
+    ): string {
+        if (languageCode === 'es') {
+            return '▶ Ver documental';
+        }
+
+        if (languageCode === 'pt-BR') {
+            return '▶ Assistir documentário';
+        }
+
+        return '▶ Watch Documentary';
     }
 
     async function loadArtistSpotlights(
@@ -715,6 +732,29 @@ goto(`/car-page?${params.toString()}`);
                                         >
                                             ▶ Play Artist Spotlight
                                         </button>
+
+                                        {#if
+                                            artistStoryInfo?.has_youtube_video &&
+                                            artistStoryInfo.youtube_url
+                                        }
+                                            <button
+                                                class="play-artist-btn"
+                                                on:click={() => {
+                                                    const url =
+                                                        artistStoryInfo?.youtube_url;
+
+                                                    if (url) {
+                                                        window.open(
+                                                            url,
+                                                            '_blank',
+                                                            'noopener,noreferrer'
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                {documentaryButtonLabel(language)}
+                                            </button>
+                                        {/if}
 
                                     </div>
                                     {#if artistTracksLoading}
