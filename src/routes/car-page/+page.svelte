@@ -97,6 +97,7 @@
     let guidedSpotifyOpened = false;
     let guidedSpotifyReturned = false;
     let guidedSpotifyWindow: Window | null = null;
+    let guidedArtistBioPlaying = false;
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
 
@@ -515,6 +516,48 @@
         return result;
     }
 
+    function guidedArtistBioUrl(trackObj: CarModeTrack): string | null {
+        const sel = get(currentSelection);
+        if (!sel) return null;
+
+        const language = sel.language ?? 'en';
+        const bucket =
+            language === 'ptbr'
+                ? 'audio-ptbr'
+                : `audio-${language}`;
+
+        return (
+            publicAudioUrl(trackObj.artistKey) ??
+            (
+                trackObj.spotifyArtistId
+                    ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/artist/${trackObj.spotifyArtistId}.mp3`
+                    : null
+            )
+        );
+    }
+
+    async function playGuidedArtistBio(): Promise<void> {
+        const track = get(currentTrack);
+        const url = track ? guidedArtistBioUrl(track) : null;
+        if (!url || guidedArtistBioPlaying) return;
+
+        guidedArtistBioPlaying = true;
+        playbackPhase.set('artist');
+
+        try {
+            await playNarrationUrlAndWait(url);
+        } finally {
+            guidedArtistBioPlaying = false;
+            playbackPhase.set('track');
+        }
+    }
+
+    function stopGuidedArtistBio(): void {
+        stopNarration();
+        guidedArtistBioPlaying = false;
+        playbackPhase.set('track');
+    }
+
     function guidedBedAudioUrl(trackObj: CarModeTrack): string {
         const sel = get(currentSelection);
         const context = sel?.context;
@@ -603,6 +646,8 @@
     }
 
     function openGuidedSpotify() {
+        stopGuidedArtistBio();
+
         const track = get(currentTrack);
 
         if (!track?.spotifyTrackId) {
@@ -1547,6 +1592,10 @@
                         track={$currentTrack}
                         opened={guidedSpotifyOpened}
                         returned={guidedSpotifyReturned}
+                        hasArtistBio={guidedArtistBioUrl($currentTrack) !== null}
+                        artistBioPlaying={guidedArtistBioPlaying}
+                        onPlayArtistBio={playGuidedArtistBio}
+                        onStopArtistBio={stopGuidedArtistBio}
                         onOpenSpotify={openGuidedSpotify}
                         onContinue={continueGuidedPlayback}
                         onSkip={skipGuidedTrack}
