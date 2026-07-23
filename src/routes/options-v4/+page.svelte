@@ -43,7 +43,15 @@
     let activeGroup: ModeType = 'decade_genre';
     let language: Language = 'en';
     let languages: Language[] = ['en'];
-    let initialLibraryTab: 'nostalgia' | 'collections' | 'artists' = 'nostalgia';
+    let initialLibraryTab: 'nostalgia' | 'collections' | 'artists' =
+        page.url.searchParams.get('tab') === 'artist'
+            ? 'artists'
+            : page.url.searchParams.get('tab') === 'collections'
+                ? 'collections'
+                : 'nostalgia';
+
+    let initialDocuseriesCollection =
+        page.url.searchParams.get('docuseries_collection');
 
     let startRank = 1;
     let endRank = 9999;
@@ -415,6 +423,10 @@
 
         if (tab === 'artist') {
             initialLibraryTab = 'artists';
+        } else if (tab === 'collections') {
+            initialLibraryTab = 'collections';
+            initialDocuseriesCollection =
+                page.url.searchParams.get('docuseries_collection');
         }
 
         try {
@@ -671,7 +683,10 @@
         {/if}
 
 
-        <div class:active-section-wrapper={openSection === 'library'}>
+        <div
+                id="listening-library"
+                class:active-section-wrapper={openSection === 'library'}
+        >
             <ListeningLibraryPanel
                     {decadeOptions}
                     {genreOptions}
@@ -684,6 +699,7 @@
                     {pauseMode}
                     {skipPlayed}
                     initialTab={initialLibraryTab}
+                    {initialDocuseriesCollection}
                     title={uiText[language].library}
                     description={uiText[language].libraryDesc}
                     collapsed={openSection !== 'library'}

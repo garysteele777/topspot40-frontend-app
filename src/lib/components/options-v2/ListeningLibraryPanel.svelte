@@ -101,6 +101,7 @@
     export let onActivate: (() => void) | undefined = undefined;
     export let collapsed = false;
     export let initialTab: LibraryMode = 'nostalgia';
+    export let initialDocuseriesCollection: string | null = null;
 
     export let title = 'TopSpot40 Listening Library';
     export let description = 'Browse saved programs and curated collections.';
@@ -115,6 +116,11 @@
 
         if (initialTab === 'artists' && artistSpotlightItems.length === 0) {
             loadArtistSpotlights('all');
+        }
+
+        if (initialTab === 'collections' && initialDocuseriesCollection) {
+            selectedCollectionGroup = 'music_docuseries';
+            void restoreDocuseriesSelection(initialDocuseriesCollection);
         }
     }
 
@@ -274,6 +280,14 @@
         } finally {
             docuseriesLoading = false;
         }
+    }
+
+    async function restoreDocuseriesSelection(
+        collectionSlug: string
+    ): Promise<void> {
+        selectedCollectionGroup = 'music_docuseries';
+        await loadDocuseriesCollections();
+        await loadDocuseriesItems(collectionSlug);
     }
 
 </script>
@@ -484,7 +498,8 @@ goto(`/car-page?${params.toString()}`);
                                     goto(
                                         `/story-player?type=music_docuseries` +
                                         `&slug=${item.slug}` +
-                                        `&language=${language}`
+                                        `&language=${language}` +
+                                        `&collection=${encodeURIComponent(selectedDocuseriesCollection ?? '')}`
                                     );
                                 }}
                                         >
