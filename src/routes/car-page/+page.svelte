@@ -636,17 +636,39 @@
         guidedSpotifyWindow?.focus();
     }
 
+    function closeGuidedSpotifyWindow(): void {
+        try {
+            if (
+                guidedSpotifyWindow
+                && !guidedSpotifyWindow.closed
+            ) {
+                guidedSpotifyWindow.close();
+            }
+        } catch {
+            // The Spotify window may already have been closed
+            // manually or may no longer be accessible.
+        }
+
+        guidedSpotifyWindow = null;
+    }
+
     async function continueGuidedPlayback() {
+        closeGuidedSpotifyWindow();
+
         guidedReady = false;
         guidedSpotifyOpened = false;
         guidedSpotifyReturned = false;
+
         await nextTrack();
     }
 
     async function skipGuidedTrack() {
+        closeGuidedSpotifyWindow();
+
         guidedReady = false;
         guidedSpotifyOpened = false;
         guidedSpotifyReturned = false;
+
         await nextTrack();
     }
 
