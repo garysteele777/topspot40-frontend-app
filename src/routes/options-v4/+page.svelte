@@ -3,7 +3,7 @@
 
     import {onMount} from 'svelte';
     import {page} from '$app/state';
-    import {browser} from '$app/environment';
+    import {browser, dev} from '$app/environment';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {buildSelectionFromResume} from '$lib/options/applyResume';
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
@@ -588,139 +588,141 @@
             />
         </div>
 
-        <!-- 🔥 RADIO (NEW) -->
-        <div
-                class="opt-cell opt-cell--radio"
-                class:active-section-wrapper={openSection === 'radio'}
-        >
+        {#if dev}
+            <!-- 🔥 RADIO (NEW) -->
             <div
-                    class="section-header-row section-header-clickable"
-                    role="button"
-                    tabindex="0"
-                    on:click={() => {
+                    class="opt-cell opt-cell--radio"
+                    class:active-section-wrapper={openSection === 'radio'}
+            >
+                <div
+                        class="section-header-row section-header-clickable"
+                        role="button"
+                        tabindex="0"
+                        on:click={() => {
                 openSection = openSection === 'radio' ? null : 'radio';
             }}
-                    on:keydown={(e) => {
+                        on:keydown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     openSection = openSection === 'radio' ? null : 'radio';
                 }
             }}
-            >
-                <h3 class="section-title">
-                    📻🐕 {uiText[language].radio} 📻🐕
-                </h3>
-                <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
-            </div>
+                >
+                    <h3 class="section-title">
+                        📻🐕 {uiText[language].radio} 📻🐕
+                    </h3>
+                    <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
+                </div>
 
-            <div class="radio-description">
-                {uiText[language].radioDesc}
-            </div>
-
-            {#if openSection === 'radio'}
                 <div class="radio-description">
-                    {uiText[language].radioHelp}
+                    {uiText[language].radioDesc}
                 </div>
 
-                <div class="radio-buttons">
-                    <button
-                            class:active={radioMode === 'nostalgia'}
-                            on:click|stopPropagation={() => startRadio('nostalgia')}
-                    >
-                        {uiText[language].nostalgiaRadio}
-                    </button>
+                {#if openSection === 'radio'}
+                    <div class="radio-description">
+                        {uiText[language].radioHelp}
+                    </div>
 
-                    <button
-                            class:active={radioMode === 'collections'}
-                            on:click|stopPropagation={() => startRadio('collections')}
-                    >
-                        {uiText[language].collectionsRadio}
-                    </button>
+                    <div class="radio-buttons">
+                        <button
+                                class:active={radioMode === 'nostalgia'}
+                                on:click|stopPropagation={() => startRadio('nostalgia')}
+                        >
+                            {uiText[language].nostalgiaRadio}
+                        </button>
 
-                    <button
-                            class:active={radioMode === 'artist_spotlight'}
-                            on:click|stopPropagation={() => startRadio('artist_spotlight')}
-                    >
-                        {uiText[language].artistRadio}
-                    </button>
-                </div>
+                        <button
+                                class:active={radioMode === 'collections'}
+                                on:click|stopPropagation={() => startRadio('collections')}
+                        >
+                            {uiText[language].collectionsRadio}
+                        </button>
 
-                <span>{uiText[language].stations}</span>
-
-                {#if radioMode === 'nostalgia'}
-                    <div style="margin-top: 10px;">
-                        <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
-                            <span class="icon">📻</span>
-                            <span>{uiText[language].startAllGenres}</span>
+                        <button
+                                class:active={radioMode === 'artist_spotlight'}
+                                on:click|stopPropagation={() => startRadio('artist_spotlight')}
+                        >
+                            {uiText[language].artistRadio}
                         </button>
                     </div>
 
-                    <div class="radio-genres">
-                        {#each genreOptions as g}
-                            <button
-                                    class="genre-btn"
-                                    class:selected={selectedGenre === g.id}
-                                    on:click|stopPropagation={() => {
+                    <span>{uiText[language].stations}</span>
+
+                    {#if radioMode === 'nostalgia'}
+                        <div style="margin-top: 10px;">
+                            <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
+                                <span class="icon">📻</span>
+                                <span>{uiText[language].startAllGenres}</span>
+                            </button>
+                        </div>
+
+                        <div class="radio-genres">
+                            {#each genreOptions as g}
+                                <button
+                                        class="genre-btn"
+                                        class:selected={selectedGenre === g.id}
+                                        on:click|stopPropagation={() => {
                                 launchNostalgiaGenre(g.id);
                             }}
-                            >
-                                <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
-                                <span>{g.label}</span>
+                                >
+                                    <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
+                                    <span>{g.label}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    {/if}
+
+                    {#if radioMode === 'collections'}
+                        <div style="margin-top: 10px;">
+                            <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
+                                <span class="icon">📻</span>
+                                <span>{uiText[language].startAllCollections}</span>
                             </button>
-                        {/each}
-                    </div>
+                        </div>
+
+                        <div class="radio-genres">
+                            {#each collectionGroups as group}
+                                <button
+                                        class="genre-btn"
+                                        on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
+                                >
+                                    <span class="icon">📀</span>
+                                    <span>{group.name}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    {/if}
                 {/if}
-
-                {#if radioMode === 'collections'}
-                    <div style="margin-top: 10px;">
-                        <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
-                            <span class="icon">📻</span>
-                            <span>{uiText[language].startAllCollections}</span>
-                        </button>
-                    </div>
-
-                    <div class="radio-genres">
-                        {#each collectionGroups as group}
-                            <button
-                                    class="genre-btn"
-                                    on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
-                            >
-                                <span class="icon">📀</span>
-                                <span>{group.name}</span>
-                            </button>
-                        {/each}
-                    </div>
-                {/if}
-            {/if}
-        </div>
-
-        {#if radioMode === 'artist_spotlight'}
-            <div class="radio-description" style="margin-top: 10px;">
-               {uiText[language].artistRadioDesc}
             </div>
 
-            <div class="radio-genres">
+            {#if radioMode === 'artist_spotlight'}
+                <div class="radio-description" style="margin-top: 10px;">
+                    {uiText[language].artistRadioDesc}
+                </div>
 
-                <button
-                        class="start-all-btn artist-start-all-btn"
-                        on:click|stopPropagation={() => launchArtistSpotlightRadioGenre('ALL')}
-                >
-                    <span class="icon">🎤</span>
-                    <span>{uiText[language].startAllArtists}</span>
-                </button>
+                <div class="radio-genres">
 
-                {#each genreOptions.filter(g => g.id !== 'tv_themes') as g}
                     <button
-                            class="genre-btn"
-                            on:click|stopPropagation={() => {
+                            class="start-all-btn artist-start-all-btn"
+                            on:click|stopPropagation={() => launchArtistSpotlightRadioGenre('ALL')}
+                    >
+                        <span class="icon">🎤</span>
+                        <span>{uiText[language].startAllArtists}</span>
+                    </button>
+
+                    {#each genreOptions.filter(g => g.id !== 'tv_themes') as g}
+                        <button
+                                class="genre-btn"
+                                on:click|stopPropagation={() => {
                         launchArtistSpotlightRadioGenre(g.id);
                     }}
-                    >
-                        <span class="icon">{genreIcons[g.id] ?? '🎤'}</span>
-                        <span>{g.label}</span>
-                    </button>
-                {/each}
-            </div>
+                        >
+                            <span class="icon">{genreIcons[g.id] ?? '🎤'}</span>
+                            <span>{g.label}</span>
+                        </button>
+                    {/each}
+                </div>
+            {/if}
         {/if}
 
 
