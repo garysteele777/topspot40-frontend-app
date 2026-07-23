@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onMount} from 'svelte';
     import {page} from '$app/stores';
+    import {goto} from '$app/navigation';
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -47,6 +48,7 @@
 
     let contentType = 'artist_story';
     let slug: string | null = null;
+    let docuseriesCollection: string | null = null;
 
     let story: StoryResponse | null = null;
     let error: string | null = null;
@@ -173,6 +175,23 @@
         return '▶ Watch Documentary';
     }
 
+    async function goBack(): Promise<void> {
+        stopStory();
+
+        if (contentType === 'music_docuseries' && docuseriesCollection) {
+            await goto(
+                `/options-v4?panel=library` +
+                `&tab=collections` +
+                `&collection_group=music_docuseries` +
+                `&docuseries_collection=${encodeURIComponent(docuseriesCollection)}` +
+                `#listening-library`
+            );
+            return;
+        }
+
+        history.back();
+    }
+
     onMount(async () => {
         artistId = $page.url.searchParams.get('artist_id');
         artistName = $page.url.searchParams.get('artist') ?? '';
@@ -180,6 +199,8 @@
 
         contentType = $page.url.searchParams.get('type') ?? 'artist_story';
         slug = $page.url.searchParams.get('slug');
+        docuseriesCollection =
+            $page.url.searchParams.get('collection');
 
         try {
             let url = '';
@@ -224,7 +245,7 @@
 </script>
 
 <div class="story-page">
-    <button class="back-btn" on:click={() => history.back()}>
+    <button class="back-btn" on:click={goBack}>
         ← Back
     </button>
 
