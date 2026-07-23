@@ -7,6 +7,7 @@
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {buildSelectionFromResume} from '$lib/options/applyResume';
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
+    import {loadResumeState} from '$lib/utils/smartResume';
     import {get} from 'svelte/store';
     import {
         programHistoryStore
@@ -56,14 +57,21 @@
     let startRank = 1;
     let endRank = 9999;
 
-    let playbackMethod: 'automatic' | 'guided' = 'guided';
-    let playbackOrder: PlaybackOrder = 'shuffle';
+    const initialPlaybackSettings = get(playbackSettingsStore);
 
-    let pauseMode: 'pause' | 'continuous' = 'continuous';
+    let playbackMethod: 'automatic' | 'guided' =
+        initialPlaybackSettings.playbackMethod;
+    let playbackOrder: PlaybackOrder =
+        initialPlaybackSettings.playbackOrder;
 
-    let skipPlayed = true;
+    let pauseMode: 'pause' | 'continuous' =
+        initialPlaybackSettings.pauseMode;
 
-    let selectedVoices: VoicePart[] = ['intro', 'detail'];
+    let skipPlayed = initialPlaybackSettings.skipPlayed;
+
+    let selectedVoices: VoicePart[] = [
+        ...initialPlaybackSettings.voices
+    ];
 
 
     let decades: string[] = [];
@@ -402,7 +410,9 @@
     // Mount: load resume → catalog → apply
     // ─────────────────────────────────────────────
     onMount(async () => {
-        pendingSelection = null;
+        pendingSelection = buildSelectionFromResume(
+            loadResumeState()
+        );
 
         const savedLanguage = localStorage.getItem('topspot_language');
 
