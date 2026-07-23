@@ -1,10 +1,14 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
+    import {onDestroy, onMount} from 'svelte';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 
     export let track: CarModeTrack;
     export let opened = false;
     export let returned = false;
+    export let hasArtistBio = false;
+    export let artistBioPlaying = false;
+    export let onPlayArtistBio: () => Promise<void>;
+    export let onStopArtistBio: () => void;
     export let onOpenSpotify: () => void;
     export let onContinue: () => void;
     export let onSkip: () => void;
@@ -14,6 +18,9 @@
 
     let device: DeviceType = 'other';
     let showDetailedHelp = true;
+    let bioButton: HTMLButtonElement | null = null;
+    let showArtistInBioLabel = false;
+    let bioButtonObserver: ResizeObserver | null = null;
 
     const HELP_STORAGE_KEY =
         'ts-guided-return-help-seen-v1';
@@ -35,6 +42,30 @@
             (_match, prefix, letter) =>
                 `${prefix}${letter.toLocaleUpperCase()}`
         );
+    }
+
+    function updateBioButtonLabel(): void {
+        if (!bioButton) return;
+
+        const artist = displayTrackName(track.artistName);
+        const personalized =
+            `▶ PLAY ${artist.toLocaleUpperCase()} BIO`;
+        const context =
+            document.createElement('canvas').getContext('2d');
+
+        if (!context) {
+            showArtistInBioLabel = false;
+            return;
+        }
+
+        context.font = getComputedStyle(bioButton).font;
+        showArtistInBioLabel =
+            context.measureText(personalized).width
+            <= bioButton.clientWidth - 36;
+    }
+
+    $: if (bioButton && track.artistName) {
+        queueMicrotask(updateBioButtonLabel);
     }
 
     function detectDevice(): DeviceType {
@@ -75,6 +106,19 @@
             localStorage.getItem(
                 HELP_STORAGE_KEY
             ) !== 'true';
+
+        bioButtonObserver = new ResizeObserver(
+            updateBioButtonLabel
+        );
+
+        if (bioButton) {
+            bioButtonObserver.observe(bioButton);
+            updateBioButtonLabel();
+        }
+    });
+
+    onDestroy(() => {
+        bioButtonObserver?.disconnect();
     });
 </script>
 
@@ -179,6 +223,28 @@
                     </button>
                 {/if}
             </div>
+
+            {#if hasArtistBio}
+                <button
+                        bind:this={bioButton}
+                        class="artist-bio-button"
+                        on:click={() => {
+                            if (artistBioPlaying) {
+                                onStopArtistBio();
+                            } else {
+                                void onPlayArtistBio();
+                            }
+                        }}
+                >
+                    {#if artistBioPlaying}
+                        ■ STOP ARTIST BIO
+                    {:else if showArtistInBioLabel}
+                        ▶ PLAY {displayTrackName(track.artistName).toLocaleUpperCase()} BIO
+                    {:else}
+                        ▶ PLAY ARTIST BIO
+                    {/if}
+                </button>
+            {/if}
 
             <button
                     class="spotify-button"
@@ -417,6 +483,26 @@
         color: #8cc8ff;
         text-decoration: underline;
         background: transparent;
+    }
+
+    .artist-bio-button {
+        width: 100%;
+        min-height: 56px;
+        margin-bottom: 12px;
+        padding: 12px 18px;
+        overflow: hidden;
+        border: 1px solid #cfb87c;
+        border-radius: 999px;
+        color: #cfb87c;
+        font-size: 1.05rem;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        background: #29251d;
+    }
+
+    .artist-bio-button:focus-visible {
+        outline: 3px solid #fff;
+        outline-offset: 3px;
     }
 
     .spotify-button,
