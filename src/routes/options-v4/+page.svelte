@@ -416,11 +416,6 @@
 
         const savedLanguage = localStorage.getItem('topspot_language');
 
-        if (savedLanguage === 'en' || savedLanguage === 'es' || savedLanguage === 'ptbr') {
-            language = savedLanguage;
-            languages = [savedLanguage];
-        }
-
         const panel = page.url.searchParams.get('panel');
         const tab = page.url.searchParams.get('tab');
 
@@ -455,6 +450,15 @@
                 pendingSelection = null;
             }
 
+            if (
+                savedLanguage === 'en'
+                || savedLanguage === 'es'
+                || savedLanguage === 'ptbr'
+            ) {
+                language = savedLanguage;
+                languages = [savedLanguage];
+            }
+
             hydrated = true;
         } catch {
             console.error('❌ Error loading catalog.');
@@ -465,6 +469,10 @@
     // Auto-save (guarded)
     // ─────────────────────────────────────────────
     $: if (browser && hydrated) {
+        // Keep landing-page and playback language synchronized.
+        localStorage.setItem('topspot_language', language);
+        localStorage.setItem('tts_language', language);
+
         // console.log('OPTIONS AUTOSAVE languages:', languages);
         saveResumeFromLocal({
             activeGroup,
