@@ -422,6 +422,17 @@
         console.log('panel=', panel);
         console.log('tab=', tab);
 
+        const optionsVisitedKey =
+            'ts-options-v4-visited-v1';
+        const isFirstControlPanelVisit =
+            sessionStorage.getItem(optionsVisitedKey) !== 'true';
+
+        sessionStorage.setItem(optionsVisitedKey, 'true');
+
+        if (!panel && isFirstControlPanelVisit) {
+            openSection = 'library';
+        }
+
         if (panel === 'library') {
             openSection = 'library';
         }
@@ -547,19 +558,31 @@
             </div>
         </div>
 
-        <div class:active-section-wrapper={openSection === 'preferences'}>
-
-            <PlaybackPreferencesPanel
-                    bind:language
-                    bind:languages
-                    bind:selectedVoices
-                    bind:playbackMethod
-                    bind:playbackOrder
-                    bind:pauseMode
-                    bind:skipPlayed
-                    collapsed={openSection !== 'preferences'}
+        <div
+                id="listening-library"
+                class:active-section-wrapper={openSection === 'library'}
+        >
+            <ListeningLibraryPanel
+                    {decadeOptions}
+                    {genreOptions}
+                    {collectionGroups}
+                    {language}
+                    {languages}
+                    voices={selectedVoices}
+                    {playbackOrder}
+                    voicePlayMode="before"
+                    {pauseMode}
+                    {skipPlayed}
+                    initialTab={initialLibraryTab}
+                    {initialDocuseriesCollection}
+                    title={uiText[language].library}
+                    description={uiText[language].libraryDesc}
+                    collapsed={openSection !== 'library'}
                     onActivate={() => {
-        openSection = openSection === 'preferences' ? null : 'preferences';
+        openSection = openSection === 'library'
+            ? null
+            : 'library';
+
         radioMode = null;
     }}
             />
@@ -701,36 +724,6 @@
         {/if}
 
 
-        <div
-                id="listening-library"
-                class:active-section-wrapper={openSection === 'library'}
-        >
-            <ListeningLibraryPanel
-                    {decadeOptions}
-                    {genreOptions}
-                    {collectionGroups}
-                    {language}
-                    {languages}
-                    voices={selectedVoices}
-                    {playbackOrder}
-                    voicePlayMode="before"
-                    {pauseMode}
-                    {skipPlayed}
-                    initialTab={initialLibraryTab}
-                    {initialDocuseriesCollection}
-                    title={uiText[language].library}
-                    description={uiText[language].libraryDesc}
-                    collapsed={openSection !== 'library'}
-                    onActivate={() => {
-        openSection = openSection === 'library'
-            ? null
-            : 'library';
-
-        radioMode = null;
-    }}
-            />
-        </div>
-
         <div class:active-section-wrapper={openSection === 'journey'}>
             <MusicJourneyPanel
                     {collectionGroups}
@@ -744,6 +737,24 @@
             />
         </div>
 
+
+        <div class:active-section-wrapper={openSection === 'preferences'}>
+
+            <PlaybackPreferencesPanel
+                    bind:language
+                    bind:languages
+                    bind:selectedVoices
+                    bind:playbackMethod
+                    bind:playbackOrder
+                    bind:pauseMode
+                    bind:skipPlayed
+                    collapsed={openSection !== 'preferences'}
+                    onActivate={() => {
+        openSection = openSection === 'preferences' ? null : 'preferences';
+        radioMode = null;
+    }}
+            />
+        </div>
 
         <!-- ✅ Playback History now at top -->
         <!--        <PlaybackHistoryPanel {language} {languages}/>-->
