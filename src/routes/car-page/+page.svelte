@@ -41,7 +41,11 @@
         resetSpotifyStartState
     } from '$lib/carmode/CarMode.poller';
 
-    import {stopBed} from '$lib/audio/bedPlayer';
+    import {
+        startBedUrl,
+        stopBed,
+        unlockBedAudio
+    } from '$lib/audio/bedPlayer';
 
 
     import {
@@ -511,6 +515,35 @@
         return result;
     }
 
+    function guidedBedAudioUrl(trackObj: CarModeTrack): string {
+        const sel = get(currentSelection);
+        const context = sel?.context;
+
+        const collectionGroup =
+            typeof context?.collection_group_slug === 'string'
+                ? context.collection_group_slug.trim().toLowerCase()
+                : '';
+
+        const genre =
+            typeof context?.genre === 'string'
+                ? context.genre.trim().toLowerCase()
+                : (trackObj.genreSlug ?? '').trim().toLowerCase();
+
+        const bedNumber =
+            String(Math.floor(Math.random() * 5) + 1).padStart(2, '0');
+
+        const bedKey = collectionGroup && collectionGroup !== 'all'
+            ? `bed-tracks/collection-groups/${collectionGroup}/bed_${bedNumber}.mp3`
+            : genre && genre !== 'all'
+                ? `bed-tracks/genres/${genre}/bed_${bedNumber}.mp3`
+                : `bed-tracks/default/bed_${bedNumber}.mp3`;
+
+        return (
+            'https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/' +
+            `audio-en/${bedKey}`
+        );
+    }
+
     async function startGuidedTrack(trackObj: CarModeTrack) {
         guidedReady = false;
         guidedSpotifyOpened = false;
@@ -523,16 +556,26 @@
 
         isPlaying.set(true);
 
-        for (const narration of narrations) {
-            const activeTrack = get(currentTrack);
-            const activeToken = activeTrack
-                ? `${activeTrack.rankingId ?? activeTrack.rank}|${activeTrack.spotifyTrackId ?? ''}`
-                : '';
+        if (narrations.length > 0) {
+            await unlockBedAudio();
 
-            if (activeToken !== token) return;
+            try {
+                await startBedUrl(guidedBedAudioUrl(trackObj));
 
-            playbackPhase.set(narration.phase);
-            await playNarrationUrlAndWait(narration.url);
+                for (const narration of narrations) {
+                    const activeTrack = get(currentTrack);
+                    const activeToken = activeTrack
+                        ? `${activeTrack.rankingId ?? activeTrack.rank}|${activeTrack.spotifyTrackId ?? ''}`
+                        : '';
+
+                    if (activeToken !== token) return;
+
+                    playbackPhase.set(narration.phase);
+                    await playNarrationUrlAndWait(narration.url);
+                }
+            } finally {
+                stopBed();
+            }
         }
 
         const activeTrack = get(currentTrack);
@@ -832,6 +875,7 @@
 
             if (get(isPlaying)) {
                 stopNarration();
+                stopBed();
                 isPlaying.set(false);
                 playbackPhase.set('paused');
                 return;
