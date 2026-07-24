@@ -60,7 +60,7 @@
     const initialPlaybackSettings = get(playbackSettingsStore);
 
     let playbackMethod: 'automatic' | 'guided' =
-        initialPlaybackSettings.playbackMethod;
+        dev ? initialPlaybackSettings.playbackMethod : 'guided';
     let playbackOrder: PlaybackOrder =
         initialPlaybackSettings.playbackOrder;
 
@@ -515,7 +515,7 @@
     $: if (browser && hydrated) {
         playbackSettingsStore.set({
             voices: selectedVoices,
-            playbackMethod,
+            playbackMethod: dev ? playbackMethod : 'guided',
             playbackOrder,
             pauseMode,
             voicePlayMode: 'before',
@@ -747,6 +747,7 @@
                     bind:languages
                     bind:selectedVoices
                     bind:playbackMethod
+                    showPlaybackMethod={dev}
                     bind:playbackOrder
                     bind:pauseMode
                     bind:skipPlayed
