@@ -539,14 +539,17 @@
     async function playGuidedArtistBio(): Promise<void> {
         const track = get(currentTrack);
         const url = track ? guidedArtistBioUrl(track) : null;
-        if (!url || guidedArtistBioPlaying) return;
+        if (!track || !url || guidedArtistBioPlaying) return;
 
         guidedArtistBioPlaying = true;
         playbackPhase.set('artist');
 
         try {
+            await unlockBedAudio();
+            await startBedUrl(guidedBedAudioUrl(track));
             await playNarrationUrlAndWait(url);
         } finally {
+            stopBed();
             guidedArtistBioPlaying = false;
             playbackPhase.set('track');
         }
@@ -554,6 +557,7 @@
 
     function stopGuidedArtistBio(): void {
         stopNarration();
+        stopBed();
         guidedArtistBioPlaying = false;
         playbackPhase.set('track');
     }
