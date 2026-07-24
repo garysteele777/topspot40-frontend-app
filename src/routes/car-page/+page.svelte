@@ -100,6 +100,7 @@
     let guidedArtistBioPlaying = false;
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
+    let guidedPlaybackRunId = 0;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -592,6 +593,8 @@
     }
 
     async function startGuidedTrack(trackObj: CarModeTrack) {
+        const runId = ++guidedPlaybackRunId;
+
         guidedReady = false;
         guidedSpotifyOpened = false;
         guidedSpotifyReturned = false;
@@ -609,16 +612,23 @@
             try {
                 await startBedUrl(guidedBedAudioUrl(trackObj));
 
+                if (runId !== guidedPlaybackRunId) return;
+
                 for (const narration of narrations) {
                     const activeTrack = get(currentTrack);
                     const activeToken = activeTrack
                         ? `${activeTrack.rankingId ?? activeTrack.rank}|${activeTrack.spotifyTrackId ?? ''}`
                         : '';
 
-                    if (activeToken !== token) return;
+                    if (
+                        activeToken !== token
+                        || runId !== guidedPlaybackRunId
+                    ) return;
 
                     playbackPhase.set(narration.phase);
                     await playNarrationUrlAndWait(narration.url);
+
+                    if (runId !== guidedPlaybackRunId) return;
                 }
             } finally {
                 stopBed();
@@ -949,6 +959,7 @@
             }
 
             if (get(isPlaying)) {
+                guidedPlaybackRunId += 1;
                 stopNarration();
                 stopBed();
                 isPlaying.set(false);
