@@ -498,7 +498,7 @@ goto(`/car-page?${params.toString()}`);
                                     goto(
                                         `/story-player?type=music_docuseries` +
                                         `&slug=${item.slug}` +
-                                        `&language=${language}` +
+                                        `&language=${language === 'ptbr' ? 'pt-BR' : language}` +
                                         `&collection=${encodeURIComponent(selectedDocuseriesCollection ?? '')}`
                                     );
                                 }}
