@@ -487,6 +487,21 @@
                     `${bucket}/intro/${trackObj.decadeSlug}_${trackObj.genreSlug}_${rankText}.mp3`;
             }
 
+            if (!url && sel.mode === 'collection') {
+                const collectionSlug =
+                    sel.context?.collection_slug ??
+                    sel.context?.collectionSlug;
+
+                if (collectionSlug) {
+                    const rankText =
+                        String(trackObj.rank).padStart(2, '0');
+
+                    url =
+                        `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/` +
+                        `${bucket}/collections-intros/${collectionSlug}_${rankText}.mp3`;
+                }
+            }
+
             if (url) result.push({phase: 'intro', url});
         }
 
