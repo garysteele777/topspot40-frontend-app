@@ -14,6 +14,7 @@
     export let languages: Language[] = ['en'];
     export let selectedVoices: VoicePart[] = ['intro'];
     export let playbackMethod: 'automatic' | 'guided' = 'guided';
+    export let showPlaybackMethod = true;
     export let playbackOrder: PlaybackOrder = 'up';
     export let pauseMode: 'pause' | 'continuous' = 'pause';
     export let skipPlayed = false;
@@ -101,25 +102,27 @@
 
                     <div class="playback-section">
 
-                        <div class="playback-group">
-                            <div class="label">Method</div>
+                        {#if showPlaybackMethod}
+                            <div class="playback-group">
+                                <div class="label">Method</div>
 
-                            <div class="grid grid-2">
-                                <button
-                                        class:selected={playbackMethod === 'automatic'}
-                                        on:click|stopPropagation={() => playbackMethod = 'automatic'}
-                                >
-                                    Automatic Spotify
-                                </button>
+                                <div class="grid grid-2">
+                                    <button
+                                            class:selected={playbackMethod === 'automatic'}
+                                            on:click|stopPropagation={() => playbackMethod = 'automatic'}
+                                    >
+                                        Automatic Spotify
+                                    </button>
 
-                                <button
-                                        class:selected={playbackMethod === 'guided'}
-                                        on:click|stopPropagation={() => playbackMethod = 'guided'}
-                                >
-                                    Guided Spotify
-                                </button>
+                                    <button
+                                            class:selected={playbackMethod === 'guided'}
+                                            on:click|stopPropagation={() => playbackMethod = 'guided'}
+                                    >
+                                        Guided Spotify
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        {/if}
 
                         <div class="playback-group">
                             <div class="label">Order</div>
