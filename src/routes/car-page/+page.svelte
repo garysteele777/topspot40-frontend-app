@@ -718,9 +718,13 @@
     }
 
     function returnToGuidedCarPage(): void {
+        closeGuidedSpotifyWindow();
+
         guidedReady = false;
         guidedSpotifyOpened = false;
         guidedSpotifyReturned = false;
+        isPlaying.set(false);
+        playbackPhase.set('idle');
     }
 
     async function playTrack(trackObj: CarModeTrack) {
