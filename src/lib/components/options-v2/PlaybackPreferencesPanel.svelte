@@ -5,6 +5,7 @@
     import type {
         PlaybackOrder,
         VoicePart,
+        DetailLength,
         Language
     } from '$lib/types/playback';
 
@@ -13,6 +14,7 @@
     export let language: Language = 'en';
     export let languages: Language[] = ['en'];
     export let selectedVoices: VoicePart[] = ['intro'];
+    export let detailLength: DetailLength = 'short';
     export let playbackMethod: 'automatic' | 'guided' = 'guided';
     export let showPlaybackMethod = true;
     export let playbackOrder: PlaybackOrder = 'up';
@@ -42,7 +44,13 @@
         selectedVoices.length === 0
             ? 'Track Only'
             : selectedVoices
-                .map(v => v === 'intro' ? 'Intro' : v === 'detail' ? 'Detail' : 'Artist')
+                .map(v =>
+                    v === 'intro'
+                        ? 'Intro'
+                        : v === 'detail'
+                            ? `Detail (${detailLength === 'short' ? 'Short' : 'Long'})`
+                            : 'Artist'
+                )
                 .join('+');
 </script>
 
@@ -93,7 +101,7 @@
             {/if}
 
             {#if activePanel === 'voice'}
-                <VoiceContentSelector bind:selectedVoices/>
+                <VoiceContentSelector bind:selectedVoices bind:detailLength/>
             {/if}
 
             {#if activePanel === 'playback'}

@@ -181,9 +181,15 @@
         const bucket = language === 'ptbr' ? 'audio-ptbr' : `audio-${language}`;
 
         let url: string | null = null;
+        let fallbackUrl: string | undefined;
 
         if (kind === 'detail' && track.spotifyTrackId) {
-            url = `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/detail/${track.spotifyTrackId}.mp3`;
+            const detailFolder =
+                settings.detailLength === 'long' ? 'detail' : 'short-detail';
+            const fallbackFolder =
+                settings.detailLength === 'long' ? 'short-detail' : 'detail';
+            url = `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/${detailFolder}/${track.spotifyTrackId}.mp3`;
+            fallbackUrl = `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/${fallbackFolder}/${track.spotifyTrackId}.mp3`;
         }
 
         if (kind === 'artist') {
@@ -212,7 +218,7 @@
         if (!url) return;
 
         console.log('🎙 preview url:', url);
-        await playNarrationUrl(url);
+        await playNarrationUrl(url, fallbackUrl);
     }
 
     type StudioAction =
@@ -454,6 +460,7 @@
     function guidedNarrationUrls(trackObj: CarModeTrack): {
         phase: 'intro' | 'detail' | 'artist';
         url: string;
+        fallbackUrl?: string;
     }[] {
         const sel = get(currentSelection);
         const settings = get(playbackSettingsStore);
@@ -469,6 +476,7 @@
         const result: {
             phase: 'intro' | 'detail' | 'artist';
             url: string;
+            fallbackUrl?: string;
         }[] = [];
 
         if (settings.voices.includes('intro')) {
@@ -506,15 +514,18 @@
         }
 
         if (settings.voices.includes('detail')) {
-            const url =
-                publicAudioUrl(trackObj.detailKey) ??
-                (
-                    trackObj.spotifyTrackId
-                        ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/detail/${trackObj.spotifyTrackId}.mp3`
-                        : null
-                );
+            const detailFolder =
+                settings.detailLength === 'long' ? 'detail' : 'short-detail';
+            const fallbackFolder =
+                settings.detailLength === 'long' ? 'short-detail' : 'detail';
+            const url = trackObj.spotifyTrackId
+                ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/${detailFolder}/${trackObj.spotifyTrackId}.mp3`
+                : null;
+            const fallbackUrl = trackObj.spotifyTrackId
+                ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/${fallbackFolder}/${trackObj.spotifyTrackId}.mp3`
+                : undefined;
 
-            if (url) result.push({phase: 'detail', url});
+            if (url) result.push({phase: 'detail', url, fallbackUrl});
         }
 
         if (settings.voices.includes('artist')) {
@@ -641,7 +652,10 @@
                     ) return;
 
                     playbackPhase.set(narration.phase);
-                    await playNarrationUrlAndWait(narration.url);
+                    await playNarrationUrlAndWait(
+                        narration.url,
+                        narration.fallbackUrl
+                    );
 
                     if (runId !== guidedPlaybackRunId) return;
                 }

@@ -1,11 +1,12 @@
 <script lang="ts">
-    import type {VoicePart} from '$lib/types/options';
+    import type {DetailLength, VoicePart} from '$lib/types/options';
 
     const DJ_PRESET: VoicePart[] = ['intro', 'detail'];
     const RADIO_PRESET: VoicePart[] = ['intro'];
     const STORY_PRESET: VoicePart[] = ['intro', 'detail', 'artist'];
 
     export let selectedVoices: VoicePart[] = [...DJ_PRESET];
+    export let detailLength: DetailLength = 'short';
 
     function isSelected(part: VoicePart): boolean {
         return selectedVoices.includes(part);
@@ -44,6 +45,20 @@
         <div class:selected={isSelected('detail')}>Detail</div>
         <div class:selected={isSelected('artist')}>Artist</div>
     </div>
+
+    {#if isSelected('detail')}
+        <div class="detail-length">
+            <div class="detail-length-label">Detail length</div>
+            <div class="grid grid-2">
+                <button class:selected={detailLength === 'short'} on:click={() => detailLength = 'short'}>
+                    Short
+                </button>
+                <button class:selected={detailLength === 'long'} on:click={() => detailLength = 'long'}>
+                    Long
+                </button>
+            </div>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -100,5 +115,19 @@
     .voice-display div.selected {
         color: #fff;
         font-weight: 600;
+    }
+
+    .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .detail-length {
+        margin-top: 0.75rem;
+    }
+
+    .detail-length-label {
+        margin-bottom: 0.4rem;
+        color: #aaa;
+        font-size: 0.85rem;
     }
 </style>
