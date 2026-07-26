@@ -281,6 +281,32 @@
                 {displayTrackName(track.artistName)}
             </div>
 
+            {#if hasArtistBio}
+                <p class="bio-instruction">
+                    Pause Spotify first if the song is still playing.
+                </p>
+
+                <button
+                        bind:this={bioButton}
+                        class="artist-bio-button"
+                        on:click={() => {
+                            if (artistBioPlaying) {
+                                onStopArtistBio();
+                            } else {
+                                void onPlayArtistBio();
+                            }
+                        }}
+                >
+                    {#if artistBioPlaying}
+                        ■ STOP ARTIST BIO
+                    {:else if showArtistInBioLabel}
+                        ▶ PLAY {displayTrackName(track.artistName).toLocaleUpperCase()} BIO
+                    {:else}
+                        ▶ PLAY ARTIST BIO
+                    {/if}
+                </button>
+            {/if}
+
             <button
                     class="continue-button"
                     on:click={onContinue}
@@ -503,6 +529,12 @@
     .artist-bio-button:focus-visible {
         outline: 3px solid #fff;
         outline-offset: 3px;
+    }
+
+    .bio-instruction {
+        margin: 20px 0 10px;
+        color: #ddd;
+        font-size: 0.95rem;
     }
 
     .spotify-button,

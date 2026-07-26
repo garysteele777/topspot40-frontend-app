@@ -41,7 +41,8 @@
                 voiceOption === 'all'
                     ? ['intro', 'detail', 'artist']
                     : [voiceOption],
-            voicePlayMode: 'before'
+            voicePlayMode: 'before',
+            detailLength: current.detailLength
         });
 
         onClose();

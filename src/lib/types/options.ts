@@ -6,6 +6,7 @@ export type {
   ModeType,
   Language,
   VoicePart,
+  DetailLength,
   PlaybackOrder,
   PauseMode,
   VoicePlayMode,

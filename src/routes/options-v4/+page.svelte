@@ -72,6 +72,7 @@
     let selectedVoices: VoicePart[] = [
         ...initialPlaybackSettings.voices
     ];
+    let detailLength = initialPlaybackSettings.detailLength;
 
 
     let decades: string[] = [];
@@ -519,7 +520,8 @@
             playbackOrder,
             pauseMode,
             voicePlayMode: 'before',
-            skipPlayed
+            skipPlayed,
+            detailLength
         });
     }
 
@@ -746,6 +748,7 @@
                     bind:language
                     bind:languages
                     bind:selectedVoices
+                    bind:detailLength
                     bind:playbackMethod
                     showPlaybackMethod={dev}
                     bind:playbackOrder
