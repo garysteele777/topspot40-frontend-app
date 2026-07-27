@@ -98,6 +98,7 @@
     let guidedSpotifyReturned = false;
     let guidedSpotifyWindow: Window | null = null;
     let guidedArtistBioPlaying = false;
+    let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
     let guidedPlaybackRunId = 0;
@@ -446,6 +447,10 @@
 
 
     function setNarrationModalOpen(v: boolean): void {
+        if (v && !guidedArtistBioPlaying) {
+            narrationModalInitialMode = 'intro';
+        }
+
         showNarrationModal.set(v);
     }
 
@@ -569,6 +574,8 @@
         if (!track || !url || guidedArtistBioPlaying) return;
 
         guidedArtistBioPlaying = true;
+        narrationModalInitialMode = 'artist';
+        showNarrationModal.set(true);
         playbackPhase.set('artist');
 
         try {
@@ -578,6 +585,8 @@
         } finally {
             stopBed();
             guidedArtistBioPlaying = false;
+            showNarrationModal.set(false);
+            narrationModalInitialMode = 'intro';
             playbackPhase.set('track');
         }
     }
@@ -586,6 +595,8 @@
         stopNarration();
         stopBed();
         guidedArtistBioPlaying = false;
+        showNarrationModal.set(false);
+        narrationModalInitialMode = 'intro';
         playbackPhase.set('track');
     }
 
@@ -1627,6 +1638,7 @@
                     progress={$progress}
                     phase={$playbackPhase}
                     showNarrationModal={$showNarrationModal}
+                    {narrationModalInitialMode}
                     setShowNarrationModal={setNarrationModalOpen}
                     onPrev={prevTrack}
                     onNext={nextTrack}
