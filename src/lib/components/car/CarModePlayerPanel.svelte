@@ -40,6 +40,7 @@
     export let onBackToOptions: () => void;
 
     export let showNarrationModal: boolean;
+    export let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     export let setShowNarrationModal: (v: boolean) => void;
 
     let isFav = false;
@@ -328,6 +329,7 @@
             track={currentTrack}
             languages={$currentSelection?.languages ?? [$currentSelection?.language ?? 'en']}
             open={showNarrationModal}
+            initialMode={narrationModalInitialMode}
             onClose={() => setShowNarrationModal(false)}
     />
 

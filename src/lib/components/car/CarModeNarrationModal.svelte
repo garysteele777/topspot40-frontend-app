@@ -2,10 +2,13 @@
     import {fade, fly} from 'svelte/transition';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 
+    type InfoMode = 'intro' | 'detail' | 'artist';
+
     export let track: CarModeTrack | null = null;
     export let open = false;
     export let onClose: () => void;
     export let languages: string[] = ['en'];
+    export let initialMode: InfoMode = 'intro';
 
     /* ──────────────────────────────
        Swipe / drag physics
@@ -60,7 +63,6 @@
     /* ──────────────────────────────
        Info navigation (Intro / Detail / Artist)
        ────────────────────────────── */
-    type InfoMode = 'intro' | 'detail' | 'artist';
     type LanguageTexts = {
         intro?: string | null;
         detail?: string | null;
@@ -72,7 +74,7 @@
 
     // Reset whenever modal opens
     $: if (open) {
-        mode = 'intro';
+        mode = initialMode;
     }
 
     $: headerImage =
@@ -213,7 +215,7 @@
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.55);
-        z-index: 900;
+        z-index: 1100;
     }
 
     .modal {
@@ -230,7 +232,7 @@
         padding: 0.75rem 1rem 2rem;
         border-radius: 16px 16px 0 0;
         overflow-y: auto;
-        z-index: 999;
+        z-index: 1101;
         touch-action: pan-y;
     }
 
