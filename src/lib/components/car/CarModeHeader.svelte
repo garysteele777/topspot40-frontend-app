@@ -27,6 +27,7 @@
     export let pauseMode: import('./CarModeHeader.svelte').PauseMode = 'pause';
     export let skipPlayed: boolean = false;
     export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
+    export let compact: boolean = false;
 
     const modeLabel = (
         m: import('./CarModeHeader.svelte').BrowseMode,
@@ -58,47 +59,31 @@
         langs.map(l => l.toUpperCase()).join(' • ');
 </script>
 
-<div class="cm-panel">
+<div class="cm-panel" class:compact>
     <div class="cm-main">
         <div class="cm-row cm-row--title">
             <span class="cm-tag">🚗 Car Mode</span>
 
             {#if mode === 'decade_genre'}
-  <span class="cm-main-text">
-
-{#if programType === PROGRAM_TYPES.FAVORITES_DG}
-
-  {#if (decade ?? '').toUpperCase() === 'ALL'}
-
-      {#if genre}
-          ⭐ All Decades {genre.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} Favorites
-      {:else}
-          ⭐ All Decades Favorites (All Genres)
-      {/if}
-
-  {:else}
-
-      {#if genre}
-          ⭐ {decade ?? '—'} {genre.replace(/_/g, ' ')} Favorites
-      {:else}
-          ⭐ {decade ?? '—'} Favorites (All Genres)
-      {/if}
-
-  {/if}
-
-{:else}
-
-  {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
-
-{/if}
-
-      {#if programType === 'RADIO_DG'}
-        TopSpot Radio • {genre ? genre.replace(/_/g, ' ') : 'All Genres'}
-        {:else}
-            {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
-        {/if}
-
-  </span>
+                <span class="cm-main-text">
+                    {#if programType === PROGRAM_TYPES.FAVORITES_DG}
+                        {#if (decade ?? '').toUpperCase() === 'ALL'}
+                            {#if genre}
+                                ⭐ All Decades {genre.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} Favorites
+                            {:else}
+                                ⭐ All Decades Favorites (All Genres)
+                            {/if}
+                        {:else if genre}
+                            ⭐ {decade ?? '—'} {genre.replace(/_/g, ' ')} Favorites
+                        {:else}
+                            ⭐ {decade ?? '—'} Favorites (All Genres)
+                        {/if}
+                    {:else if programType === 'RADIO_DG'}
+                        TopSpot Radio • {genre ? genre.replace(/_/g, ' ') : 'All Genres'}
+                    {:else}
+                        {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
+                    {/if}
+                </span>
             {:else if mode === 'artist_spotlight'}
     <span class="cm-main-text">
         Artist Spotlight
@@ -111,32 +96,34 @@
 
         </div>
 
-        <div class="cm-row cm-row--primary">
-            {modeLabel(mode, programType)}
-            <span>•</span>
-            <span>Category: {categoryLabel(categoryMode)}</span>
-            <span>•</span>
-            <span>
-                {languages.length > 1 ? 'Langs:' : 'Lang:'}
-                {languageText(languages)}
-            </span>
-        </div>
-
-        <div class="cm-row cm-row--secondary">
-            <span>Voices: {voiceText(voices)}</span>
-            <span>•</span>
-            <span>Order: {orderLabel(playbackOrder)}</span>
-
-            {#if skipPlayed}
+        {#if !compact}
+            <div class="cm-row cm-row--primary">
+                {modeLabel(mode, programType)}
                 <span>•</span>
-                <span class="cm-accent">Skip Played</span>
-            {/if}
+                <span>Category: {categoryLabel(categoryMode)}</span>
+                <span>•</span>
+                <span>
+                    {languages.length > 1 ? 'Langs:' : 'Lang:'}
+                    {languageText(languages)}
+                </span>
+            </div>
 
-            <span>•</span>
-            <span>{voicePlayLabel(voicePlayMode)}</span>
-            <span>•</span>
-            <span>{pauseLabel(pauseMode)}</span>
-        </div>
+            <div class="cm-row cm-row--secondary">
+                <span>Voices: {voiceText(voices)}</span>
+                <span>•</span>
+                <span>Order: {orderLabel(playbackOrder)}</span>
+
+                {#if skipPlayed}
+                    <span>•</span>
+                    <span class="cm-accent">Skip Played</span>
+                {/if}
+
+                <span>•</span>
+                <span>{voicePlayLabel(voicePlayMode)}</span>
+                <span>•</span>
+                <span>{pauseLabel(pauseMode)}</span>
+            </div>
+        {/if}
     </div>
 </div>
 
@@ -149,6 +136,11 @@
         color: #fff;
         font-size: 0.85rem;
         line-height: 1.4;
+    }
+
+    .cm-panel.compact {
+        margin-bottom: 0.25rem;
+        padding: 0.28rem 0.7rem;
     }
 
     .cm-main {
