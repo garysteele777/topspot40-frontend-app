@@ -39,7 +39,7 @@
 <nav class="header">
     <div class="logo">
         <a href="/">
-            <img src="/favicon.ico" alt="TopSpot40 Logo"/>
+            <img src="/old-dog-icon.png" alt="TopSpot40 Logo"/>
             <span>TopSpot40</span>
         </a>
     </div>

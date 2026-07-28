@@ -14,7 +14,7 @@
             discoverDesc: 'Explore stories, artists, collections, and music history.',
             controlTitle: 'Main Control Panel',
             controlDesc: 'Start listening, radio, playlists, favorites, and playback settings.',
-            classic: 'View classic landing page'
+            journeyView: 'Journey View'
         },
         es: {
             tagline: 'Tu música. Tus recuerdos. Tu estación.',
@@ -23,7 +23,7 @@
             discoverDesc: 'Explora historias, artistas, colecciones e historia musical.',
             controlTitle: 'Panel de Control Principal',
             controlDesc: 'Empieza a escuchar, radio, listas, favoritos y ajustes de reproducción.',
-            classic: 'Ver página clásica'
+            journeyView: 'Vista de viaje'
         },
         'ptbr': {
             tagline: 'Sua música. Suas memórias. Sua estação.',
@@ -32,7 +32,7 @@
             discoverDesc: 'Explore histórias, artistas, coleções e história da música.',
             controlTitle: 'Painel de Controle Principal',
             controlDesc: 'Comece a ouvir, rádio, playlists, favoritos e configurações de reprodução.',
-            classic: 'Ver página clássica'
+            journeyView: 'Vista da jornada'
         }
     };
 
@@ -86,7 +86,20 @@
         goto('/options-v4');
     }
 
+    function showJourneyView() {
+        localStorage.setItem('topspot_home_layout', 'journey');
+        goto('/journey-prototype');
+    }
+
     onMount(() => {
+        const savedLayout = localStorage.getItem('topspot_home_layout');
+
+        if (savedLayout !== 'compact') {
+            localStorage.setItem('topspot_home_layout', 'journey');
+            goto('/journey-prototype', {replaceState: true});
+            return;
+        }
+
         const savedLanguage = localStorage.getItem('topspot_language');
 
         if (isLandingLanguage(savedLanguage)) {
@@ -98,7 +111,7 @@
 
 <main class="page">
     <section class="card">
-        <img src="/favicon.ico" alt="TopSpot40" class="logo"/>
+        <img src="/old-dog-icon.png" alt="TopSpot40" class="logo"/>
 
         <h1>TopSpot40</h1>
         <p class="tagline">{text[language].tagline}</p>
@@ -141,9 +154,10 @@
             </button>
         </div>
 
-        <a class="classic" href="/landing-classic">
-            {text[language].classic}
-        </a>
+        <button class="layout-switch" on:click={showJourneyView}>
+            <span aria-hidden="true">✨</span>
+            {text[language].journeyView}
+        </button>
     </section>
 </main>
 
@@ -306,17 +320,25 @@
         opacity: 0.9;
     }
 
-    .classic {
-        display: inline-block;
+    .layout-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         margin-top: 28px;
-        color: #bbb;
-        text-decoration: none;
+        padding: 10px 18px;
+        color: #f5d66e;
+        background: #242014;
+        border: 1px solid #d6c17a;
+        border-radius: 999px;
         font-size: 14px;
+        font-weight: 800;
     }
 
-    .classic:hover {
-        color: white;
-        text-decoration: underline;
+    .layout-switch:hover,
+    .layout-switch:focus-visible {
+        color: #111;
+        background: #d6c17a;
+        outline: none;
     }
 
     @media (max-width: 720px) {

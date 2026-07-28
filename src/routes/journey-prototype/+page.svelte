@@ -1,0 +1,726 @@
+<script lang="ts">
+    import {goto} from '$app/navigation';
+    import {onMount} from 'svelte';
+
+    type LandingLanguage = 'en' | 'es' | 'ptbr';
+    type ViewMode = 'journey' | 'list';
+
+    let language: LandingLanguage = 'en';
+    let viewMode: ViewMode = 'journey';
+    let hasChosenLanguage = false;
+
+    const text = {
+        en: {
+            title: 'Choose Your Musical Journey',
+            instruction: 'Select a language to begin.',
+            continue: 'Continue',
+            listView: 'List View',
+            journeyView: 'Journey View',
+            compactView: 'Compact View',
+            home: 'Home',
+            back: 'Back',
+            contact: 'Contact Us',
+            about: 'About',
+            signIn: 'Sign In',
+            signUp: 'Sign Up'
+        },
+        es: {
+            title: 'Elige tu viaje musical',
+            instruction: 'Selecciona un idioma para comenzar.',
+            continue: 'Continuar',
+            listView: 'Vista de lista',
+            journeyView: 'Vista de viaje',
+            compactView: 'Vista compacta',
+            home: 'Inicio',
+            back: 'Atrás',
+            contact: 'Contáctanos',
+            about: 'Acerca de',
+            signIn: 'Iniciar sesión',
+            signUp: 'Registrarse'
+        },
+        ptbr: {
+            title: 'Escolha sua jornada musical',
+            instruction: 'Selecione um idioma para começar.',
+            continue: 'Continuar',
+            listView: 'Vista em lista',
+            journeyView: 'Vista da jornada',
+            compactView: 'Vista compacta',
+            home: 'Início',
+            back: 'Voltar',
+            contact: 'Fale conosco',
+            about: 'Sobre',
+            signIn: 'Entrar',
+            signUp: 'Cadastrar'
+        }
+    };
+
+    const languageNames: Record<LandingLanguage, string> = {
+        en: 'English',
+        es: 'Español',
+        ptbr: 'Português'
+    };
+
+    function isLandingLanguage(value: string | null): value is LandingLanguage {
+        return value === 'en' || value === 'es' || value === 'ptbr';
+    }
+
+    function isViewMode(value: string | null): value is ViewMode {
+        return value === 'journey' || value === 'list';
+    }
+
+    function setLanguage(value: LandingLanguage) {
+        language = value;
+        hasChosenLanguage = true;
+        localStorage.setItem('topspot_language', value);
+        localStorage.setItem('tts_language', value);
+    }
+
+    function setViewMode(value: ViewMode) {
+        viewMode = value;
+        localStorage.setItem('topspot_journey_view', value);
+    }
+
+    function continueJourney() {
+        goto('/journey-prototype/choose');
+    }
+
+    function showCompactView() {
+        localStorage.setItem('topspot_home_layout', 'compact');
+        goto('/');
+    }
+
+    onMount(() => {
+        localStorage.setItem('topspot_home_layout', 'journey');
+
+        const savedLanguage = localStorage.getItem('topspot_language');
+        const savedViewMode = localStorage.getItem('topspot_journey_view');
+
+        if (isLandingLanguage(savedLanguage)) {
+            language = savedLanguage;
+            hasChosenLanguage = true;
+        }
+
+        if (isViewMode(savedViewMode)) {
+            viewMode = savedViewMode;
+        } else if (window.innerWidth <= 600) {
+            viewMode = 'list';
+        }
+    });
+</script>
+
+<svelte:head>
+    <title>Choose Your TopSpot40 Journey</title>
+    <meta
+        name="description"
+        content="Choose the language for your TopSpot40 musical journey."
+    />
+</svelte:head>
+
+<div class="prototype">
+    <header class="topbar">
+        <a class="brand" href="/" aria-label="TopSpot40 home">
+            <img src="/old-dog-icon.png" alt="" />
+            <span>TopSpot<span class="brand-number">40</span></span>
+        </a>
+
+        <nav aria-label="TopSpot40 navigation">
+            <a href="/">{text[language].contact}</a>
+            <a href="/about">{text[language].about}</a>
+            <a href="/signin">{text[language].signIn}</a>
+            <a class="signup" href="/signup-official">
+                {text[language].signUp}
+            </a>
+        </nav>
+    </header>
+
+    <div class="utilitybar">
+        <button class="utility" on:click={() => history.back()}>
+            <span aria-hidden="true">←</span>
+            {text[language].back}
+        </button>
+
+        <a class="utility" href="/">
+            <span aria-hidden="true">⌂</span>
+            {text[language].home}
+        </a>
+
+        <button
+            class="utility layout-toggle"
+            on:click={showCompactView}
+        >
+            <span aria-hidden="true">▦</span>
+            {text[language].compactView}
+        </button>
+
+        <button
+            class="utility view-toggle"
+            on:click={() => setViewMode(
+                viewMode === 'journey' ? 'list' : 'journey'
+            )}
+        >
+            <span aria-hidden="true">{viewMode === 'journey' ? '☷' : '✨'}</span>
+            {viewMode === 'journey'
+                ? text[language].listView
+                : text[language].journeyView}
+        </button>
+    </div>
+
+    {#if viewMode === 'journey'}
+        <main class="journey">
+            <div class="art-layer">
+<img
+                class="journey-art"
+                src="/images/journey/01-ai-language-journey.png"
+                alt="Three musical roads leading toward the TopSpot40 castle"
+            />
+
+            <div class="shade" aria-hidden="true"></div>
+</div>
+
+            <section class="journey-title">
+                <h1>{text[language].title}</h1>
+                <p>{text[language].instruction}</p>
+            </section>
+
+            <div class="hotspot-layer">
+<button
+                class:active={language === 'en' && hasChosenLanguage}
+                class="road-button english"
+                aria-label="Choose English"
+                aria-pressed={language === 'en' && hasChosenLanguage}
+                on:click={() => setLanguage('en')}
+            >
+                <span class="screen-reader-only">English</span>
+            </button>
+
+            <button
+                class:active={language === 'es' && hasChosenLanguage}
+                class="road-button spanish"
+                aria-label="Elegir Español"
+                aria-pressed={language === 'es' && hasChosenLanguage}
+                on:click={() => setLanguage('es')}
+            >
+                <span class="screen-reader-only">Español</span>
+            </button>
+
+            <button
+                class:active={language === 'ptbr' && hasChosenLanguage}
+                class="road-button portuguese"
+                aria-label="Escolher Português"
+                aria-pressed={language === 'ptbr' && hasChosenLanguage}
+                on:click={() => setLanguage('ptbr')}
+            >
+                <span class="screen-reader-only">Português</span>
+            </button>
+</div>
+
+            {#if hasChosenLanguage}
+                <button class="continue" on:click={continueJourney}>
+                    {text[language].continue}
+                    <span aria-hidden="true">→</span>
+                </button>
+            {/if}
+        </main>
+    {:else}
+        <main class="list-page">
+            <section class="list-card">
+                <img src="/old-dog-icon.png" alt="" class="list-logo" />
+                <h1>{text[language].title}</h1>
+                <p>{text[language].instruction}</p>
+
+                <div class="language-list">
+                    {#each Object.entries(languageNames) as [code, name]}
+                        <button
+                            class:active={
+                                language === code && hasChosenLanguage
+                            }
+                            on:click={() =>
+                                setLanguage(code as LandingLanguage)}
+                        >
+                            <span>{name}</span>
+                            <span aria-hidden="true">→</span>
+                        </button>
+                    {/each}
+                </div>
+
+                {#if hasChosenLanguage}
+                    <button class="list-continue" on:click={continueJourney}>
+                        {text[language].continue}
+                    </button>
+                {/if}
+            </section>
+        </main>
+    {/if}
+</div>
+
+<style>
+    :global(html),
+    :global(body) {
+        margin: 0;
+        min-height: 100%;
+        background: #0b0a07;
+        color: #fff;
+        font-family: Arial, sans-serif;
+    }
+
+    :global(*) {
+        box-sizing: border-box;
+    }
+
+    button,
+    a {
+        font: inherit;
+    }
+
+    button {
+        cursor: pointer;
+    }
+
+    .prototype {
+        min-height: 100vh;
+        background: #0b0a07;
+    }
+
+    .topbar {
+        position: relative;
+        z-index: 20;
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 10px clamp(18px, 4vw, 64px);
+        background: rgba(5, 5, 5, 0.94);
+        border-bottom: 1px solid rgba(214, 193, 122, 0.38);
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #f5d66e;
+        font-size: clamp(22px, 2vw, 32px);
+        font-weight: 900;
+        text-decoration: none;
+    }
+
+    .brand img {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+    }
+
+    .brand-number {
+        color: #e54a2e;
+    }
+
+    nav {
+        display: flex;
+        align-items: center;
+        gap: clamp(14px, 2vw, 34px);
+    }
+
+    nav a {
+        color: #fff;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    nav a:hover,
+    nav a:focus-visible {
+        color: #f5d66e;
+    }
+
+    nav .signup {
+        padding: 10px 22px;
+        color: #f5d66e;
+        border: 2px solid #d9aa28;
+        border-radius: 12px;
+    }
+
+    .utilitybar {
+        position: absolute;
+        z-index: 30;
+        top: 88px;
+        left: clamp(16px, 3vw, 48px);
+        right: clamp(16px, 3vw, 48px);
+        display: flex;
+        gap: 10px;
+        pointer-events: none;
+    }
+
+    .utility {
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 13px;
+        color: #fff;
+        background: rgba(8, 8, 8, 0.76);
+        border: 1px solid rgba(245, 214, 110, 0.55);
+        border-radius: 10px;
+        text-decoration: none;
+        backdrop-filter: blur(7px);
+    }
+
+    .layout-toggle {
+        margin-left: auto;
+    }
+
+    .journey {
+        position: relative;
+        width: 100%;
+        min-height: calc(100vh - 72px);
+        overflow: hidden;
+        background: #0b0a07;
+    }
+
+    .journey-art {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .shade {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.2),
+                transparent 25%,
+                transparent 78%,
+                rgba(0, 0, 0, 0.45)
+            );
+    }
+
+    .journey-title {
+        position: absolute;
+        z-index: 4;
+        top: 8%;
+        left: 50%;
+        width: min(1180px, 86vw);
+        transform: translateX(-50%);
+        text-align: center;
+        text-shadow: 0 3px 12px #000, 0 0 30px #000;
+        pointer-events: none;
+    }
+
+    .journey-title h1 {
+        margin: 0;
+        color: #f7dc82;
+        font-family: Georgia, serif;
+        font-size: clamp(30px, 3.35vw, 58px);
+        line-height: 1.05;
+        white-space: nowrap;
+    }
+
+    .journey-title p {
+        margin: 10px 0 0;
+        font-size: clamp(16px, 1.4vw, 22px);
+        font-weight: 700;
+    }
+
+    .road-button {
+        position: absolute;
+        z-index: 6;
+        top: 34%;
+        width: 12%;
+        height: 11.5%;
+        padding: 0;
+        border: 3px solid transparent;
+        border-radius: 22px;
+        background: transparent;
+        transition:
+            border-color 160ms ease,
+            box-shadow 160ms ease,
+            background 160ms ease;
+    }
+
+    .road-button:hover,
+    .road-button:focus-visible,
+    .road-button.active {
+        outline: none;
+        border-color: #7cff54;
+        background: rgba(29, 185, 84, 0.1);
+        box-shadow:
+            0 0 18px #55ff3c,
+            0 0 48px rgba(55, 255, 56, 0.75),
+            inset 0 0 30px rgba(55, 255, 56, 0.24);
+    }
+
+    .english {
+        left: 23.3%;
+    }
+
+    .spanish {
+        left: 44.1%;
+    }
+
+    .portuguese {
+        left: 68.9%;
+    }
+
+    .continue {
+        position: absolute;
+        z-index: 8;
+        left: 50%;
+        bottom: 3.5%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 30px;
+        color: #081008;
+        background: #75ef4f;
+        border: 2px solid #b7ff9c;
+        border-radius: 999px;
+        font-size: 20px;
+        font-weight: 900;
+        box-shadow: 0 0 28px rgba(78, 255, 73, 0.62);
+    }
+
+    .list-page {
+        min-height: calc(100vh - 72px);
+        display: grid;
+        place-items: center;
+        padding: 90px 24px 40px;
+        background:
+            radial-gradient(circle at 30% 20%, #164a23, transparent 40%),
+            #101010;
+    }
+
+    .list-card {
+        width: min(680px, 100%);
+        padding: clamp(26px, 5vw, 48px);
+        text-align: center;
+        background: rgba(18, 18, 18, 0.96);
+        border: 1px solid rgba(214, 193, 122, 0.42);
+        border-radius: 28px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    }
+
+    .list-logo {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+    }
+
+    .list-card h1 {
+        margin: 20px 0 8px;
+        color: #f7dc82;
+        font-size: clamp(32px, 5vw, 50px);
+    }
+
+    .list-card p {
+        color: #d8f5e2;
+        font-size: 18px;
+    }
+
+    .language-list {
+        display: grid;
+        gap: 14px;
+        margin-top: 30px;
+    }
+
+    .language-list button {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        color: #fff;
+        background: #222;
+        border: 2px solid #625735;
+        border-radius: 15px;
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .language-list button:hover,
+    .language-list button:focus-visible,
+    .language-list button.active {
+        color: #081008;
+        background: #75ef4f;
+        border-color: #b7ff9c;
+    }
+
+    .list-continue {
+        width: 100%;
+        min-height: 58px;
+        margin-top: 22px;
+        color: #111;
+        background: #d6c17a;
+        border: 0;
+        border-radius: 15px;
+        font-size: 19px;
+        font-weight: 900;
+    }
+
+    .screen-reader-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    @media (max-width: 820px) {
+        .topbar {
+            min-height: 62px;
+        }
+
+        nav a:not(.signup) {
+            display: none;
+        }
+
+        .brand {
+            font-size: 22px;
+        }
+
+        .brand img {
+            width: 38px;
+            height: 38px;
+        }
+
+        .journey {
+            min-height: calc(100vh - 62px);
+        }
+
+        .journey-art {
+            object-position: center;
+        }
+
+        .utilitybar {
+            top: 74px;
+        }
+
+        .utility {
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        .utility:not(.view-toggle) {
+            font-size: 0;
+        }
+
+        .utility span {
+            font-size: 20px;
+        }
+
+        .journey-title {
+            top: 12%;
+        }
+
+        .journey-title h1 {
+            white-space: normal;
+        }
+
+        .road-button {
+            top: 35%;
+            width: 27%;
+            height: 13%;
+        }
+
+        .english {
+            left: 5%;
+        }
+
+        .spanish {
+            left: 36.5%;
+        }
+
+        .portuguese {
+            left: 68%;
+        }
+    }
+
+    /* Rectangular Journey artwork alignment */
+    .art-layer,
+    .hotspot-layer {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: max(100%, calc((100vh - 72px) * 1.780618));
+        aspect-ratio: 1672 / 939;
+        transform: translate(-50%, -50%);
+    }
+
+    .art-layer {
+        z-index: 1;
+    }
+
+    .hotspot-layer {
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    .hotspot-layer button {
+        pointer-events: auto;
+    }
+
+    .art-layer .journey-art {
+        position: static;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+    }
+
+    .hotspot-layer .road-button {
+        top: 40.05%;
+        height: 8.3%;
+        border-radius: 5px;
+    }
+
+    .hotspot-layer .english {
+        left: 23.35%;
+        width: 11.7%;
+    }
+
+    .hotspot-layer .spanish {
+        left: 44.35%;
+        width: 10.45%;
+    }
+
+    .hotspot-layer .portuguese {
+        left: 69%;
+        width: 11%;
+    }
+
+    @media (max-width: 820px) {
+        .art-layer,
+        .hotspot-layer {
+            width: max(100%, calc((100vh - 62px) * 1.780618));
+        }
+
+        .hotspot-layer .road-button {
+            top: 40.05%;
+            height: 8.3%;
+        }
+
+        .hotspot-layer .english {
+            left: 23.35%;
+            width: 11.7%;
+        }
+
+        .hotspot-layer .spanish {
+            left: 44.35%;
+            width: 10.45%;
+        }
+
+        .hotspot-layer .portuguese {
+            left: 69%;
+            width: 11%;
+        }
+    }
+
+</style>
