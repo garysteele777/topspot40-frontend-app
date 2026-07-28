@@ -1,14 +1,17 @@
 <script lang="ts">
+	import { submitFeedback } from '$lib/api/feedback';
+
 	export let visible: boolean = false;
 	export let onClose: () => void;
 
 	let submitted = false;
+	let submitting = false;
 
 	let email = '';
 	let message = '';
 	let error = '';
 
-	function sendMessage(e: MouseEvent) {
+	async function sendMessage(e: MouseEvent) {
 		e.preventDefault();
 
 		if (!email.trim() || !message.trim()) {
@@ -16,16 +19,34 @@
 			return;
 		}
 
-		submitted = true;
 		error = '';
+		submitting = true;
 
-		// TODO: send message to backend here
+		try {
+			await submitFeedback({
+				type: 'feedback',
+				title: 'Contact Us message',
+				message: message.trim(),
+				email: email.trim(),
+				route: window.location.pathname
+			});
+
+			submitted = true;
+		} catch (err) {
+			error =
+				err instanceof Error
+					? err.message
+					: 'Unable to send your message. Please try again.';
+		} finally {
+			submitting = false;
+		}
 	}
 
 	function handleClose(e?: MouseEvent) {
 		e?.preventDefault?.();
 
 		submitted = false;
+		submitting = false;
 		email = '';
 		message = '';
 		error = '';
@@ -75,8 +96,12 @@
 				{/if}
 
 				<div class="actions">
-					<button type="button" on:click={sendMessage}>Send</button>
-					<button type="button" class="secondary" on:click={handleClose}>Cancel</button>
+					<button type="button" on:click={sendMessage} disabled={submitting}>
+						{submitting ? 'Sending...' : 'Send'}
+					</button>
+					<button type="button" class="secondary" on:click={handleClose} disabled={submitting}>
+						Cancel
+					</button>
 				</div>
 			{:else}
 				<h2>Thank you!</h2>
@@ -130,6 +155,11 @@
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
+	}
+
+	button:disabled {
+		cursor: not-allowed;
+		opacity: 0.65;
 	}
 
 	button:first-of-type {

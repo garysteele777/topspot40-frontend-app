@@ -1,26 +1,45 @@
 <script lang="ts">
+	import { submitFeedback as submitFeedbackRequest } from '$lib/api/feedback';
+
 	export let visible = false;
 	export let onClose: () => void;
 
 	let submitted = false;
+	let submitting = false;
 
 	let feedback = '';
 	let error = '';
 
-	function submitFeedback() {
+	async function submitFeedback() {
 		if (!feedback.trim()) {
 			error = 'Please write some feedback before submitting.';
 			return;
 		}
 
-		submitted = true;
 		error = '';
+		submitting = true;
 
-		// TODO: send feedback to backend here
+		try {
+			await submitFeedbackRequest({
+				type: 'feedback',
+				message: feedback.trim(),
+				route: window.location.pathname
+			});
+
+			submitted = true;
+		} catch (err) {
+			error =
+				err instanceof Error
+					? err.message
+					: 'Unable to submit feedback. Please try again.';
+		} finally {
+			submitting = false;
+		}
 	}
 
 	function handleClose() {
 		submitted = false;
+		submitting = false;
 		feedback = '';
 		error = '';
 
@@ -59,9 +78,11 @@
 				{/if}
 
 				<div class="actions">
-					<button type="button" on:click={submitFeedback}>Submit</button>
+					<button type="button" on:click={submitFeedback} disabled={submitting}>
+						{submitting ? 'Submitting...' : 'Submit'}
+					</button>
 
-					<button type="button" class="secondary" on:click={handleClose}>
+					<button type="button" class="secondary" on:click={handleClose} disabled={submitting}>
 						Cancel
 					</button>
 				</div>
@@ -117,6 +138,11 @@
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
+	}
+
+	button:disabled {
+		cursor: not-allowed;
+		opacity: 0.65;
 	}
 
 	button:first-of-type {

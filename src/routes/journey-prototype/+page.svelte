@@ -1,6 +1,7 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
+    import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type ViewMode = 'journey' | 'list';
@@ -8,6 +9,7 @@
     let language: LandingLanguage = 'en';
     let viewMode: ViewMode = 'journey';
     let hasChosenLanguage = false;
+    let showContactModal = false;
 
     const text = {
         en: {
@@ -84,6 +86,14 @@
         goto('/journey-prototype/choose');
     }
 
+    function openContactModal() {
+        showContactModal = true;
+    }
+
+    function closeContactModal() {
+        showContactModal = false;
+    }
+
     function showCompactView() {
         localStorage.setItem('topspot_home_layout', 'compact');
         goto('/');
@@ -124,7 +134,7 @@
         </a>
 
         <nav aria-label="TopSpot40 navigation">
-            <a href="/">{text[language].contact}</a>
+            <a href="/" on:click|preventDefault={openContactModal}>{text[language].contact}</a>
             <a href="/about">{text[language].about}</a>
             <a href="/signin">{text[language].signIn}</a>
             <a class="signup" href="/signup-official">
@@ -253,6 +263,10 @@
     {/if}
 </div>
 
+<div class="contact-modal-host">
+    <ContactModal visible={showContactModal} onClose={closeContactModal} />
+</div>
+
 <style>
     :global(html),
     :global(body) {
@@ -279,6 +293,11 @@
     .prototype {
         min-height: 100vh;
         background: #0b0a07;
+    }
+
+    .contact-modal-host {
+        position: relative;
+        z-index: 10000;
     }
 
     .topbar {

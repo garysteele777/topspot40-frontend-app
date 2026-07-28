@@ -1,6 +1,7 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
+    import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type Genre =
@@ -49,6 +50,7 @@
     let language: LandingLanguage = 'en';
     let selectedDecade = '';
     let selectedGenre: Genre | null = null;
+    let showContactModal = false;
 
     const text = {
         en: {
@@ -109,6 +111,14 @@
         goto(`/car-page?${params.toString()}`);
     }
 
+    function openContactModal() {
+        showContactModal = true;
+    }
+
+    function closeContactModal() {
+        showContactModal = false;
+    }
+
     onMount(() => {
         const savedLanguage = localStorage.getItem('topspot_language');
         if (
@@ -137,7 +147,7 @@
             <span>TopSpot<span class="brand-number">40</span></span>
         </a>
         <nav aria-label="TopSpot40 navigation">
-            <a href="/">{text[language].contact}</a>
+            <a href="/" on:click|preventDefault={openContactModal}>{text[language].contact}</a>
             <a href="/about">{text[language].about}</a>
             <a href="/signin">{text[language].signIn}</a>
             <a class="signup" href="/signup-official">{text[language].signUp}</a>
@@ -221,6 +231,10 @@
     </main>
 </div>
 
+<div class="contact-modal-host">
+    <ContactModal visible={showContactModal} onClose={closeContactModal} />
+</div>
+
 <style>
     :global(html),
     :global(body) {
@@ -247,6 +261,11 @@
     .prototype {
         min-height: 100vh;
         background: #0b0a07;
+    }
+
+    .contact-modal-host {
+        position: relative;
+        z-index: 10000;
     }
 
     .topbar {
