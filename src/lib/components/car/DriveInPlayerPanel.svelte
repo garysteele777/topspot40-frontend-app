@@ -282,7 +282,8 @@
 
     .drive-in-stage {
         position: relative;
-        width: min(100vw, calc((100vh - 102px) * 1.780618));
+        width: min(94vw, calc((100dvh - 118px) * 1.780618));
+        max-width: 1672px;
         aspect-ratio: 1672 / 939;
         margin: -2.8rem auto 0;
         overflow: visible;
@@ -295,7 +296,8 @@
         inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: fill;
+        object-fit: contain;
+        object-position: center top;
         user-select: none;
         pointer-events: none;
     }
@@ -395,19 +397,19 @@
     }
 
     .speaker-pulse.narrating .speaker-glow {
-        animation: speaker-breathe 2.4s ease-in-out infinite;
+        animation: speaker-breathe 1.35s ease-in-out infinite;
     }
 
     .speaker-pulse.narrating .pulse-ring {
-        animation: speaker-wave 3.3s ease-out infinite;
+        animation: speaker-wave 2.4s ease-out infinite;
     }
 
     .speaker-pulse.narrating .ring-two {
-        animation-delay: 1.1s;
+        animation-delay: 0.8s;
     }
 
     .speaker-pulse.narrating .ring-three {
-        animation-delay: 2.2s;
+        animation-delay: 1.6s;
     }
 
     @keyframes speaker-wave {
@@ -420,7 +422,7 @@
         }
         100% {
             opacity: 0;
-            transform: translate(-50%, -50%) scale(2.25);
+            transform: translate(-50%, -50%) scale(2.7);
         }
     }
 
@@ -431,8 +433,8 @@
             transform: translate(-50%, -50%) scale(0.8);
         }
         50% {
-            opacity: 0.92;
-            transform: translate(-50%, -50%) scale(1.2);
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.35);
         }
     }
 
@@ -686,9 +688,7 @@
 
     @media (max-width: 820px) {
         .drive-in-stage {
-            width: max(100%, calc((100vh - 86px) * 1.780618));
-            left: 50%;
-            transform: translateX(-50%);
+            width: min(100%, calc((100dvh - 86px) * 1.780618));
         }
 
         .secondary-controls {
