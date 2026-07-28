@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
+    import DriveInPlayerPanel from '$lib/components/car/DriveInPlayerPanel.svelte';
     import GuidedPlaybackPanel from '$lib/components/car/GuidedPlaybackPanel.svelte';
     import {derived} from 'svelte/store';
     import {PROGRAM_TYPES} from '$lib/types/program';
@@ -102,6 +103,17 @@
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
     let guidedPlaybackRunId = 0;
+
+    type CarDisplayView = 'classic' | 'drive-in';
+    let carDisplayView: CarDisplayView = 'drive-in';
+
+    function setCarDisplayView(view: CarDisplayView): void {
+        carDisplayView = view;
+
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('topspot_car_display', view);
+        }
+    }
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -1354,6 +1366,13 @@
                 ? 'Artist Spotlight'
                 : uiGenre;
 
+    $: driveInProgramTitle =
+        headerMode === 'collection'
+            ? uiDecade
+            : headerMode === 'artist_spotlight'
+                ? `${bannerTitle} Spotlight`
+                : `${uiDecade} ${uiGenre}`.trim();
+
 
     $: headerMode =
         $currentSelection?.mode === 'decade_genre' ||
@@ -1408,6 +1427,11 @@
     // ─────────────────────────────────────────────
     onMount(async () => {
         console.info('[car-page] build marker main@3ce2b0b mini-player-tap-diagnostic');
+
+        const savedCarDisplay = localStorage.getItem('topspot_car_display');
+        if (savedCarDisplay === 'classic' || savedCarDisplay === 'drive-in') {
+            carDisplayView = savedCarDisplay;
+        }
 
 
         window.addEventListener('keydown', handleKeyDown);
@@ -1624,28 +1648,60 @@
                     pauseMode={settings.pauseMode}
                     skipPlayed={settings.skipPlayed}
                     categoryMode="single"
+                    compact={carDisplayView === 'drive-in'}
             />
         {/if}
 
         {#if $currentTrack}
 
-            <CarModePlayerPanel
-                    currentTrack={$currentTrack}
-                    tracks={$tracks}
-                    isPlaying={$isPlaying}
-                    elapsed={$elapsed}
-                    duration={$duration}
-                    progress={$progress}
-                    phase={$playbackPhase}
-                    showNarrationModal={$showNarrationModal}
-                    {narrationModalInitialMode}
-                    setShowNarrationModal={setNarrationModalOpen}
-                    onPrev={prevTrack}
-                    onNext={nextTrack}
-                    onJumpToTrack={handleJumpToTrack}
-                    onPlayPause={handlePlayPause}
-                    onBackToOptions={backToOptions}
-            />
+            {#if carDisplayView === 'drive-in'}
+                <DriveInPlayerPanel
+                        currentTrack={$currentTrack}
+                        tracks={$tracks}
+                        isPlaying={$isPlaying}
+                        elapsed={$elapsed}
+                        duration={$duration}
+                        progress={$progress}
+                        phase={$playbackPhase}
+                        programTitle={driveInProgramTitle}
+                        showNarrationModal={$showNarrationModal}
+                        {narrationModalInitialMode}
+                        setShowNarrationModal={setNarrationModalOpen}
+                        onPrev={prevTrack}
+                        onNext={nextTrack}
+                        onJumpToTrack={handleJumpToTrack}
+                        onPlayPause={handlePlayPause}
+                        onBackToOptions={backToOptions}
+                        onUseClassicView={() => setCarDisplayView('classic')}
+                />
+            {:else}
+                <div class="classic-view-toolbar">
+                    <button
+                            type="button"
+                            on:click={() => setCarDisplayView('drive-in')}
+                    >
+                        🎞 Drive-In View
+                    </button>
+                </div>
+
+                <CarModePlayerPanel
+                        currentTrack={$currentTrack}
+                        tracks={$tracks}
+                        isPlaying={$isPlaying}
+                        elapsed={$elapsed}
+                        duration={$duration}
+                        progress={$progress}
+                        phase={$playbackPhase}
+                        showNarrationModal={$showNarrationModal}
+                        {narrationModalInitialMode}
+                        setShowNarrationModal={setNarrationModalOpen}
+                        onPrev={prevTrack}
+                        onNext={nextTrack}
+                        onJumpToTrack={handleJumpToTrack}
+                        onPlayPause={handlePlayPause}
+                        onBackToOptions={backToOptions}
+                />
+            {/if}
 
             {#if settings.playbackMethod === 'guided' && guidedReady}
                 <GuidedPlaybackPanel
@@ -1691,6 +1747,28 @@
                 #08080a 100%
         );
         color: #fff;
+    }
+
+    .classic-view-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        padding: 10px 18px 0;
+    }
+
+    .classic-view-toolbar button {
+        border: 1px solid rgba(207, 184, 124, 0.65);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.72);
+        color: #e8d7a7;
+        cursor: pointer;
+        padding: 8px 15px;
+        font-weight: 700;
+    }
+
+    .classic-view-toolbar button:hover,
+    .classic-view-toolbar button:focus-visible {
+        border-color: #22c55e;
+        color: #42df78;
     }
 
     .pause-banner {
