@@ -98,7 +98,7 @@
 <div class="hero-section">
 	<div class="hero-logo">
 		<a href="/app" class="logo">
-			<img src="/favicon.ico" alt="TopSpot40 Logo" />
+			<img src="/old-dog-icon.png" alt="TopSpot40 Logo" />
 		</a>
 	</div>
 	<main>
