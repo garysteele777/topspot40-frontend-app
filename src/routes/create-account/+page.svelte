@@ -6,6 +6,13 @@
 
   export let data;
 
+  $: accessState = data?.subscriptionStatus?.access_state;
+  $: isExpired = accessState === 'expired';
+  $: heading = isExpired ? 'Your promotional access has ended' : 'Choose your TopSpot40 plan';
+  $: body = isExpired
+    ? 'Choose a paid plan to continue using TopSpot40.'
+    : 'Choose a paid plan to start using TopSpot40.';
+
   type CheckoutResponse =
     | { url: string }
     | { error: string }
@@ -72,8 +79,8 @@
 
 
 <div class="container">
-  <h1>Welcome to TopSpot40!</h1>
-  <p>You’re all set with Spotify Premium — now let’s create your account.</p>
+  <h1>{heading}</h1>
+  <p>{body}</p>
   <button on:click={startCheckout}> Continue to Subscription </button>
 </div>
 
