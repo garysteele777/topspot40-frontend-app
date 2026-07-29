@@ -282,7 +282,7 @@
 
     .drive-in-stage {
         position: relative;
-        width: min(94vw, calc((100dvh - 118px) * 1.780618));
+        width: min(94vw, calc((100dvh - 28px) * 1.780618));
         max-width: 1672px;
         aspect-ratio: 1672 / 939;
         margin: -2.8rem auto 0;
@@ -315,9 +315,11 @@
     }
 
     .movie-screen img {
-        width: 100%;
+        display: block;
+        width: 54%;
         height: 100%;
         object-fit: contain;
+        object-position: center;
         filter: brightness(0.96) contrast(1.03);
     }
 
