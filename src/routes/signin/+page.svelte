@@ -24,7 +24,7 @@
 -->
 <div class="signin-container">
 	<h1>Sign In</h1>
-	<p>Sign in with your Spotify account to continue.</p>
+	<p>Sign in to continue to your TopSpot40 account.</p>
 	<button on:click={signInWithSpotify} class="spotify-signin-button">
 		Sign in with Spotify
 	</button>
