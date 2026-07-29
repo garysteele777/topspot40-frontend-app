@@ -46,7 +46,7 @@
     ];
 
 	let steps = [
-		{ title: 'Sign in with Spotify', description: 'Connect your Spotify Premium account to unlock playback.' },
+		{ title: 'Sign in with Spotify', description: 'Open selected tracks in Spotify while TopSpot40 guides the story, ranking, and context.' },
 		{ title: 'Choose genre + decade', description: 'Pick Pop, Rock, Country, RnB/Soul, or Blues/Jazz and select a decade.' },
 		{ title: 'Select Language', description: 'Select English, Spanish, or Portuguese'},
 		{ title: 'Select listening mode', description: 'Radio Mode, DJ Mode, or Story Mode — each changes how tracks are introduced.' },
@@ -149,7 +149,7 @@
 					</div>
 				</div>
 				<h3>Fast & Easy</h3>
-				<p>Instant access to your top 40 songs with smooth playback and intuitive controls.</p>
+				<p>Explore curated Top 40 programs with rankings, context, and direct Spotify links.</p>
 			</div>
 			<div class="feature-card" tabindex="0">
 				<div class="icon">
@@ -175,8 +175,8 @@
 						<Lock size={36} color="#1db954" />
 					</div>
 				</div>
-				<h3>Spotify Powered</h3>
-				<p>Connect your Premium Account instantly.</p>
+				<h3>Spotify Companion</h3>
+				<p>Open tracks in Spotify. Spotify handles playback, advertisements, and account rules.</p>
 			</div>
 			<div class="feature-card" tabindex="0">
 				<div class="icon">
