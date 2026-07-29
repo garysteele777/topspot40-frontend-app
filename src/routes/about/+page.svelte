@@ -8,8 +8,20 @@
 	<button on:click={goBack} class="go-back-button"> Go Back </button>
 </div>
 
-<h1>About TopSpot40</h1>
-<p>This is the about page. Content coming soon!</p>
+<main class="about-content">
+	<h1>About TopSpot40</h1>
+	<p>
+		TopSpot40 is an interactive music discovery guide and companion. It combines
+		curated song rankings by genre and decade, artist spotlights, collections,
+		music history, and radio-inspired narration.
+	</p>
+	<p>
+		When you choose a song, TopSpot40 can open the selected track in Spotify.
+		Spotify handles music playback, advertisements, account restrictions, and
+		Free or Premium behavior.
+	</p>
+	<p>TopSpot40 does not include a Spotify Premium subscription.</p>
+</main>
 
 <style>
 	.go-back-button-wrapper {
@@ -45,5 +57,20 @@
 
 	.go-back-button:hover {
 		background-color: #1db954;
+	}
+
+	.about-content {
+		max-width: 720px;
+		margin: 5rem auto 0;
+		padding: 0 1.5rem;
+		line-height: 1.6;
+	}
+
+	.about-content h1 {
+		margin-bottom: 1rem;
+	}
+
+	.about-content p {
+		margin: 0 0 1rem;
 	}
 </style>
