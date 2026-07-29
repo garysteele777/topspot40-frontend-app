@@ -18,7 +18,7 @@
 <div class="page-wrapper">
 	<div class="signup-box">
 		<h1>Sign Up</h1>
-		<p>Please note: Only Spotify Premium users can sign up and join us.</p>
+		<p>TopSpot40’s current Spotify sign-up path requires Spotify Premium. Spotify handles music playback and account restrictions.</p>
 		<div class="spotify-btn">
 			<button on:click={signInWithSpotify}> Sign up with Spotify </button>
 		</div>
