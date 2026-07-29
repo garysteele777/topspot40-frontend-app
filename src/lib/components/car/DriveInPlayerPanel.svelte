@@ -1,6 +1,6 @@
 <script lang="ts">
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
-    import TrackListPanel from '$lib/components/shared/TrackListPanel.svelte';
+    import DriveInJukeboxPanel from '$lib/components/car/DriveInJukeboxPanel.svelte';
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
@@ -242,35 +242,15 @@
 />
 
 {#if showTrackList}
-    <div class="tracklist-overlay">
-        <div class="tracklist-panel">
-            <div class="tracklist-header">
-                <div>
-                    <h3>Track List</h3>
-                    <div>Choose a track to continue your journey.</div>
-                </div>
-
-                <button
-                    type="button"
-                    class="close-button"
-                    on:click={() => (showTrackList = false)}
-                    aria-label="Close track list"
-                >
-                    ✕
-                </button>
-            </div>
-
-            <TrackListPanel
-                {tracks}
-                {currentTrack}
-                onJumpToTrack={jumpToTrack}
-                {isPlayed}
-                {programType}
-                {programGroup}
-                closeOnJump={() => (showTrackList = false)}
-            />
-        </div>
-    </div>
+    <DriveInJukeboxPanel
+        {tracks}
+        {currentTrack}
+        onJumpToTrack={jumpToTrack}
+        onClose={() => (showTrackList = false)}
+        {isPlayed}
+        {programType}
+        {programGroup}
+    />
 {/if}
 
 <style>
@@ -639,53 +619,6 @@
 
     .view-switch button.active {
         color: #2bd469;
-    }
-
-    .tracklist-overlay {
-        position: fixed;
-        z-index: 80;
-        inset: 0;
-        display: grid;
-        place-items: end center;
-        padding: 16px;
-        background: rgba(0, 0, 0, 0.78);
-    }
-
-    .tracklist-panel {
-        width: min(760px, 100%);
-        max-height: 76vh;
-        overflow: hidden;
-        border: 1px solid rgba(207, 184, 124, 0.55);
-        border-radius: 18px;
-        background: #111;
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.7);
-    }
-
-    .tracklist-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 11px 15px;
-        border-bottom: 1px solid rgba(207, 184, 124, 0.3);
-    }
-
-    .tracklist-header h3 {
-        margin: 0;
-    }
-
-    .tracklist-header div div {
-        margin-top: 2px;
-        color: #bbb;
-        font-size: 0.78rem;
-    }
-
-    .close-button {
-        border: 0;
-        border-radius: 999px;
-        background: #333;
-        color: #fff;
-        cursor: pointer;
-        padding: 7px 11px;
     }
 
     @media (max-width: 820px) {
