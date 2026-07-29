@@ -37,6 +37,7 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
     console.log('👤 USER JSON:', user);
 
     return {
-        user
-    } satisfies { user: any };
+        user,
+        subscriptionStatus: data
+    } satisfies { user: any; subscriptionStatus: any };
 }
