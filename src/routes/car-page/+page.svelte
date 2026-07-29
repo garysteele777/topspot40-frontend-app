@@ -11,7 +11,8 @@
     import {
         playNarrationUrl,
         playNarrationUrlAndWait,
-        stopNarration
+        stopNarration,
+        type NarrationTiming
     } from '$lib/audio/narrationPlayer';
 
     import ShowcasePanel from '$lib/components/studio/ShowcasePanel.svelte';
@@ -103,6 +104,18 @@
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
     let guidedPlaybackRunId = 0;
+
+    function updateGuidedNarrationTiming(timing: NarrationTiming): void {
+        elapsed.set(timing.elapsed);
+        duration.set(timing.duration);
+        progress.set(timing.progress);
+    }
+
+    function resetGuidedNarrationTiming(): void {
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
+    }
 
     type CarDisplayView = 'classic' | 'drive-in';
     let carDisplayView: CarDisplayView = 'drive-in';
@@ -594,9 +607,14 @@
         try {
             await unlockBedAudio();
             await startBedUrl(guidedBedAudioUrl(track));
-            await playNarrationUrlAndWait(url);
+            await playNarrationUrlAndWait(
+                url,
+                undefined,
+                updateGuidedNarrationTiming
+            );
         } finally {
             stopBed();
+            resetGuidedNarrationTiming();
             guidedArtistBioPlaying = false;
             showNarrationModal.set(false);
             narrationModalInitialMode = 'intro';
@@ -607,6 +625,7 @@
     function stopGuidedArtistBio(): void {
         stopNarration();
         stopBed();
+        resetGuidedNarrationTiming();
         guidedArtistBioPlaying = false;
         showNarrationModal.set(false);
         narrationModalInitialMode = 'intro';
@@ -678,13 +697,15 @@
                     playbackPhase.set(narration.phase);
                     await playNarrationUrlAndWait(
                         narration.url,
-                        narration.fallbackUrl
+                        narration.fallbackUrl,
+                        updateGuidedNarrationTiming
                     );
 
                     if (runId !== guidedPlaybackRunId) return;
                 }
             } finally {
                 stopBed();
+                resetGuidedNarrationTiming();
             }
         }
 
