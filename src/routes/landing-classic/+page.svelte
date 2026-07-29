@@ -240,8 +240,7 @@
 
 <footer class="disclaimer">
     <p>
-        <strong>Disclaimer:</strong> TopSpot is currently in development. You must have a valid Spotify Premium
-        account to use TopSpot when it launches. TopSpot does not provide Spotify Premium access or subscriptions.
+        <strong>Disclaimer:</strong> TopSpot40 is an interactive music discovery guide and companion. Spotify handles music playback, advertisements, and Spotify account behavior. TopSpot40 does not include a Spotify Premium subscription.
     </p>
     <p class="creators">Gary Steele, Isaiah Trevino, and Patricia Steele</p>
 </footer>
