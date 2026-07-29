@@ -1,6 +1,14 @@
 let narrationAudio: HTMLAudioElement | null = null;
 let cancelPendingWait: (() => void) | null = null;
 
+export type NarrationTiming = {
+	elapsed: number;
+	duration: number;
+	progress: number;
+};
+
+type NarrationTimingListener = (timing: NarrationTiming) => void;
+
 export function stopNarration(): void {
 	const audio = narrationAudio;
 
@@ -45,7 +53,10 @@ export async function playNarrationUrl(url: string, fallbackUrl?: string): Promi
 	await play(url, fallbackUrl);
 }
 
-function playNarrationUrlOnceAndWait(url: string): Promise<'ended' | 'error' | 'cancelled'> {
+function playNarrationUrlOnceAndWait(
+	url: string,
+	onTiming?: NarrationTimingListener
+): Promise<'ended' | 'error' | 'cancelled'> {
 	stopNarration();
 
 	return new Promise((resolve) => {
@@ -53,10 +64,40 @@ function playNarrationUrlOnceAndWait(url: string): Promise<'ended' | 'error' | '
 		narrationAudio = audio;
 		audio.preload = 'auto';
 		let settled = false;
+		let timingTimer: number | null = null;
+
+		const publishTiming = (complete = false) => {
+			const audioDuration =
+				Number.isFinite(audio.duration) && audio.duration > 0
+					? audio.duration
+					: 0;
+			const audioElapsed =
+				complete && audioDuration > 0
+					? audioDuration
+					: Math.max(0, audio.currentTime || 0);
+
+			onTiming?.({
+				elapsed: audioElapsed,
+				duration: audioDuration,
+				progress:
+					audioDuration > 0
+						? Math.min(100, (audioElapsed / audioDuration) * 100)
+						: 0
+			});
+		};
+
+		onTiming?.({elapsed: 0, duration: 0, progress: 0});
 
 		const finish = (result: 'ended' | 'error' | 'cancelled') => {
 			if (settled) return;
 			settled = true;
+			if (timingTimer !== null) {
+				window.clearInterval(timingTimer);
+				timingTimer = null;
+			}
+			if (result === 'ended') {
+				publishTiming(true);
+			}
 			if (narrationAudio === audio) {
 				narrationAudio = null;
 			}
@@ -69,19 +110,28 @@ function playNarrationUrlOnceAndWait(url: string): Promise<'ended' | 'error' | '
 		const cancel = () => finish('cancelled');
 		cancelPendingWait = cancel;
 
+		audio.addEventListener('loadedmetadata', () => publishTiming(), {once: true});
+		audio.addEventListener('durationchange', () => publishTiming());
+		audio.addEventListener('timeupdate', () => publishTiming());
 		audio.addEventListener('ended', () => finish('ended'), {once: true});
 		audio.addEventListener('error', () => finish('error'), {once: true});
 
-		void audio.play().catch(() => finish('error'));
+		void audio.play()
+			.then(() => {
+				publishTiming();
+				timingTimer = window.setInterval(publishTiming, 100);
+			})
+			.catch(() => finish('error'));
 	});
 }
 
 export async function playNarrationUrlAndWait(
 	url: string,
-	fallbackUrl?: string
+	fallbackUrl?: string,
+	onTiming?: NarrationTimingListener
 ): Promise<void> {
-	const result = await playNarrationUrlOnceAndWait(url);
+	const result = await playNarrationUrlOnceAndWait(url, onTiming);
 	if (result === 'error' && fallbackUrl) {
-		await playNarrationUrlOnceAndWait(fallbackUrl);
+		await playNarrationUrlOnceAndWait(fallbackUrl, onTiming);
 	}
 }
