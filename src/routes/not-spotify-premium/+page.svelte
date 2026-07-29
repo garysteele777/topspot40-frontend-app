@@ -9,11 +9,14 @@
 </div>
 
 <main class="center-text">
-	<h1>Oops! Spotify Premium is Required</h1>
-	<p>Sorry, to use this feature you must have a Spotify Premium account.</p>
-	<p>Please upgrade your Spotify subscription and try again.</p>
+	<h1>This sign-in path currently requires Spotify Premium</h1>
+	<p>
+		TopSpot40’s current account sign-in still checks for Spotify Premium.
+		TopSpot40 is moving toward a Spotify companion model where Spotify handles
+		playback, advertisements, and account restrictions.
+	</p>
 	<a href="https://www.spotify.com/premium/" target="_blank" rel="noopener noreferrer">
-		Learn More About Spotify Premium
+		Learn about Spotify Premium
 	</a>
 </main>
 
