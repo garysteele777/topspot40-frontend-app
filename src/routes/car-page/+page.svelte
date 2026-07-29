@@ -106,6 +106,7 @@
 
     type CarDisplayView = 'classic' | 'drive-in';
     let carDisplayView: CarDisplayView = 'drive-in';
+    let isSmallScreen = false;
 
     function setCarDisplayView(view: CarDisplayView): void {
         carDisplayView = view;
@@ -1428,8 +1429,16 @@
     onMount(async () => {
         console.info('[car-page] build marker main@3ce2b0b mini-player-tap-diagnostic');
 
+        isSmallScreen = window.matchMedia('(max-width: 767px)').matches;
+
         const savedCarDisplay = localStorage.getItem('topspot_car_display');
-        if (savedCarDisplay === 'classic' || savedCarDisplay === 'drive-in') {
+
+        if (isSmallScreen) {
+            carDisplayView = 'classic';
+        } else if (
+            savedCarDisplay === 'classic' ||
+            savedCarDisplay === 'drive-in'
+        ) {
             carDisplayView = savedCarDisplay;
         }
 
@@ -1675,14 +1684,16 @@
                         onUseClassicView={() => setCarDisplayView('classic')}
                 />
             {:else}
-                <div class="classic-view-toolbar">
-                    <button
-                            type="button"
-                            on:click={() => setCarDisplayView('drive-in')}
-                    >
-                        🎞 Drive-In View
-                    </button>
-                </div>
+                {#if !isSmallScreen}
+                    <div class="classic-view-toolbar">
+                        <button
+                                type="button"
+                                on:click={() => setCarDisplayView('drive-in')}
+                        >
+                            🎞 Drive-In View
+                        </button>
+                    </div>
+                {/if}
 
                 <CarModePlayerPanel
                         currentTrack={$currentTrack}

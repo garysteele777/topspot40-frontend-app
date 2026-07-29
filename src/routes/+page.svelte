@@ -93,8 +93,11 @@
 
     onMount(() => {
         const savedLayout = localStorage.getItem('topspot_home_layout');
+        const isSmallScreen = window.matchMedia('(max-width: 767px)').matches;
 
-        if (savedLayout !== 'compact') {
+        if (isSmallScreen) {
+            localStorage.setItem('topspot_home_layout', 'compact');
+        } else if (savedLayout !== 'compact') {
             localStorage.setItem('topspot_home_layout', 'journey');
             goto('/journey-prototype', {replaceState: true});
             return;
@@ -105,7 +108,6 @@
         if (isLandingLanguage(savedLanguage)) {
             language = savedLanguage;
         }
-
     });
 </script>
 
