@@ -2,6 +2,7 @@
 
 import {browser} from '$app/environment';
 import {get} from 'svelte/store';
+import {NARRATION_VOLUME} from '$lib/audio/audioLevels';
 
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
@@ -321,7 +322,7 @@ function playOneAudio(
             narrationAudioState(audio, playbackSessionIdPresent)
         );
         audio.src = url;
-        audio.volume = 0.60;
+        audio.volume = NARRATION_VOLUME;
         audio.muted = false;
         audio.setAttribute('playsinline', '');
         sendClientDiagnostic(
