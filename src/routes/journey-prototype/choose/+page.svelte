@@ -59,7 +59,7 @@
     };
 
     const routes: Record<Destination, string> = {
-        library: '/journey-prototype/decade',
+        library: '/journey-prototype/program',
         radio: '/options-v4',
         journey: '/options-v4',
         preferences: '/options-v4'
