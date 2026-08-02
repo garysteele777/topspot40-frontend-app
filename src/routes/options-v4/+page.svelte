@@ -18,7 +18,7 @@
     // ─────────────────────────────────────────────
     // UI Components
     // ─────────────────────────────────────────────
-    import HeroHeader from '$lib/components/options/HeroHeader.svelte';
+    import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
     import MusicJourneyPanel from '$lib/components/options-v2/MusicJourneyPanel.svelte';
     import PlaybackPreferencesPanel from '$lib/components/options-v2/PlaybackPreferencesPanel.svelte';
@@ -44,15 +44,19 @@
     let activeGroup: ModeType = 'decade_genre';
     let language: Language = 'en';
     let languages: Language[] = ['en'];
-    let initialLibraryTab: 'nostalgia' | 'collections' | 'artists' =
-        page.url.searchParams.get('tab') === 'artist'
+    const requestedLibraryTab = page.url.searchParams.get('tab');
+    const requestedDocuseriesCollection = page.url.searchParams.get('docuseries_collection');
+    let initialLibraryTab: 'nostalgia' | 'collections' | 'artists' | 'docuseries' =
+        requestedLibraryTab === 'artist'
             ? 'artists'
-            : page.url.searchParams.get('tab') === 'collections'
-                ? 'collections'
-                : 'nostalgia';
+            : requestedLibraryTab === 'docuseries' ||
+                (requestedLibraryTab === 'collections' && requestedDocuseriesCollection)
+                    ? 'docuseries'
+                    : requestedLibraryTab === 'collections'
+                        ? 'collections'
+                        : 'nostalgia';
 
-    let initialDocuseriesCollection =
-        page.url.searchParams.get('docuseries_collection');
+    let initialDocuseriesCollection = requestedDocuseriesCollection;
 
     let startRank = 1;
     let endRank = 9999;
@@ -436,12 +440,23 @@
 
         if (panel === 'library') {
             openSection = 'library';
+        } else if (panel === 'journey') {
+            openSection = 'journey';
+        } else if (panel === 'preferences') {
+            openSection = 'preferences';
         }
 
         if (tab === 'artist') {
             initialLibraryTab = 'artists';
         } else if (tab === 'collections') {
-            initialLibraryTab = 'collections';
+            if (page.url.searchParams.get('docuseries_collection')) {
+                initialLibraryTab = 'docuseries';
+                initialDocuseriesCollection = page.url.searchParams.get('docuseries_collection');
+            } else {
+                initialLibraryTab = 'collections';
+            }
+        } else if (tab === 'docuseries') {
+            initialLibraryTab = 'docuseries';
             initialDocuseriesCollection =
                 page.url.searchParams.get('docuseries_collection');
         }
@@ -537,7 +552,7 @@
 
 
 <div class="page-shell">
-    <HeroHeader/>
+    <PublicJourneyHeader {language}/>
 
     <div class="page">
 

@@ -13,7 +13,7 @@
             discoverTitle: 'Discover TopSpot40',
             discoverDesc: 'Explore stories, artists, collections, and music history.',
             controlTitle: 'Main Control Panel',
-            controlDesc: 'Start listening, radio, playlists, favorites, and playback settings.',
+            controlDesc: 'Start listening, explore programs, favorites, and playback settings.',
             journeyView: 'Journey View'
         },
         es: {
@@ -22,7 +22,7 @@
             discoverTitle: 'Descubrir TopSpot40',
             discoverDesc: 'Explora historias, artistas, colecciones e historia musical.',
             controlTitle: 'Panel de Control Principal',
-            controlDesc: 'Empieza a escuchar, radio, listas, favoritos y ajustes de reproducción.',
+            controlDesc: 'Empieza a escuchar, explora programas, favoritos y ajustes de reproducción.',
             journeyView: 'Vista de viaje'
         },
         'ptbr': {
@@ -31,7 +31,7 @@
             discoverTitle: 'Descobrir TopSpot40',
             discoverDesc: 'Explore histórias, artistas, coleções e história da música.',
             controlTitle: 'Painel de Controle Principal',
-            controlDesc: 'Comece a ouvir, rádio, playlists, favoritos e configurações de reprodução.',
+            controlDesc: 'Comece a ouvir, explore programas, favoritos e configurações de reprodução.',
             journeyView: 'Vista da jornada'
         }
     };

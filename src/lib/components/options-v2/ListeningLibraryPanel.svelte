@@ -2,7 +2,7 @@
 
     import {goto} from '$app/navigation';
 
-    type LibraryMode = 'nostalgia' | 'collections' | 'artists';
+    type LibraryMode = 'nostalgia' | 'collections' | 'artists' | 'docuseries';
 
     type OptionItem = {
         id: string;
@@ -118,9 +118,13 @@
             loadArtistSpotlights('all');
         }
 
-        if (initialTab === 'collections' && initialDocuseriesCollection) {
+        if (initialTab === 'docuseries') {
             selectedCollectionGroup = 'music_docuseries';
-            void restoreDocuseriesSelection(initialDocuseriesCollection);
+            if (initialDocuseriesCollection) {
+                void restoreDocuseriesSelection(initialDocuseriesCollection);
+            } else {
+                void loadDocuseriesCollections();
+            }
         }
     }
 
@@ -354,7 +358,19 @@
                         }
                     }}
             >
-                Artist Spotlight
+                Artist Spotlights
+            </button>
+
+            <button
+                    class:active={!collapsed && libraryMode === 'docuseries'}
+                    on:click|stopPropagation={() => {
+                        if (collapsed) onActivate?.();
+                        libraryMode = 'docuseries';
+                        selectedCollectionGroup = 'music_docuseries';
+                        if (docuseriesCollections.length === 0) loadDocuseriesCollections();
+                    }}
+            >
+                Music Docuseries
             </button>
         </div>
 
@@ -364,6 +380,8 @@
                 Decades & Genres
             {:else if libraryMode === 'collections'}
                 Collection Groups
+            {:else if libraryMode === 'docuseries'}
+                Music Docuseries Collections
             {:else}
                 Featured Artists
             {/if}
@@ -430,8 +448,9 @@ goto(`/car-page?${params.toString()}`);
 
                 {/if}
 
-            {:else if libraryMode === 'collections'}
+            {:else if libraryMode === 'collections' || libraryMode === 'docuseries'}
 
+                {#if libraryMode === 'collections'}
                 <div class="decade-grid">
 
                     {#each collectionGroups as group}
@@ -443,17 +462,8 @@ goto(`/car-page?${params.toString()}`);
                         </button>
                     {/each}
 
-                    <button
-                            class:selected={selectedCollectionGroup === 'music_docuseries'}
-                            on:click={() => {
-                                selectedCollectionGroup = 'music_docuseries';
-                                loadDocuseriesCollections();
-                            }}
-                    >
-                        🎙 Music Docuseries
-                    </button>
-
                 </div>
+                {/if}
 
                 {#if selectedCollectionGroup === 'music_docuseries'}
 
