@@ -1432,7 +1432,21 @@
             saveResumeState(resume);
         }
 
-        window.location.href = '/options-v4';
+        const currentParams = new URLSearchParams(window.location.search);
+        const mode = currentParams.get('mode');
+        const decade = currentParams.get('decade');
+        const language = currentParams.get('language') ?? 'en';
+
+        if (mode === 'nostalgia' && decade) {
+            const genreParams = new URLSearchParams({
+                decade,
+                language
+            });
+
+            window.location.href = `/journey-prototype/genre?${genreParams.toString()}`;
+        } else {
+            window.location.href = '/options-v4';
+        }
     }
 
 

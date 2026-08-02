@@ -217,7 +217,7 @@
 
         <div class="secondary-controls">
             <button type="button" class="back-button" on:click={onBackToOptions}>
-                ← Back to Options
+                ← Change Music
             </button>
 
             <div class="view-switch" aria-label="Playback view">

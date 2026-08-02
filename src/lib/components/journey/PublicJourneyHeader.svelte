@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {onDestroy, onMount} from 'svelte';
+    import {onMount} from 'svelte';
     import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
 
     export let language: 'en' | 'es' | 'ptbr' = 'en';
@@ -44,13 +44,18 @@
         }
     }
 
-    onMount(() => document.addEventListener('click', handleDocumentClick));
-    onDestroy(() => document.removeEventListener('click', handleDocumentClick));
+    onMount(() => {
+        document.addEventListener('click', handleDocumentClick);
+
+        return () => {
+            document.removeEventListener('click', handleDocumentClick);
+        };
+    });
 </script>
 
 <header class="topbar">
     <a class="brand" href="/" aria-label="TopSpot40 home">
-        <img src="/old-dog-icon.png" alt="" />
+        <img src="/old-dog-icon.png" alt=""/>
         <span>TopSpot<span class="brand-number">40</span></span>
     </a>
 
@@ -62,11 +67,11 @@
 
         <div class="my-menu" bind:this={menu}>
             <button
-                class="my-menu-trigger"
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                on:click|stopPropagation={() => (menuOpen = !menuOpen)}
+                    class="my-menu-trigger"
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    on:click|stopPropagation={() => (menuOpen = !menuOpen)}
             >
                 {text[language].myTopSpot40}
                 <span aria-hidden="true">▾</span>
@@ -90,7 +95,7 @@
 </header>
 
 <div class="contact-modal-host">
-    <ContactModal visible={showContactModal} onClose={() => (showContactModal = false)} />
+    <ContactModal visible={showContactModal} onClose={() => (showContactModal = false)}/>
 </div>
 
 <style>
