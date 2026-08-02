@@ -40,7 +40,7 @@
         nostalgia: '/journey-prototype/decade',
         collections: '/journey-prototype/collections',
         artist: '/journey-prototype/artist-spotlights',
-        docuseries: '/options-v4?panel=library&tab=docuseries'
+        docuseries: '/journey-prototype/music-docuseries'
     };
     const choices: ProgramChoice[] = ['nostalgia', 'collections', 'artist', 'docuseries'];
 

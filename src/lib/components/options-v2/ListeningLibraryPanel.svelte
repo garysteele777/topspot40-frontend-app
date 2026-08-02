@@ -11,6 +11,14 @@
         ArtistStoryInfo,
         ArtistTrackItem
     } from '$lib/artistSpotlights/types';
+    import {
+        loadMusicDocuseriesCollections,
+        loadMusicDocuseriesStories
+    } from '$lib/musicDocuseries/catalogAdapter';
+    import type {
+        MusicDocuseriesCollection,
+        MusicDocuseriesStory
+    } from '$lib/musicDocuseries/types';
 
     type LibraryMode = 'nostalgia' | 'collections' | 'artists' | 'docuseries';
 
@@ -28,25 +36,6 @@
         }[];
     };
 
-
-    type DocuseriesCollection = {
-        id: number;
-        slug: string;
-        name: string;
-        description?: string;
-        sort_order: number;
-    };
-
-    type DocuseriesItem = {
-        id: number;
-        slug: string;
-        title: string;
-        short_description?: string | null;
-        artwork_url?: string | null;
-        target_length?: string | null;
-        sort_order: number;
-    };
-
     let selectedArtist: ArtistSpotlightItem | null = null;
     let artistTracks: ArtistTrackItem[] = [];
     let artistTracksLoading = false;
@@ -58,13 +47,11 @@
     let artistSpotlightLoading = false;
     let artistSpotlightError: string | null = null;
 
-    let docuseriesCollections: DocuseriesCollection[] = [];
+    let docuseriesCollections: MusicDocuseriesCollection[] = [];
     let selectedDocuseriesCollection: string | null = null;
-    let docuseriesItems: DocuseriesItem[] = [];
+    let docuseriesItems: MusicDocuseriesStory[] = [];
     let docuseriesLoading = false;
     let docuseriesError: string | null = null;
-
-    const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
     export let decadeOptions: OptionItem[] = [];
     export let genreOptions: OptionItem[] = [];
@@ -203,13 +190,7 @@
         selectedDocuseriesCollection = null;
 
         try {
-            const res = await fetch(`${API_BASE}/music-docuseries/collections`);
-
-            if (!res.ok) {
-                throw new Error(`Request failed: ${res.status}`);
-            }
-
-            docuseriesCollections = await res.json();
+            docuseriesCollections = await loadMusicDocuseriesCollections();
         } catch (err) {
             docuseriesError = err instanceof Error ? err.message : 'Failed to load Music Docuseries.';
         } finally {
@@ -224,15 +205,7 @@
         docuseriesItems = [];
 
         try {
-            const res = await fetch(
-                `${API_BASE}/music-docuseries/items?collection_slug=${collectionSlug}`
-            );
-
-            if (!res.ok) {
-                throw new Error(`Request failed: ${res.status}`);
-            }
-
-            docuseriesItems = await res.json();
+            docuseriesItems = await loadMusicDocuseriesStories(collectionSlug);
         } catch (err) {
             docuseriesError = err instanceof Error ? err.message : 'Failed to load Docuseries items.';
         } finally {

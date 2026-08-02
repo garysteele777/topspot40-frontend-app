@@ -2,6 +2,7 @@
     import {onMount} from 'svelte';
     import {page} from '$app/stores';
     import {goto} from '$app/navigation';
+    import {isSafeMusicDocuseriesReturnPath} from '$lib/musicDocuseries/launchMusicDocuseries';
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -49,6 +50,7 @@
     let contentType = 'artist_story';
     let slug: string | null = null;
     let docuseriesCollection: string | null = null;
+    let returnTo: string | null = null;
 
     let story: StoryResponse | null = null;
     let error: string | null = null;
@@ -178,6 +180,11 @@
     async function goBack(): Promise<void> {
         stopStory();
 
+        if (contentType === 'music_docuseries' && isSafeMusicDocuseriesReturnPath(returnTo)) {
+            await goto(returnTo);
+            return;
+        }
+
         if (contentType === 'music_docuseries' && docuseriesCollection) {
             await goto(
                 `/options-v4?panel=library` +
@@ -201,6 +208,7 @@
         slug = $page.url.searchParams.get('slug');
         docuseriesCollection =
             $page.url.searchParams.get('collection');
+        returnTo = $page.url.searchParams.get('returnTo');
 
         try {
             let url = '';
