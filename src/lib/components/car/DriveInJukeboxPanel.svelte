@@ -10,8 +10,11 @@
 
     export let tracks: CarModeTrack[] = [];
     export let currentTrack: CarModeTrack | null = null;
-    export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
-    export let onClose: () => void;
+    export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined = undefined;
+    export let onClose: () => void = () => {};
+    export let variant: 'modal' | 'embedded' = 'modal';
+    export let eyebrow = 'TopSpot40 Drive-In';
+    export let heading = 'Choose Your Favorite';
     export let isPlayed: (rank: number) => boolean = () => false;
     export let programType: ProgramType | null = null;
     export let programGroup: string | null = null;
@@ -21,6 +24,8 @@
     let pageIndex = 0;
     let selectedTrack: CarModeTrack | null = currentTrack;
     let lastCurrentIdentity = '';
+
+    $: embedded = variant === 'embedded';
 
     $: favoriteRefresh = $favoritesStore;
     $: sortedTracks = [...tracks].sort((a, b) => a.rank - b.rank);
@@ -106,31 +111,35 @@
         }
     }
 
-    onMount(() => window.addEventListener('keydown', handleKeyDown));
+    onMount(() => {
+        if (!embedded) window.addEventListener('keydown', handleKeyDown);
+    });
     onDestroy(() => window.removeEventListener('keydown', handleKeyDown));
 </script>
 
 <div
-    class="jukebox-overlay"
-    role="dialog"
-    aria-modal="true"
+    class:jukebox-overlay={!embedded}
+    class:jukebox-embedded={embedded}
+    role={embedded ? 'region' : 'dialog'}
+    aria-modal={embedded ? undefined : 'true'}
     aria-label="TopSpot40 jukebox track selector"
 >
-    <div class="jukebox-cabinet">
-        <button
-            type="button"
-            class="close-button"
-            on:click={onClose}
-            aria-label="Close jukebox"
-        >
-            ✕
-        </button>
-
+    <div class="jukebox-cabinet" class:embedded>
+        {#if !embedded}
+            <button
+                type="button"
+                class="close-button"
+                on:click={onClose}
+                aria-label="Close jukebox"
+            >
+                ✕
+            </button>
+        {/if}
         <div class="jukebox-display">
             <header>
                 <div>
-                    <span class="eyebrow">TopSpot40 Drive-In</span>
-                    <h2>Choose Your Favorite</h2>
+                    <span class="eyebrow">{eyebrow}</span>
+                    <h2>{heading}</h2>
                 </div>
                 <div class="page-label">
                     Page {pageIndex + 1} of {pageCount}
@@ -142,17 +151,18 @@
                     <div
                         class="selection-card"
                         class:current={isCurrent(track)}
-                        class:selected={selectedIdentity === trackIdentity(track)}
+                        class:selected={!embedded && selectedIdentity === trackIdentity(track)}
                         role="button"
-                        tabindex="0"
+                        tabindex={embedded ? undefined : 0}
+                        aria-disabled={embedded}
                         on:click={() => chooseTrack(track)}
                         on:keydown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
+                            if (!embedded && (event.key === 'Enter' || event.key === ' ')) {
                                 event.preventDefault();
                                 chooseTrack(track);
                             }
                         }}
-                        aria-pressed={selectedIdentity === trackIdentity(track)}
+                        aria-pressed={embedded ? undefined : selectedIdentity === trackIdentity(track)}
                     >
                         <span class="selection-code">
                             {selectionCode(index)}
@@ -223,17 +233,19 @@
                     <span>Previous</span>
                 </button>
 
-                <button
-                    type="button"
-                    class="play-selected"
-                    on:click={playSelected}
-                    disabled={!selectedTrack}
-                >
-                    <span aria-hidden="true">▶</span>
-                    {selectedTrack
-                        ? `Play #${selectedTrack.rank}`
-                        : 'Select a Track'}
-                </button>
+                {#if !embedded}
+                    <button
+                        type="button"
+                        class="play-selected"
+                        on:click={playSelected}
+                        disabled={!selectedTrack}
+                    >
+                        <span aria-hidden="true">▶</span>
+                        {selectedTrack
+                            ? `Play #${selectedTrack.rank}`
+                            : 'Select a Track'}
+                    </button>
+                {/if}
 
                 <button
                     type="button"
@@ -524,6 +536,51 @@
         box-shadow: 0 0 15px rgba(255, 175, 42, 0.38);
     }
 
+    .jukebox-embedded {
+        width: 100%;
+    }
+
+    .jukebox-cabinet.embedded {
+        width: 100%;
+        max-width: none;
+        aspect-ratio: auto;
+        background: none;
+    }
+
+    .jukebox-cabinet.embedded .jukebox-display {
+        position: relative;
+        inset: auto;
+        width: 100%;
+        height: auto;
+        min-height: 560px;
+        gap: 10px;
+        padding: clamp(12px, 2vw, 20px);
+        border-color: rgba(244, 194, 91, 0.62);
+        border-radius: 18px;
+    }
+
+    .jukebox-cabinet.embedded .selection-list {
+        min-height: 430px;
+        gap: 7px;
+    }
+
+    .jukebox-cabinet.embedded .selection-card {
+        grid-template-columns: 54px 64px minmax(0, 1fr);
+        min-height: 76px;
+        cursor: default;
+    }
+
+    .jukebox-cabinet.embedded .selection-card:hover {
+        border-color: rgba(202, 153, 66, 0.45);
+    }
+
+    .jukebox-cabinet.embedded .status-icons {
+        display: none;
+    }
+
+    .jukebox-cabinet.embedded footer {
+        grid-template-columns: 1fr 1fr;
+    }
     @media (max-width: 900px) {
         .jukebox-overlay {
             padding: 2px;

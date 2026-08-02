@@ -38,8 +38,8 @@
 
     const routes: Record<ProgramChoice, string> = {
         nostalgia: '/journey-prototype/decade',
-        collections: '/options-v4?panel=library&tab=collections',
-        artist: '/options-v4?panel=library&tab=artist',
+        collections: '/journey-prototype/collections',
+        artist: '/journey-prototype/artist-spotlights',
         docuseries: '/options-v4?panel=library&tab=docuseries'
     };
     const choices: ProgramChoice[] = ['nostalgia', 'collections', 'artist', 'docuseries'];

@@ -1,6 +1,16 @@
 <script lang="ts">
 
     import {goto} from '$app/navigation';
+    import {
+        fetchArtistSpotlights,
+        fetchArtistStory,
+        fetchArtistTracks
+    } from '$lib/artistSpotlights/catalogAdapter';
+    import type {
+        ArtistSpotlightItem,
+        ArtistStoryInfo,
+        ArtistTrackItem
+    } from '$lib/artistSpotlights/types';
 
     type LibraryMode = 'nostalgia' | 'collections' | 'artists' | 'docuseries';
 
@@ -18,37 +28,6 @@
         }[];
     };
 
-    type ArtistSpotlightItem = {
-        artist_id: number;
-        artist_name: string;
-        genre_track_count: number;
-        total_track_count: number;
-        has_story: boolean;
-    };
-
-    type ArtistStoryInfo = {
-        ok: boolean;
-        has_story: boolean;
-        story_id?: number;
-        artist_id?: number;
-        title?: string;
-        story_type?: string;
-        duration_seconds?: number;
-        tts_bucket?: string;
-        tts_key?: string;
-        has_youtube_video?: boolean;
-        youtube_video_id?: string;
-        youtube_url?: string;
-    };
-
-    type ArtistTrackItem = {
-        track_id: number;
-        track_name: string;
-        spotify_track_id: string;
-        duration_ms: number;
-        artist_id: number;
-        artist_name: string;
-    };
 
     type DocuseriesCollection = {
         id: number;
@@ -165,23 +144,8 @@
         artistTracksLoading = true;
 
         try {
-            const res = await fetch(
-                `${API_BASE}/artist-spotlight/artist-tracks?artist_id=${artist.artist_id}`
-            );
-
-            if (!res.ok) {
-                throw new Error(`Request failed: ${res.status}`);
-            }
-
-            artistTracks = await res.json();
-
-            const storyRes = await fetch(
-                `${API_BASE}/artist-spotlight/artist-story?artist_id=${artist.artist_id}&language=${language}`
-            );
-
-            if (storyRes.ok) {
-                artistStoryInfo = await storyRes.json();
-            }
+            artistTracks = await fetchArtistTracks(artist.artist_id);
+            artistStoryInfo = await fetchArtistStory(artist.artist_id, language, true);
         } catch (err) {
             artistTracksError = err instanceof Error ? err.message : 'Failed to load artist tracks.';
         } finally {
@@ -219,22 +183,12 @@
         artistSpotlightLoading = true;
 
         try {
-            const maxTracksParam =
-                maxTracks !== null ? `&max_tracks=${maxTracks}` : '';
-
-            const res = await fetch(
-                `${API_BASE}/artist-spotlight/artists-by-genre` +
-                `?genre=${genreId}` +
-                `&min_tracks=${minTracks}` +
-                maxTracksParam +
-                `&featured_only=${featured}`
-            );
-
-            if (!res.ok) {
-                throw new Error(`Request failed: ${res.status}`);
-            }
-
-            artistSpotlightItems = await res.json();
+            artistSpotlightItems = await fetchArtistSpotlights({
+                genreId,
+                featured,
+                minTracks,
+                maxTracks
+            });
         } catch (err) {
             artistSpotlightError = err instanceof Error ? err.message : 'Failed to load artists.';
         } finally {

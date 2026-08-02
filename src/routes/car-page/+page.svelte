@@ -69,6 +69,8 @@
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
     import {saveResumeState} from '$lib/utils/smartResume';
+    import {isSafeCollectionsReturnPath} from '$lib/collections/launchCollection';
+    import {isSafeArtistSpotlightsReturnPath} from '$lib/artistSpotlights/launchArtistSpotlight';
 
     import {
         playbackView,
@@ -1436,8 +1438,11 @@
         const mode = currentParams.get('mode');
         const decade = currentParams.get('decade');
         const language = currentParams.get('language') ?? 'en';
+        const returnTo = currentParams.get('returnTo');
 
-        if (mode === 'nostalgia' && decade) {
+        if (isSafeCollectionsReturnPath(returnTo) || isSafeArtistSpotlightsReturnPath(returnTo)) {
+            window.location.href = returnTo;
+        } else if (mode === 'nostalgia' && decade) {
             const genreParams = new URLSearchParams({
                 decade,
                 language
