@@ -31,7 +31,7 @@
 
             {#if onBackToOptions}
                 <button class="back-btn" on:click={onBackToOptions}>
-                    ⚙ Back to Options
+                    ← Change Music
                 </button>
             {/if}
         </div>

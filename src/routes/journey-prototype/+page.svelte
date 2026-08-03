@@ -1,7 +1,7 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
-    import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
+    import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type ViewMode = 'journey' | 'list';
@@ -9,7 +9,6 @@
     let language: LandingLanguage = 'en';
     let viewMode: ViewMode = 'journey';
     let hasChosenLanguage = false;
-    let showContactModal = false;
 
     const text = {
         en: {
@@ -86,14 +85,6 @@
         goto('/journey-prototype/choose');
     }
 
-    function openContactModal() {
-        showContactModal = true;
-    }
-
-    function closeContactModal() {
-        showContactModal = false;
-    }
-
     function showCompactView() {
         localStorage.setItem('topspot_home_layout', 'compact');
         goto('/');
@@ -127,21 +118,7 @@
 </svelte:head>
 
 <div class="prototype">
-    <header class="topbar">
-        <a class="brand" href="/" aria-label="TopSpot40 home">
-            <img src="/old-dog-icon.png" alt="" />
-            <span>TopSpot<span class="brand-number">40</span></span>
-        </a>
-
-        <nav aria-label="TopSpot40 navigation">
-            <a href="/" on:click|preventDefault={openContactModal}>{text[language].contact}</a>
-            <a href="/about">{text[language].about}</a>
-            <a href="/signin">{text[language].signIn}</a>
-            <a class="signup" href="/signup-official">
-                {text[language].signUp}
-            </a>
-        </nav>
-    </header>
+    <PublicJourneyHeader {language}/>
 
     <div class="utilitybar">
         <button class="utility" on:click={() => history.back()}>
@@ -263,10 +240,6 @@
     {/if}
 </div>
 
-<div class="contact-modal-host">
-    <ContactModal visible={showContactModal} onClose={closeContactModal} />
-</div>
-
 <style>
     :global(html),
     :global(body) {
@@ -295,67 +268,6 @@
         background: #0b0a07;
     }
 
-    .contact-modal-host {
-        position: relative;
-        z-index: 10000;
-    }
-
-    .topbar {
-        position: relative;
-        z-index: 20;
-        min-height: 72px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 24px;
-        padding: 10px clamp(18px, 4vw, 64px);
-        background: rgba(5, 5, 5, 0.94);
-        border-bottom: 1px solid rgba(214, 193, 122, 0.38);
-    }
-
-    .brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: #f5d66e;
-        font-size: clamp(22px, 2vw, 32px);
-        font-weight: 900;
-        text-decoration: none;
-    }
-
-    .brand img {
-        width: 46px;
-        height: 46px;
-        border-radius: 10px;
-    }
-
-    .brand-number {
-        color: #e54a2e;
-    }
-
-    nav {
-        display: flex;
-        align-items: center;
-        gap: clamp(14px, 2vw, 34px);
-    }
-
-    nav a {
-        color: #fff;
-        text-decoration: none;
-        white-space: nowrap;
-    }
-
-    nav a:hover,
-    nav a:focus-visible {
-        color: #f5d66e;
-    }
-
-    nav .signup {
-        padding: 10px 22px;
-        color: #f5d66e;
-        border: 2px solid #d9aa28;
-        border-radius: 12px;
-    }
 
     .utilitybar {
         position: absolute;
@@ -593,22 +505,6 @@
     }
 
     @media (max-width: 820px) {
-        .topbar {
-            min-height: 62px;
-        }
-
-        nav a:not(.signup) {
-            display: none;
-        }
-
-        .brand {
-            font-size: 22px;
-        }
-
-        .brand img {
-            width: 38px;
-            height: 38px;
-        }
 
         .journey {
             min-height: calc(100vh - 62px);

@@ -1,8 +1,26 @@
 <script lang="ts">
 
     import {goto} from '$app/navigation';
+    import {
+        fetchArtistSpotlights,
+        fetchArtistStory,
+        fetchArtistTracks
+    } from '$lib/artistSpotlights/catalogAdapter';
+    import type {
+        ArtistSpotlightItem,
+        ArtistStoryInfo,
+        ArtistTrackItem
+    } from '$lib/artistSpotlights/types';
+    import {
+        loadMusicDocuseriesCollections,
+        loadMusicDocuseriesStories
+    } from '$lib/musicDocuseries/catalogAdapter';
+    import type {
+        MusicDocuseriesCollection,
+        MusicDocuseriesStory
+    } from '$lib/musicDocuseries/types';
 
-    type LibraryMode = 'nostalgia' | 'collections' | 'artists';
+    type LibraryMode = 'nostalgia' | 'collections' | 'artists' | 'docuseries';
 
     type OptionItem = {
         id: string;
@@ -18,56 +36,6 @@
         }[];
     };
 
-    type ArtistSpotlightItem = {
-        artist_id: number;
-        artist_name: string;
-        genre_track_count: number;
-        total_track_count: number;
-        has_story: boolean;
-    };
-
-    type ArtistStoryInfo = {
-        ok: boolean;
-        has_story: boolean;
-        story_id?: number;
-        artist_id?: number;
-        title?: string;
-        story_type?: string;
-        duration_seconds?: number;
-        tts_bucket?: string;
-        tts_key?: string;
-        has_youtube_video?: boolean;
-        youtube_video_id?: string;
-        youtube_url?: string;
-    };
-
-    type ArtistTrackItem = {
-        track_id: number;
-        track_name: string;
-        spotify_track_id: string;
-        duration_ms: number;
-        artist_id: number;
-        artist_name: string;
-    };
-
-    type DocuseriesCollection = {
-        id: number;
-        slug: string;
-        name: string;
-        description?: string;
-        sort_order: number;
-    };
-
-    type DocuseriesItem = {
-        id: number;
-        slug: string;
-        title: string;
-        short_description?: string | null;
-        artwork_url?: string | null;
-        target_length?: string | null;
-        sort_order: number;
-    };
-
     let selectedArtist: ArtistSpotlightItem | null = null;
     let artistTracks: ArtistTrackItem[] = [];
     let artistTracksLoading = false;
@@ -79,13 +47,11 @@
     let artistSpotlightLoading = false;
     let artistSpotlightError: string | null = null;
 
-    let docuseriesCollections: DocuseriesCollection[] = [];
+    let docuseriesCollections: MusicDocuseriesCollection[] = [];
     let selectedDocuseriesCollection: string | null = null;
-    let docuseriesItems: DocuseriesItem[] = [];
+    let docuseriesItems: MusicDocuseriesStory[] = [];
     let docuseriesLoading = false;
     let docuseriesError: string | null = null;
-
-    const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
     export let decadeOptions: OptionItem[] = [];
     export let genreOptions: OptionItem[] = [];
@@ -118,9 +84,13 @@
             loadArtistSpotlights('all');
         }
 
-        if (initialTab === 'collections' && initialDocuseriesCollection) {
+        if (initialTab === 'docuseries') {
             selectedCollectionGroup = 'music_docuseries';
-            void restoreDocuseriesSelection(initialDocuseriesCollection);
+            if (initialDocuseriesCollection) {
+                void restoreDocuseriesSelection(initialDocuseriesCollection);
+            } else {
+                void loadDocuseriesCollections();
+            }
         }
     }
 
@@ -161,23 +131,8 @@
         artistTracksLoading = true;
 
         try {
-            const res = await fetch(
-                `${API_BASE}/artist-spotlight/artist-tracks?artist_id=${artist.artist_id}`
-            );
-
-            if (!res.ok) {
-                throw new Error(`Request failed: ${res.status}`);
-            }
-
-            artistTracks = await res.json();
-
-            const storyRes = await fetch(
-                `${API_BASE}/artist-spotlight/artist-story?artist_id=${artist.artist_id}&language=${language}`
-            );
-
-            if (storyRes.ok) {
-                artistStoryInfo = await storyRes.json();
-            }
+            artistTracks = await fetchArtistTracks(artist.artist_id);
+            artistStoryInfo = await fetchArtistStory(artist.artist_id, language, true);
         } catch (err) {
             artistTracksError = err instanceof Error ? err.message : 'Failed to load artist tracks.';
         } finally {
@@ -215,22 +170,12 @@
         artistSpotlightLoading = true;
 
         try {
-            const maxTracksParam =
-                maxTracks !== null ? `&max_tracks=${maxTracks}` : '';
-
-            const res = await fetch(
-                `${API_BASE}/artist-spotlight/artists-by-genre` +
-                `?genre=${genreId}` +
-                `&min_tracks=${minTracks}` +
-                maxTracksParam +
-                `&featured_only=${featured}`
-            );
-
-            if (!res.ok) {
-                throw new Error(`Request failed: ${res.status}`);
-            }
-
-            artistSpotlightItems = await res.json();
+            artistSpotlightItems = await fetchArtistSpotlights({
+                genreId,
+                featured,
+                minTracks,
+                maxTracks
+            });
         } catch (err) {
             artistSpotlightError = err instanceof Error ? err.message : 'Failed to load artists.';
         } finally {
@@ -245,13 +190,7 @@
         selectedDocuseriesCollection = null;
 
         try {
-            const res = await fetch(`${API_BASE}/music-docuseries/collections`);
-
-            if (!res.ok) {
-                throw new Error(`Request failed: ${res.status}`);
-            }
-
-            docuseriesCollections = await res.json();
+            docuseriesCollections = await loadMusicDocuseriesCollections();
         } catch (err) {
             docuseriesError = err instanceof Error ? err.message : 'Failed to load Music Docuseries.';
         } finally {
@@ -266,15 +205,7 @@
         docuseriesItems = [];
 
         try {
-            const res = await fetch(
-                `${API_BASE}/music-docuseries/items?collection_slug=${collectionSlug}`
-            );
-
-            if (!res.ok) {
-                throw new Error(`Request failed: ${res.status}`);
-            }
-
-            docuseriesItems = await res.json();
+            docuseriesItems = await loadMusicDocuseriesStories(collectionSlug);
         } catch (err) {
             docuseriesError = err instanceof Error ? err.message : 'Failed to load Docuseries items.';
         } finally {
@@ -354,7 +285,19 @@
                         }
                     }}
             >
-                Artist Spotlight
+                Artist Spotlights
+            </button>
+
+            <button
+                    class:active={!collapsed && libraryMode === 'docuseries'}
+                    on:click|stopPropagation={() => {
+                        if (collapsed) onActivate?.();
+                        libraryMode = 'docuseries';
+                        selectedCollectionGroup = 'music_docuseries';
+                        if (docuseriesCollections.length === 0) loadDocuseriesCollections();
+                    }}
+            >
+                Music Docuseries
             </button>
         </div>
 
@@ -364,6 +307,8 @@
                 Decades & Genres
             {:else if libraryMode === 'collections'}
                 Collection Groups
+            {:else if libraryMode === 'docuseries'}
+                Music Docuseries Collections
             {:else}
                 Featured Artists
             {/if}
@@ -430,8 +375,9 @@ goto(`/car-page?${params.toString()}`);
 
                 {/if}
 
-            {:else if libraryMode === 'collections'}
+            {:else if libraryMode === 'collections' || libraryMode === 'docuseries'}
 
+                {#if libraryMode === 'collections'}
                 <div class="decade-grid">
 
                     {#each collectionGroups as group}
@@ -443,17 +389,8 @@ goto(`/car-page?${params.toString()}`);
                         </button>
                     {/each}
 
-                    <button
-                            class:selected={selectedCollectionGroup === 'music_docuseries'}
-                            on:click={() => {
-                                selectedCollectionGroup = 'music_docuseries';
-                                loadDocuseriesCollections();
-                            }}
-                    >
-                        🎙 Music Docuseries
-                    </button>
-
                 </div>
+                {/if}
 
                 {#if selectedCollectionGroup === 'music_docuseries'}
 

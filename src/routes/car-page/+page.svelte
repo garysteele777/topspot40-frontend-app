@@ -69,6 +69,8 @@
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
     import {saveResumeState} from '$lib/utils/smartResume';
+    import {isSafeCollectionsReturnPath} from '$lib/collections/launchCollection';
+    import {isSafeArtistSpotlightsReturnPath} from '$lib/artistSpotlights/launchArtistSpotlight';
 
     import {
         playbackView,
@@ -1432,7 +1434,24 @@
             saveResumeState(resume);
         }
 
-        window.location.href = '/options-v4';
+        const currentParams = new URLSearchParams(window.location.search);
+        const mode = currentParams.get('mode');
+        const decade = currentParams.get('decade');
+        const language = currentParams.get('language') ?? 'en';
+        const returnTo = currentParams.get('returnTo');
+
+        if (isSafeCollectionsReturnPath(returnTo) || isSafeArtistSpotlightsReturnPath(returnTo)) {
+            window.location.href = returnTo;
+        } else if (mode === 'nostalgia' && decade) {
+            const genreParams = new URLSearchParams({
+                decade,
+                language
+            });
+
+            window.location.href = `/journey-prototype/genre?${genreParams.toString()}`;
+        } else {
+            window.location.href = '/options-v4';
+        }
     }
 
 

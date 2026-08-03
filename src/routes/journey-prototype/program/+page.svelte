@@ -1,14 +1,13 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
-    import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
+    import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type ProgramChoice = 'nostalgia' | 'collections' | 'artist';
 
     let language: LandingLanguage = 'en';
     let selectedProgram: ProgramChoice | null = null;
-    let showContactModal = false;
 
     const text = {
         en: {
@@ -106,21 +105,7 @@
 </svelte:head>
 
 <div class="prototype">
-    <header class="topbar">
-        <a class="brand" href="/" aria-label="TopSpot40 home">
-            <img src="/old-dog-icon.png" alt=""/>
-            <span>TopSpot<span class="brand-number">40</span></span>
-        </a>
-
-        <nav aria-label="TopSpot40 navigation">
-            <button class="nav-link" on:click={() => (showContactModal = true)}>
-                {text[language].contact}
-            </button>
-            <a href="/about">{text[language].about}</a>
-            <a href="/signin">{text[language].signIn}</a>
-            <a class="signup" href="/signup-official">{text[language].signUp}</a>
-        </nav>
-    </header>
+    <PublicJourneyHeader {language}/>
 
     <main class="journey">
         <img
@@ -171,13 +156,6 @@
     </main>
 </div>
 
-<div class="contact-modal-host">
-    <ContactModal
-            visible={showContactModal}
-            onClose={() => (showContactModal = false)}
-    />
-</div>
-
 <style>
     :global(html),
     :global(body) {
@@ -206,71 +184,6 @@
         background: #090705;
     }
 
-    .contact-modal-host {
-        position: relative;
-        z-index: 10000;
-    }
-
-    .topbar {
-        position: relative;
-        z-index: 20;
-        min-height: 72px;
-        padding: 0 4.2%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 24px;
-        background: #030303;
-        border-bottom: 1px solid rgba(228, 180, 67, 0.45);
-    }
-
-    .brand {
-        display: inline-flex;
-        align-items: center;
-        gap: 14px;
-        color: #f0c454;
-        text-decoration: none;
-        font-family: Georgia, serif;
-        font-size: 34px;
-        font-weight: 900;
-    }
-
-    .brand img {
-        width: 50px;
-        height: 50px;
-        object-fit: contain;
-    }
-
-    .brand-number {
-        color: #f04424;
-    }
-
-    nav {
-        display: flex;
-        align-items: center;
-        gap: 30px;
-    }
-
-    nav a,
-    .nav-link {
-        padding: 0;
-        color: #fff;
-        background: none;
-        border: 0;
-        text-decoration: none;
-    }
-
-    nav a:hover,
-    .nav-link:hover {
-        color: #f3cd68;
-    }
-
-    nav .signup {
-        padding: 12px 25px;
-        color: #f3cd68;
-        border: 2px solid #e2ba29;
-        border-radius: 18px;
-    }
 
     .journey {
         position: relative;
@@ -451,24 +364,6 @@
     }
 
     @media (max-width: 820px) {
-        .topbar {
-            min-height: 62px;
-            padding: 0 16px;
-        }
-
-        nav a:not(.signup),
-        .nav-link {
-            display: none;
-        }
-
-        .brand {
-            font-size: 22px;
-        }
-
-        .brand img {
-            width: 38px;
-            height: 38px;
-        }
 
         .journey {
             height: calc(100vh - 62px);

@@ -1,3 +1,5 @@
+import {BED_VOLUME} from '$lib/audio/audioLevels';
+
 let bedAudio: HTMLAudioElement | null = null;
 let currentBedUrl: string | null = null;
 let bedStartInFlight = false;
@@ -5,7 +7,6 @@ let bedFadeTargetReached = false;
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 const BED_PLAY_TIMEOUT_MS = 3000;
 const BED_PLAY_TIMEOUT_MESSAGE = 'bed audio play() timeout';
-const BED_TARGET_VOLUME = 0.18;
 const SILENT_AUDIO_DATA_URI =
     'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 
@@ -232,7 +233,7 @@ export async function startBedUrl(url: string): Promise<void> {
     }
 
     // 🎧 Fade in
-    const targetVolume = BED_TARGET_VOLUME;
+    const targetVolume = BED_VOLUME;
     const step = 0.02;
     let fadeAudibleSent = false;
 

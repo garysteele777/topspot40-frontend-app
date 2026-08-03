@@ -1,3 +1,5 @@
+import {NARRATION_VOLUME} from '$lib/audio/audioLevels';
+
 let narrationAudio: HTMLAudioElement | null = null;
 let cancelPendingWait: (() => void) | null = null;
 
@@ -29,6 +31,7 @@ export async function playNarrationUrl(url: string, fallbackUrl?: string): Promi
 	const play = async (audioUrl: string, alternateUrl?: string): Promise<void> => {
 		const audio = new Audio(audioUrl);
 		narrationAudio = audio;
+        audio.volume = NARRATION_VOLUME;
 		audio.preload = 'auto';
 
 		audio.addEventListener('error', () => {
@@ -62,6 +65,7 @@ function playNarrationUrlOnceAndWait(
 	return new Promise((resolve) => {
 		const audio = new Audio(url);
 		narrationAudio = audio;
+        audio.volume = NARRATION_VOLUME;
 		audio.preload = 'auto';
 		let settled = false;
 		let timingTimer: number | null = null;
