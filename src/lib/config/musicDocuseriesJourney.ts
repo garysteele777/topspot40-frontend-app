@@ -8,7 +8,6 @@ type DocumentaryPresentation = {accent:string; kicker:string; description?:strin
 
 const COLLECTION_PRESENTATION: Record<string, DocumentaryPresentation> = {
     latin_america_and_caribbean: {accent:'#e2a64e',kicker:'Influential regional music',description:'Discover influential music from Latin America and the Caribbean and the cultural forces that carried it around the world.'},
-    latin_america_caribbean: {accent:'#d7a64a',kicker:'Movements and traditions',description:'Explore the movements and traditions of Latin America and the Caribbean through the stories behind their music.'}
 };
 
 const DEFAULT_PRESENTATION: DocumentaryPresentation = {accent:MUSIC_DOCUSERIES_ACCENT,kicker:'A TopSpot40 documentary series'};
