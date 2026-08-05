@@ -21,6 +21,40 @@
     let initialized = false;
     let previewRequest = 0;
 
+    const COLLECTION_ORDER = [
+        'history_eras',
+        'songs_stories',
+        'legends_rivalries',
+        'movements_revolutions',
+        'people_behind_the_music',
+        'mysteries_tragedies',
+        'mexico_border',
+        'latin_america_and_caribbean',
+        'brazil_and_new_global_sounds',
+        'modern_music_revolutions',
+        'musical_instruments',
+        'foundations_technology_events',
+        'modern_music_listening',
+        'beyond_the_music'
+    ];
+
+    const collectionPosition = new Map(
+        COLLECTION_ORDER.map((slug, index) => [slug, index])
+    );
+
+    function orderMusicDocuseriesCollections(
+        items: MusicDocuseriesCollection[]
+    ): MusicDocuseriesCollection[] {
+        return [...items].sort((first, second) => {
+            const firstPosition = collectionPosition.get(first.slug) ?? Number.MAX_SAFE_INTEGER;
+            const secondPosition = collectionPosition.get(second.slug) ?? Number.MAX_SAFE_INTEGER;
+
+            return firstPosition - secondPosition
+                || first.sort_order - second.sort_order
+                || first.id - second.id;
+        });
+    }
+
     const text = {
         en: {title:'Choose a Music Docuseries',instruction:'Select a documentary collection, preview its stories, and continue your journey.',back:'Choose Experience',home:'Home',collections:'Docuseries Collections',loading:'Loading documentary series…',empty:'No Music Docuseries collections are currently available.',error:'We could not load the Music Docuseries catalog.',invalid:'That Music Docuseries collection is not available.',show:'Show available collections',previewLoading:'Loading available stories…',previewError:'The collection is available, but its stories could not be loaded.',previewEmpty:'No stories are currently available in this collection.',explore:'Explore'},
         es: {title:'Elige una docuserie musical',instruction:'Selecciona una colección documental, conoce sus historias y continúa tu viaje.',back:'Elegir experiencia',home:'Inicio',collections:'Colecciones de docuseries',loading:'Cargando series documentales…',empty:'No hay colecciones de docuseries musicales disponibles.',error:'No pudimos cargar el catálogo de docuseries musicales.',invalid:'Esa colección de docuseries musicales no está disponible.',show:'Mostrar colecciones disponibles',previewLoading:'Cargando historias disponibles…',previewError:'La colección está disponible, pero no pudimos cargar sus historias.',previewEmpty:'No hay historias disponibles en esta colección.',explore:'Explorar'},
@@ -93,7 +127,9 @@
     onMount(async () => {
         language = readLanguage();
         try {
-            collections = await loadMusicDocuseriesCollections();
+            collections = orderMusicDocuseriesCollections(
+                await loadMusicDocuseriesCollections()
+            );
         } catch (error) {
             console.error('Failed to load Music Docuseries collections:', error);
             collectionsError = text[language].error;
@@ -123,8 +159,13 @@
             <section class="collection-picker" aria-labelledby="docuseries-collections-heading">
                 <h2 id="docuseries-collections-heading">{text[language].collections}</h2>
                 <div class="collection-buttons">
-                    {#each collections as collection (`${collection.id}:${collection.slug}`)}
-                        <MusicDocuseriesCollectionCard {collection} selected={collection.slug === selectedCollection.slug} onSelect={() => selectCollection(collection)}/>
+                    {#each collections as collection, index (`${collection.id}:${collection.slug}`)}
+                        <MusicDocuseriesCollectionCard
+                            {collection}
+                            referenceNumber={index + 1}
+                            selected={collection.slug === selectedCollection.slug}
+                            onSelect={() => selectCollection(collection)}
+                        />
                     {/each}
                 </div>
             </section>
@@ -134,7 +175,7 @@
 </ProgramJourneyShell>
 
 <style>
-    .browser-layout { display:grid; grid-template-columns:minmax(270px,.76fr) minmax(0,1.65fr); gap:clamp(20px,3vw,34px); align-items:stretch; }
+    .browser-layout { display:grid; grid-template-columns:minmax(330px,.9fr) minmax(0,1.55fr); gap:clamp(20px,3vw,34px); align-items:stretch; }
     .collection-picker { min-width:0; }
     .collection-picker h2 { margin:0 0 12px; color:#f7dc82; font-family:Georgia,serif; font-size:23px; }
     .collection-buttons { display:grid; max-height:520px; gap:7px; padding-right:6px; overflow-y:auto; scrollbar-color:#d7a64a rgba(255,255,255,.08); scrollbar-width:thin; }
