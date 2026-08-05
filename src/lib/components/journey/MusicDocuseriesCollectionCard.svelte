@@ -7,6 +7,7 @@
     import type {MusicDocuseriesCollection} from '$lib/musicDocuseries/types';
 
     export let collection: MusicDocuseriesCollection;
+    export let referenceNumber: number;
     export let selected = false;
     export let onSelect: () => void;
 
@@ -17,6 +18,7 @@
 
 <button type="button" class:active={selected} aria-pressed={selected} on:click={onSelect}
         style={`--series-accent:${presentation.accent}`}>
+<span class="number">{referenceNumber}</span>
 <span class="icon" aria-hidden="true">
     <img src={artwork} alt=""/>
 </span>
@@ -26,8 +28,8 @@
 <style>
     button {
         display: grid;
-        grid-template-columns:34px minmax(0, 1fr);
-        gap: 10px;
+        grid-template-columns:24px 34px minmax(0, 1fr);
+        gap: 8px;
         align-items: center;
         width: 100%;
         min-height: 58px;
@@ -57,6 +59,25 @@
         background: var(--series-accent);
         border-color: #f7dc82;
         box-shadow: 0 0 15px rgba(215, 166, 74, .2);
+    }
+
+    .number {
+        display: grid;
+        width: 22px;
+        height: 22px;
+        place-items: center;
+        color: #171006;
+        background: #d7a64a;
+        border: 1px solid #f7dc82;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    button.active .number {
+        background: rgba(21, 16, 6, .16);
+        border-color: rgba(21, 16, 6, .42);
     }
 
     .icon {
