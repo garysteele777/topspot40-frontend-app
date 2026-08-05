@@ -4,13 +4,16 @@
 /// <reference types="vite/client" />
 
 declare global {
-	namespace App {
-		// interface Error {}
-		// interface Locals {}
-		// interface PageData {}
-		// interface PageState {}
-		// interface Platform {}
-	}
+        const __APP_COMMIT__: string;
+        const __BUILD_DATE__: string;
+
+        namespace App {
+                // interface Error {}
+                // interface Locals {}
+                // interface PageData {}
+                // interface PageState {}
+                // interface Platform {}
+        }
 }
 
 export {};
