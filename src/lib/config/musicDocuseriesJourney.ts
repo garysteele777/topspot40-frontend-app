@@ -10,6 +10,27 @@ const COLLECTION_PRESENTATION: Record<string, DocumentaryPresentation> = {
     latin_america_and_caribbean: {accent:'#e2a64e',kicker:'Influential regional music',description:'Discover influential music from Latin America and the Caribbean and the cultural forces that carried it around the world.'},
 };
 
+const COLLECTION_ARTWORK: Record<string, string> = {
+    history_eras: '/docuseries/history-eras-collection.png',
+    movements_revolutions: '/docuseries/movements-revolutions-collection.png',
+    legends_rivalries: '/docuseries/legends-rivalries-collection.png',
+    songs_stories: '/docuseries/songs-stories-collection.png',
+    mysteries_tragedies: '/docuseries/mysteries-tragedies-collection.png',
+    modern_music_revolutions: '/docuseries/modern-music-revolutions-collection.png',
+    people_behind_the_music: '/docuseries/the-people-behind-the-music.png',
+    mexico_border: '/docuseries/mexico-and-the-border.png',
+    latin_america_and_caribbean: '/docuseries/latin-america-and-the-caribbean.png',
+    brazil_and_new_global_sounds: '/docuseries/brazil_and_new_global_sounds.png',
+    beyond_the_music: '/docuseries/beyond_the_music.png',
+    musical_instruments: '/docuseries/instruments_that_changed_music.png',
+    modern_music_listening: '/docuseries/modern_music_and_listening.png',
+    foundations_technology_events: '/docuseries/foundations_technology_events.png'
+};
+
+export function musicDocuseriesCollectionArtwork(slug: string): string {
+    return COLLECTION_ARTWORK[slug] ?? MUSIC_DOCUSERIES_FALLBACK_ARTWORK;
+}
+
 const DEFAULT_PRESENTATION: DocumentaryPresentation = {accent:MUSIC_DOCUSERIES_ACCENT,kicker:'A TopSpot40 documentary series'};
 
 export function musicDocuseriesCollectionPresentation(slug:string): DocumentaryPresentation {
