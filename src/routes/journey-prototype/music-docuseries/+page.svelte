@@ -175,7 +175,7 @@
 </ProgramJourneyShell>
 
 <style>
-    .browser-layout { display:grid; grid-template-columns:minmax(270px,.76fr) minmax(0,1.65fr); gap:clamp(20px,3vw,34px); align-items:stretch; }
+    .browser-layout { display:grid; grid-template-columns:minmax(330px,.9fr) minmax(0,1.55fr); gap:clamp(20px,3vw,34px); align-items:stretch; }
     .collection-picker { min-width:0; }
     .collection-picker h2 { margin:0 0 12px; color:#f7dc82; font-family:Georgia,serif; font-size:23px; }
     .collection-buttons { display:grid; max-height:520px; gap:7px; padding-right:6px; overflow-y:auto; scrollbar-color:#d7a64a rgba(255,255,255,.08); scrollbar-width:thin; }
