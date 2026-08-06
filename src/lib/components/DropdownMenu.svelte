@@ -2,10 +2,12 @@
 	// Props for the parent to handle clicks
 	export let onFeedback: () => void;
 	export let onContact: () => void;
+	export let onLogout: () => void;
 
-	function handleClick(type: 'feedback' | 'contact') {
+	function handleClick(type: 'feedback' | 'contact' | 'logout') {
 		if (type === 'feedback') onFeedback?.();
 		else if (type === 'contact') onContact?.();
+		else if (type === 'logout') onLogout?.();
 	}
 </script>
 
@@ -35,7 +37,11 @@
 			</button>
 		</li>
 
-		<li>Logout</li>
+		<li>
+			<button type="button" on:click={() => handleClick('logout')}>
+				Logout
+			</button>
+		</li>
 	</ul>
 </div>
 

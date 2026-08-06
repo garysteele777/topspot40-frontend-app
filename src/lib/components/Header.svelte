@@ -5,13 +5,55 @@
 	import { browser } from '$app/environment';
 	import ContactModal from './profile-components/ContactModal.svelte';
 	import FeedbackModal from './profile-components/FeedbackModal.svelte';
+	import { goto } from '$app/navigation';
+	import { getBackendUrl } from '$lib/config';
+	import { supabase } from '$lib/supabaseClient';
 
 	let dropdownRef: HTMLElement; // reference to the dropdown container
 	let showDropdown = false;
 	let showFeedbackModal = false;
 	let showContactModal = false;
+	let isLoggingOut = false;
 
 	export let user: any = null;
+
+	async function handleLogout() {
+		if (isLoggingOut) return;
+
+		isLoggingOut = true;
+		showDropdown = false;
+
+		let backendError: Error | null = null;
+
+		try {
+			const response = await fetch(`${getBackendUrl()}/api/auth/logout`, {
+				method: 'POST',
+				credentials: 'include'
+			});
+
+			if (!response.ok) {
+				backendError = new Error(`Backend logout failed with status ${response.status}`);
+			}
+		} catch (error) {
+			backendError = error instanceof Error
+				? error
+				: new Error('Backend logout failed');
+		}
+
+		const { error: supabaseError } = await supabase.auth.signOut();
+
+		if (backendError || supabaseError) {
+			console.error('Logout failed', {
+				backendError,
+				supabaseError
+			});
+			window.alert('TopSpot40 could not fully log you out. Please try again.');
+			isLoggingOut = false;
+			return;
+		}
+
+		await goto('/signin', { replaceState: true });
+	}
 
 	function handleClickOutside(event: MouseEvent) {
 		if (dropdownRef && !dropdownRef.contains(event.target as Node)) {
@@ -50,6 +92,7 @@
 					showContactModal = true;
 					showDropdown = false;
 				}}
+				onLogout={handleLogout}
 			/>
 		{/if}
 	</div>
