@@ -50,8 +50,22 @@
                                 'Check your email for your six-digit sign-in code.';
                 } catch (error) {
                         console.error('Unable to send sign-in code:', error);
-                        errorMessage =
-                                'We could not send your sign-in code. Please try again.';
+
+                        const authError = error as {
+                                status?: number;
+                                message?: string;
+                        };
+
+                        if (
+                                authError?.status === 429 ||
+                                authError?.message?.toLowerCase().includes('seconds')
+                        ) {
+                                errorMessage =
+                                        'Please wait about 60 seconds before requesting another sign-in code.';
+                        } else {
+                                errorMessage =
+                                        'We could not send your sign-in code. Please try again.';
+                        }
                 } finally {
                         isLoading = false;
                 }
