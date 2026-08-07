@@ -69,9 +69,9 @@
   <div class="auth-container">
     <div class="auth-card">  
       <h2>Authentication Required</h2>
-      <p>If you’re not logged in, please sign in with Spotify first.</p>
+      <p>If you’re not logged in, please sign in or sign up first.</p>
       <button class="auth-button" on:click={() => window.location.href = '/signup-official'}>
-        Go to Sign In
+        Go to Sign Up
       </button>
     </div>
   </div>
