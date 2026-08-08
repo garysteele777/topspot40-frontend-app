@@ -561,9 +561,13 @@ async function playNarrationQueue() {
     }
 }
 
-export function startPlaybackPolling() {
+export function startPlaybackPolling(
+    options: { guidedLinkOut?: boolean } = {}
+) {
     if (!browser) return;
     if (pollTimer) return;
+
+    const guidedLinkOut = options.guidedLinkOut === true;
 
     dlog('▶️ Playback polling started');
 
@@ -809,6 +813,29 @@ export function startPlaybackPolling() {
                 data.context?.spotify_track_id
             ) {
                 const spotifyTrackId = data.context.spotify_track_id as string;
+
+                if (guidedLinkOut) {
+                    if (lastSpotifyId !== spotifyTrackId) {
+                        if (isBedPlaying()) {
+                            stopBed();
+                        }
+
+                        lastSpotifyId = spotifyTrackId;
+                        activeSpotifyTrackId = spotifyTrackId;
+                        trackSwitchTime = Date.now();
+                        trackFinalized = false;
+
+                        window.dispatchEvent(
+                            new CustomEvent('ts-guided-track-ready', {
+                                detail: { spotifyTrackId }
+                            })
+                        );
+                    }
+
+                    lastPhase = phase;
+                    return;
+                }
+
                 const now = Date.now();
 
                 if (failedSpotifyStartTrackId !== spotifyTrackId) {

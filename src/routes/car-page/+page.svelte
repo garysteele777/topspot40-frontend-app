@@ -65,6 +65,7 @@
     } from '$lib/carmode/CarMode.store';
 
     import {loadForSelection} from '$lib/carmode/CarMode.loader';
+    import {signalTrackFinishedApi} from '$lib/api/playbackApi';
 
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
@@ -794,6 +795,21 @@
         guidedSpotifyOpened = false;
         guidedSpotifyReturned = false;
 
+        const sel = get(currentSelection);
+        const track = get(currentTrack);
+        const isRadioProgram =
+            sel?.programType === 'RADIO_DG' ||
+            sel?.programType === 'RADIO_COL' ||
+            sel?.programType === 'RADIO_ARTIST';
+
+        if (isRadioProgram) {
+            await signalTrackFinishedApi({
+                rankingId: track?.rankingId ?? null,
+                spotifyTrackId: track?.spotifyTrackId ?? null
+            });
+            return;
+        }
+
         await nextTrack();
     }
 
@@ -803,6 +819,21 @@
         guidedReady = false;
         guidedSpotifyOpened = false;
         guidedSpotifyReturned = false;
+
+        const sel = get(currentSelection);
+        const track = get(currentTrack);
+        const isRadioProgram =
+            sel?.programType === 'RADIO_DG' ||
+            sel?.programType === 'RADIO_COL' ||
+            sel?.programType === 'RADIO_ARTIST';
+
+        if (isRadioProgram) {
+            await signalTrackFinishedApi({
+                rankingId: track?.rankingId ?? null,
+                spotifyTrackId: track?.spotifyTrackId ?? null
+            });
+            return;
+        }
 
         await nextTrack();
     }
@@ -1031,6 +1062,39 @@
 
         if (activeSettings.playbackMethod === 'guided') {
             if (guidedReady) {
+                return;
+            }
+
+            const sel = get(currentSelection);
+            const isRadioProgram =
+                sel?.programType === 'RADIO_DG' ||
+                sel?.programType === 'RADIO_COL' ||
+                sel?.programType === 'RADIO_ARTIST';
+
+            if (isRadioProgram) {
+                if (
+                    playbackStartInFlight ||
+                    userStartedPlaybackThisSession
+                ) {
+                    return;
+                }
+
+                playbackStartInFlight = true;
+
+                try {
+                    guidedReady = false;
+                    guidedSpotifyOpened = false;
+                    guidedSpotifyReturned = false;
+
+                    startPlaybackPolling({guidedLinkOut: true});
+                    markUserStartedPlayback();
+
+                    await playTrack($currentTrack);
+                    userStartedPlaybackThisSession = true;
+                } finally {
+                    playbackStartInFlight = false;
+                }
+
                 return;
             }
 
@@ -1462,6 +1526,28 @@
         await nextTrack();
     }
 
+    function handleGuidedTrackReady(event: Event): void {
+        const customEvent = event as CustomEvent<{ spotifyTrackId?: string }>;
+        const spotifyTrackId = customEvent.detail?.spotifyTrackId;
+        const track = get(currentTrack);
+
+        if (
+            !spotifyTrackId ||
+            !track?.spotifyTrackId ||
+            track.spotifyTrackId !== spotifyTrackId
+        ) {
+            return;
+        }
+
+        guidedSpotifyOpened = false;
+        guidedSpotifyReturned = false;
+        guidedReady = true;
+
+        isPlaying.set(false);
+        playbackPhase.set('track');
+    }
+
+
 
     // ─────────────────────────────────────────────
     // Lifecycle
@@ -1515,6 +1601,7 @@
         }
 
         window.addEventListener('ts-next-track', handleAutoNextTrack);
+        window.addEventListener('ts-guided-track-ready', handleGuidedTrackReady);
 
 
         const url = new URL(window.location.href);
@@ -1629,6 +1716,10 @@
         window.removeEventListener(
             'ts-next-track',
             handleAutoNextTrack
+        );
+        window.removeEventListener(
+            'ts-guided-track-ready',
+            handleGuidedTrackReady
         );
 
         stopPlaybackPolling();
