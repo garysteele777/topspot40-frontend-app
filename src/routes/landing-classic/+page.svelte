@@ -46,7 +46,7 @@
     ];
 
 	let steps = [
-		{ title: 'Sign in with Spotify', description: 'Open selected tracks in Spotify while TopSpot40 guides the story, ranking, and context.' },
+		{ title: 'Sign in to TopSpot40', description: 'Open selected tracks in Spotify while TopSpot40 guides the story, ranking, and context.' },
 		{ title: 'Choose genre + decade', description: 'Pick Pop, Rock, Country, RnB/Soul, or Blues/Jazz and select a decade.' },
 		{ title: 'Select Language', description: 'Select English, Spanish, or Portuguese'},
 		{ title: 'Select listening mode', description: 'Radio Mode, DJ Mode, or Story Mode — each changes how tracks are introduced.' },

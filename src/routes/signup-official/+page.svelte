@@ -14,11 +14,6 @@
                 history.back();
         }
 
-        function signUpWithSpotify() {
-                window.location.href =
-                        `${getBackendUrl()}/api/auth/spotify/login`;
-        }
-
         async function requestCode() {
                 errorMessage = '';
                 statusMessage = '';
@@ -244,18 +239,6 @@
                         <a href="/signin">Sign in</a>
                 </p>
 
-                <div class="fallback">
-                        <span>Temporary fallback</span>
-
-                        <button
-                                type="button"
-                                on:click={signUpWithSpotify}
-                                class="spotify-signup-button"
-                                disabled={isLoading}
-                        >
-                                Sign up with Spotify
-                        </button>
-                </div>
         </div>
 </div>
 
@@ -360,8 +343,7 @@
         }
 
         .primary-button,
-        .secondary-button,
-        .spotify-signup-button {
+        .secondary-button {
                 padding: 0.85rem 1.25rem;
                 border-radius: 9999px;
                 border: none;
@@ -407,30 +389,6 @@
         .signin-link a {
                 color: #7ee29c;
                 font-weight: 700;
-        }
-
-        .fallback {
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-                margin-top: 2rem;
-                padding-top: 1.5rem;
-                border-top: 1px solid #444;
-                text-align: center;
-        }
-
-        .fallback span {
-                color: #aaa;
-                font-size: 0.85rem;
-        }
-
-        .spotify-signup-button {
-                background-color: #333;
-                color: white;
-        }
-
-        .spotify-signup-button:hover:not(:disabled) {
-                background-color: #444;
         }
 
         @media (max-width: 640px) {
