@@ -10,11 +10,8 @@ import {cleanupNarrationAudio} from '$lib/audio/narrationAudioCleanup';
 import {
     fetchPlaybackStatus,
     signalNarrationFinishedApi,
-    playSpotifyTrackApi,
     signalTrackFinishedApi,
     stopPlaybackApi,
-    fetchSpotifyDevices,
-    transferSpotifyPlayback
 } from '$lib/api/playbackApi';
 
 
@@ -170,7 +167,6 @@ const POLL_INTERVAL_MS = Number(
     import.meta.env.VITE_PLAYBACK_POLL_MS ?? 500
 );
 
-const SPOTIFY_START_RETRY_THROTTLE_MS = 3000;
 
 const SILENT_AUDIO_DATA_URI =
     'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
@@ -184,11 +180,7 @@ let pollTimer: number | null = null;
 let lastPhase: PlaybackPhase | null = null;
 
 let lastSpotifyId: string | null = null;
-let spotifyStartLock = false;
 let finishedTrackId: string | null = null;
-let failedSpotifyStartTrackId: string | null = null;
-let lastSpotifyStartRetryAt = 0;
-let spotifyStartAttemptGeneration = 0;
 let syncedUiSpotifyTrackId: string | null = null;
 
 let narrationLock = false;
@@ -835,94 +827,6 @@ export function startPlaybackPolling(
                     lastPhase = phase;
                     return;
                 }
-
-                const now = Date.now();
-
-                if (failedSpotifyStartTrackId !== spotifyTrackId) {
-                    failedSpotifyStartTrackId = null;
-                    lastSpotifyStartRetryAt = 0;
-                }
-
-                const retryThrottled =
-                    failedSpotifyStartTrackId === spotifyTrackId &&
-                    now - lastSpotifyStartRetryAt < SPOTIFY_START_RETRY_THROTTLE_MS;
-
-                if (
-                    lastSpotifyId !== spotifyTrackId &&
-                    !spotifyStartLock &&
-                    !data.isPaused &&
-                    !retryThrottled
-                ) {
-                    spotifyStartLock = true;
-                    const spotifyStartAttempt = ++spotifyStartAttemptGeneration;
-
-                    dlog('🎵 TRACK start:', spotifyTrackId);
-
-                    try {
-                        const sel = get(currentSelection);
-
-                        if (sel?.mode === 'artist_spotlight') {
-                            dlog('🎵 Artist Spotlight: backend controls Spotify start');
-
-                            if (isBedPlaying()) {
-                                dlog('🎧 BED stop: artist spotlight track start');
-                                stopBed();
-                            }
-
-                            lastSpotifyId = spotifyTrackId;
-                            activeSpotifyTrackId = spotifyTrackId;
-                            trackSwitchTime = Date.now();
-                            trackFinalized = false;
-                            failedSpotifyStartTrackId = null;
-                            lastSpotifyStartRetryAt = 0;
-                            return;
-                        }
-                        if (isBedPlaying()) {
-                            dlog('ðŸŽ§ BED stop: track phase reached');
-                            stopBed();
-                        }
-
-                        const devices = await fetchSpotifyDevices();
-                        const device = devices.find(d => d.is_active) ?? devices[0];
-
-                        if (spotifyStartAttempt !== spotifyStartAttemptGeneration) {
-                            return;
-                        }
-
-                        if (!device) {
-                            console.warn('No Spotify devices found. Open Spotify on a device to continue.');
-                            if (spotifyStartAttempt === spotifyStartAttemptGeneration) {
-                                failedSpotifyStartTrackId = spotifyTrackId;
-                                lastSpotifyStartRetryAt = Date.now();
-                            }
-                            return;
-                        }
-
-                        await transferSpotifyPlayback(device.id);
-                        await playSpotifyTrackApi(spotifyTrackId, device.id);
-
-                        if (spotifyStartAttempt !== spotifyStartAttemptGeneration) {
-                            return;
-                        }
-
-                        lastSpotifyId = spotifyTrackId;
-                        activeSpotifyTrackId = spotifyTrackId;
-                        trackSwitchTime = Date.now();
-                        trackFinalized = false;
-                        failedSpotifyStartTrackId = null;
-                        lastSpotifyStartRetryAt = 0;
-
-                        stopBed();
-                    } catch (err) {
-                        if (spotifyStartAttempt === spotifyStartAttemptGeneration) {
-                            failedSpotifyStartTrackId = spotifyTrackId;
-                            lastSpotifyStartRetryAt = Date.now();
-                        }
-                        console.error('❌ Spotify start failed', err);
-                    } finally {
-                        spotifyStartLock = false;
-                    }
-                }
             }
 
             const {
@@ -1000,12 +904,9 @@ export function startPlaybackPolling(
 }
 
 export function resetSpotifyStartState(): void {
-    spotifyStartAttemptGeneration += 1;
     lastSpotifyId = null;
     activeSpotifyTrackId = null;
     syncedUiSpotifyTrackId = null;
-    failedSpotifyStartTrackId = null;
-    lastSpotifyStartRetryAt = 0;
 }
 
 export function resetNarrationPhaseState(): void {
