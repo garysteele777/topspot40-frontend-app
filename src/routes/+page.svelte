@@ -92,22 +92,7 @@
     }
 
     onMount(() => {
-        const savedLayout = localStorage.getItem('topspot_home_layout');
-        const isSmallScreen = window.matchMedia('(max-width: 767px)').matches;
-
-        if (isSmallScreen) {
-            localStorage.setItem('topspot_home_layout', 'compact');
-        } else if (savedLayout !== 'compact') {
-            localStorage.setItem('topspot_home_layout', 'journey');
-            goto('/journey-prototype', {replaceState: true});
-            return;
-        }
-
-        const savedLanguage = localStorage.getItem('topspot_language');
-
-        if (isLandingLanguage(savedLanguage)) {
-            language = savedLanguage;
-        }
+        goto('/journey-prototype', {replaceState: true});
     });
 </script>
 

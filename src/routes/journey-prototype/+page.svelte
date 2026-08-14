@@ -4,69 +4,46 @@
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
-    type ViewMode = 'journey' | 'list';
 
     let language: LandingLanguage = 'en';
-    let viewMode: ViewMode = 'journey';
     let hasChosenLanguage = false;
+    let showJourneyLayout = false;
 
     const text = {
         en: {
             title: 'Choose Your Musical Journey',
             instruction: 'Select a language to begin.',
             continue: 'Continue',
-            listView: 'List View',
-            journeyView: 'Journey View',
-            compactView: 'Compact View',
             home: 'Home',
-            back: 'Back',
-            contact: 'Contact Us',
-            about: 'About',
-            signIn: 'Sign In',
-            signUp: 'Sign Up'
+            back: 'Back'
         },
         es: {
             title: 'Elige tu viaje musical',
             instruction: 'Selecciona un idioma para comenzar.',
             continue: 'Continuar',
-            listView: 'Vista de lista',
-            journeyView: 'Vista de viaje',
-            compactView: 'Vista compacta',
             home: 'Inicio',
-            back: 'Atrás',
-            contact: 'Contáctanos',
-            about: 'Acerca de',
-            signIn: 'Iniciar sesión',
-            signUp: 'Registrarse'
+            back: 'Atrás'
         },
         ptbr: {
             title: 'Escolha sua jornada musical',
             instruction: 'Selecione um idioma para começar.',
             continue: 'Continuar',
-            listView: 'Vista em lista',
-            journeyView: 'Vista da jornada',
-            compactView: 'Vista compacta',
             home: 'Início',
-            back: 'Voltar',
-            contact: 'Fale conosco',
-            about: 'Sobre',
-            signIn: 'Entrar',
-            signUp: 'Cadastrar'
+            back: 'Voltar'
         }
     };
 
-    const languageNames: Record<LandingLanguage, string> = {
-        en: 'English',
-        es: 'Español',
-        ptbr: 'Português'
-    };
+    const languageOptions: {
+        code: LandingLanguage;
+        name: string;
+    }[] = [
+        {code: 'en', name: 'English'},
+        {code: 'es', name: 'Español'},
+        {code: 'ptbr', name: 'Português'}
+    ];
 
     function isLandingLanguage(value: string | null): value is LandingLanguage {
         return value === 'en' || value === 'es' || value === 'ptbr';
-    }
-
-    function isViewMode(value: string | null): value is ViewMode {
-        return value === 'journey' || value === 'list';
     }
 
     function setLanguage(value: LandingLanguage) {
@@ -76,93 +53,57 @@
         localStorage.setItem('tts_language', value);
     }
 
-    function setViewMode(value: ViewMode) {
-        viewMode = value;
-        localStorage.setItem('topspot_journey_view', value);
-    }
-
     function continueJourney() {
         goto('/journey-prototype/choose');
     }
 
-    function showCompactView() {
-        localStorage.setItem('topspot_home_layout', 'compact');
-        goto('/');
-    }
-
     onMount(() => {
-        localStorage.setItem('topspot_home_layout', 'journey');
+        const journeyScreen = window.matchMedia(
+            '(min-width: 1024px) and (min-height: 650px)'
+        );
+
+        function updateLayout() {
+            showJourneyLayout = journeyScreen.matches;
+        }
 
         const savedLanguage = localStorage.getItem('topspot_language');
-        const savedViewMode = localStorage.getItem('topspot_journey_view');
 
         if (isLandingLanguage(savedLanguage)) {
             language = savedLanguage;
             hasChosenLanguage = true;
         }
 
-        if (isViewMode(savedViewMode)) {
-            viewMode = savedViewMode;
-        } else if (window.innerWidth <= 600) {
-            viewMode = 'list';
-        }
+        updateLayout();
+        journeyScreen.addEventListener('change', updateLayout);
+
+        return () => {
+            journeyScreen.removeEventListener('change', updateLayout);
+        };
     });
 </script>
 
 <svelte:head>
     <title>Choose Your TopSpot40 Journey</title>
     <meta
-        name="description"
-        content="Choose the language for your TopSpot40 musical journey."
+            name="description"
+            content="Choose the language for your TopSpot40 musical journey."
     />
 </svelte:head>
 
 <div class="prototype">
     <PublicJourneyHeader {language}/>
 
-    <div class="utilitybar">
-        <button class="utility" on:click={() => history.back()}>
-            <span aria-hidden="true">←</span>
-            {text[language].back}
-        </button>
-
-        <a class="utility" href="/">
-            <span aria-hidden="true">⌂</span>
-            {text[language].home}
-        </a>
-
-        <button
-            class="utility layout-toggle"
-            on:click={showCompactView}
-        >
-            <span aria-hidden="true">▦</span>
-            {text[language].compactView}
-        </button>
-
-        <button
-            class="utility view-toggle"
-            on:click={() => setViewMode(
-                viewMode === 'journey' ? 'list' : 'journey'
-            )}
-        >
-            <span aria-hidden="true">{viewMode === 'journey' ? '☷' : '✨'}</span>
-            {viewMode === 'journey'
-                ? text[language].listView
-                : text[language].journeyView}
-        </button>
-    </div>
-
-    {#if viewMode === 'journey'}
+    {#if showJourneyLayout}
         <main class="journey">
             <div class="art-layer">
-<img
-                class="journey-art"
-                src="/images/journey/01-ai-language-journey.png"
-                alt="Three musical roads leading toward the TopSpot40 castle"
-            />
+                <img
+                        class="journey-art"
+                        src="/images/journey/01-ai-language-journey.png"
+                        alt="Three musical roads leading toward the TopSpot40 castle"
+                />
 
-            <div class="shade" aria-hidden="true"></div>
-</div>
+                <div class="shade" aria-hidden="true"></div>
+            </div>
 
             <section class="journey-title">
                 <h1>{text[language].title}</h1>
@@ -170,36 +111,36 @@
             </section>
 
             <div class="hotspot-layer">
-<button
-                class:active={language === 'en' && hasChosenLanguage}
-                class="road-button english"
-                aria-label="Choose English"
-                aria-pressed={language === 'en' && hasChosenLanguage}
-                on:click={() => setLanguage('en')}
-            >
-                <span class="screen-reader-only">English</span>
-            </button>
+                <button
+                        class:active={language === 'en' && hasChosenLanguage}
+                        class="road-button english"
+                        aria-label="Choose English"
+                        aria-pressed={language === 'en' && hasChosenLanguage}
+                        on:click={() => setLanguage('en')}
+                >
+                    <span class="screen-reader-only">English</span>
+                </button>
 
-            <button
-                class:active={language === 'es' && hasChosenLanguage}
-                class="road-button spanish"
-                aria-label="Elegir Español"
-                aria-pressed={language === 'es' && hasChosenLanguage}
-                on:click={() => setLanguage('es')}
-            >
-                <span class="screen-reader-only">Español</span>
-            </button>
+                <button
+                        class:active={language === 'es' && hasChosenLanguage}
+                        class="road-button spanish"
+                        aria-label="Elegir Español"
+                        aria-pressed={language === 'es' && hasChosenLanguage}
+                        on:click={() => setLanguage('es')}
+                >
+                    <span class="screen-reader-only">Español</span>
+                </button>
 
-            <button
-                class:active={language === 'ptbr' && hasChosenLanguage}
-                class="road-button portuguese"
-                aria-label="Escolher Português"
-                aria-pressed={language === 'ptbr' && hasChosenLanguage}
-                on:click={() => setLanguage('ptbr')}
-            >
-                <span class="screen-reader-only">Português</span>
-            </button>
-</div>
+                <button
+                        class:active={language === 'ptbr' && hasChosenLanguage}
+                        class="road-button portuguese"
+                        aria-label="Escolher Português"
+                        aria-pressed={language === 'ptbr' && hasChosenLanguage}
+                        on:click={() => setLanguage('ptbr')}
+                >
+                    <span class="screen-reader-only">Português</span>
+                </button>
+            </div>
 
             {#if hasChosenLanguage}
                 <button class="continue" on:click={continueJourney}>
@@ -211,21 +152,22 @@
     {:else}
         <main class="list-page">
             <section class="list-card">
-                <img src="/old-dog-icon.png" alt="" class="list-logo" />
+                <img src="/old-dog-icon.png" alt="" class="list-logo"/>
                 <h1>{text[language].title}</h1>
                 <p>{text[language].instruction}</p>
 
                 <div class="language-list">
-                    {#each Object.entries(languageNames) as [code, name]}
+                    {#each languageOptions as {code, name}}
                         <button
-                            class:active={
+                                class:active={
                                 language === code && hasChosenLanguage
                             }
-                            on:click={() =>
-                                setLanguage(code as LandingLanguage)}
+                                on:click={() => setLanguage(code)}
                         >
                             <span>{name}</span>
-                            <span aria-hidden="true">→</span>
+                            <span aria-hidden="true">
+                                {language === code && hasChosenLanguage ? '✓' : '→'}
+                            </span>
                         </button>
                     {/each}
                 </div>
@@ -294,10 +236,6 @@
         backdrop-filter: blur(7px);
     }
 
-    .layout-toggle {
-        margin-left: auto;
-    }
-
     .journey {
         position: relative;
         width: 100%;
@@ -319,14 +257,13 @@
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background:
-            linear-gradient(
+        background: linear-gradient(
                 to bottom,
                 rgba(0, 0, 0, 0.2),
                 transparent 25%,
                 transparent 78%,
                 rgba(0, 0, 0, 0.45)
-            );
+        );
     }
 
     .journey-title {
@@ -366,10 +303,9 @@
         border: 3px solid transparent;
         border-radius: 22px;
         background: transparent;
-        transition:
-            border-color 160ms ease,
-            box-shadow 160ms ease,
-            background 160ms ease;
+        transition: border-color 160ms ease,
+        box-shadow 160ms ease,
+        background 160ms ease;
     }
 
     .road-button:hover,
@@ -378,10 +314,9 @@
         outline: none;
         border-color: #7cff54;
         background: rgba(29, 185, 84, 0.1);
-        box-shadow:
-            0 0 18px #55ff3c,
-            0 0 48px rgba(55, 255, 56, 0.75),
-            inset 0 0 30px rgba(55, 255, 56, 0.24);
+        box-shadow: 0 0 18px #55ff3c,
+        0 0 48px rgba(55, 255, 56, 0.75),
+        inset 0 0 30px rgba(55, 255, 56, 0.24);
     }
 
     .english {
@@ -420,9 +355,8 @@
         display: grid;
         place-items: center;
         padding: 90px 24px 40px;
-        background:
-            radial-gradient(circle at 30% 20%, #164a23, transparent 40%),
-            #101010;
+        background: radial-gradient(circle at 30% 20%, #164a23, transparent 40%),
+        #101010;
     }
 
     .list-card {
@@ -473,7 +407,12 @@
     }
 
     .language-list button:hover,
-    .language-list button:focus-visible,
+    .language-list button:focus-visible {
+        background: #332d23;
+        border-color: #f7dc82;
+        outline: none;
+    }
+
     .language-list button.active {
         color: #081008;
         background: #75ef4f;
@@ -523,7 +462,7 @@
             min-height: 44px;
         }
 
-        .utility:not(.view-toggle) {
+        .utility {
             font-size: 0;
         }
 
