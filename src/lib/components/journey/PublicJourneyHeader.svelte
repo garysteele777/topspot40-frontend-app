@@ -4,14 +4,18 @@
 
     export let language: 'en' | 'es' | 'ptbr' = 'en';
 
-    let menuOpen = false;
+    let aboutMenuOpen = false;
+    let myMenuOpen = false;
     let showContactModal = false;
-    let menu: HTMLElement;
+    let aboutMenu: HTMLElement;
+    let myMenu: HTMLElement;
 
     const text = {
         en: {
-            contact: 'Contact Us',
             about: 'About',
+            discover: 'Discover TopSpot40',
+            aboutTopSpot40: 'About TopSpot40',
+            contact: 'Contact Us',
             signIn: 'Sign In',
             signUp: 'Sign Up',
             myTopSpot40: 'My TopSpot40',
@@ -19,8 +23,10 @@
             preferences: 'Playback Preferences'
         },
         es: {
-            contact: 'Contáctanos',
             about: 'Acerca de',
+            discover: 'Descubrir TopSpot40',
+            aboutTopSpot40: 'Acerca de TopSpot40',
+            contact: 'Contáctanos',
             signIn: 'Iniciar sesión',
             signUp: 'Registrarse',
             myTopSpot40: 'Mi TopSpot40',
@@ -28,8 +34,10 @@
             preferences: 'Preferencias de reproducción'
         },
         ptbr: {
-            contact: 'Fale conosco',
             about: 'Sobre',
+            discover: 'Descobrir TopSpot40',
+            aboutTopSpot40: 'Sobre o TopSpot40',
+            contact: 'Fale conosco',
             signIn: 'Entrar',
             signUp: 'Cadastrar',
             myTopSpot40: 'Meu TopSpot40',
@@ -39,9 +47,30 @@
     };
 
     function handleDocumentClick(event: MouseEvent) {
-        if (menu && !menu.contains(event.target as Node)) {
-            menuOpen = false;
+        const target = event.target as Node;
+
+        if (aboutMenu && !aboutMenu.contains(target)) {
+            aboutMenuOpen = false;
         }
+
+        if (myMenu && !myMenu.contains(target)) {
+            myMenuOpen = false;
+        }
+    }
+
+    function toggleAboutMenu() {
+        aboutMenuOpen = !aboutMenuOpen;
+        myMenuOpen = false;
+    }
+
+    function toggleMyMenu() {
+        myMenuOpen = !myMenuOpen;
+        aboutMenuOpen = false;
+    }
+
+    function openContactModal() {
+        aboutMenuOpen = false;
+        showContactModal = true;
     }
 
     onMount(() => {
@@ -60,24 +89,51 @@
     </a>
 
     <nav aria-label="TopSpot40 navigation">
-        <button class="nav-link secondary-link" type="button" on:click={() => (showContactModal = true)}>
-            {text[language].contact}
-        </button>
-        <a class="secondary-link" href="/about">{text[language].about}</a>
-
-        <div class="my-menu" bind:this={menu}>
+        <div class="my-menu" bind:this={aboutMenu}>
             <button
-                    class="my-menu-trigger"
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={menuOpen}
-                    on:click|stopPropagation={() => (menuOpen = !menuOpen)}
+                class="my-menu-trigger"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={aboutMenuOpen}
+                on:click|stopPropagation={toggleAboutMenu}
+            >
+                {text[language].about}
+                <span aria-hidden="true">▾</span>
+            </button>
+
+            {#if aboutMenuOpen}
+                <div class="my-menu-panel" role="menu">
+                    <a role="menuitem" href="/catalog/index.html">
+                        {text[language].discover}
+                    </a>
+                    <a role="menuitem" href="/about">
+                        {text[language].aboutTopSpot40}
+                    </a>
+                    <button
+                        class="menu-action"
+                        role="menuitem"
+                        type="button"
+                        on:click={openContactModal}
+                    >
+                        {text[language].contact}
+                    </button>
+                </div>
+            {/if}
+        </div>
+
+        <div class="my-menu" bind:this={myMenu}>
+            <button
+                class="my-menu-trigger"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={myMenuOpen}
+                on:click|stopPropagation={toggleMyMenu}
             >
                 {text[language].myTopSpot40}
                 <span aria-hidden="true">▾</span>
             </button>
 
-            {#if menuOpen}
+            {#if myMenuOpen}
                 <div class="my-menu-panel" role="menu">
                     <a role="menuitem" href="/options-v4?panel=journey">
                         {text[language].progress}
@@ -95,7 +151,10 @@
 </header>
 
 <div class="contact-modal-host">
-    <ContactModal visible={showContactModal} onClose={() => (showContactModal = false)}/>
+    <ContactModal
+        visible={showContactModal}
+        onClose={() => (showContactModal = false)}
+    />
 </div>
 
 <style>
@@ -142,7 +201,6 @@
     }
 
     nav a,
-    .nav-link,
     .my-menu-trigger {
         color: #fff;
         background: none;
@@ -155,8 +213,6 @@
 
     nav a:hover,
     nav a:focus-visible,
-    .nav-link:hover,
-    .nav-link:focus-visible,
     .my-menu-trigger:hover,
     .my-menu-trigger:focus-visible {
         color: #f5d66e;
@@ -201,8 +257,23 @@
         border-radius: 8px;
     }
 
+    .menu-action {
+        display: block;
+        width: 100%;
+        padding: 11px 13px;
+        color: #fff;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
+    }
+
     .my-menu-panel a:hover,
-    .my-menu-panel a:focus-visible {
+    .my-menu-panel a:focus-visible,
+    .menu-action:hover,
+    .menu-action:focus-visible {
         color: #0d180d;
         background: #75ef4f;
         outline: none;
@@ -248,6 +319,12 @@
             right: -52px;
         }
     }
+
+    @media (max-width: 600px) {
+    .brand > span {
+        display: none;
+    }
+}
 
     @media (max-width: 480px) {
         nav .signup {
