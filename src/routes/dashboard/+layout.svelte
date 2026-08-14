@@ -1,6 +1,14 @@
 <script lang="ts">
-    export let data;
     import Header from '$lib/components/Header.svelte';
+
+    type DashboardLayoutData = {
+        user: any;
+        subscriptionStatus: {
+            access_state?: string;
+        } | null;
+    };
+
+    export let data: DashboardLayoutData;
 
     $: accessState = data?.subscriptionStatus?.access_state;
     $: showFreePromotionNotice = accessState === 'free_2026';

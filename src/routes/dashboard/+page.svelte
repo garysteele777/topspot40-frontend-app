@@ -1,196 +1,128 @@
 <script lang="ts">
-	import Header from '$lib/components/Header.svelte';
-	import RecentTracks from '$lib/components/RecentTracks.svelte';
-	import DecadeGenreBrowser from '$lib/components/DecadeGenreBrowser.svelte';
-	//import PlaylistModal from '$lib/components/PlaylistModal.svelte';
-	import { goto } from '$app/navigation';
-	//import { onMount } from 'svelte';
+    import { goto } from '$app/navigation';
+    import { SlidersHorizontal } from 'lucide-svelte';
 
-	let showModal = false;
-
-	/*
-	function openModal() {
-		showModal = true;
-	}
-
-	function closeModal() {
-		showModal = false;
-	}
-		*/
-
-	// Example placeholder data
-	let recentTracks = [
-		{
-			id: 1,
-			track_name: 'where were you when the world stopped turning',
-			artist_name: 'alan jackson',
-			album_artwork: 'https://i.scdn.co/image/ab67616d0000b273c5d5d983f8d9edc7f695cc72'
-		},
-		{
-			id: 2,
-			track_name: 'courtesy of the red white and blue the angry american',
-			artist_name: 'toby keith',
-			album_artwork: 'https://i.scdn.co/image/ab67616d0000b273bb5c54a68f9ce31f83b98de4'
-		}
-	];
-
-	let playlists = [
-		{
-			id: 1,
-			title: '1980s Pop Top 40',
-			decade: '1980s',
-			genre: 'Pop',
-			artwork: 'https://i.scdn.co/image/ab67616d0000b273example1'
-		},
-		{
-			id: 2,
-			title: '1990s Rock Top 40',
-			decade: '1990s',
-			genre: 'Rock',
-			artwork: 'https://i.scdn.co/image/ab67616d0000b273example2'
-		},
-		{
-			id: 3,
-			title: '2000s Country Top 40',
-			decade: '2000s',
-			genre: 'Country',
-			artwork: 'https://i.scdn.co/image/ab67616d0000b273example3'
-		},
-		{
-			id: 4,
-			title: '2010s Pop Top 40',
-			decade: '2000s',
-			genre: 'Pop',
-			artwork: 'https://i.scdn.co/image/ab67616d0000b273example4'
-		},
-		{
-			id: 5,
-			title: '1970s Rock Top 40',
-			decade: '1970s',
-			genre: 'Rock',
-			artwork: 'https://i.scdn.co/image/ab67616d0000b273example5'
-		}
-	];
-
-
-
-	let deferredPrompt: any;
-	let canInstall = false;
-
-	if (typeof window !== 'undefined') {
-		window.addEventListener('beforeinstallprompt', (e) => {
-			e.preventDefault();
-			deferredPrompt = e;
-			canInstall = true;
-		});
-	}
-
-	function install() {
-		if (deferredPrompt) {
-			deferredPrompt.prompt();
-
-			deferredPrompt.userChoice.finally(() => {
-				deferredPrompt = null;
-				canInstall = false;
-			});
-		}
-	}
-
-
-
-	// Navigate to the new player route
-	function goToPlayer() {
-		goto('/options-v4');
-	}
+    function openControlCenter() {
+        goto('/options-v4');
+    }
 
 </script>
 
-<!-- <Header /> -->
-
-
-
 <div class="dashboard-wrapper">
-	{#if canInstall}
-		<div class="pwa-bar">
-			<button on:click={install}>Install App</button>
-		</div>
-	{/if}
-	<main class="dashboard">
-		<section class="decade-genre-browser">
-			<h2>Get Started with TopSpot40</h2>
-			<button on:click={goToPlayer}>Get Started</button>
-		</section>
+    <main class="dashboard">
+        <section class="home">
+            <p class="eyebrow">TopSpot40</p>
+            <h1>Welcome to TopSpot40</h1>
 
-		<section class="recent-tracks">
-			<RecentTracks {recentTracks} />
-		</section>
+            <p class="tagline">
+                Your music. Your memories. Your station.
+            </p>
 
-		<section>
-			<DecadeGenreBrowser {playlists} />
-		</section>
-	</main>
+            <button class="control-center-button" on:click={openControlCenter}>
+                <SlidersHorizontal size={21} strokeWidth={1.8} />
+                Open Control Center
+            </button>
+
+            <p class="supporting-copy">
+                Browse TopSpot40 programs, adjust your listening preferences,
+                and start your experience from the Control Center.
+            </p>
+        </section>
+    </main>
 </div>
 
-<!--
-{#if showModal}
-	<div on:click={closeModal}></div>
-	<div><PlaylistModal visible={true} onClose={closeModal} /></div>
-{/if}
--->
-
 <style>
-	:global(body) {
-		margin: 0; /* remove default body margin */
-	}
-	.dashboard-wrapper {
-		min-height: 100vh; /* full viewport height */
-		background: radial-gradient(circle at 30% 30%, #1db954 5%, #121212 90%);
-		display: flex;
-		flex-direction: column;
-	}
+    :global(body) {
+        margin: 0;
+        background: #0c0d0d;
+    }
 
-	.dashboard {
-		flex: 1; /* fills the wrapper */
-		padding: 2rem;
-		display: flex;
-		flex-direction: column;
-		gap: 3rem;
-		box-sizing: border-box; /* ensure padding doesn’t create extra space */
-	}
+    .dashboard-wrapper {
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at 50% 10%, rgba(29, 185, 84, 0.12), transparent 32rem),
+            #0c0d0d;
+        color: #f5f5f5;
+    }
 
-	button {
-		background-color: #121212; /* TopSpot40 dark background */
-		color: white;
-		padding: 0.8rem 1.5rem;
-		border: none;
-		border-radius: 5px;
-		cursor: pointer;
-	}
+    .dashboard {
+        width: min(960px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 6rem 0;
+    }
 
-	button:hover {
-		background-color: #1db954;
-	}
+    .home {
+        display: flex;
+        min-height: 56vh;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
 
+    .eyebrow {
+        margin: 0 0 0.75rem;
+        color: #7dd99b;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
 
-.pwa-bar {
-    display: flex;
-    justify-content: flex-end;
-    padding: 0.75rem 2rem 0 2rem;
-}
+    h1 {
+        margin: 0;
+        font-size: clamp(2.5rem, 7vw, 4.75rem);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.04em;
+    }
 
-.pwa-bar button {
-	background: rgba(29, 185, 84, 0.15);
-	border: 1px solid rgba(29, 185, 84, 0.4);
-	color: white;
-	padding: 0.5rem 0.9rem;
-	border-radius: 999px;
-	cursor: pointer;
-}
+    .tagline {
+        margin: 1rem 0 2rem;
+        color: #b5b8b6;
+        font-size: clamp(1rem, 2.5vw, 1.25rem);
+    }
 
-.pwa-bar button:hover {
-	background: rgba(29, 185, 84, 0.25);
-}
+    .control-center-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        min-height: 52px;
+        padding: 0.85rem 1.4rem;
+        border: 0;
+        border-radius: 9px;
+        background: #1db954;
+        color: #07140c;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+    }
 
+    .control-center-button:hover {
+        background: #27c861;
+    }
 
+    .supporting-copy {
+        max-width: 520px;
+        margin: 1.4rem 0 0;
+        color: #8f9391;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
 
+    @media (max-width: 640px) {
+        .dashboard {
+            padding: 3.5rem 0;
+        }
+
+        .home {
+            min-height: 50vh;
+        }
+
+        .control-center-button {
+            width: 100%;
+            max-width: 320px;
+        }
+    }
 </style>

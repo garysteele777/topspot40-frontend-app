@@ -1,43 +1,72 @@
+import { dev } from '$app/environment';
 import { redirect } from '@sveltejs/kit';
 import { getBackendUrl } from '$lib/config';
 import type { LayoutServerLoad } from './$types';
 
+export const load: LayoutServerLoad = async ({ fetch, cookies }) => {
+    if (dev) {
+        return {
+            user: null,
+            subscriptionStatus: null
+        };
+    }
 
-export const load: LayoutServerLoad = async ({ fetch }) => {
-    console.log('🔥 DASHBOARD LAYOUT HIT');
-    const backend = getBackendUrl();
+    const accessToken = cookies.get('access_token');
 
-    const res = await fetch(`${backend}/api/subscription-status`, {
-        credentials: 'include'
-    });
-
-    // ❌ Not logged in / invalid JWT
-    if (res.status === 401) {
+    if (!accessToken) {
         throw redirect(302, '/');
     }
 
-    console.log('📡 subscription-status HTTP status:', res.status);
+    const backend = getBackendUrl();
 
-    const data = await res.json();
-    console.log('📦 subscription-status JSON:', data);
+    const headers = {
+        cookie: `access_token=${accessToken}`
+    };
 
-    // ❌ Not subscribed
-    if (!data.is_subscribed) {
+    const subscriptionRes = await fetch(
+        `${backend}/api/subscription-status`,
+        {
+            headers
+        }
+    );
+
+    if (subscriptionRes.status === 401) {
+        throw redirect(302, '/');
+    }
+
+    if (!subscriptionRes.ok) {
+        throw new Error(
+            `Unable to load subscription status: ${subscriptionRes.status}`
+        );
+    }
+
+    const subscriptionStatus = await subscriptionRes.json();
+
+    if (!subscriptionStatus.is_subscribed) {
         throw redirect(302, '/create-account');
     }
 
-    const userRes = await fetch(`${backend}/api/auth/me`, {
-        credentials: 'include'
-    });
+    const userRes = await fetch(
+        `${backend}/api/auth/me`,
+        {
+            headers
+        }
+    );
 
-    console.log('📡 /me HTTP status:', userRes.status);
+    if (userRes.status === 401) {
+        throw redirect(302, '/');
+    }
 
-    const user = userRes.ok ? await userRes.json() : null;
+    if (!userRes.ok) {
+        throw new Error(
+            `Unable to load dashboard user: ${userRes.status}`
+        );
+    }
 
-    console.log('👤 USER JSON:', user);
+    const user = await userRes.json();
 
     return {
         user,
-        subscriptionStatus: data
-    } satisfies { user: any; subscriptionStatus: any };
-}
+        subscriptionStatus
+    };
+};
