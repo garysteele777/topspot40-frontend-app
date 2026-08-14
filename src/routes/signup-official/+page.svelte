@@ -4,6 +4,7 @@
         import { supabase } from '$lib/supabaseClient';
 
         let email = '';
+        let marketingOptIn = false;
         let verificationCode = '';
         let codeRequested = false;
         let isLoading = false;
@@ -107,7 +108,8 @@
                                                 'Content-Type': 'application/json'
                                         },
                                         body: JSON.stringify({
-                                                access_token: supabaseAccessToken
+                                                access_token: supabaseAccessToken,
+                                                marketing_opt_in: marketingOptIn
                                         })
                                 }
                         );
@@ -169,6 +171,17 @@
                                         disabled={isLoading}
                                         required
                                 />
+
+                                <label class="marketing-opt-in">
+                                        <input
+                                                type="checkbox"
+                                                bind:checked={marketingOptIn}
+                                                disabled={isLoading}
+                                        />
+                                        <span>
+                                                Email me TopSpot40 updates, announcements, and promotions.
+                                        </span>
+                                </label>
 
                                 <button
                                         type="submit"
@@ -334,6 +347,22 @@
         input:focus {
                 outline: 3px solid rgba(29, 185, 84, 0.35);
                 border-color: #1db954;
+        }
+
+        .marketing-opt-in {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.65rem;
+                font-weight: 400;
+                line-height: 1.4;
+                cursor: pointer;
+        }
+
+        .marketing-opt-in input[type="checkbox"] {
+                width: auto;
+                margin-top: 0.2rem;
+                padding: 0;
+                flex: 0 0 auto;
         }
 
         input:disabled,
