@@ -19,7 +19,7 @@
             signIn: 'Sign In',
             signUp: 'Sign Up',
             myTopSpot40: 'My TopSpot40',
-            progress: 'Listening Progress',
+            progress: 'My Music Journey',
             preferences: 'Playback Preferences'
         },
         es: {
@@ -91,11 +91,11 @@
     <nav aria-label="TopSpot40 navigation">
         <div class="my-menu" bind:this={aboutMenu}>
             <button
-                class="my-menu-trigger"
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={aboutMenuOpen}
-                on:click|stopPropagation={toggleAboutMenu}
+                    class="my-menu-trigger"
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={aboutMenuOpen}
+                    on:click|stopPropagation={toggleAboutMenu}
             >
                 {text[language].about}
                 <span aria-hidden="true">▾</span>
@@ -110,10 +110,10 @@
                         {text[language].aboutTopSpot40}
                     </a>
                     <button
-                        class="menu-action"
-                        role="menuitem"
-                        type="button"
-                        on:click={openContactModal}
+                            class="menu-action"
+                            role="menuitem"
+                            type="button"
+                            on:click={openContactModal}
                     >
                         {text[language].contact}
                     </button>
@@ -123,11 +123,11 @@
 
         <div class="my-menu" bind:this={myMenu}>
             <button
-                class="my-menu-trigger"
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={myMenuOpen}
-                on:click|stopPropagation={toggleMyMenu}
+                    class="my-menu-trigger"
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={myMenuOpen}
+                    on:click|stopPropagation={toggleMyMenu}
             >
                 {text[language].myTopSpot40}
                 <span aria-hidden="true">▾</span>
@@ -135,7 +135,7 @@
 
             {#if myMenuOpen}
                 <div class="my-menu-panel" role="menu">
-                    <a role="menuitem" href="/options-v4?panel=journey">
+                    <a role="menuitem" href="/music-journey">
                         {text[language].progress}
                     </a>
                     <a role="menuitem" href="/options-v4?panel=preferences">
@@ -152,8 +152,8 @@
 
 <div class="contact-modal-host">
     <ContactModal
-        visible={showContactModal}
-        onClose={() => (showContactModal = false)}
+            visible={showContactModal}
+            onClose={() => (showContactModal = false)}
     />
 </div>
 
@@ -321,10 +321,10 @@
     }
 
     @media (max-width: 600px) {
-    .brand > span {
-        display: none;
+        .brand > span {
+            display: none;
+        }
     }
-}
 
     @media (max-width: 480px) {
         nav .signup {

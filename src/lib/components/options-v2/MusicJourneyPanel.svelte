@@ -30,7 +30,6 @@
     let musicJourneyMode:
         | 'nostalgia'
         | 'collections'
-        | 'favorites'
         | null = null;
 
     let selectedJourneyDecade: string | null = null;
@@ -224,27 +223,29 @@
 </script>
 
 <div class="opt-cell music-journey-card">
-    <div
-            class="section-header-row section-header-clickable"
-            role="button"
-            tabindex="0"
-            on:click={() => {
-                onActivate?.();
-            }}
-            on:keydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
+    {#if onActivate}
+        <div
+                class="section-header-row section-header-clickable"
+                role="button"
+                tabindex="0"
+                on:click={() => {
                     onActivate?.();
-                }
-            }}
-    >
-        <h3 class="section-title">🎵 {title}</h3>
-        <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
-    </div>
+                }}
+                on:keydown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onActivate?.();
+                    }
+                }}
+        >
+            <h3 class="section-title">🎵 {title}</h3>
+            <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
+        </div>
 
-    <div class="radio-description">
-        {description}
-    </div>
+        <div class="radio-description">
+            {description}
+        </div>
+    {/if}
 
     {#if !collapsed}
         <div class="radio-buttons">
@@ -268,15 +269,6 @@
                 Collections History
             </button>
 
-            <button
-                    type="button"
-                    class:active={musicJourneyMode === 'favorites'}
-                    on:click={() => {
-                musicJourneyMode = 'favorites';
-            }}
-            >
-                Favorite Tracks (incomplete)
-            </button>
         </div>
     {/if}
 </div>
@@ -595,7 +587,7 @@
     /* RADIO BUTTONS */
     .radio-buttons {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 6px;
     }
 
