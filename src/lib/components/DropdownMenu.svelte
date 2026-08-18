@@ -1,11 +1,13 @@
 <script lang="ts">
 	// Props for the parent to handle clicks
+	export let onManageAccount: () => void;
 	export let onFeedback: () => void;
 	export let onContact: () => void;
 	export let onLogout: () => void;
 
-	function handleClick(type: 'feedback' | 'contact' | 'logout') {
-		if (type === 'feedback') onFeedback?.();
+	function handleClick(type: 'manage-account' | 'feedback' | 'contact' | 'logout') {
+		if (type === 'manage-account') onManageAccount?.();
+		else if (type === 'feedback') onFeedback?.();
 		else if (type === 'contact') onContact?.();
 		else if (type === 'logout') onLogout?.();
 	}
@@ -21,7 +23,11 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="dropdown-menu" on:click|stopPropagation>
 	<ul>
-		<li>Manage Account / Subscription</li>
+		<li>
+			<button type="button" on:click={() => handleClick('manage-account')}>
+				Manage Account / Subscription
+			</button>
+		</li>
 		<li>Stats & Analytics</li>
 		<li>Notifications</li>
 

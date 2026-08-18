@@ -5,6 +5,7 @@
 	import { browser } from '$app/environment';
 	import ContactModal from './profile-components/ContactModal.svelte';
 	import FeedbackModal from './profile-components/FeedbackModal.svelte';
+	import MarketingPreferenceModal from './profile-components/MarketingPreferenceModal.svelte';
 	import { goto } from '$app/navigation';
 	import { getBackendUrl } from '$lib/config';
 	import { supabase } from '$lib/supabaseClient';
@@ -13,6 +14,7 @@
 	let showDropdown = false;
 	let showFeedbackModal = false;
 	let showContactModal = false;
+	let showMarketingModal = false;
 	let isLoggingOut = false;
 
 	export let user: any = null;
@@ -83,6 +85,10 @@
 			alt="User"/>
 		{#if showDropdown}
 			<DropdownMenu
+				onManageAccount={() => {
+					showMarketingModal = true;
+					showDropdown = false;
+				}}
 				onFeedback={() => {
 					showFeedbackModal = true;
 					showDropdown = false;
@@ -103,6 +109,12 @@
 
 <!-- Contact Us Modal -->
 <ContactModal visible={showContactModal} onClose={() => (showContactModal = false)} />
+
+<!-- Manage Account / Marketing Preference Modal -->
+<MarketingPreferenceModal
+	visible={showMarketingModal}
+	onClose={() => (showMarketingModal = false)}
+/>
 
 <style>
 	.header {
