@@ -113,7 +113,6 @@
             <div class="shade" aria-hidden="true"></div>
             <div class="utilitybar">
                 <a class="utility" href="/journey-prototype"><span aria-hidden="true">←</span>{text[language].back}</a>
-                <a class="utility" href="/"><span aria-hidden="true">⌂</span>{text[language].home}</a>
             </div>
             <section class="journey-title"><h1>{text[language].title}</h1>
                 <p>{text[language].instruction}</p></section>

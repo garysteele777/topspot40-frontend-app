@@ -55,25 +55,27 @@
 </script>
 
 <div class="opt-cell playback-preferences-card">
-    <div
-            class="section-header-row section-header-clickable"
-            role="button"
-            tabindex="0"
-            on:click={() => onActivate?.()}
-            on:keydown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onActivate?.();
-            }
-        }}
-    >
-        <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
-        <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
-    </div>
+    {#if onActivate}
+        <div
+                class="section-header-row section-header-clickable"
+                role="button"
+                tabindex="0"
+                on:click={() => onActivate?.()}
+                on:keydown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onActivate?.();
+                    }
+                }}
+        >
+            <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
+            <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
+        </div>
 
-    <div class="radio-description">
-        {languageSummary} • {methodSummary} • {orderSummary} • {flowSummary} • {trackStrategySummary} • {voiceSummary}
-    </div>
+        <div class="radio-description">
+            {languageSummary} • {methodSummary} • {orderSummary} • {flowSummary} • {trackStrategySummary} • {voiceSummary}
+        </div>
+    {/if}
 
     {#if !collapsed}
         <div class="radio-buttons">

@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import {onMount} from 'svelte';
 
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import MusicJourneyPanel from '$lib/components/options-v2/MusicJourneyPanel.svelte';
-    import { loadCatalogOnce } from '$lib/stores/loadCatalogOnce';
+    import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
 
-    import type { Language } from '$lib/types/playback';
+    import type {Language} from '$lib/types/playback';
+    import {goto} from '$app/navigation';
 
     let language: Language = 'en';
 
@@ -17,6 +18,10 @@
             slug: string;
         }[];
     }[] = [];
+
+    function goBack() {
+        history.back();
+    }
 
     onMount(async () => {
         const savedLanguage = localStorage.getItem('topspot_language');
@@ -39,14 +44,17 @@
 </script>
 
 <div class="page-shell">
-    <PublicJourneyHeader {language} />
+    <PublicJourneyHeader {language}/>
 
     <main class="page">
         <div class="page-heading">
-            <a class="back-button" href="/options-v4">
-                ← Control Center
-            </a>
-
+            <button
+                    class="back-button"
+                    type="button"
+                    on:click={goBack}
+            >
+                ← Back
+            </button>
             <div>
                 <h1>🎵 My TopSpot40 Music Journey</h1>
                 <p>Track your musical journey through TopSpot40.</p>
@@ -54,10 +62,10 @@
         </div>
 
         <MusicJourneyPanel
-            {collectionGroups}
-            title="My TopSpot40 Music Journey"
-            description="Track your musical journey through TopSpot40."
-            collapsed={false}
+                {collectionGroups}
+                title="My TopSpot40 Music Journey"
+                description="Track your musical journey through TopSpot40."
+                collapsed={false}
         />
     </main>
 </div>
@@ -65,13 +73,12 @@
 <style>
     .page-shell {
         min-height: 100vh;
-        background:
-            radial-gradient(
+        background: radial-gradient(
                 circle at top,
                 #1f1f1f 0,
                 #121212 45%,
                 #050505 100%
-            );
+        );
     }
 
     .page {
@@ -109,6 +116,9 @@
         color: #f5d66e;
         text-decoration: none;
         white-space: nowrap;
+        background: transparent;
+        cursor: pointer;
+        font: inherit;
     }
 
     .back-button:hover {

@@ -20,9 +20,6 @@
     // ─────────────────────────────────────────────
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
-    import MusicJourneyPanel from '$lib/components/options-v2/MusicJourneyPanel.svelte';
-    import PlaybackPreferencesPanel from '$lib/components/options-v2/PlaybackPreferencesPanel.svelte';
-
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     // ─────────────────────────────────────────────
     // Types
@@ -737,43 +734,6 @@
             {/if}
         {/if}
 
-
-        <div class:active-section-wrapper={openSection === 'journey'}>
-            <MusicJourneyPanel
-                    {collectionGroups}
-                    title={uiText[language].journey}
-                    description={uiText[language].journeyDesc}
-                    collapsed={openSection !== 'journey'}
-                    onActivate={() => {
-        openSection = openSection === 'journey' ? null : 'journey';
-        radioMode = null;
-    }}
-            />
-        </div>
-
-
-        <div class:active-section-wrapper={openSection === 'preferences'}>
-
-            <PlaybackPreferencesPanel
-                    bind:language
-                    bind:languages
-                    bind:selectedVoices
-                    bind:detailLength
-                    bind:playbackMethod
-                    showPlaybackMethod={dev}
-                    bind:playbackOrder
-                    bind:pauseMode
-                    bind:skipPlayed
-                    collapsed={openSection !== 'preferences'}
-                    onActivate={() => {
-        openSection = openSection === 'preferences' ? null : 'preferences';
-        radioMode = null;
-    }}
-            />
-        </div>
-
-        <!-- ✅ Playback History now at top -->
-        <!--        <PlaybackHistoryPanel {language} {languages}/>-->
 
     </div>
 </div>

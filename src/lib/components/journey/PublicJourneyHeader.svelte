@@ -138,7 +138,7 @@
                     <a role="menuitem" href="/music-journey">
                         {text[language].progress}
                     </a>
-                    <a role="menuitem" href="/options-v4?panel=preferences">
+                    <a role="menuitem" href="/playback-preferences">
                         {text[language].preferences}
                     </a>
                 </div>

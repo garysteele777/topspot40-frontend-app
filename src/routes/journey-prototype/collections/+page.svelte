@@ -112,7 +112,6 @@
     instruction={text[language].instruction}
     backHref="/journey-prototype/choose"
     backLabel={text[language].back}
-    homeLabel={text[language].home}
     {accent}
 >
     {#if loading}

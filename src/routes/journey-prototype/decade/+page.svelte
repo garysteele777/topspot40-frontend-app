@@ -110,10 +110,6 @@
             <span aria-hidden="true">←</span>
             {text[language].back}
         </a>
-        <a class="utility" href="/">
-            <span aria-hidden="true">⌂</span>
-            {text[language].home}
-        </a>
     </div>
 
     <main class="decade-page">
