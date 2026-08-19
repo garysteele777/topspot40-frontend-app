@@ -73,6 +73,32 @@
                 ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
                 : null;
 
+    function displayName(value: string): string {
+        return value
+            .replaceAll('_', ' ')
+            .replaceAll('-', ' ')
+            .replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    $: trackListProgramLabel =
+        $currentSelection?.mode === 'decade_genre'
+            ? `Nostalgia: ${$currentSelection?.context?.decade ?? ''} ${displayName($currentSelection?.context?.genre ?? '')}`.trim()
+            : $currentSelection?.mode === 'collection'
+                ? `Collections: ${programTitle}`
+                : $currentSelection?.mode === 'artist_spotlight'
+                    ? `Artist Spotlight: ${
+                        $currentSelection?.context?.artist_name ??
+                        currentTrack?.artistName ??
+                        programTitle
+                    }`
+                    : programTitle;
+
+    $: trackListExportName =
+        trackListProgramLabel
+            ? `TopSpot40 ${trackListProgramLabel.replace(':', '')}.csv`
+            : 'TopSpot40 Track List.csv';
+
+
     function formatTime(seconds: number): string {
         if (!seconds || seconds < 0) return '0:00';
         const minutes = Math.floor(seconds / 60);
@@ -117,15 +143,15 @@
 <section class="drive-in-shell" aria-label="TopSpot40 Drive-In View">
     <div class="drive-in-stage">
         <img
-            class="drive-in-background"
-            src="/images/car/drive-in-background.png"
-            alt=""
+                class="drive-in-background"
+                src="/images/car/drive-in-background.png"
+                alt=""
         />
 
         <div class="movie-screen">
             <img
-                src={currentTrack?.albumArtwork ?? '/default_album.png'}
-                alt={currentTrack?.trackName
+                    src={currentTrack?.albumArtwork ?? '/default_album.png'}
+                    alt={currentTrack?.trackName
                     ? `${currentTrack.trackName} album artwork`
                     : 'Album artwork'}
             />
@@ -137,9 +163,9 @@
         </div>
 
         <div
-            class:narrating={narrationActive}
-            class="speaker-pulse"
-            aria-hidden="true"
+                class:narrating={narrationActive}
+                class="speaker-pulse"
+                aria-hidden="true"
         >
             <span class="pulse-ring ring-one"></span>
             <span class="pulse-ring ring-two"></span>
@@ -181,11 +207,11 @@
             </button>
 
             <button
-                type="button"
-                class="play-control"
-                class:playing={isPlaying}
-                on:click={onPlayPause}
-                aria-label={isPlaying ? 'Pause' : 'Play'}
+                    type="button"
+                    class="play-control"
+                    class:playing={isPlaying}
+                    on:click={onPlayPause}
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
             >
                 <span class="control-icon">{isPlaying ? 'Ⅱ' : '▶'}</span>
                 <span>{isPlaying ? 'Pause' : 'Play'}</span>
@@ -197,18 +223,18 @@
             </button>
 
             <button
-                type="button"
-                class="gold-control"
-                on:click={() => setShowNarrationModal(true)}
+                    type="button"
+                    class="gold-control"
+                    on:click={() => setShowNarrationModal(true)}
             >
                 <span class="control-icon">ⓘ</span>
                 <span>More Info</span>
             </button>
 
             <button
-                type="button"
-                class="gold-control"
-                on:click={() => (showTrackList = true)}
+                    type="button"
+                    class="gold-control"
+                    on:click={() => (showTrackList = true)}
             >
                 <span class="control-icon">☷</span>
                 <span>Track List</span>
@@ -232,24 +258,26 @@
 </section>
 
 <CarModeNarrationModal
-    track={currentTrack}
-    languages={$currentSelection?.languages ?? [
+        track={currentTrack}
+        languages={$currentSelection?.languages ?? [
         $currentSelection?.language ?? 'en'
     ]}
-    open={showNarrationModal}
-    initialMode={narrationModalInitialMode}
-    onClose={() => setShowNarrationModal(false)}
+        open={showNarrationModal}
+        initialMode={narrationModalInitialMode}
+        onClose={() => setShowNarrationModal(false)}
 />
 
 {#if showTrackList}
     <DriveInJukeboxPanel
-        {tracks}
-        {currentTrack}
-        onJumpToTrack={jumpToTrack}
-        onClose={() => (showTrackList = false)}
-        {isPlayed}
-        {programType}
-        {programGroup}
+            {tracks}
+            {currentTrack}
+            onJumpToTrack={jumpToTrack}
+            onClose={() => (showTrackList = false)}
+            {isPlayed}
+            {programType}
+            {programGroup}
+            programLabel={trackListProgramLabel}
+            exportFileName={trackListExportName}
     />
 {/if}
 
@@ -362,10 +390,10 @@
         width: clamp(28px, 3.5vw, 62px);
         height: clamp(28px, 3.5vw, 62px);
         background: radial-gradient(
-            circle,
-            rgba(255, 226, 139, 0.98) 0%,
-            rgba(255, 170, 48, 0.58) 52%,
-            rgba(236, 154, 55, 0) 75%
+                circle,
+                rgba(255, 226, 139, 0.98) 0%,
+                rgba(255, 170, 48, 0.58) 52%,
+                rgba(236, 154, 55, 0) 75%
         );
     }
 
@@ -373,9 +401,8 @@
         width: clamp(36px, 4.7vw, 86px);
         height: clamp(36px, 4.7vw, 86px);
         border: 3px solid rgba(255, 205, 102, 0.96);
-        box-shadow:
-            0 0 12px rgba(255, 185, 64, 0.9),
-            0 0 26px rgba(255, 137, 25, 0.58);
+        box-shadow: 0 0 12px rgba(255, 185, 64, 0.9),
+        0 0 26px rgba(255, 137, 25, 0.58);
     }
 
     .speaker-pulse.narrating .speaker-glow {
