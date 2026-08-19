@@ -6,6 +6,7 @@
 	} from '$lib/api/marketingPreferences';
 
 	export let visible = false;
+	export let subscriptionStatus: any = null;
 	export let onClose: () => void;
 
 	let loading = false;
@@ -65,6 +66,38 @@
 		onClose?.();
 	}
 
+	function accessLabel(status: any): string {
+		switch (status?.access_state) {
+			case 'paid':
+				return 'Paid subscription';
+			case 'free_2026':
+				return '2026 promotional access';
+			case 'grace_2027':
+				return '2027 promotional grace period';
+			case 'tester':
+				return 'Tester access';
+			case 'expired':
+				return 'Promotional access expired';
+			case 'none':
+				return 'No active subscription';
+			default:
+				return status?.status ?? 'Unknown';
+		}
+	}
+
+	function formatDate(value: string | null | undefined): string {
+		if (!value) return '';
+
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return value;
+
+		return new Intl.DateTimeFormat('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		}).format(date);
+	}
+
 	$: if (visible && !loading && !preference && !error) {
 		loadPreference();
 	}
@@ -85,11 +118,40 @@
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="popup" on:click|stopPropagation>
-			<h2>Marketing Emails</h2>
-			<p>
-				Manage whether TopSpot40 can send you marketing emails. This does not affect your
-				TopSpot40 account or subscription.
-			</p>
+			<h2>Manage Account / Subscription</h2>
+
+			<section class="section">
+				<h3>Subscription</h3>
+
+				{#if subscriptionStatus}
+					<p class="status">
+						Current access:
+						<strong>{accessLabel(subscriptionStatus)}</strong>
+					</p>
+
+					{#if subscriptionStatus.current_period_end}
+						<p class="status">
+							Current billing period ends:
+							<strong>{formatDate(subscriptionStatus.current_period_end)}</strong>
+						</p>
+					{/if}
+
+					{#if subscriptionStatus.cancel_at_period_end}
+						<p class="status">
+							Your subscription is scheduled to cancel at the end of the current billing period.
+						</p>
+					{/if}
+				{:else}
+					<p class="status">Subscription information is unavailable.</p>
+				{/if}
+			</section>
+
+			<section class="section">
+				<h3>Marketing Emails</h3>
+				<p>
+					Manage whether TopSpot40 can send you marketing emails. This does not affect your
+					TopSpot40 account or subscription.
+				</p>
 
 			{#if loading}
 				<p class="status">Loading your preference...</p>
@@ -127,6 +189,8 @@
 					</button>
 				</div>
 			{/if}
+
+			</section>
 
 			<div class="actions">
 				<button type="button" class="secondary" on:click={handleClose} disabled={saving}>

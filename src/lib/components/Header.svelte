@@ -18,6 +18,7 @@
 	let isLoggingOut = false;
 
 	export let user: any = null;
+	export let subscriptionStatus: any = null;
 
 	async function handleLogout() {
 		if (isLoggingOut) return;
@@ -113,6 +114,7 @@
 <!-- Manage Account / Marketing Preference Modal -->
 <MarketingPreferenceModal
 	visible={showMarketingModal}
+	subscriptionStatus={subscriptionStatus}
 	onClose={() => (showMarketingModal = false)}
 />
 

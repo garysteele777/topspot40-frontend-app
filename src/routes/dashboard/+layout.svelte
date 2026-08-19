@@ -15,7 +15,7 @@
     $: showGracePromotionNotice = accessState === 'grace_2027';
 </script>
 
-<Header user={data.user} />
+<Header user={data.user} subscriptionStatus={data.subscriptionStatus} />
 
 {#if showFreePromotionNotice}
     <div class="promotion-notice" role="status">
