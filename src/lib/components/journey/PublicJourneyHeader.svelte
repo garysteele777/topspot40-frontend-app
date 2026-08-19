@@ -145,7 +145,7 @@
             {/if}
         </div>
 
-        <a class="secondary-link" href="/signin">{text[language].signIn}</a>
+        <a class="secondary-link signin" href="/signin">{text[language].signIn}</a>
         <a class="signup" href="/signup-official">{text[language].signUp}</a>
     </nav>
 </header>
@@ -216,6 +216,12 @@
     .my-menu-trigger:hover,
     .my-menu-trigger:focus-visible {
         color: #f5d66e;
+    }
+
+    nav .signin {
+        padding: 9px 14px;
+        border: 1px solid rgba(245, 214, 110, 0.55);
+        border-radius: 10px;
     }
 
     nav .signup {
@@ -299,10 +305,6 @@
             height: 38px;
         }
 
-        .secondary-link {
-            display: none;
-        }
-
         nav {
             gap: 8px;
         }
@@ -326,9 +328,4 @@
         }
     }
 
-    @media (max-width: 480px) {
-        nav .signup {
-            display: none;
-        }
-    }
 </style>
