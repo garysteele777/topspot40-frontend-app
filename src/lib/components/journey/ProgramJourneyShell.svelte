@@ -9,6 +9,7 @@
     export let artwork: string;
     export let artworkAlt: string;
     export let backLabel = 'Back';
+    export let homeLabel = 'Home';
     export let accent = '#75ef4f';
 </script>
 
@@ -22,6 +23,10 @@
         <nav class="utilitybar" aria-label="Journey navigation">
             <a class="utility" href={backHref}>
                 <span aria-hidden="true">←</span>{backLabel}
+            </a>
+
+            <a class="utility" href="/journey-prototype/choose">
+                <span aria-hidden="true">⌂</span>{homeLabel}
             </a>
         </nav>
 

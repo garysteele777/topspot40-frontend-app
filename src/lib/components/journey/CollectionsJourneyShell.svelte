@@ -8,18 +8,20 @@
     export let instruction: string;
     export let backHref: string;
     export let backLabel = 'Back';
+    export let homeLabel = 'Home';
     export let accent = '#75ef4f';
 </script>
 
 <ProgramJourneyShell
-    {language}
-    {title}
-    {instruction}
-    {backHref}
-    {backLabel}
-    {accent}
-    artwork={COLLECTIONS_JOURNEY_ARTWORK}
-    artworkAlt="A grand musical library welcoming listeners to explore curated collections"
+        {language}
+        {title}
+        {instruction}
+        {backHref}
+        {backLabel}
+        {homeLabel}
+        {accent}
+        artwork={COLLECTIONS_JOURNEY_ARTWORK}
+        artworkAlt="A grand musical library welcoming listeners to explore curated collections"
 >
     <slot/>
 </ProgramJourneyShell>
