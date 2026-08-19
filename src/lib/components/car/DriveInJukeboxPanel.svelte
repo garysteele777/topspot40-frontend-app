@@ -15,7 +15,9 @@
     };
     export let variant: 'modal' | 'embedded' = 'modal';
     export let eyebrow = 'TopSpot40 Drive-In';
-    export let heading = 'Choose Your Favorite';
+    export let heading = 'Choose Track to Play';
+    export let programLabel = '';
+    export let exportFileName = 'TopSpot40 Track List.csv';
     export let isPlayed: (rank: number) => boolean = () => false;
     export let programType: ProgramType | null = null;
     export let programGroup: string | null = null;
@@ -126,7 +128,7 @@
         const link = document.createElement('a');
 
         link.href = url;
-        link.download = 'TopSpot40-track-list.csv';
+        link.download = exportFileName;
 
         document.body.appendChild(link);
         link.click();
@@ -181,16 +183,32 @@
                 <div>
                     <span class="eyebrow">{eyebrow}</span>
                     <h2>{heading}</h2>
+
+                    {#if programLabel}
+                        <div class="program-label">{programLabel}</div>
+                    {/if}
                 </div>
 
                 <div class="header-actions">
-                    <button
-                            type="button"
-                            class="export-button"
-                            on:click={exportCsv}
-                    >
-                        ↓ Export CSV
-                    </button>
+                    <div class="export-wrapper">
+                        <button
+                                type="button"
+                                class="export-button"
+                                on:click={exportCsv}
+                                aria-describedby="export-csv-hint"
+                        >
+                            ↓ Export CSV
+                        </button>
+
+                        <div
+                                id="export-csv-hint"
+                                class="export-tooltip"
+                                role="tooltip"
+                        >
+                            Save this track list as a CSV for playlist transfer tools that work with Spotify and other
+                            music services.
+                        </div>
+                    </div>
 
                     <div class="page-label">
                         Page {pageIndex + 1} of {pageCount}
@@ -372,70 +390,109 @@
                 transparent 4px
         );
         box-shadow: inset 0 0 30px #000;
-        overflow: hidden;
+        overflow: visible;
     }
 
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-.export-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    .export-wrapper {
+        position: relative;
+    }
 
-    min-height: 34px;
-    padding: 6px 14px;
+    .export-tooltip {
+        position: absolute;
+        z-index: 10;
+        right: 0;
+        bottom: calc(100% + 8px);
+        width: 280px;
+        padding: 9px 12px;
 
-    border: 1px solid #d9aa3a;
-    border-radius: 999px;
+        border: 1px solid #d9aa3a;
+        border-radius: 8px;
 
-    background: linear-gradient(
-        180deg,
-        rgba(73, 43, 10, 0.96),
-        rgba(25, 14, 4, 0.98)
-    );
+        background: rgba(20, 11, 4, 0.98);
+        color: #f6e4b2;
 
-    color: #f6d77a;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.35;
 
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.03em;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
 
-    cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(4px);
 
-    box-shadow:
-        inset 0 1px 0 rgba(255, 232, 164, 0.18),
+        transition: opacity 0.15s ease,
+        transform 0.15s ease,
+        visibility 0.15s ease;
+
+        pointer-events: none;
+    }
+
+    .export-wrapper:hover .export-tooltip,
+    .export-wrapper:focus-within .export-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .export-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 34px;
+        padding: 6px 14px;
+
+        border: 1px solid #d9aa3a;
+        border-radius: 999px;
+
+        background: linear-gradient(
+                180deg,
+                rgba(73, 43, 10, 0.96),
+                rgba(25, 14, 4, 0.98)
+        );
+
+        color: #f6d77a;
+
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+
+        cursor: pointer;
+
+        box-shadow: inset 0 1px 0 rgba(255, 232, 164, 0.18),
         0 2px 8px rgba(0, 0, 0, 0.45);
 
-    transition:
-        background 0.15s ease,
+        transition: background 0.15s ease,
         color 0.15s ease,
         transform 0.15s ease,
         box-shadow 0.15s ease;
-}
+    }
 
-.export-button:hover,
-.export-button:focus-visible {
-    background: linear-gradient(
-        180deg,
-        #f5cf69,
-        #d69b27
-    );
+    .export-button:hover,
+    .export-button:focus-visible {
+        background: linear-gradient(
+                180deg,
+                #f5cf69,
+                #d69b27
+        );
 
-    color: #1b1004;
+        color: #1b1004;
 
-    box-shadow:
-        0 0 12px rgba(239, 183, 59, 0.55);
+        box-shadow: 0 0 12px rgba(239, 183, 59, 0.55);
 
-    outline: none;
-}
+        outline: none;
+    }
 
-.export-button:active {
-    transform: translateY(1px);
-}
+    .export-button:active {
+        transform: translateY(1px);
+    }
 
     header {
         display: flex;
@@ -460,6 +517,14 @@
         font-size: clamp(14px, 1.45vw, 26px);
         line-height: 1;
         text-shadow: 0 0 10px rgba(255, 187, 54, 0.45);
+    }
+
+    .program-label {
+        margin-top: 0.28em;
+        color: #e3bd68;
+        font-size: clamp(9px, 0.8vw, 14px);
+        font-weight: 800;
+        letter-spacing: 0.02em;
     }
 
     .page-label {

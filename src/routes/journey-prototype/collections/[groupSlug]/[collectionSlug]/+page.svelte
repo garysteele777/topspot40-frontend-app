@@ -127,13 +127,13 @@
 </svelte:head>
 
 <CollectionsJourneyShell
-    {language}
-    {title}
-    instruction={text[language].instruction}
-    {backHref}
-    backLabel={text[language].back}
-    homeLabel={text[language].home}
-    {accent}
+        {language}
+        {title}
+        instruction={text[language].instruction}
+        {backHref}
+        backLabel={text[language].back}
+        homeLabel={text[language].home}
+        {accent}
 >
     {#if loading}
         <div class="state" aria-live="polite">{text[language].loading}</div>
@@ -167,11 +167,13 @@
         </header>
 
 
-
         {#if tracks.length === 0}
             <div class="state">{text[language].empty}</div>
         {:else}
-            <CollectionTrackPreview {tracks}/>
+            <CollectionTrackPreview
+                    {tracks}
+                    collectionName={collection.name}
+            />
         {/if}
     {/if}
 </CollectionsJourneyShell>
