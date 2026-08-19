@@ -11,7 +11,8 @@
     export let tracks: CarModeTrack[] = [];
     export let currentTrack: CarModeTrack | null = null;
     export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined = undefined;
-    export let onClose: () => void = () => {};
+    export let onClose: () => void = () => {
+    };
     export let variant: 'modal' | 'embedded' = 'modal';
     export let eyebrow = 'TopSpot40 Drive-In';
     export let heading = 'Choose Your Favorite';
@@ -95,6 +96,46 @@
         onClose();
     }
 
+    function exportCsv(): void {
+        if (sortedTracks.length === 0) return;
+
+        const escapeCsv = (value: string | number | null | undefined): string => {
+            const text = String(value ?? '');
+            return `"${text.replaceAll('"', '""')}"`;
+        };
+
+        const rows = [
+            ['title', 'artist', 'album', 'spotify_id'],
+            ...sortedTracks.map(track => [
+                track.trackName,
+                track.artistName,
+                track.albumName ?? '',
+                track.spotifyTrackId ?? ''
+            ])
+        ];
+
+        const csv = rows
+            .map(row => row.map(escapeCsv).join(','))
+            .join('\r\n');
+
+        const blob = new Blob([csv], {
+            type: 'text/csv;charset=utf-8'
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = 'TopSpot40-track-list.csv';
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        URL.revokeObjectURL(url);
+    }
+
+
     function handleKeyDown(event: KeyboardEvent): void {
         if (event.key === 'ArrowLeft') {
             event.preventDefault();
@@ -118,19 +159,19 @@
 </script>
 
 <div
-    class:jukebox-overlay={!embedded}
-    class:jukebox-embedded={embedded}
-    role={embedded ? 'region' : 'dialog'}
-    aria-modal={embedded ? undefined : 'true'}
-    aria-label="TopSpot40 jukebox track selector"
+        class:jukebox-overlay={!embedded}
+        class:jukebox-embedded={embedded}
+        role={embedded ? 'region' : 'dialog'}
+        aria-modal={embedded ? undefined : 'true'}
+        aria-label="TopSpot40 jukebox track selector"
 >
     <div class="jukebox-cabinet" class:embedded>
         {#if !embedded}
             <button
-                type="button"
-                class="close-button"
-                on:click={onClose}
-                aria-label="Close jukebox"
+                    type="button"
+                    class="close-button"
+                    on:click={onClose}
+                    aria-label="Close jukebox"
             >
                 ✕
             </button>
@@ -141,36 +182,47 @@
                     <span class="eyebrow">{eyebrow}</span>
                     <h2>{heading}</h2>
                 </div>
-                <div class="page-label">
-                    Page {pageIndex + 1} of {pageCount}
+
+                <div class="header-actions">
+                    <button
+                            type="button"
+                            class="export-button"
+                            on:click={exportCsv}
+                    >
+                        ↓ Export CSV
+                    </button>
+
+                    <div class="page-label">
+                        Page {pageIndex + 1} of {pageCount}
+                    </div>
                 </div>
             </header>
 
             <div class="selection-list">
                 {#each visibleTracks as track, index}
                     <div
-                        class="selection-card"
-                        class:current={isCurrent(track)}
-                        class:selected={!embedded && selectedIdentity === trackIdentity(track)}
-                        role="button"
-                        tabindex={embedded ? undefined : 0}
-                        aria-disabled={embedded}
-                        on:click={() => chooseTrack(track)}
-                        on:keydown={(event) => {
+                            class="selection-card"
+                            class:current={isCurrent(track)}
+                            class:selected={!embedded && selectedIdentity === trackIdentity(track)}
+                            role="button"
+                            tabindex={embedded ? undefined : 0}
+                            aria-disabled={embedded}
+                            on:click={() => chooseTrack(track)}
+                            on:keydown={(event) => {
                             if (!embedded && (event.key === 'Enter' || event.key === ' ')) {
                                 event.preventDefault();
                                 chooseTrack(track);
                             }
                         }}
-                        aria-pressed={embedded ? undefined : selectedIdentity === trackIdentity(track)}
+                            aria-pressed={embedded ? undefined : selectedIdentity === trackIdentity(track)}
                     >
                         <span class="selection-code">
                             {selectionCode(index)}
                         </span>
 
                         <img
-                            src={track.albumArtwork ?? '/default_album.png'}
-                            alt=""
+                                src={track.albumArtwork ?? '/default_album.png'}
+                                alt=""
                         />
 
                         <span class="track-copy">
@@ -186,9 +238,9 @@
                             {/if}
 
                             <button
-                                type="button"
-                                class="favorite"
-                                class:active={
+                                    type="button"
+                                    class="favorite"
+                                    class:active={
                                     favoriteRefresh &&
                                     programType &&
                                     programGroup &&
@@ -199,7 +251,7 @@
                                         track.rankingId
                                     )
                                 }
-                                on:click|stopPropagation={() => {
+                                    on:click|stopPropagation={() => {
                                     if (
                                         programType &&
                                         programGroup &&
@@ -212,7 +264,7 @@
                                         );
                                     }
                                 }}
-                                aria-label={`Favorite ${track.trackName}`}
+                                    aria-label={`Favorite ${track.trackName}`}
                             >
                                 ★
                             </button>
@@ -223,11 +275,11 @@
 
             <footer>
                 <button
-                    type="button"
-                    class="page-turn"
-                    on:click={previousPage}
-                    disabled={pageIndex === 0}
-                    aria-label="Previous five tracks"
+                        type="button"
+                        class="page-turn"
+                        on:click={previousPage}
+                        disabled={pageIndex === 0}
+                        aria-label="Previous five tracks"
                 >
                     ‹
                     <span>Previous</span>
@@ -235,10 +287,10 @@
 
                 {#if !embedded}
                     <button
-                        type="button"
-                        class="play-selected"
-                        on:click={playSelected}
-                        disabled={!selectedTrack}
+                            type="button"
+                            class="play-selected"
+                            on:click={playSelected}
+                            disabled={!selectedTrack}
                     >
                         <span aria-hidden="true">▶</span>
                         {selectedTrack
@@ -248,11 +300,11 @@
                 {/if}
 
                 <button
-                    type="button"
-                    class="page-turn"
-                    on:click={nextPage}
-                    disabled={pageIndex === pageCount - 1}
-                    aria-label="Next five tracks"
+                        type="button"
+                        class="page-turn"
+                        on:click={nextPage}
+                        disabled={pageIndex === pageCount - 1}
+                        aria-label="Next five tracks"
                 >
                     <span>Next</span>
                     ›
@@ -278,8 +330,7 @@
         width: min(98vw, calc(98dvh * 1.7768));
         max-width: 1672px;
         aspect-ratio: 1672 / 941;
-        background: url('/images/car/drive-in-jukebox-frame.png')
-            center / contain no-repeat;
+        background: url('/images/car/drive-in-jukebox-frame.png') center / contain no-repeat;
         color: #f9edc7;
         font-family: Arial, Helvetica, sans-serif;
     }
@@ -312,18 +363,79 @@
         padding: clamp(8px, 1vw, 17px);
         border: 1px solid rgba(244, 194, 91, 0.45);
         border-radius: 8px;
-        background:
-            linear-gradient(rgba(10, 5, 3, 0.93), rgba(21, 9, 4, 0.93)),
-            repeating-linear-gradient(
+        background: linear-gradient(rgba(10, 5, 3, 0.93), rgba(21, 9, 4, 0.93)),
+        repeating-linear-gradient(
                 0deg,
                 rgba(255, 255, 255, 0.025) 0,
                 rgba(255, 255, 255, 0.025) 1px,
                 transparent 1px,
                 transparent 4px
-            );
+        );
         box-shadow: inset 0 0 30px #000;
         overflow: hidden;
     }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.export-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 34px;
+    padding: 6px 14px;
+
+    border: 1px solid #d9aa3a;
+    border-radius: 999px;
+
+    background: linear-gradient(
+        180deg,
+        rgba(73, 43, 10, 0.96),
+        rgba(25, 14, 4, 0.98)
+    );
+
+    color: #f6d77a;
+
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+
+    cursor: pointer;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 232, 164, 0.18),
+        0 2px 8px rgba(0, 0, 0, 0.45);
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.export-button:hover,
+.export-button:focus-visible {
+    background: linear-gradient(
+        180deg,
+        #f5cf69,
+        #d69b27
+    );
+
+    color: #1b1004;
+
+    box-shadow:
+        0 0 12px rgba(239, 183, 59, 0.55);
+
+    outline: none;
+}
+
+.export-button:active {
+    transform: translateY(1px);
+}
 
     header {
         display: flex;
@@ -382,9 +494,9 @@
         border: 1px solid rgba(202, 153, 66, 0.45);
         border-radius: 8px;
         background: linear-gradient(
-            90deg,
-            rgba(61, 24, 12, 0.88),
-            rgba(24, 12, 8, 0.92)
+                90deg,
+                rgba(61, 24, 12, 0.88),
+                rgba(24, 12, 8, 0.92)
         );
         color: #f5e7c4;
         text-align: left;
@@ -406,13 +518,12 @@
     .selection-card.selected {
         border-color: #ffd568;
         background: linear-gradient(
-            90deg,
-            rgba(111, 47, 18, 0.96),
-            rgba(49, 23, 10, 0.97)
+                90deg,
+                rgba(111, 47, 18, 0.96),
+                rgba(49, 23, 10, 0.97)
         );
-        box-shadow:
-            inset 0 0 12px rgba(255, 198, 72, 0.22),
-            0 0 9px rgba(255, 177, 42, 0.28);
+        box-shadow: inset 0 0 12px rgba(255, 198, 72, 0.22),
+        0 0 9px rgba(255, 177, 42, 0.28);
     }
 
     .selection-code {
@@ -581,6 +692,7 @@
     .jukebox-cabinet.embedded footer {
         grid-template-columns: 1fr 1fr;
     }
+
     @media (max-width: 900px) {
         .jukebox-overlay {
             padding: 2px;
