@@ -4,6 +4,7 @@
 		setMarketingPreference,
 		type MarketingPreference
 	} from '$lib/api/marketingPreferences';
+	import { createBillingPortalSession } from '$lib/api/billingPortal';
 
 	export let visible = false;
 	export let subscriptionStatus: any = null;
@@ -11,6 +12,8 @@
 
 	let loading = false;
 	let saving = false;
+	let billingLoading = false;
+	let billingError = '';
 	let error = '';
 	let success = '';
 	let preference: MarketingPreference | null = null;
@@ -54,11 +57,31 @@
 		}
 	}
 
+	async function manageSubscription() {
+		if (billingLoading) return;
+
+		billingLoading = true;
+		billingError = '';
+
+		try {
+			const url = await createBillingPortalSession();
+			window.location.assign(url);
+		} catch (err) {
+			billingError =
+				err instanceof Error
+					? err.message
+					: 'Unable to open subscription management. Please try again.';
+			billingLoading = false;
+		}
+	}
+
 	function handleClose(e?: MouseEvent) {
 		e?.preventDefault?.();
 
 		loading = false;
 		saving = false;
+		billingLoading = false;
+		billingError = '';
 		error = '';
 		success = '';
 		preference = null;
@@ -140,6 +163,22 @@
 						<p class="status">
 							Your subscription is scheduled to cancel at the end of the current billing period.
 						</p>
+					{/if}
+
+					{#if subscriptionStatus.access_state === 'paid'}
+						{#if billingError}
+							<p class="error">{billingError}</p>
+						{/if}
+
+						<div class="actions">
+							<button
+								type="button"
+								on:click={manageSubscription}
+								disabled={billingLoading}
+							>
+								{billingLoading ? 'Opening...' : 'Manage subscription'}
+							</button>
+						</div>
 					{/if}
 				{:else}
 					<p class="status">Subscription information is unavailable.</p>
