@@ -39,7 +39,10 @@
         if (!isDragging) return;
         currentY = e.touches[0].clientY;
         translateY = Math.max(0, currentY - startY);
-        modalEl?.style.setProperty('transform', `translateY(${translateY}px)`);
+        modalEl?.style.setProperty(
+            'transform',
+            `translateX(-50%) translateY(${translateY}px)`
+        );
     }
 
     function onTouchEnd() {
@@ -51,7 +54,7 @@
         } else {
             if (modalEl) {
                 modalEl.style.transition = 'transform 0.25s ease-out';
-                modalEl.style.transform = 'translateY(0)';
+                modalEl.style.transform = 'translateX(-50%) translateY(0)';
                 setTimeout(() => {
                     if (modalEl) modalEl.style.transition = '';
                 }, 260);
