@@ -113,6 +113,74 @@
                 ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
                 : null;
 
+    function displayName(value: string): string {
+        return value
+            .replaceAll('_', ' ')
+            .replaceAll('-', ' ')
+            .replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    $: trackListProgramLabel =
+        $currentSelection?.mode === 'decade_genre'
+            ? `Nostalgia: ${$currentSelection?.context?.decade ?? ''} ${displayName($currentSelection?.context?.genre ?? '')}`.trim()
+            : $currentSelection?.mode === 'collection'
+                ? `Collections: ${$currentSelection?.context?.collection_slug ?? ''}`
+                : $currentSelection?.mode === 'artist_spotlight'
+                    ? `Artist Spotlight: ${
+                        $currentSelection?.context?.artist_name ??
+                        currentTrack?.artistName ??
+                        ''
+                    }`
+                    : '';
+
+    $: trackListExportName =
+        trackListProgramLabel
+            ? `TopSpot40 ${trackListProgramLabel.replace(':', '')}.csv`
+            : 'TopSpot40 Track List.csv';
+
+    function exportCsv(): void {
+        const sortedTracks = [...tracks].sort((a, b) => a.rank - b.rank);
+
+        if (sortedTracks.length === 0) return;
+
+        const escapeCsv = (
+            value: string | number | null | undefined
+        ): string => {
+            const text = String(value ?? '');
+            return `"${text.replaceAll('"', '""')}"`;
+        };
+
+        const rows = [
+            ['title', 'artist', 'album', 'spotify_id'],
+            ...sortedTracks.map(track => [
+                track.trackName,
+                track.artistName,
+                track.albumName ?? '',
+                track.spotifyTrackId ?? ''
+            ])
+        ];
+
+        const csv = rows
+            .map(row => row.map(escapeCsv).join(','))
+            .join('\r\n');
+
+        const blob = new Blob([csv], {
+            type: 'text/csv;charset=utf-8'
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = trackListExportName;
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        URL.revokeObjectURL(url);
+    }
+
 
     $: {
         void $favoritesStore; // 👈 force reactive dependency (no unused var)
@@ -345,12 +413,23 @@
                         </div>
                     </div>
 
-                    <button
-                            class="close-btn"
-                            on:click={() => showTrackList = false}
-                    >
-                        ✕
-                    </button>
+                    <div class="tracklist-actions">
+                        <button
+                                class="export-btn"
+                                on:click={exportCsv}
+                                type="button"
+                        >
+                            ↓ Export CSV
+                        </button>
+
+                        <button
+                                class="close-btn"
+                                on:click={() => showTrackList = false}
+                                type="button"
+                        >
+                            ✕
+                        </button>
+                    </div>
                 </div>
 
                 <TrackListPanel
@@ -559,6 +638,29 @@
         font-size: 0.72rem;
         color: #d1d5db;
         opacity: 0.72;
+    }
+
+    .tracklist-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .export-btn {
+        padding: 7px 11px;
+        color: #f7dc82;
+        background: #1c1a16;
+        border: 1px solid #8b6d24;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .export-btn:hover,
+    .export-btn:focus-visible {
+        border-color: #d9b84f;
+        color: #fff2b2;
     }
 
 </style>
