@@ -124,6 +124,17 @@
     type CarDisplayView = 'classic' | 'drive-in';
     let carDisplayView: CarDisplayView = 'drive-in';
     let isSmallScreen = false;
+    let carScreen: MediaQueryList | null = null;
+
+    function updateCarLayout() {
+        if (!carScreen) return;
+
+        isSmallScreen = carScreen.matches;
+
+        if (isSmallScreen) {
+            carDisplayView = 'classic';
+        }
+    }
 
     function setCarDisplayView(view: CarDisplayView): void {
         carDisplayView = view;
@@ -1549,14 +1560,15 @@
     }
 
 
-
     // ─────────────────────────────────────────────
     // Lifecycle
     // ─────────────────────────────────────────────
     onMount(async () => {
         console.info('[car-page] build marker main@3ce2b0b mini-player-tap-diagnostic');
 
-        isSmallScreen = window.matchMedia('(max-width: 767px)').matches;
+        carScreen = window.matchMedia('(max-width: 1199px)');
+        updateCarLayout();
+        carScreen.addEventListener('change', updateCarLayout);
 
         const savedCarDisplay = localStorage.getItem('topspot_car_display');
 
@@ -1699,6 +1711,12 @@
 
 
     onDestroy(() => {
+        carScreen?.removeEventListener('change', updateCarLayout);
+
+        window.removeEventListener(
+            'keydown',
+            handleKeyDown
+        );
         window.removeEventListener(
             'keydown',
             handleKeyDown
@@ -1729,7 +1747,7 @@
 
 </script>
 
-<PublicJourneyHeader language={$currentSelection?.language ?? 'en'} />
+<PublicJourneyHeader language={$currentSelection?.language ?? 'en'}/>
 
 
 <div

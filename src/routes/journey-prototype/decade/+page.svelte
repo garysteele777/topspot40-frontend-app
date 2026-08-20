@@ -382,7 +382,7 @@
         display: none;
     }
 
-    @media (max-width: 700px) and (orientation: portrait) {
+    @media (max-width: 1199px), (max-height: 649px) {
 
         .utilitybar {
             top: 74px;
