@@ -42,32 +42,32 @@
 <div class="player-wrapper">
     <div class="cover-container">
         <img class="album-cover" src={coverUrl} alt="Album cover" on:error={handleImgError}/>
+    </div>
 
-        <div class="controls-overlay">
-            <button class="btn" on:click={onPrev} aria-label="Previous">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                    <path d="M6 6h2v12H6V6zm11.5 6L10 18V6l7.5 6z"/>
+    <div class="controls-overlay">
+        <button class="btn" on:click={onPrev} aria-label="Previous">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M6 6h2v12H6V6zm11.5 6L10 18V6l7.5 6z"/>
+            </svg>
+        </button>
+
+        <button class="btn play" on:click={handlePlayClick} aria-label="Play/Pause">
+            {#if isPlaying}
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                    <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
                 </svg>
-            </button>
-
-            <button class="btn play" on:click={handlePlayClick} aria-label="Play/Pause">
-                {#if isPlaying}
-                    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-                        <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
-                    </svg>
-                {:else}
-                    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                {/if}
-            </button>
-
-            <button class="btn" on:click={onNext} aria-label="Next">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                    <path d="M16 6h2v12h-2V6zM6.5 12L14 18V6l-7.5 6z"/>
+            {:else}
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
                 </svg>
-            </button>
-        </div>
+            {/if}
+        </button>
+
+        <button class="btn" on:click={onNext} aria-label="Next">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M16 6h2v12h-2V6zM6.5 12L14 18V6l-7.5 6z"/>
+            </svg>
+        </button>
     </div>
 
     <!-- ✅ Hide these lines if hideMeta=true -->
@@ -104,20 +104,11 @@
     }
 
     .controls-overlay {
-        position: absolute;
-        inset: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 14px;
-        opacity: 0;
-        transition: opacity 0.25s ease;
-        background: rgba(0, 0, 0, 0.35);
-    }
-
-    .cover-container:hover .controls-overlay,
-    .cover-container:focus-within .controls-overlay {
-        opacity: 1;
+        gap: 18px;
+        margin-top: 12px;
     }
 
     .btn {
@@ -165,10 +156,4 @@
         text-overflow: ellipsis;
     }
 
-    @media (hover: none) and (pointer: coarse) {
-        .controls-overlay {
-            opacity: 1;
-            background: rgba(0, 0, 0, 0.25);
-        }
-    }
 </style>

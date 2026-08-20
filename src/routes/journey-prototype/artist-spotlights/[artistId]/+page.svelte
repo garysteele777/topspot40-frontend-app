@@ -140,8 +140,7 @@
     instruction="Preview the artist's program, then start listening in the TopSpot40 player."
     {backHref}
     backLabel="Back to Artists"
-    homeLabel="Home"
-    accent={ARTIST_SPOTLIGHTS_ACCENT}
+npm    accent={ARTIST_SPOTLIGHTS_ACCENT}
     artwork={ARTIST_SPOTLIGHTS_JOURNEY_ARTWORK}
     artworkAlt="A grand music library illuminated for an Artist Spotlight journey"
 >

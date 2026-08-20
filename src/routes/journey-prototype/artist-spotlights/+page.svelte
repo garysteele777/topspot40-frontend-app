@@ -174,7 +174,6 @@
     instruction="Filter the TopSpot40 artist library, then choose an artist to preview their program."
     backHref="/journey-prototype/choose"
     backLabel="Back"
-    homeLabel="Home"
     accent={ARTIST_SPOTLIGHTS_ACCENT}
     artwork={ARTIST_SPOTLIGHTS_JOURNEY_ARTWORK}
     artworkAlt="A grand music library illuminated for an Artist Spotlight journey"

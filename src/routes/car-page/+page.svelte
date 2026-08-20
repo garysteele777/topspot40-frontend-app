@@ -8,6 +8,7 @@
     import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
     import CameraPanel from '$lib/components/studio/CameraPanel.svelte';
     import {showCamera} from '$lib/studio/studio.store';
+    import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {
         playNarrationUrl,
         playNarrationUrlAndWait,
@@ -1727,6 +1728,8 @@
     });
 
 </script>
+
+<PublicJourneyHeader language={$currentSelection?.language ?? 'en'} />
 
 
 <div

@@ -96,34 +96,6 @@
 
         </div>
 
-        {#if !compact}
-            <div class="cm-row cm-row--primary">
-                {modeLabel(mode, programType)}
-                <span>•</span>
-                <span>Category: {categoryLabel(categoryMode)}</span>
-                <span>•</span>
-                <span>
-                    {languages.length > 1 ? 'Langs:' : 'Lang:'}
-                    {languageText(languages)}
-                </span>
-            </div>
-
-            <div class="cm-row cm-row--secondary">
-                <span>Voices: {voiceText(voices)}</span>
-                <span>•</span>
-                <span>Order: {orderLabel(playbackOrder)}</span>
-
-                {#if skipPlayed}
-                    <span>•</span>
-                    <span class="cm-accent">Skip Played</span>
-                {/if}
-
-                <span>•</span>
-                <span>{voicePlayLabel(voicePlayMode)}</span>
-                <span>•</span>
-                <span>{pauseLabel(pauseMode)}</span>
-            </div>
-        {/if}
     </div>
 </div>
 
