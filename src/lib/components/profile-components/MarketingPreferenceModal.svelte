@@ -159,6 +159,12 @@
 						</p>
 					{/if}
 
+					{#if subscriptionStatus.status === 'past_due'}
+						<p class="error">
+							Payment issue: We couldn't process your latest payment. Your TopSpot40 access is still active while Stripe retries the payment. Please update your payment method in Manage subscription to avoid losing access.
+						</p>
+					{/if}
+
 					{#if subscriptionStatus.cancel_at_period_end}
 						<p class="status">
 							Your subscription is scheduled to cancel at the end of the current billing period.
