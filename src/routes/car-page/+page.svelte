@@ -814,8 +814,8 @@
 
     function prepareAutoSpotifyWindow(): void {
         try {
-            const width = 420;
-            const height = 300;
+            const width = 390;
+            const height = 520;
             const left = Math.max(
                 0,
                 window.screen.availWidth - width - 30
@@ -2009,7 +2009,9 @@
                         onPrev={prevTrack}
                         onNext={nextTrack}
                         onJumpToTrack={handleJumpToTrack}
-                        onPlayPause={handlePlayPause}
+                        onPlayPause={handleGuidedPlay}
+                        onAutoPlay={handleAutoPlay}
+                        activePlayMode={activePlayMode}
                         onBackToOptions={backToOptions}
                 />
             {/if}
