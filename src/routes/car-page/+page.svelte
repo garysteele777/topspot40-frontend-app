@@ -814,18 +814,33 @@
 
     function prepareAutoSpotifyWindow(): void {
         try {
+            const width = 420;
+            const height = 300;
+            const left = Math.max(
+                0,
+                window.screen.availWidth - width - 30
+            );
+            const top = 30;
+
             guidedSpotifyWindow = window.open(
                 '/spotify-wait',
-                'topspot40-guided-spotify'
+                'topspot40-guided-spotify',
+                `popup=yes,width=${width},height=${height},left=${left},top=${top}`
             );
 
-            // Try to keep TopSpot40 in front while narration plays.
-            window.focus();
+            if (guidedSpotifyWindow) {
+                guidedSpotifyWindow.blur();
+                window.focus();
+
+                setTimeout(() => {
+                    guidedSpotifyWindow?.blur();
+                    window.focus();
+                }, 150);
+            }
         } catch {
             guidedSpotifyWindow = null;
         }
     }
-
 
     function openGuidedSpotify() {
         stopGuidedArtistBio();
@@ -1999,7 +2014,7 @@
                 />
             {/if}
 
-            {#if settings.playbackMethod === 'guided' && guidedReady}
+            {#if settings.playbackMethod === 'guided' && guidedReady && activePlayMode !== 'auto'}
                 <GuidedPlaybackPanel
                         track={$currentTrack}
                         opened={guidedSpotifyOpened}
