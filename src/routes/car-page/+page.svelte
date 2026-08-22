@@ -812,35 +812,50 @@
         guidedSpotifyReturned = true;
     }
 
-    function prepareAutoSpotifyWindow(): void {
-        try {
-            const width = 390;
-            const height = 520;
-            const left = Math.max(
-                0,
-                window.screen.availWidth - width - 30
-            );
-            const top = 30;
+function prepareAutoSpotifyWindow(): void {
+    try {
+        const isMobile =
+            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+        if (isMobile) {
+            // Mobile browsers behave better with a normal tab/window.
+            // Reserve it now while we're still inside the user's tap.
             guidedSpotifyWindow = window.open(
                 '/spotify-wait',
-                'topspot40-guided-spotify',
-                `popup=yes,width=${width},height=${height},left=${left},top=${top}`
+                'topspot40-guided-spotify'
             );
 
-            if (guidedSpotifyWindow) {
-                guidedSpotifyWindow.blur();
-                window.focus();
-
-                setTimeout(() => {
-                    guidedSpotifyWindow?.blur();
-                    window.focus();
-                }, 150);
-            }
-        } catch {
-            guidedSpotifyWindow = null;
+            return;
         }
+
+        // Desktop: keep the compact companion popup.
+        const width = 390;
+        const height = 520;
+        const left = Math.max(
+            0,
+            window.screen.availWidth - width - 30
+        );
+        const top = 30;
+
+        guidedSpotifyWindow = window.open(
+            '/spotify-wait',
+            'topspot40-guided-spotify',
+            `popup=yes,width=${width},height=${height},left=${left},top=${top}`
+        );
+
+        if (guidedSpotifyWindow) {
+            guidedSpotifyWindow.blur();
+            window.focus();
+
+            setTimeout(() => {
+                guidedSpotifyWindow?.blur();
+                window.focus();
+            }, 150);
+        }
+    } catch {
+        guidedSpotifyWindow = null;
     }
+}
 
     function openGuidedSpotify() {
         stopGuidedArtistBio();
