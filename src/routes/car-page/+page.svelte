@@ -108,6 +108,11 @@
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
     let guidedPlaybackRunId = 0;
+    let activePlayMode: 'guided' | 'auto' | null = null;
+
+    const AUTO_PLAY_BUFFER_SECONDS = 7;
+    let autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
+
 
     function updateGuidedNarrationTiming(timing: NarrationTiming): void {
         elapsed.set(timing.elapsed);
@@ -637,6 +642,65 @@
         }
     }
 
+    function startAutoPlayTimer(track: CarModeTrack): void {
+        if (autoPlayTimer) {
+            clearTimeout(autoPlayTimer);
+        }
+
+        const durationSeconds =
+            track.durationSeconds ??
+            (track.durationMs
+                ? Math.floor(track.durationMs / 1000)
+                : 0);
+
+        if (durationSeconds <= 0) {
+            console.warn('Auto Play: no track duration available');
+            return;
+        }
+
+        const delayMs =
+            (durationSeconds + AUTO_PLAY_BUFFER_SECONDS) * 1000;
+
+        console.log(
+            `Auto Play: ${track.trackName} — advancing in ${
+                durationSeconds + AUTO_PLAY_BUFFER_SECONDS
+            }s`
+        );
+
+        autoPlayTimer = setTimeout(async () => {
+            autoPlayTimer = null;
+
+            if (activePlayMode !== 'auto') {
+                return;
+            }
+
+            // Return Spotify to the TopSpot40 waiting screen
+            // and advance to the next track.
+            await continueAutoPlayback();
+
+            if (activePlayMode !== 'auto') {
+                return;
+            }
+
+            const next = get(currentTrack);
+
+            if (!next) {
+                activePlayMode = null;
+                return;
+            }
+
+            console.log(
+                'AUTO: opening Spotify for',
+                next.trackName,
+                next.spotifyTrackId
+            );
+
+            openGuidedSpotify();
+
+            startAutoPlayTimer(next);
+        }, delayMs);
+    }
+
     function stopGuidedArtistBio(): void {
         stopNarration();
         stopBed();
@@ -748,6 +812,21 @@
         guidedSpotifyReturned = true;
     }
 
+    function prepareAutoSpotifyWindow(): void {
+        try {
+            guidedSpotifyWindow = window.open(
+                '/spotify-wait',
+                'topspot40-guided-spotify'
+            );
+
+            // Try to keep TopSpot40 in front while narration plays.
+            window.focus();
+        } catch {
+            guidedSpotifyWindow = null;
+        }
+    }
+
+
     function openGuidedSpotify() {
         stopGuidedArtistBio();
 
@@ -776,10 +855,17 @@
         const spotifyUrl =
             `https://open.spotify.com/track/${track.spotifyTrackId}`;
 
-        guidedSpotifyWindow = window.open(
-            spotifyUrl,
-            'topspot40-guided-spotify'
-        );
+        if (
+            guidedSpotifyWindow &&
+            !guidedSpotifyWindow.closed
+        ) {
+            guidedSpotifyWindow.location.href = spotifyUrl;
+        } else {
+            guidedSpotifyWindow = window.open(
+                spotifyUrl,
+                'topspot40-guided-spotify'
+            );
+        }
 
         guidedSpotifyWindow?.focus();
     }
@@ -798,6 +884,26 @@
         }
 
         guidedSpotifyWindow = null;
+    }
+
+    async function continueAutoPlayback() {
+        try {
+            if (
+                guidedSpotifyWindow &&
+                !guidedSpotifyWindow.closed
+            ) {
+                guidedSpotifyWindow.location.href =
+                    `${window.location.origin}/spotify-wait`;
+            }
+        } catch {
+            console.warn('Auto Play: could not return Spotify window to waiting page');
+        }
+
+        guidedReady = false;
+        guidedSpotifyOpened = false;
+        guidedSpotifyReturned = false;
+
+        await nextTrack();
     }
 
     async function continueGuidedPlayback() {
@@ -1064,6 +1170,31 @@
 
         if (res.ok && sel.mode === 'artist_spotlight') {
             artistBioPlayedThisSet = true;
+        }
+    }
+
+    async function handleGuidedPlay() {
+        activePlayMode = 'guided';
+        await handlePlayPause();
+    }
+
+    async function handleAutoPlay() {
+        if (!$currentTrack) return;
+
+        activePlayMode = 'auto';
+
+        const track = $currentTrack;
+
+        // Reserve the Spotify window while this is still
+        // directly connected to the user's click.
+        prepareAutoSpotifyWindow();
+
+        await startGuidedTrack(track);
+
+        // Narration is now complete.
+        if (activePlayMode === 'auto') {
+            openGuidedSpotify();
+            startAutoPlayTimer(track);
         }
     }
 
@@ -1831,7 +1962,9 @@
                         onPrev={prevTrack}
                         onNext={nextTrack}
                         onJumpToTrack={handleJumpToTrack}
-                        onPlayPause={handlePlayPause}
+                        onPlayPause={handleGuidedPlay}
+                        activePlayMode={activePlayMode}
+                        onAutoPlay={handleAutoPlay}
                         onBackToOptions={backToOptions}
                         onUseClassicView={() => setCarDisplayView('classic')}
                 />
