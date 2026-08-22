@@ -7,7 +7,10 @@
 
     export let onPrev: () => void;
     export let onPlayPause: () => void;
+    export let onAutoPlay: () => void;
     export let onNext: () => void;
+
+    export let activePlayMode: 'guided' | 'auto' | null = null;
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -45,29 +48,69 @@
     </div>
 
     <div class="controls-overlay">
-        <button class="btn" on:click={onPrev} aria-label="Previous">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                <path d="M6 6h2v12H6V6zm11.5 6L10 18V6l7.5 6z"/>
-            </svg>
-        </button>
-
-        <button class="btn play" on:click={handlePlayClick} aria-label="Play/Pause">
-            {#if isPlaying}
-                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-                    <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
+        <div class="control-item">
+            <button class="btn" on:click={onPrev} aria-label="Previous">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <path d="M6 6h2v12H6V6zm11.5 6L10 18V6l7.5 6z"/>
                 </svg>
-            {:else}
-                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-                    <path d="M8 5v14l11-7z"/>
-                </svg>
-            {/if}
-        </button>
+            </button>
+            <span>Previous</span>
+        </div>
 
-        <button class="btn" on:click={onNext} aria-label="Next">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                <path d="M16 6h2v12h-2V6zM6.5 12L14 18V6l-7.5 6z"/>
-            </svg>
-        </button>
+        <div class="control-item">
+            <button
+                    class="btn play"
+                    on:click={handlePlayClick}
+                    aria-label="Guided Play"
+            >
+                {#if isPlaying && activePlayMode === 'guided'}
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                        <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
+                    </svg>
+                {:else}
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                {/if}
+            </button>
+            <span>
+            {isPlaying && activePlayMode === 'guided'
+                ? 'Pause'
+                : 'Guided'}
+        </span>
+        </div>
+
+        <div class="control-item">
+            <button
+                    class="btn play"
+                    on:click={onAutoPlay}
+                    aria-label="Auto"
+            >
+                {#if isPlaying && activePlayMode === 'auto'}
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                        <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
+                    </svg>
+                {:else}
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                {/if}
+            </button>
+            <span>
+            {isPlaying && activePlayMode === 'auto'
+                ? 'Pause'
+                : 'Auto Play'}
+        </span>
+        </div>
+
+        <div class="control-item">
+            <button class="btn" on:click={onNext} aria-label="Next">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <path d="M16 6h2v12h-2V6zM6.5 12L14 18V6l-7.5 6z"/>
+                </svg>
+            </button>
+            <span>Next</span>
+        </div>
     </div>
 
     <!-- ✅ Hide these lines if hideMeta=true -->
@@ -105,10 +148,25 @@
 
     .controls-overlay {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
-        gap: 18px;
+        gap: 14px;
         margin-top: 12px;
+    }
+
+    .control-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        min-width: 58px;
+    }
+
+    .control-item > span {
+        color: #ddd;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
     }
 
     .btn {
@@ -129,8 +187,8 @@
     }
 
     .btn.play {
-        width: 56px;
-        height: 56px;
+        width: 50px;
+        height: 50px;
     }
 
     .track-info {

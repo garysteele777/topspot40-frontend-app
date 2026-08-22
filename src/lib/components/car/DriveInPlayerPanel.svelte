@@ -19,6 +19,7 @@
     export let onPrev: () => void;
     export let onNext: () => void;
     export let onPlayPause: () => void;
+    export let onAutoPlay: () => void;
     export let onBackToOptions: () => void;
     export let onUseClassicView: () => void;
     export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
@@ -26,6 +27,7 @@
     export let showNarrationModal = false;
     export let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     export let setShowNarrationModal: (value: boolean) => void;
+    export let activePlayMode: 'guided' | 'auto' | null = null;
 
     let showTrackList = false;
 
@@ -209,12 +211,39 @@
             <button
                     type="button"
                     class="play-control"
-                    class:playing={isPlaying}
+                    class:playing={isPlaying && activePlayMode === 'guided'}
                     on:click={onPlayPause}
-                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                    aria-label={
+            isPlaying && activePlayMode === 'guided'
+                ? 'Pause Guided Play'
+                : 'Guided Play'
+        }
             >
-                <span class="control-icon">{isPlaying ? 'Ⅱ' : '▶'}</span>
-                <span>{isPlaying ? 'Pause' : 'Play'}</span>
+    <span class="control-icon">
+        {isPlaying && activePlayMode === 'guided' ? 'Ⅱ' : '▶'}
+    </span>
+                <span>
+        {isPlaying && activePlayMode === 'guided' ? 'Pause' : 'Guided Play'}
+    </span>
+            </button>
+
+            <button
+                    type="button"
+                    class="play-control"
+                    class:playing={isPlaying && activePlayMode === 'auto'}
+                    on:click={onAutoPlay}
+                    aria-label={
+            isPlaying && activePlayMode === 'auto'
+                ? 'Pause Auto Play'
+                : 'Auto Play'
+        }
+            >
+    <span class="control-icon">
+        {isPlaying && activePlayMode === 'auto' ? 'Ⅱ' : '▶'}
+    </span>
+                <span>
+        {isPlaying && activePlayMode === 'auto' ? 'Pause' : 'Auto Play'}
+    </span>
             </button>
 
             <button type="button" on:click={onNext} aria-label="Next track">
@@ -545,7 +574,7 @@
         top: 81%;
         width: 76%;
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: 2.7%;
     }
 

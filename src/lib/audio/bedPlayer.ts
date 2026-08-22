@@ -221,13 +221,41 @@ export async function startBedUrl(url: string): Promise<void> {
             volume: bedAudio.volume
         });
     } catch (err) {
-        const didTimeout = err instanceof Error && err.message === BED_PLAY_TIMEOUT_MESSAGE;
-        sendBedDiagnostic(didTimeout ? 'bed play timeout' : 'bed play failed');
-        console.warn(didTimeout ? '[bedPlayer] bed audio play() timed out' : '[bedPlayer] bed audio play() failed', {
-            url,
-            err
-        });
-        throw err;
+        const didTimeout =
+            err instanceof Error &&
+            err.message === BED_PLAY_TIMEOUT_MESSAGE;
+
+        const wasAborted =
+            err instanceof DOMException &&
+            err.name === 'AbortError';
+
+        sendBedDiagnostic(
+            didTimeout
+                ? 'bed play timeout'
+                : wasAborted
+                    ? 'bed play aborted'
+                    : 'bed play failed'
+        );
+
+        console.warn(
+            didTimeout
+                ? '[bedPlayer] bed audio play() timed out'
+                : wasAborted
+                    ? '[bedPlayer] bed audio play() was interrupted'
+                    : '[bedPlayer] bed audio play() failed',
+            {
+                url,
+                err
+            }
+        );
+
+        if (!didTimeout && !wasAborted) {
+            throw err;
+        }
+
+        console.warn(
+            '[bedPlayer] continuing without bed audio'
+        );
     } finally {
         bedStartInFlight = false;
     }
