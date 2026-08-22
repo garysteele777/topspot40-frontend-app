@@ -889,10 +889,9 @@
             /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
         if (isMobile) {
-            const spotifyAppUrl =
-                `spotify:track:${track.spotifyTrackId}`;
-
-            window.location.href = spotifyAppUrl;
+            // On mobile, use the same browser tab.
+            // Android Back should return naturally to Car Mode.
+            window.location.href = spotifyUrl;
             return;
         }
 
