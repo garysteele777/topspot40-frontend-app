@@ -1208,25 +1208,29 @@ function prepareAutoSpotifyWindow(): void {
         await handlePlayPause();
     }
 
-    async function handleAutoPlay() {
-        if (!$currentTrack) return;
+async function handleAutoPlay() {
+    if (!$currentTrack) return;
 
-        activePlayMode = 'auto';
+    activePlayMode = 'auto';
 
-        const track = $currentTrack;
+    const track = $currentTrack;
 
-        // Reserve the Spotify window while this is still
-        // directly connected to the user's click.
+    const isMobile =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // Desktop reserves the Spotify popup before narration.
+    if (!isMobile) {
         prepareAutoSpotifyWindow();
-
-        await startGuidedTrack(track);
-
-        // Narration is now complete.
-        if (activePlayMode === 'auto') {
-            openGuidedSpotify();
-            startAutoPlayTimer(track);
-        }
     }
+
+    // Keep Car Mode visible while narration plays.
+    await startGuidedTrack(track);
+
+    if (activePlayMode === 'auto') {
+        openGuidedSpotify();
+        startAutoPlayTimer(track);
+    }
+}
 
     async function handlePlayPause() {
         if (!$currentTrack) return;
