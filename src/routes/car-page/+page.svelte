@@ -812,50 +812,50 @@
         guidedSpotifyReturned = true;
     }
 
-function prepareAutoSpotifyWindow(): void {
-    try {
-        const isMobile =
-            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    function prepareAutoSpotifyWindow(): void {
+        try {
+            const isMobile =
+                /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        if (isMobile) {
-            // Mobile browsers behave better with a normal tab/window.
-            // Reserve it now while we're still inside the user's tap.
+            if (isMobile) {
+                // Mobile browsers behave better with a normal tab/window.
+                // Reserve it now while we're still inside the user's tap.
+                guidedSpotifyWindow = window.open(
+                    '/spotify-wait',
+                    'topspot40-guided-spotify'
+                );
+
+                return;
+            }
+
+            // Desktop: keep the compact companion popup.
+            const width = 390;
+            const height = 520;
+            const left = Math.max(
+                0,
+                window.screen.availWidth - width - 30
+            );
+            const top = 30;
+
             guidedSpotifyWindow = window.open(
                 '/spotify-wait',
-                'topspot40-guided-spotify'
+                'topspot40-guided-spotify',
+                `popup=yes,width=${width},height=${height},left=${left},top=${top}`
             );
 
-            return;
-        }
-
-        // Desktop: keep the compact companion popup.
-        const width = 390;
-        const height = 520;
-        const left = Math.max(
-            0,
-            window.screen.availWidth - width - 30
-        );
-        const top = 30;
-
-        guidedSpotifyWindow = window.open(
-            '/spotify-wait',
-            'topspot40-guided-spotify',
-            `popup=yes,width=${width},height=${height},left=${left},top=${top}`
-        );
-
-        if (guidedSpotifyWindow) {
-            guidedSpotifyWindow.blur();
-            window.focus();
-
-            setTimeout(() => {
-                guidedSpotifyWindow?.blur();
+            if (guidedSpotifyWindow) {
+                guidedSpotifyWindow.blur();
                 window.focus();
-            }, 150);
+
+                setTimeout(() => {
+                    guidedSpotifyWindow?.blur();
+                    window.focus();
+                }, 150);
+            }
+        } catch {
+            guidedSpotifyWindow = null;
         }
-    } catch {
-        guidedSpotifyWindow = null;
     }
-}
 
     function openGuidedSpotify() {
         stopGuidedArtistBio();
@@ -884,6 +884,16 @@ function prepareAutoSpotifyWindow(): void {
 
         const spotifyUrl =
             `https://open.spotify.com/track/${track.spotifyTrackId}`;
+
+        const isMobile =
+            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (isMobile) {
+            // On mobile, use the same browser tab.
+            // Android Back should return naturally to Car Mode.
+            window.location.href = spotifyUrl;
+            return;
+        }
 
         if (
             guidedSpotifyWindow &&
@@ -1208,29 +1218,29 @@ function prepareAutoSpotifyWindow(): void {
         await handlePlayPause();
     }
 
-async function handleAutoPlay() {
-    if (!$currentTrack) return;
+    async function handleAutoPlay() {
+        if (!$currentTrack) return;
 
-    activePlayMode = 'auto';
+        activePlayMode = 'auto';
 
-    const track = $currentTrack;
+        const track = $currentTrack;
 
-    const isMobile =
-        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isMobile =
+            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    // Desktop reserves the Spotify popup before narration.
-    if (!isMobile) {
-        prepareAutoSpotifyWindow();
+        // Desktop reserves the Spotify popup before narration.
+        if (!isMobile) {
+            prepareAutoSpotifyWindow();
+        }
+
+        // Keep Car Mode visible while narration plays.
+        await startGuidedTrack(track);
+
+        if (activePlayMode === 'auto') {
+            openGuidedSpotify();
+            startAutoPlayTimer(track);
+        }
     }
-
-    // Keep Car Mode visible while narration plays.
-    await startGuidedTrack(track);
-
-    if (activePlayMode === 'auto') {
-        openGuidedSpotify();
-        startAutoPlayTimer(track);
-    }
-}
 
     async function handlePlayPause() {
         if (!$currentTrack) return;
