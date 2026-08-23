@@ -28,7 +28,6 @@
     export let tracks: CarModeTrack[] = [];
     export let phase: PlaybackPhase | null = null;
     export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
-    export let onAutoPlay: () => void;
     export let activePlayMode: 'guided' | 'auto' | null = null;
 
     export let isPlaying: boolean;
@@ -306,7 +305,6 @@
                 onPrev={onPrev}
                 onNext={onNext}
                 onPlayPause={onPlayPause}
-                onAutoPlay={onAutoPlay}
                 {activePlayMode}
                 hideMeta={true}
         />

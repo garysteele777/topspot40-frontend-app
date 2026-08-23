@@ -2039,7 +2039,6 @@
                         onNext={nextTrack}
                         onJumpToTrack={handleJumpToTrack}
                         onPlayPause={handleGuidedPlay}
-                        onAutoPlay={handleAutoPlay}
                         activePlayMode={activePlayMode}
                         onBackToOptions={backToOptions}
                 />

@@ -7,7 +7,6 @@
 
     export let onPrev: () => void;
     export let onPlayPause: () => void;
-    export let onAutoPlay: () => void;
     export let onNext: () => void;
 
     export let activePlayMode: 'guided' | 'auto' | null = null;
@@ -77,29 +76,6 @@
             {isPlaying && activePlayMode === 'guided'
                 ? 'Pause'
                 : 'Guided'}
-        </span>
-        </div>
-
-        <div class="control-item auto-play-control">
-            <button
-                    class="btn play"
-                    on:click={onAutoPlay}
-                    aria-label="Auto"
-            >
-                {#if isPlaying && activePlayMode === 'auto'}
-                    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-                        <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
-                    </svg>
-                {:else}
-                    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                {/if}
-            </button>
-            <span>
-            {isPlaying && activePlayMode === 'auto'
-                ? 'Pause'
-                : 'Auto Play'}
         </span>
         </div>
 
