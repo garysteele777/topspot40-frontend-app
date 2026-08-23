@@ -80,7 +80,7 @@
         </span>
         </div>
 
-        <div class="control-item">
+        <div class="control-item auto-play-control">
             <button
                     class="btn play"
                     on:click={onAutoPlay}
@@ -212,6 +212,12 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    @media (max-width: 820px) {
+        .auto-play-control {
+            display: none;
+        }
     }
 
 </style>

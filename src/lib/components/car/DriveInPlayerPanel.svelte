@@ -229,7 +229,7 @@
 
             <button
                     type="button"
-                    class="play-control"
+                    class="play-control auto-play-control"
                     class:playing={isPlaying && activePlayMode === 'auto'}
                     on:click={onAutoPlay}
                     aria-label={
@@ -685,6 +685,10 @@
         .secondary-controls {
             left: 20%;
             width: 60%;
+        }
+
+        .auto-play-control {
+            display: none;
         }
     }
 
