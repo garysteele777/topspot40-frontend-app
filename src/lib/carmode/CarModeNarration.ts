@@ -27,7 +27,7 @@ export type CarModeNarrationDependencies = {
     getPlaybackPhase: () => PlaybackPhase;
     setPlaybackPhase: (phase: PlaybackPhase) => void;
     setIsPlaying: (playing: boolean) => void;
-    resetGuidedState: () => void;
+    resetGuidedReadyState: () => void;
     setGuidedReady: (ready: boolean) => void;
 };
 
@@ -75,7 +75,7 @@ export function createCarModeNarration(
     ): Promise<boolean> {
         const activeRunId = ++runId;
 
-        dependencies.resetGuidedState();
+        dependencies.resetGuidedReadyState();
 
         const token = trackToken(track);
         const narrations = dependencies.getNarrations(track);

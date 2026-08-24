@@ -30,6 +30,7 @@
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import {createCarModeAutoPlay} from '$lib/carmode/CarModeAutoPlay';
     import {createCarModeNarration} from '$lib/carmode/CarModeNarration';
+    import {createCarModeSpotify} from '$lib/carmode/CarModeSpotify';
     import {
         programHistoryStore,
         markRankPlayed,
@@ -102,9 +103,6 @@
     let nextTrackLock = false;
     let artistBioPlayedThisSet = false;
     let guidedReady = false;
-    let guidedSpotifyOpened = false;
-    let guidedSpotifyReturned = false;
-    let guidedSpotifyWindow: Window | null = null;
     let guidedArtistBioPlaying = false;
     let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     let userStartedPlaybackThisSession = false;
@@ -681,6 +679,12 @@
         );
     }
 
+    const spotify = createCarModeSpotify({
+        getGuidedReady: () => guidedReady,
+        setStatus: message => status.set(message)
+    });
+    const spotifyState = spotify.state;
+
     const narration = createCarModeNarration({
         getCurrentTrack: () => get(currentTrack),
         getNarrations: guidedNarrationUrls,
@@ -695,11 +699,7 @@
         getPlaybackPhase: () => get(playbackPhase),
         setPlaybackPhase: phase => playbackPhase.set(phase),
         setIsPlaying: playing => isPlaying.set(playing),
-        resetGuidedState: () => {
-            guidedReady = false;
-            guidedSpotifyOpened = false;
-            guidedSpotifyReturned = false;
-        },
+        resetGuidedReadyState: () => (guidedReady = false),
         setGuidedReady: ready => (guidedReady = ready)
     });
 
@@ -707,161 +707,31 @@
         trackObj: CarModeTrack,
         startPhase: 'intro' | 'detail' = 'intro'
     ): Promise<boolean> {
+        spotify.reset();
         return narration.start(trackObj, startPhase);
-    }
-
-    function handleGuidedReturn(): void {
-        if (
-            !guidedReady
-            || !guidedSpotifyOpened
-            || document.visibilityState === 'hidden'
-        ) {
-            return;
-        }
-
-        guidedSpotifyReturned = true;
-    }
-
-    function prepareAutoSpotifyWindow(): void {
-        try {
-            const isMobile =
-                /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-            if (isMobile) {
-                // Mobile browsers behave better with a normal tab/window.
-                // Reserve it now while we're still inside the user's tap.
-                guidedSpotifyWindow = window.open(
-                    '/spotify-wait',
-                    'topspot40-guided-spotify'
-                );
-
-                return;
-            }
-
-            // Desktop: keep the compact companion popup.
-            const width = 390;
-            const height = 520;
-            const left = Math.max(
-                0,
-                window.screen.availWidth - width - 30
-            );
-            const top = 30;
-
-            guidedSpotifyWindow = window.open(
-                '/spotify-wait',
-                'topspot40-guided-spotify',
-                `popup=yes,width=${width},height=${height},left=${left},top=${top}`
-            );
-
-            if (guidedSpotifyWindow) {
-                guidedSpotifyWindow.blur();
-                window.focus();
-
-                setTimeout(() => {
-                    guidedSpotifyWindow?.blur();
-                    window.focus();
-                }, 150);
-            }
-        } catch {
-            guidedSpotifyWindow = null;
-        }
     }
 
     function openGuidedSpotify() {
         stopGuidedArtistBio();
 
         const track = get(currentTrack);
-
-        if (!track?.spotifyTrackId) {
-            status.set('Spotify link is not available for this track.');
-            return;
-        }
-
-        guidedSpotifyReturned = false;
-        guidedSpotifyOpened = true;
-
-        localStorage.setItem(
-            'ts-guided-playback-v1',
-            JSON.stringify({
-                rankingId: track.rankingId,
-                rank: track.rank,
-                spotifyTrackId: track.spotifyTrackId,
-                trackName: track.trackName,
-                artistName: track.artistName,
-                openedAt: new Date().toISOString()
-            })
-        );
-
-        const spotifyUrl =
-            `https://open.spotify.com/track/${track.spotifyTrackId}`;
-
-        const isMobile =
-            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-        if (isMobile) {
-            // On mobile, use the same browser tab.
-            // Android Back should return naturally to Car Mode.
-            window.location.href = spotifyUrl;
-            return;
-        }
-
-        if (
-            guidedSpotifyWindow &&
-            !guidedSpotifyWindow.closed
-        ) {
-            guidedSpotifyWindow.location.href = spotifyUrl;
-        } else {
-            guidedSpotifyWindow = window.open(
-                spotifyUrl,
-                'topspot40-guided-spotify'
-            );
-        }
-
-        guidedSpotifyWindow?.focus();
-    }
-
-    function closeGuidedSpotifyWindow(): void {
-        try {
-            if (
-                guidedSpotifyWindow
-                && !guidedSpotifyWindow.closed
-            ) {
-                guidedSpotifyWindow.close();
-            }
-        } catch {
-            // The Spotify window may already have been closed
-            // manually or may no longer be accessible.
-        }
-
-        guidedSpotifyWindow = null;
+        spotify.open(track);
     }
 
     async function continueAutoPlayback() {
-        try {
-            if (
-                guidedSpotifyWindow &&
-                !guidedSpotifyWindow.closed
-            ) {
-                guidedSpotifyWindow.location.href =
-                    `${window.location.origin}/spotify-wait`;
-            }
-        } catch {
-            console.warn('Auto Play: could not return Spotify window to waiting page');
-        }
+        spotify.returnToWaitingPage();
 
         guidedReady = false;
-        guidedSpotifyOpened = false;
-        guidedSpotifyReturned = false;
+        spotify.reset();
 
         await nextTrack(true);
     }
 
     async function continueGuidedPlayback() {
-        closeGuidedSpotifyWindow();
+        spotify.close();
 
         guidedReady = false;
-        guidedSpotifyOpened = false;
-        guidedSpotifyReturned = false;
+        spotify.reset();
 
         const sel = get(currentSelection);
         const track = get(currentTrack);
@@ -882,11 +752,10 @@
     }
 
     async function skipGuidedTrack() {
-        closeGuidedSpotifyWindow();
+        spotify.close();
 
         guidedReady = false;
-        guidedSpotifyOpened = false;
-        guidedSpotifyReturned = false;
+        spotify.reset();
 
         const sel = get(currentSelection);
         const track = get(currentTrack);
@@ -907,11 +776,10 @@
     }
 
     function returnToGuidedCarPage(): void {
-        closeGuidedSpotifyWindow();
+        spotify.close();
 
         guidedReady = false;
-        guidedSpotifyOpened = false;
-        guidedSpotifyReturned = false;
+        spotify.reset();
         isPlaying.set(false);
         playbackPhase.set('idle');
     }
@@ -1141,8 +1009,8 @@
             takePausedNarrationPhase: narration.takePausedPhase,
             abandonNarration: narration.abandon,
             startNarration: startGuidedTrack,
-            prepareSpotifyWindow: prepareAutoSpotifyWindow,
-            isMobile: () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+            prepareSpotifyWindow: spotify.prepareAutoWindow,
+            isMobile: spotify.isMobile,
             openSpotify: openGuidedSpotify,
             continueAutoPlayback,
             nextTrack,
@@ -1192,8 +1060,7 @@
 
                 try {
                     guidedReady = false;
-                    guidedSpotifyOpened = false;
-                    guidedSpotifyReturned = false;
+                    spotify.reset();
 
                     startPlaybackPolling({guidedLinkOut: true});
                     markUserStartedPlayback();
@@ -1671,8 +1538,7 @@
             return;
         }
 
-        guidedSpotifyOpened = false;
-        guidedSpotifyReturned = false;
+        spotify.reset();
         guidedReady = true;
 
         isPlaying.set(false);
@@ -1706,11 +1572,11 @@
 
         document.addEventListener(
             'visibilitychange',
-            handleGuidedReturn
+            spotify.handleReturn
         );
         window.addEventListener(
             'focus',
-            handleGuidedReturn
+            spotify.handleReturn
         );
         const mountedSettings = get(playbackSettingsStore);
 
@@ -1844,12 +1710,12 @@
 
         document.removeEventListener(
             'visibilitychange',
-            handleGuidedReturn
+            spotify.handleReturn
         );
 
         window.removeEventListener(
             'focus',
-            handleGuidedReturn
+            spotify.handleReturn
         );
 
         window.removeEventListener(
@@ -1992,8 +1858,8 @@
             {#if settings.playbackMethod === 'guided' && guidedReady && activePlayMode !== 'auto'}
                 <GuidedPlaybackPanel
                         track={$currentTrack}
-                        opened={guidedSpotifyOpened}
-                        returned={guidedSpotifyReturned}
+                        opened={$spotifyState.opened}
+                        returned={$spotifyState.returned}
                         hasArtistBio={guidedArtistBioUrl($currentTrack) !== null}
                         artistBioPlaying={guidedArtistBioPlaying}
                         onPlayArtistBio={playGuidedArtistBio}
