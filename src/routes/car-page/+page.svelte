@@ -110,6 +110,7 @@
     let guidedPlaybackRunId = 0;
     let activePlayMode: 'guided' | 'auto' | null = null;
     let autoPlayPausedPhase: 'intro' | 'detail' | null = null;
+    let guidedPausedPhase: 'intro' | 'detail' | null = null;
     let autoPlayHandoffTrackToken: string | null = null;
 
     const AUTO_PLAY_BUFFER_SECONDS = 7;
@@ -1357,12 +1358,32 @@
             }
 
             if (get(isPlaying)) {
+                const phase = get(playbackPhase);
+
                 guidedPlaybackRunId += 1;
                 stopNarration();
                 stopBed();
                 isPlaying.set(false);
                 playbackPhase.set('paused');
+                guidedPausedPhase = phase === 'detail' ? 'detail' : 'intro';
                 return;
+            }
+
+            if (get(playbackPhase) === 'paused') {
+                const pausedPhase = guidedPausedPhase;
+                guidedPausedPhase = null;
+
+                if (pausedPhase === 'detail') {
+                    resetGuidedNarrationTiming();
+                    playbackPhase.set('track');
+                    guidedReady = true;
+                    return;
+                }
+
+                if (pausedPhase === 'intro') {
+                    await startGuidedTrack($currentTrack, 'detail');
+                    return;
+                }
             }
 
             await startGuidedTrack($currentTrack);
