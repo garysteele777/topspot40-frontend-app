@@ -1326,12 +1326,7 @@
         }
     }
 
-    function handleDriveInNext(): void {
-        if (activePlayMode !== 'auto') {
-            void nextTrack();
-            return;
-        }
-
+    function abandonAutoPlayCycle(): number {
         guidedPlaybackRunId += 1;
         stopNarration();
         stopBed();
@@ -1340,12 +1335,36 @@
         autoPlayPausedPhase = null;
         autoPlayHandoffTrackToken = null;
 
-        const runId = cancelAutoPlayCycle();
+        return cancelAutoPlayCycle();
+    }
+
+    function handleDriveInNext(): void {
+        if (activePlayMode !== 'auto') {
+            void nextTrack();
+            return;
+        }
+
+        const runId = abandonAutoPlayCycle();
         autoPlayTimer = setTimeout(() => {
             if (runId !== autoPlayRunId) return;
 
             autoPlayTimer = null;
             void advanceAutoPlayback(runId);
+        }, 100);
+    }
+
+    function handleDriveInPrev(): void {
+        if (activePlayMode !== 'auto') {
+            void prevTrack();
+            return;
+        }
+
+        const runId = abandonAutoPlayCycle();
+        autoPlayTimer = setTimeout(() => {
+            if (runId !== autoPlayRunId) return;
+
+            autoPlayTimer = null;
+            void prevTrack(true);
         }, 100);
     }
 
@@ -1660,7 +1679,7 @@
         }
     }
 
-    async function prevTrack() {
+    async function prevTrack(startAutoPlay = false) {
         if (!$currentTrack || $tracks.length === 0) return;
 
         stopNarrationAudio();
@@ -1686,7 +1705,11 @@
         await new Promise(r => setTimeout(r, 50));
 
         markUserStartedPlayback();
-        await playTrack(prev);
+        if (startAutoPlay) {
+            void handleAutoPlay();
+        } else {
+            await playTrack(prev);
+        }
         userStartedPlaybackThisSession = true;
     }
 
@@ -2136,7 +2159,7 @@
                         showNarrationModal={$showNarrationModal}
                         {narrationModalInitialMode}
                         setShowNarrationModal={setNarrationModalOpen}
-                        onPrev={prevTrack}
+                        onPrev={handleDriveInPrev}
                         onNext={handleDriveInNext}
                         onJumpToTrack={handleJumpToTrack}
                         onPlayPause={handleGuidedPlay}
