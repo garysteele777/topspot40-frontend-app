@@ -115,6 +115,7 @@
 
     const AUTO_PLAY_BUFFER_SECONDS = 7;
     let autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
+    let autoPlayRunId = 0;
 
 
     function updateGuidedNarrationTiming(timing: NarrationTiming): void {
@@ -645,10 +646,47 @@
         }
     }
 
-    function startAutoPlayTimer(track: CarModeTrack): void {
+    function cancelAutoPlayCycle(): number {
         if (autoPlayTimer) {
             clearTimeout(autoPlayTimer);
+            autoPlayTimer = null;
         }
+
+        return ++autoPlayRunId;
+    }
+
+    async function advanceAutoPlayback(runId: number): Promise<void> {
+        if (runId !== autoPlayRunId || activePlayMode !== 'auto') return;
+
+        await continueAutoPlayback();
+
+        if (
+            runId !== autoPlayRunId ||
+            activePlayMode !== 'auto' ||
+            get(isPlaying) ||
+            get(playbackPhase) !== 'track'
+        ) {
+            return;
+        }
+
+        const next = get(currentTrack);
+
+        if (!next) {
+            activePlayMode = null;
+            return;
+        }
+
+        console.log(
+            'AUTO: opening Spotify for',
+            next.trackName,
+            next.spotifyTrackId
+        );
+
+        handoffAutoPlayTrack(next);
+    }
+
+    function startAutoPlayTimer(track: CarModeTrack): void {
+        const runId = cancelAutoPlayCycle();
 
         const durationSeconds =
             track.durationSeconds ??
@@ -670,39 +708,13 @@
             }s`
         );
 
-        autoPlayTimer = setTimeout(async () => {
+        autoPlayTimer = setTimeout(() => {
+            if (runId !== autoPlayRunId) {
+                return;
+            }
+
             autoPlayTimer = null;
-
-            if (activePlayMode !== 'auto') {
-                return;
-            }
-
-            // Return Spotify to the TopSpot40 waiting screen
-            // and advance to the next track.
-            await continueAutoPlayback();
-
-            if (
-                activePlayMode !== 'auto' ||
-                get(isPlaying) ||
-                get(playbackPhase) !== 'track'
-            ) {
-                return;
-            }
-
-            const next = get(currentTrack);
-
-            if (!next) {
-                activePlayMode = null;
-                return;
-            }
-
-            console.log(
-                'AUTO: opening Spotify for',
-                next.trackName,
-                next.spotifyTrackId
-            );
-
-            handoffAutoPlayTrack(next);
+            void advanceAutoPlayback(runId);
         }, delayMs);
     }
 
@@ -961,7 +973,7 @@
         guidedSpotifyOpened = false;
         guidedSpotifyReturned = false;
 
-        await nextTrack();
+        await nextTrack(true);
     }
 
     async function continueGuidedPlayback() {
@@ -1314,6 +1326,29 @@
         }
     }
 
+    function handleDriveInNext(): void {
+        if (activePlayMode !== 'auto') {
+            void nextTrack();
+            return;
+        }
+
+        guidedPlaybackRunId += 1;
+        stopNarration();
+        stopBed();
+        resetGuidedNarrationTiming();
+        isPlaying.set(false);
+        autoPlayPausedPhase = null;
+        autoPlayHandoffTrackToken = null;
+
+        const runId = cancelAutoPlayCycle();
+        autoPlayTimer = setTimeout(() => {
+            if (runId !== autoPlayRunId) return;
+
+            autoPlayTimer = null;
+            void advanceAutoPlayback(runId);
+        }, 100);
+    }
+
     async function handlePlayPause() {
         if (!$currentTrack) return;
 
@@ -1513,7 +1548,7 @@
         userStartedPlaybackThisSession = true;
     }
 
-    async function nextTrack() {
+    async function nextTrack(releaseAutoLock = false) {
 
         if (nextTrackLock) return;
         nextTrackLock = true;
@@ -1610,13 +1645,19 @@
             await new Promise(r => setTimeout(r, 50));
 
             markUserStartedPlayback();
-            await playTrack(next);
+            const playback = playTrack(next);
+            if (releaseAutoLock) {
+                nextTrackLock = false;
+            }
+            await playback;
             userStartedPlaybackThisSession = true;
         }
 
-        setTimeout(() => {
-            nextTrackLock = false;
-        }, 500);
+        if (!releaseAutoLock) {
+            setTimeout(() => {
+                nextTrackLock = false;
+            }, 500);
+        }
     }
 
     async function prevTrack() {
@@ -2096,7 +2137,7 @@
                         {narrationModalInitialMode}
                         setShowNarrationModal={setNarrationModalOpen}
                         onPrev={prevTrack}
-                        onNext={nextTrack}
+                        onNext={handleDriveInNext}
                         onJumpToTrack={handleJumpToTrack}
                         onPlayPause={handleGuidedPlay}
                         activePlayMode={activePlayMode}
