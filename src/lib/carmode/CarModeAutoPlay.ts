@@ -2,7 +2,6 @@ import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 
 type AutoPlayMode = 'guided' | 'auto' | null;
-type AutoPlayPausedPhase = 'intro' | 'detail' | null;
 
 export type CarModeAutoPlayDependencies = {
     getActivePlayMode: () => AutoPlayMode;
@@ -12,10 +11,9 @@ export type CarModeAutoPlayDependencies = {
     setIsPlaying: (playing: boolean) => void;
     getPlaybackPhase: () => PlaybackPhase;
     setPlaybackPhase: (phase: PlaybackPhase) => void;
-    invalidateNarrationRun: () => void;
-    stopNarration: () => void;
-    stopBed: () => void;
-    resetNarrationTiming: () => void;
+    pauseNarration: () => void;
+    takePausedNarrationPhase: () => 'intro' | 'detail' | null;
+    abandonNarration: () => void;
     startNarration: (
         track: CarModeTrack,
         startPhase?: 'intro' | 'detail'
@@ -36,7 +34,6 @@ export function createCarModeAutoPlay(
     let timer: ReturnType<typeof setTimeout> | null = null;
     let runId = 0;
     let handoffToken: string | null = null;
-    let pausedPhase: AutoPlayPausedPhase = null;
 
     const trackToken = (track: CarModeTrack): string =>
         `${track.rankingId ?? track.rank}|${track.spotifyTrackId ?? ''}`;
@@ -123,12 +120,7 @@ export function createCarModeAutoPlay(
     }
 
     function abandonCycle(): number {
-        dependencies.invalidateNarrationRun();
-        dependencies.stopNarration();
-        dependencies.stopBed();
-        dependencies.resetNarrationTiming();
-        dependencies.setIsPlaying(false);
-        pausedPhase = null;
+        dependencies.abandonNarration();
         handoffToken = null;
 
         return cancelCycle();
@@ -142,22 +134,15 @@ export function createCarModeAutoPlay(
             dependencies.getActivePlayMode() === 'auto' &&
             dependencies.getIsPlaying()
         ) {
-            const phase = dependencies.getPlaybackPhase();
-
-            dependencies.invalidateNarrationRun();
-            dependencies.stopNarration();
-            dependencies.stopBed();
-            dependencies.setIsPlaying(false);
+            dependencies.pauseNarration();
             dependencies.setPlaybackPhase('paused');
-            pausedPhase = phase === 'detail' ? 'detail' : 'intro';
             return;
         }
 
         dependencies.setActivePlayMode('auto');
 
         if (dependencies.getPlaybackPhase() === 'paused') {
-            const paused = pausedPhase;
-            pausedPhase = null;
+            const paused = dependencies.takePausedNarrationPhase();
 
             if (paused === 'detail') {
                 handoff(track);

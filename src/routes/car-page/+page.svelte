@@ -29,6 +29,7 @@
     import type {ResumeState} from '$lib/utils/smartResume';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import {createCarModeAutoPlay} from '$lib/carmode/CarModeAutoPlay';
+    import {createCarModeNarration} from '$lib/carmode/CarModeNarration';
     import {
         programHistoryStore,
         markRankPlayed,
@@ -108,9 +109,7 @@
     let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
-    let guidedPlaybackRunId = 0;
     let activePlayMode: 'guided' | 'auto' | null = null;
-    let guidedPausedPhase: 'intro' | 'detail' | null = null;
 
     const AUTO_PLAY_BUFFER_SECONDS = 7;
 
@@ -682,77 +681,33 @@
         );
     }
 
+    const narration = createCarModeNarration({
+        getCurrentTrack: () => get(currentTrack),
+        getNarrations: guidedNarrationUrls,
+        getBedUrl: guidedBedAudioUrl,
+        unlockBed: unlockBedAudio,
+        startBed: startBedUrl,
+        stopBed,
+        playNarration: playNarrationUrlAndWait,
+        stopNarration,
+        updateTiming: updateGuidedNarrationTiming,
+        resetTiming: resetGuidedNarrationTiming,
+        getPlaybackPhase: () => get(playbackPhase),
+        setPlaybackPhase: phase => playbackPhase.set(phase),
+        setIsPlaying: playing => isPlaying.set(playing),
+        resetGuidedState: () => {
+            guidedReady = false;
+            guidedSpotifyOpened = false;
+            guidedSpotifyReturned = false;
+        },
+        setGuidedReady: ready => (guidedReady = ready)
+    });
+
     async function startGuidedTrack(
         trackObj: CarModeTrack,
         startPhase: 'intro' | 'detail' = 'intro'
     ): Promise<boolean> {
-        const runId = ++guidedPlaybackRunId;
-
-        guidedReady = false;
-        guidedSpotifyOpened = false;
-        guidedSpotifyReturned = false;
-
-        const token =
-            `${trackObj.rankingId ?? trackObj.rank}|${trackObj.spotifyTrackId ?? ''}`;
-
-        const narrations = guidedNarrationUrls(trackObj);
-        const narrationStartIndex = narrations.findIndex(
-            narration => narration.phase === startPhase
-        );
-        const narrationSequence =
-            startPhase === 'detail'
-                ? narrationStartIndex === -1
-                    ? []
-                    : narrations.slice(narrationStartIndex)
-                : narrations;
-
-        isPlaying.set(true);
-
-        if (narrationSequence.length > 0) {
-            await unlockBedAudio();
-
-            try {
-                await startBedUrl(guidedBedAudioUrl(trackObj));
-
-                if (runId !== guidedPlaybackRunId) return false;
-
-                for (const narration of narrationSequence) {
-                    const activeTrack = get(currentTrack);
-                    const activeToken = activeTrack
-                        ? `${activeTrack.rankingId ?? activeTrack.rank}|${activeTrack.spotifyTrackId ?? ''}`
-                        : '';
-
-                    if (
-                        activeToken !== token
-                        || runId !== guidedPlaybackRunId
-                    ) return false;
-
-                    playbackPhase.set(narration.phase);
-                    await playNarrationUrlAndWait(
-                        narration.url,
-                        narration.fallbackUrl,
-                        updateGuidedNarrationTiming
-                    );
-
-                    if (runId !== guidedPlaybackRunId) return false;
-                }
-            } finally {
-                stopBed();
-                resetGuidedNarrationTiming();
-            }
-        }
-
-        const activeTrack = get(currentTrack);
-        const activeToken = activeTrack
-            ? `${activeTrack.rankingId ?? activeTrack.rank}|${activeTrack.spotifyTrackId ?? ''}`
-            : '';
-
-        if (activeToken !== token || runId !== guidedPlaybackRunId) return false;
-
-        isPlaying.set(false);
-        playbackPhase.set('track');
-        guidedReady = true;
-        return true;
+        return narration.start(trackObj, startPhase);
     }
 
     function handleGuidedReturn(): void {
@@ -1182,12 +1137,9 @@
             setIsPlaying: playing => isPlaying.set(playing),
             getPlaybackPhase: () => get(playbackPhase),
             setPlaybackPhase: phase => playbackPhase.set(phase),
-            invalidateNarrationRun: () => {
-                guidedPlaybackRunId += 1;
-            },
-            stopNarration,
-            stopBed,
-            resetNarrationTiming: resetGuidedNarrationTiming,
+            pauseNarration: narration.pause,
+            takePausedNarrationPhase: narration.takePausedPhase,
+            abandonNarration: narration.abandon,
             startNarration: startGuidedTrack,
             prepareSpotifyWindow: prepareAutoSpotifyWindow,
             isMobile: () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
@@ -1256,20 +1208,13 @@
             }
 
             if (get(isPlaying)) {
-                const phase = get(playbackPhase);
-
-                guidedPlaybackRunId += 1;
-                stopNarration();
-                stopBed();
-                isPlaying.set(false);
+                narration.pause();
                 playbackPhase.set('paused');
-                guidedPausedPhase = phase === 'detail' ? 'detail' : 'intro';
                 return;
             }
 
             if (get(playbackPhase) === 'paused') {
-                const pausedPhase = guidedPausedPhase;
-                guidedPausedPhase = null;
+                const pausedPhase = narration.takePausedPhase();
 
                 if (pausedPhase === 'detail') {
                     resetGuidedNarrationTiming();
