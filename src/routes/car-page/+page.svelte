@@ -28,6 +28,7 @@
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import {createCarModeAutoPlay} from '$lib/carmode/CarModeAutoPlay';
     import {
         programHistoryStore,
         markRankPlayed,
@@ -109,13 +110,9 @@
     let playbackStartInFlight = false;
     let guidedPlaybackRunId = 0;
     let activePlayMode: 'guided' | 'auto' | null = null;
-    let autoPlayPausedPhase: 'intro' | 'detail' | null = null;
     let guidedPausedPhase: 'intro' | 'detail' | null = null;
-    let autoPlayHandoffTrackToken: string | null = null;
 
     const AUTO_PLAY_BUFFER_SECONDS = 7;
-    let autoPlayTimer: ReturnType<typeof setTimeout> | null = null;
-    let autoPlayRunId = 0;
 
 
     function updateGuidedNarrationTiming(timing: NarrationTiming): void {
@@ -644,78 +641,6 @@
             narrationModalInitialMode = 'intro';
             playbackPhase.set('track');
         }
-    }
-
-    function cancelAutoPlayCycle(): number {
-        if (autoPlayTimer) {
-            clearTimeout(autoPlayTimer);
-            autoPlayTimer = null;
-        }
-
-        return ++autoPlayRunId;
-    }
-
-    async function advanceAutoPlayback(runId: number): Promise<void> {
-        if (runId !== autoPlayRunId || activePlayMode !== 'auto') return;
-
-        await continueAutoPlayback();
-
-        if (
-            runId !== autoPlayRunId ||
-            activePlayMode !== 'auto' ||
-            get(isPlaying) ||
-            get(playbackPhase) !== 'track'
-        ) {
-            return;
-        }
-
-        const next = get(currentTrack);
-
-        if (!next) {
-            activePlayMode = null;
-            return;
-        }
-
-        console.log(
-            'AUTO: opening Spotify for',
-            next.trackName,
-            next.spotifyTrackId
-        );
-
-        handoffAutoPlayTrack(next);
-    }
-
-    function startAutoPlayTimer(track: CarModeTrack): void {
-        const runId = cancelAutoPlayCycle();
-
-        const durationSeconds =
-            track.durationSeconds ??
-            (track.durationMs
-                ? Math.floor(track.durationMs / 1000)
-                : 0);
-
-        if (durationSeconds <= 0) {
-            console.warn('Auto Play: no track duration available');
-            return;
-        }
-
-        const delayMs =
-            (durationSeconds + AUTO_PLAY_BUFFER_SECONDS) * 1000;
-
-        console.log(
-            `Auto Play: ${track.trackName} — advancing in ${
-                durationSeconds + AUTO_PLAY_BUFFER_SECONDS
-            }s`
-        );
-
-        autoPlayTimer = setTimeout(() => {
-            if (runId !== autoPlayRunId) {
-                return;
-            }
-
-            autoPlayTimer = null;
-            void advanceAutoPlayback(runId);
-        }, delayMs);
     }
 
     function stopGuidedArtistBio(): void {
@@ -1248,124 +1173,43 @@
         await handlePlayPause();
     }
 
-    function autoPlayTrackToken(track: CarModeTrack): string {
-        return `${track.rankingId ?? track.rank}|${track.spotifyTrackId ?? ''}`;
-    }
-
-    function handoffAutoPlayTrack(track: CarModeTrack): void {
-        const token = autoPlayTrackToken(track);
-
-        if (
-            activePlayMode !== 'auto' ||
-            autoPlayHandoffTrackToken === token
-        ) {
-            return;
-        }
-
-        autoPlayHandoffTrackToken = token;
-        openGuidedSpotify();
-        startAutoPlayTimer(track);
-    }
+    const autoPlay = createCarModeAutoPlay(
+        {
+            getActivePlayMode: () => activePlayMode,
+            setActivePlayMode: mode => (activePlayMode = mode),
+            getCurrentTrack: () => $currentTrack,
+            getIsPlaying: () => get(isPlaying),
+            setIsPlaying: playing => isPlaying.set(playing),
+            getPlaybackPhase: () => get(playbackPhase),
+            setPlaybackPhase: phase => playbackPhase.set(phase),
+            invalidateNarrationRun: () => {
+                guidedPlaybackRunId += 1;
+            },
+            stopNarration,
+            stopBed,
+            resetNarrationTiming: resetGuidedNarrationTiming,
+            startNarration: startGuidedTrack,
+            prepareSpotifyWindow: prepareAutoSpotifyWindow,
+            isMobile: () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+            openSpotify: openGuidedSpotify,
+            continueAutoPlayback,
+            nextTrack,
+            previousTrack: prevTrack,
+            startPreviousAutoPlayback: () => prevTrack(true)
+        },
+        AUTO_PLAY_BUFFER_SECONDS
+    );
 
     async function handleAutoPlay() {
-        if (!$currentTrack) return;
-
-        if (activePlayMode === 'auto' && get(isPlaying)) {
-            const phase = get(playbackPhase);
-
-            guidedPlaybackRunId += 1;
-            stopNarration();
-            stopBed();
-            isPlaying.set(false);
-            playbackPhase.set('paused');
-            autoPlayPausedPhase = phase === 'detail' ? 'detail' : 'intro';
-            return;
-        }
-
-        activePlayMode = 'auto';
-
-        const track = $currentTrack;
-
-        if (get(playbackPhase) === 'paused') {
-            const pausedPhase = autoPlayPausedPhase;
-            autoPlayPausedPhase = null;
-
-            if (pausedPhase === 'detail') {
-                handoffAutoPlayTrack(track);
-                return;
-            }
-
-            if (pausedPhase === 'intro') {
-                const completed = await startGuidedTrack(track, 'detail');
-
-                if (completed) {
-                    handoffAutoPlayTrack(track);
-                }
-
-                return;
-            }
-        }
-
-        if (autoPlayHandoffTrackToken === autoPlayTrackToken(track)) {
-            return;
-        }
-
-        const isMobile =
-            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-        // Desktop reserves the Spotify popup before narration.
-        if (!isMobile) {
-            prepareAutoSpotifyWindow();
-        }
-
-        // Keep Car Mode visible while narration plays.
-        const completed = await startGuidedTrack(track);
-
-        if (completed) {
-            handoffAutoPlayTrack(track);
-        }
-    }
-
-    function abandonAutoPlayCycle(): number {
-        guidedPlaybackRunId += 1;
-        stopNarration();
-        stopBed();
-        resetGuidedNarrationTiming();
-        isPlaying.set(false);
-        autoPlayPausedPhase = null;
-        autoPlayHandoffTrackToken = null;
-
-        return cancelAutoPlayCycle();
+        await autoPlay.handlePlay();
     }
 
     function handleDriveInNext(): void {
-        if (activePlayMode !== 'auto') {
-            void nextTrack();
-            return;
-        }
-
-        const runId = abandonAutoPlayCycle();
-        autoPlayTimer = setTimeout(() => {
-            if (runId !== autoPlayRunId) return;
-
-            autoPlayTimer = null;
-            void advanceAutoPlayback(runId);
-        }, 100);
+        autoPlay.handleNext();
     }
 
     function handleDriveInPrev(): void {
-        if (activePlayMode !== 'auto') {
-            void prevTrack();
-            return;
-        }
-
-        const runId = abandonAutoPlayCycle();
-        autoPlayTimer = setTimeout(() => {
-            if (runId !== autoPlayRunId) return;
-
-            autoPlayTimer = null;
-            void prevTrack(true);
-        }, 100);
+        autoPlay.handlePrevious();
     }
 
     async function handlePlayPause() {
