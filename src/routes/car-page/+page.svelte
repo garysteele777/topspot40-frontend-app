@@ -110,12 +110,38 @@
     let activePlayMode: 'guided' | 'auto' | null = null;
 
     const AUTO_PLAY_BUFFER_SECONDS = 7;
+    const AUTO_PLAY_SPOTIFY_LEAD_SECONDS = 2;
 
 
     function updateGuidedNarrationTiming(timing: NarrationTiming): void {
         elapsed.set(timing.elapsed);
         duration.set(timing.duration);
         progress.set(timing.progress);
+
+        if (
+            activePlayMode !== 'auto' ||
+            timing.duration <= 0
+        ) {
+            return;
+        }
+
+        const track = get(currentTrack);
+        if (!track) return;
+
+        const narrationSequence = guidedNarrationUrls(track);
+        const finalNarration =
+            narrationSequence[narrationSequence.length - 1];
+
+        if (finalNarration?.phase !== get(playbackPhase)) return;
+
+        const remainingSeconds = timing.duration - timing.elapsed;
+
+        if (
+            remainingSeconds > 0 &&
+            remainingSeconds <= AUTO_PLAY_SPOTIFY_LEAD_SECONDS
+        ) {
+            autoPlay.prepareEarlySpotifyHandoff();
+        }
     }
 
     function resetGuidedNarrationTiming(): void {
