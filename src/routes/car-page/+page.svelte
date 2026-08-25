@@ -1012,6 +1012,7 @@
             prepareSpotifyWindow: spotify.prepareAutoWindow,
             isMobile: spotify.isMobile,
             openSpotify: openGuidedSpotify,
+            closeSpotify: spotify.close,
             continueAutoPlayback,
             nextTrack,
             previousTrack: prevTrack,
@@ -1213,6 +1214,16 @@
     }
 
     async function handleJumpToTrack(track: CarModeTrack) {
+        if (activePlayMode === 'auto') {
+            currentTrack.set(track);
+            currentRank.set(track.rank);
+
+            markUserStartedPlayback();
+            await autoPlay.playSelectedTrack(track);
+            userStartedPlaybackThisSession = true;
+            return;
+        }
+
         await stopPlayback();
 
         currentTrack.set(track);
