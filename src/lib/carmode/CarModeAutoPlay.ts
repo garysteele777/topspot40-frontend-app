@@ -74,18 +74,27 @@ export function createCarModeAutoPlay(
         }, delayMs);
     }
 
-    function handoff(track: CarModeTrack): void {
-        const token = trackToken(track);
+    function prepareEarlySpotifyHandoff(): void {
+        const track = dependencies.getCurrentTrack();
+        if (!track || dependencies.getActivePlayMode() !== 'auto') return;
 
-        if (
-            dependencies.getActivePlayMode() !== 'auto' ||
-            handoffToken === token
-        ) {
-            return;
-        }
+        const token = trackToken(track);
+        if (handoffToken === token) return;
 
         handoffToken = token;
         dependencies.openSpotify();
+    }
+
+    function handoff(track: CarModeTrack): void {
+        if (dependencies.getActivePlayMode() !== 'auto') return;
+
+        const token = trackToken(track);
+
+        if (handoffToken !== token) {
+            handoffToken = token;
+            dependencies.openSpotify();
+        }
+
         startTimer(track);
     }
 
@@ -198,5 +207,10 @@ export function createCarModeAutoPlay(
         }, 100);
     }
 
-    return {handlePlay, handleNext, handlePrevious};
+    return {
+        handlePlay,
+        handleNext,
+        handlePrevious,
+        prepareEarlySpotifyHandoff
+    };
 }
