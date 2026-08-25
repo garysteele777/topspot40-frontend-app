@@ -109,7 +109,7 @@
     let playbackStartInFlight = false;
     let activePlayMode: 'guided' | 'auto' | null = null;
 
-    const AUTO_PLAY_BUFFER_SECONDS = 7;
+    const AUTO_PLAY_BUFFER_SECONDS = 5;
 
 
     function updateGuidedNarrationTiming(timing: NarrationTiming): void {
