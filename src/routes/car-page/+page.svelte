@@ -109,7 +109,7 @@
     let playbackStartInFlight = false;
     let activePlayMode: 'guided' | 'auto' | null = null;
 
-    const AUTO_PLAY_BUFFER_SECONDS = 7;
+    const AUTO_PLAY_BUFFER_SECONDS = 5;
 
 
     function updateGuidedNarrationTiming(timing: NarrationTiming): void {
@@ -1012,6 +1012,7 @@
             prepareSpotifyWindow: spotify.prepareAutoWindow,
             isMobile: spotify.isMobile,
             openSpotify: openGuidedSpotify,
+            closeSpotify: spotify.close,
             continueAutoPlayback,
             nextTrack,
             previousTrack: prevTrack,
@@ -1213,6 +1214,16 @@
     }
 
     async function handleJumpToTrack(track: CarModeTrack) {
+        if (activePlayMode === 'auto') {
+            currentTrack.set(track);
+            currentRank.set(track.rank);
+
+            markUserStartedPlayback();
+            await autoPlay.playSelectedTrack(track);
+            userStartedPlaybackThisSession = true;
+            return;
+        }
+
         await stopPlayback();
 
         currentTrack.set(track);

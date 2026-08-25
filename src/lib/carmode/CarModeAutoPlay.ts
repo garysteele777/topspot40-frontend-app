@@ -21,6 +21,7 @@ export type CarModeAutoPlayDependencies = {
     prepareSpotifyWindow: () => void;
     isMobile: () => boolean;
     openSpotify: () => void;
+    closeSpotify: () => void;
     continueAutoPlayback: () => Promise<void>;
     nextTrack: () => Promise<void>;
     previousTrack: () => Promise<void>;
@@ -168,6 +169,20 @@ export function createCarModeAutoPlay(
         if (completed) handoff(track);
     }
 
+    async function playSelectedTrack(track: CarModeTrack): Promise<void> {
+        abandonCycle();
+        dependencies.closeSpotify();
+        dependencies.setActivePlayMode('auto');
+
+        if (!dependencies.isMobile()) {
+            dependencies.prepareSpotifyWindow();
+        }
+
+        const completed = await dependencies.startNarration(track);
+
+        if (completed) handoff(track);
+    }
+
     function handleNext(): void {
         if (dependencies.getActivePlayMode() !== 'auto') {
             void dependencies.nextTrack();
@@ -198,5 +213,10 @@ export function createCarModeAutoPlay(
         }, 100);
     }
 
-    return {handlePlay, handleNext, handlePrevious};
+    return {
+        handlePlay,
+        handleNext,
+        handlePrevious,
+        playSelectedTrack
+    };
 }
