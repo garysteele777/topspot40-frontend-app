@@ -29,11 +29,11 @@
     import type {ResumeState} from '$lib/utils/smartResume';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import {createCarModeAutoPlay} from '$lib/carmode/CarModeAutoPlay';
+    import {createCarModeNavigation} from '$lib/carmode/CarModeNavigation';
     import {createCarModeNarration} from '$lib/carmode/CarModeNarration';
     import {createCarModeSpotify} from '$lib/carmode/CarModeSpotify';
     import {
         programHistoryStore,
-        markRankPlayed,
         type ProgramKey
     } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
@@ -100,7 +100,6 @@
 
 
     let lastProgramKey: string | null = null;
-    let nextTrackLock = false;
     let artistBioPlayedThisSet = false;
     let guidedReady = false;
     let guidedArtistBioPlaying = false;
@@ -191,7 +190,7 @@
         currentTrack.set(null);
         currentRank.set(1);
         artistBioPlayedThisSet = false;
-        playedRanks = [];
+        navigation.resetPlayedRanks();
 
         await loadForSelection(sel, 1);
     }
@@ -1213,7 +1212,24 @@
         progress.set(0);
     }
 
-    async function handleJumpToTrack(track: CarModeTrack) {
+    const navigation = createCarModeNavigation({
+        getCurrentTrack: () => get(currentTrack),
+        getTracks: () => get(tracks),
+        getSelection: () => get(currentSelection),
+        getPlaybackSettings: () => get(playbackSettingsStore),
+        setCurrentTrack: track => currentTrack.set(track),
+        setCurrentRank: rank => currentRank.set(rank),
+        stopNarrationAudio,
+        stopCurrentNarrationPhase,
+        stopBed,
+        stopPlayback,
+        markUserStartedPlayback,
+        setUserStartedPlayback: started => (userStartedPlaybackThisSession = started),
+        playTrack,
+        startAutoPlay: handleAutoPlay
+    });
+
+    async function handleJumpToTrack(track: CarModeTrack): Promise<void> {
         if (activePlayMode === 'auto') {
             currentTrack.set(track);
             currentRank.set(track.rank);
@@ -1224,160 +1240,15 @@
             return;
         }
 
-        await stopPlayback();
-
-        currentTrack.set(track);
-        currentRank.set(track.rank);
-
-        markUserStartedPlayback();
-        await playTrack(track);
-        userStartedPlaybackThisSession = true;
+        await navigation.jumpTo(track);
     }
 
-    async function nextTrack(releaseAutoLock = false) {
-
-        if (nextTrackLock) return;
-        nextTrackLock = true;
-
-        stopCurrentNarrationPhase({resolvePhase: false});
-        stopBed();
-
-        await stopPlayback();
-
-        // resetNarrationPhaseState();
-
-        if (!$currentTrack || $tracks.length === 0) return;
-
-        // await stopPlayback();
-        const rankingId = $currentTrack.rankingId;
-        const rank = $currentTrack.rank;
-
-// Only block if BOTH are missing (should never happen)
-        if (rankingId == null && rank == null) return;
-
-        // track played ranks using rankingId (safer for ALL mode)
-        const playedKey = rankingId ?? rank;
-
-        if (playedKey != null && !playedRanks.includes(playedKey)) {
-            playedRanks.push(playedKey);
-        }
-
-        const sel = $currentSelection;
-
-        if (sel) {
-            let key: ProgramKey | null = null;
-
-            if (sel.mode === 'collection') {
-                const slug = sel.context?.collection_slug;
-                const group = sel.context?.collection_group_slug;
-
-                if (slug && group) {
-                    key = `COL|${slug}|${group}` as ProgramKey;
-                }
-            } else if (sel.mode === 'decade_genre') {
-                const decade = $currentTrack.decadeSlug;
-                const genre = $currentTrack.genreSlug;
-
-                if (decade && genre) {
-                    key = `DG|${decade}|${genre}` as ProgramKey;
-                }
-            }
-
-            if (key) {
-                markRankPlayed(key, $currentTrack.rank);
-            }
-        }
-
-        const isRadio =
-            sel?.programType === 'RADIO_DG' ||
-            sel?.programType === 'RADIO_COL' ||
-            sel?.programType === 'RADIO_ARTIST';
-
-        if (isRadio) {
-
-        } else {
-
-            const settings = get(playbackSettingsStore);
-
-            let orderedTracks = [...$tracks];
-
-            if (settings.playbackOrder === 'down') {
-                orderedTracks.sort((a, b) => b.rank - a.rank);
-            } else if (settings.playbackOrder === 'up') {
-                orderedTracks.sort((a, b) => a.rank - b.rank);
-            }
-
-            const currentIndex =
-                rankingId != null
-                    ? orderedTracks.findIndex(t => t.rankingId === rankingId)
-                    : orderedTracks.findIndex(t => t.rank === rank);
-
-            if (currentIndex === -1) return;
-
-            let next =
-                settings.skipPlayed
-                    ? orderedTracks
-                        .slice(currentIndex + 1)
-                        .find(t => !playedRanks.includes(t.rank))
-                    : null;
-
-            if (!next) {
-                next = orderedTracks[(currentIndex + 1) % orderedTracks.length];
-            }
-
-            currentRank.set(next.rank);
-            currentTrack.set(next);
-
-            await new Promise(r => setTimeout(r, 50));
-
-            markUserStartedPlayback();
-            const playback = playTrack(next);
-            if (releaseAutoLock) {
-                nextTrackLock = false;
-            }
-            await playback;
-            userStartedPlaybackThisSession = true;
-        }
-
-        if (!releaseAutoLock) {
-            setTimeout(() => {
-                nextTrackLock = false;
-            }, 500);
-        }
+    async function nextTrack(releaseAutoLock = false): Promise<void> {
+        await navigation.next(releaseAutoLock);
     }
 
-    async function prevTrack(startAutoPlay = false) {
-        if (!$currentTrack || $tracks.length === 0) return;
-
-        stopNarrationAudio();
-        stopCurrentNarrationPhase();
-        stopBed();
-
-        await stopPlayback();
-
-        const rankingId = $currentTrack.rankingId;
-        if (rankingId == null) return;
-
-        const currentIndex =
-            $tracks.findIndex(t => t.rankingId === rankingId);
-
-        if (currentIndex === -1) return;
-
-        const prevIndex = (currentIndex - 1 + $tracks.length) % $tracks.length;
-        const prev = $tracks[prevIndex];
-
-        currentRank.set(prev.rank);
-        currentTrack.set(prev);
-
-        await new Promise(r => setTimeout(r, 50));
-
-        markUserStartedPlayback();
-        if (startAutoPlay) {
-            void handleAutoPlay();
-        } else {
-            await playTrack(prev);
-        }
-        userStartedPlaybackThisSession = true;
+    async function prevTrack(startAutoPlay = false): Promise<void> {
+        await navigation.previous(startAutoPlay);
     }
 
     // ─────────────────────────────────────────────
@@ -1387,8 +1258,6 @@
         text ? text.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1)) : '';
 
 
-    let playedRanks: number[] = [];
-
     $: console.log('showCamera =', $showCamera);
 
     $: {
@@ -1396,7 +1265,7 @@
 
         if (!sel) {
             lastProgramKey = null;
-            playedRanks = [];
+            navigation.resetPlayedRanks();
         } else {
             let key: ProgramKey | null = null;
 
@@ -1421,7 +1290,7 @@
             }
 
             const history = $programHistoryStore.find(p => p.key === key);
-            playedRanks = history?.playedRanks ?? [];
+            navigation.setPlayedRanks(history?.playedRanks ?? []);
         }
     }
 
