@@ -2,6 +2,7 @@
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
+    import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type ProgramChoice = 'nostalgia' | 'collections' | 'artist';
@@ -71,7 +72,7 @@
 
     const choices: ProgramChoice[] = ['nostalgia', 'collections', 'artist'];
 
-    function chooseProgram(choice: ProgramChoice) {
+    function setProgram(choice: ProgramChoice) {
         selectedProgram = choice;
         localStorage.setItem('topspot_journey_program', choice);
     }
@@ -82,10 +83,25 @@
         return text[language].artistDesc;
     }
 
-    function continueJourney() {
+    function performContinueJourney() {
         if (selectedProgram) {
             goto(routes[selectedProgram]);
         }
+    }
+
+    const selectionContinue = createSingleChoiceContinue({
+        getSelected: () => selectedProgram,
+        select: setProgram,
+        onContinue: performContinueJourney,
+        isContinueDisabled: () => !selectedProgram
+    });
+
+    function chooseProgram(choice: ProgramChoice, event?: MouseEvent) {
+        selectionContinue.select(choice, event);
+    }
+
+    function continueJourney() {
+        return selectionContinue.continue();
     }
 
     onMount(() => {
@@ -137,7 +153,7 @@
                         class="program-choice program-{choice}"
                         class:active={selectedProgram === choice}
                         aria-pressed={selectedProgram === choice}
-                        on:click={() => chooseProgram(choice)}
+                        on:click={(event) => chooseProgram(choice, event)}
                 >
                     <span class="choice-label">
                         <strong>{text[language][choice]}</strong>

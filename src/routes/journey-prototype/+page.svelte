@@ -2,6 +2,7 @@
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
+    import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
 
@@ -53,8 +54,23 @@
         localStorage.setItem('tts_language', value);
     }
 
-    function continueJourney() {
+    function performContinueJourney() {
         goto('/journey-prototype/choose');
+    }
+
+    const selectionContinue = createSingleChoiceContinue({
+        getSelected: () => (hasChosenLanguage ? language : null),
+        select: setLanguage,
+        onContinue: performContinueJourney,
+        isContinueDisabled: () => !hasChosenLanguage
+    });
+
+    function chooseLanguage(value: LandingLanguage, event?: MouseEvent) {
+        selectionContinue.select(value, event);
+    }
+
+    function continueJourney() {
+        return selectionContinue.continue();
     }
 
     onMount(() => {
@@ -116,7 +132,7 @@
                         class="road-button english"
                         aria-label="Choose English"
                         aria-pressed={language === 'en' && hasChosenLanguage}
-                        on:click={() => setLanguage('en')}
+                        on:click={(event) => chooseLanguage('en', event)}
                 >
                     <span class="screen-reader-only">English</span>
                 </button>
@@ -126,7 +142,7 @@
                         class="road-button spanish"
                         aria-label="Elegir Español"
                         aria-pressed={language === 'es' && hasChosenLanguage}
-                        on:click={() => setLanguage('es')}
+                        on:click={(event) => chooseLanguage('es', event)}
                 >
                     <span class="screen-reader-only">Español</span>
                 </button>
@@ -136,7 +152,7 @@
                         class="road-button portuguese"
                         aria-label="Escolher Português"
                         aria-pressed={language === 'ptbr' && hasChosenLanguage}
-                        on:click={() => setLanguage('ptbr')}
+                        on:click={(event) => chooseLanguage('ptbr', event)}
                 >
                     <span class="screen-reader-only">Português</span>
                 </button>
@@ -162,7 +178,7 @@
                                 class:active={
                                 language === code && hasChosenLanguage
                             }
-                                on:click={() => setLanguage(code)}
+                                on:click={(event) => chooseLanguage(code, event)}
                         >
                             <span>{name}</span>
                             <span aria-hidden="true">
