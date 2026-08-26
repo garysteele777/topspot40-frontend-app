@@ -4,6 +4,7 @@
     import CollectionsJourneyShell from '$lib/components/journey/CollectionsJourneyShell.svelte';
     import CollectionGroupPreview from '$lib/components/journey/CollectionGroupPreview.svelte';
     import {loadCollectionsJourneyCatalog} from '$lib/collections/catalogAdapter';
+    import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
     import type {JourneyCollectionGroup} from '$lib/collections/types';
     import type {Language} from '$lib/types/playback';
 
@@ -74,6 +75,27 @@
         void goto(`${url.pathname}${url.search}`, {keepFocus: true, noScroll: true});
     }
 
+    function exploreSelectedGroup() {
+        if (!selectedGroup || !groups.some((group) => group.slug === selectedGroup?.slug)) return;
+
+        void goto(`/journey-prototype/collections/${encodeURIComponent(selectedGroup.slug)}`);
+    }
+
+    const selectionContinue = createSingleChoiceContinue({
+        getSelected: () => selectedGroup,
+        select: selectGroup,
+        onContinue: exploreSelectedGroup,
+        isContinueDisabled: () => !selectedGroup
+    });
+
+    function chooseGroup(group: JourneyCollectionGroup, event: MouseEvent) {
+        return selectionContinue.select(group, event);
+    }
+
+    function exploreGroup() {
+        return selectionContinue.continue();
+    }
+
     function resetGroupSelection() {
         if (!groups[0]) return;
         selectGroup(groups[0]);
@@ -136,7 +158,7 @@
                             type="button"
                             class:active={group.slug === selectedGroup.slug}
                             aria-pressed={group.slug === selectedGroup.slug}
-                            on:click={() => selectGroup(group)}
+                            on:click={(event) => chooseGroup(group, event)}
                         >
                             <span aria-hidden="true">{group.presentation.icon}</span>
                             <span>{group.name}</span>
@@ -150,6 +172,7 @@
                 group={selectedGroup}
                 {language}
                 exploreLabel={text[language].explore}
+                onExplore={exploreGroup}
             />
         </div>
     {/if}
@@ -190,13 +213,21 @@
         cursor: pointer;
     }
 
-    .group-buttons button:hover,
-    .group-buttons button:focus-visible,
     .group-buttons button.active {
         color: #101010;
         background: #d6c17a;
         border-color: #f7dc82;
-        outline: none;
+    }
+
+    .group-buttons button:not(.active):hover {
+        border-color: #f7dc82;
+        box-shadow: 0 0 0 1px #f7dc82;
+    }
+
+    .group-buttons button:focus-visible {
+        border-color: #fff4b8;
+        outline: 3px solid #fff4b8;
+        outline-offset: 3px;
     }
 
     .group-buttons small {

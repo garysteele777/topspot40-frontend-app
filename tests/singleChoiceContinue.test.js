@@ -50,6 +50,18 @@ test('second pointer activation of the selected choice continues', () => {
     assert.equal(screen.continuations, 1);
 });
 
+test('a collection group selects first and explores on its next pointer activation', () => {
+    const screen = setup();
+    const group = {slug: 'soul'};
+
+    screen.control.select(group, {detail: 1});
+    screen.control.select(group, {detail: 1});
+
+    assert.equal(screen.selected, group);
+    assert.equal(screen.selections, 1);
+    assert.equal(screen.continuations, 1);
+});
+
 test('changing choice only changes the selection', () => {
     const screen = setup();
 
