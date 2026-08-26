@@ -2,6 +2,7 @@
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
+    import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type Decade =
@@ -75,15 +76,30 @@
         }
     };
 
-    function chooseDecade(decade: Decade) {
+    function setDecade(decade: Decade) {
         selectedDecade = decade;
         localStorage.setItem('topspot_journey_decade', decade);
     }
 
-    function continueJourney() {
+    function performContinueJourney() {
         if (selectedDecade) {
             goto(`/journey-prototype/genre?decade=${selectedDecade}`);
         }
+    }
+
+    const selectionContinue = createSingleChoiceContinue({
+        getSelected: () => selectedDecade,
+        select: setDecade,
+        onContinue: performContinueJourney,
+        isContinueDisabled: () => !selectedDecade
+    });
+
+    function chooseDecade(decade: Decade, event?: MouseEvent) {
+        selectionContinue.select(decade, event);
+    }
+
+    function continueJourney() {
+        return selectionContinue.continue();
     }
 
     onMount(() => {
@@ -134,7 +150,7 @@
                 class:active={selectedDecade === decade}
                 aria-label={`Choose ${decade}`}
                 aria-pressed={selectedDecade === decade}
-                on:click={() => chooseDecade(decade)}
+                on:click={(event) => chooseDecade(decade, event)}
             >
                 <span class="screen-reader-only">{decade}</span>
             </button>
@@ -158,7 +174,7 @@
                 {#each decades as decade}
                     <button
                         class:active={selectedDecade === decade}
-                        on:click={() => chooseDecade(decade)}
+                        on:click={(event) => chooseDecade(decade, event)}
                     >
                         <span class="mobile-icon" aria-hidden="true">
                             {decadeIcons[decade]}

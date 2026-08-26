@@ -2,6 +2,7 @@
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
+    import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type Genre =
@@ -87,12 +88,12 @@
         }
     };
 
-    function chooseGenre(genre: Genre) {
+    function setGenre(genre: Genre) {
         selectedGenre = genre;
         localStorage.setItem('topspot_journey_genre', genre);
     }
 
-    function continueJourney() {
+    function performContinueJourney() {
         if (!selectedGenre) return;
 
         const params = new URLSearchParams({
@@ -108,6 +109,21 @@
         });
 
         goto(`/car-page?${params.toString()}`);
+    }
+
+    const selectionContinue = createSingleChoiceContinue({
+        getSelected: () => selectedGenre,
+        select: setGenre,
+        onContinue: performContinueJourney,
+        isContinueDisabled: () => !selectedGenre
+    });
+
+    function chooseGenre(genre: Genre, event?: MouseEvent) {
+        selectionContinue.select(genre, event);
+    }
+
+    function continueJourney() {
+        return selectionContinue.continue();
     }
 
     onMount(() => {
@@ -163,7 +179,7 @@
                 class:active={selectedGenre === genre}
                 aria-label={`Choose ${labels[genre]}`}
                 aria-pressed={selectedGenre === genre}
-                on:click={() => chooseGenre(genre)}
+                on:click={(event) => chooseGenre(genre, event)}
             >
                 <span class="screen-reader-only">{labels[genre]}</span>
             </button>
@@ -187,7 +203,7 @@
                 {#each genres as genre}
                     <button
                         class:active={selectedGenre === genre}
-                        on:click={() => chooseGenre(genre)}
+                        on:click={(event) => chooseGenre(genre, event)}
                     >
                         <span class="mobile-icon" aria-hidden="true">
                             {genreIcons[genre]}
