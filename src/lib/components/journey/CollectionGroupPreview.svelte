@@ -6,10 +6,10 @@
     export let group: JourneyCollectionGroup;
     export let language: Language = 'en';
     export let exploreLabel: string;
+    export let onExplore: () => unknown;
 
     $: previewItems = group.items.slice(0, 7);
     $: remainingItems = Math.max(0, group.items.length - previewItems.length);
-    $: exploreHref = `/journey-prototype/collections/${encodeURIComponent(group.slug)}`;
 </script>
 
 <article class="preview" style={`--group-accent: ${group.presentation.accent}`}>
@@ -42,10 +42,10 @@
             {/if}
         </ul>
 
-        <a class="explore" href={exploreHref}>
+        <button type="button" class="explore" on:click={onExplore}>
             {exploreLabel} {group.name}
             <span aria-hidden="true">→</span>
-        </a>
+        </button>
     {:else}
         <p class="empty">No collections are currently available in this group.</p>
     {/if}
@@ -134,8 +134,9 @@
         padding: 12px 20px;
         color: #101010;
         background: var(--group-accent);
+        border: 0;
         border-radius: 999px;
-        text-decoration: none;
+        cursor: pointer;
         font-weight: 900;
     }
 
