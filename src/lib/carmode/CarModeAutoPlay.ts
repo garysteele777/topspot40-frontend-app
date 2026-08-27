@@ -3,6 +3,14 @@ import type {PlaybackPhase} from '$lib/helpers/car/types';
 
 type AutoPlayMode = 'guided' | 'auto' | null;
 
+const activeCancels = new Set<() => void>();
+
+export function cancelAllCarModeAutoPlay(): void {
+    for (const cancel of activeCancels) {
+        cancel();
+    }
+}
+
 export type CarModeAutoPlayDependencies = {
     getActivePlayMode: () => AutoPlayMode;
     setActivePlayMode: (mode: AutoPlayMode) => void;
@@ -127,6 +135,12 @@ export function createCarModeAutoPlay(
         return cancelCycle();
     }
 
+    function cancel(): void {
+        abandonCycle();
+    }
+
+    activeCancels.add(cancel);
+
     async function handlePlay(): Promise<void> {
         const track = dependencies.getCurrentTrack();
         if (!track) return;
@@ -214,6 +228,7 @@ export function createCarModeAutoPlay(
     }
 
     return {
+        cancel,
         handlePlay,
         handleNext,
         handlePrevious,
