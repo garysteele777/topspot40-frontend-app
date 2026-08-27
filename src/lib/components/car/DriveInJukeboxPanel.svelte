@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onDestroy, onMount} from 'svelte';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import {createTrackListCsv, downloadCsv} from '$lib/program/trackListCsv';
     import {
         favoritesStore,
         isFavorite,
@@ -101,40 +102,7 @@
     function exportCsv(): void {
         if (sortedTracks.length === 0) return;
 
-        const escapeCsv = (value: string | number | null | undefined): string => {
-            const text = String(value ?? '');
-            return `"${text.replaceAll('"', '""')}"`;
-        };
-
-        const rows = [
-            ['title', 'artist', 'album', 'spotify_id'],
-            ...sortedTracks.map(track => [
-                track.trackName,
-                track.artistName,
-                track.albumName ?? '',
-                track.spotifyTrackId ?? ''
-            ])
-        ];
-
-        const csv = rows
-            .map(row => row.map(escapeCsv).join(','))
-            .join('\r\n');
-
-        const blob = new Blob([csv], {
-            type: 'text/csv;charset=utf-8'
-        });
-
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-
-        link.href = url;
-        link.download = exportFileName;
-
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        URL.revokeObjectURL(url);
+        downloadCsv(createTrackListCsv(sortedTracks), exportFileName);
     }
 
 
