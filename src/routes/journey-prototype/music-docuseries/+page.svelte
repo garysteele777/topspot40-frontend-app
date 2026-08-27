@@ -8,6 +8,7 @@
     import {findMusicDocuseriesCollection, loadMusicDocuseriesCollections, loadMusicDocuseriesStories} from '$lib/musicDocuseries/catalogAdapter';
     import type {MusicDocuseriesCollection, MusicDocuseriesStory} from '$lib/musicDocuseries/types';
     import type {Language} from '$lib/types/playback';
+    import {readLanguagePreference} from '$lib/languagePreferences';
 
     let language: Language = 'en';
     let collections: MusicDocuseriesCollection[] = [];
@@ -62,8 +63,7 @@
     };
 
     function readLanguage(): Language {
-        const saved = localStorage.getItem('topspot_language');
-        return saved === 'es' || saved === 'ptbr' ? saved : 'en';
+        return readLanguagePreference();
     }
 
     async function loadSelectedPreview(collection: MusicDocuseriesCollection): Promise<void> {

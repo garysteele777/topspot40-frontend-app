@@ -20,6 +20,7 @@
     import {localizedCollectionCopy} from '$lib/config/collectionsJourney';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     import type {Language} from '$lib/types/playback';
+    import {readStoredLanguagePreference} from '$lib/languagePreferences';
 
     let language: Language = 'en';
     let group: JourneyCollectionGroup | null = null;
@@ -61,8 +62,7 @@
     };
 
     onMount(async () => {
-        const savedLanguage = localStorage.getItem('topspot_language');
-        language = savedLanguage === 'es' || savedLanguage === 'ptbr' ? savedLanguage : 'en';
+        language = readStoredLanguagePreference() ?? 'en';
 
         try {
             const groups = await loadCollectionsJourneyCatalog();

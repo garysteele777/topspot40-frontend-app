@@ -1,7 +1,10 @@
 // src/lib/helpers/car/selectionFromUrl.ts
 import type {SelectionState} from './types';
 import type {PlaybackOrder} from './types';
-import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
+import {
+    normalizeLanguagePreference as normalizeLanguage,
+    normalizeSelectedLanguages
+} from '$lib/languagePreferences';
 import {normalizeVoices} from '$lib/helpers/normalizeVoices';
 import {PROGRAM_TYPES} from '$lib/types/program';
 
@@ -21,10 +24,9 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const favoritesGroup = sp.get('favoritesGroup') ?? '';
 
     const language = normalizeLanguage(sp.get('language'));
-    const languages = (sp.get('languages') ?? language)
-        .split(',')
-        .map(normalizeLanguage)
-        .filter((lang, index, arr) => arr.indexOf(lang) === index);
+    const languages = normalizeSelectedLanguages(
+        (sp.get('languages') ?? language).split(',')
+    );
 
     const startRank = Number(sp.get('startRank') ?? 1);
 

@@ -7,6 +7,10 @@
     import PlaybackPreferencesPanel from '$lib/components/options-v2/PlaybackPreferencesPanel.svelte';
 
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+    import {
+        readStoredLanguagePreference,
+        writeLanguagePreference
+    } from '$lib/languagePreferences';
 
     import type {
         Language,
@@ -39,13 +43,9 @@
     let hydrated = false;
 
     onMount(() => {
-        const savedLanguage = localStorage.getItem('topspot_language');
+        const savedLanguage = readStoredLanguagePreference();
 
-        if (
-            savedLanguage === 'en'
-            || savedLanguage === 'es'
-            || savedLanguage === 'ptbr'
-        ) {
+        if (savedLanguage) {
             language = savedLanguage;
             languages = [savedLanguage];
         }
@@ -54,8 +54,7 @@
     });
 
     $: if (hydrated) {
-        localStorage.setItem('topspot_language', language);
-        localStorage.setItem('tts_language', language);
+        writeLanguagePreference(language);
 
         playbackSettingsStore.set({
             voices: selectedVoices,

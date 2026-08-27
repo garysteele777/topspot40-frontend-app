@@ -3,6 +3,10 @@
     import {onMount} from 'svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
+    import {
+        readStoredLanguagePreference,
+        writeLanguagePreference
+    } from '$lib/languagePreferences';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
 
@@ -43,15 +47,10 @@
         {code: 'ptbr', name: 'Português'}
     ];
 
-    function isLandingLanguage(value: string | null): value is LandingLanguage {
-        return value === 'en' || value === 'es' || value === 'ptbr';
-    }
-
     function setLanguage(value: LandingLanguage) {
         language = value;
         hasChosenLanguage = true;
-        localStorage.setItem('topspot_language', value);
-        localStorage.setItem('tts_language', value);
+        writeLanguagePreference(value);
     }
 
     function performContinueJourney() {
@@ -82,9 +81,9 @@
             showJourneyLayout = journeyScreen.matches;
         }
 
-        const savedLanguage = localStorage.getItem('topspot_language');
+        const savedLanguage = readStoredLanguagePreference();
 
-        if (isLandingLanguage(savedLanguage)) {
+        if (savedLanguage) {
             language = savedLanguage;
             hasChosenLanguage = true;
         }

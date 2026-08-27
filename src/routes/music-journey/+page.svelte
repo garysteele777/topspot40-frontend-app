@@ -7,6 +7,7 @@
 
     import type {Language} from '$lib/types/playback';
     import {goto} from '$app/navigation';
+    import {readStoredLanguagePreference} from '$lib/languagePreferences';
 
     let language: Language = 'en';
 
@@ -24,13 +25,9 @@
     }
 
     onMount(async () => {
-        const savedLanguage = localStorage.getItem('topspot_language');
+        const savedLanguage = readStoredLanguagePreference();
 
-        if (
-            savedLanguage === 'en'
-            || savedLanguage === 'es'
-            || savedLanguage === 'ptbr'
-        ) {
+        if (savedLanguage) {
             language = savedLanguage;
         }
 

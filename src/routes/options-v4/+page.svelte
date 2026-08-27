@@ -21,6 +21,10 @@
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+    import {
+        readStoredLanguagePreference,
+        writeLanguagePreference
+    } from '$lib/languagePreferences';
     // ─────────────────────────────────────────────
     // Types
     // ─────────────────────────────────────────────
@@ -416,7 +420,7 @@
             loadResumeState()
         );
 
-        const savedLanguage = localStorage.getItem('topspot_language');
+        const savedLanguage = readStoredLanguagePreference();
 
         const panel = page.url.searchParams.get('panel');
         const tab = page.url.searchParams.get('tab');
@@ -474,11 +478,7 @@
                 pendingSelection = null;
             }
 
-            if (
-                savedLanguage === 'en'
-                || savedLanguage === 'es'
-                || savedLanguage === 'ptbr'
-            ) {
+            if (savedLanguage) {
                 language = savedLanguage;
                 languages = [savedLanguage];
             }
@@ -494,8 +494,7 @@
     // ─────────────────────────────────────────────
     $: if (browser && hydrated) {
         // Keep landing-page and playback language synchronized.
-        localStorage.setItem('topspot_language', language);
-        localStorage.setItem('tts_language', language);
+        writeLanguagePreference(language);
 
         // console.log('OPTIONS AUTOSAVE languages:', languages);
         saveResumeFromLocal({

@@ -7,6 +7,7 @@
     import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
     import type {JourneyCollectionGroup} from '$lib/collections/types';
     import type {Language} from '$lib/types/playback';
+    import {readLanguagePreference} from '$lib/languagePreferences';
 
     let language: Language = 'en';
     let groups: JourneyCollectionGroup[] = [];
@@ -43,8 +44,7 @@
     };
 
     function readLanguage(): Language {
-        const saved = localStorage.getItem('topspot_language');
-        return saved === 'es' || saved === 'ptbr' ? saved : 'en';
+        return readLanguagePreference();
     }
 
     function synchronizeSelection(url: URL, replaceMissing = false) {

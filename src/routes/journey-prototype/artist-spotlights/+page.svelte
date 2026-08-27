@@ -23,6 +23,7 @@
         ArtistSpotlightItem
     } from '$lib/artistSpotlights/types';
     import type {Language} from '$lib/types/playback';
+    import {readLanguagePreference} from '$lib/languagePreferences';
 
     let language: Language = 'en';
     let genres: ArtistGenreOption[] = [];
@@ -41,8 +42,7 @@
     const categories: ArtistSpotlightCategory[] = ['featured', 'other', 'single'];
 
     function readLanguage(): Language {
-        const saved = localStorage.getItem('topspot_language');
-        return saved === 'es' || saved === 'ptbr' ? saved : 'en';
+        return readLanguagePreference();
     }
 
     function artistIsInRange(name: string, range: ArtistAlphabetRange): boolean {
