@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onDestroy, onMount} from 'svelte';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import {createBroadActivation} from '$lib/interactions/broadActivation.js';
 
     export let track: CarModeTrack;
     export let opened = false;
@@ -17,13 +18,58 @@
     type DeviceType = 'ios' | 'android' | 'other';
 
     let device: DeviceType = 'other';
-    let showDetailedHelp = true;
     let bioButton: HTMLButtonElement | null = null;
     let showArtistInBioLabel = false;
     let bioButtonObserver: ResizeObserver | null = null;
+    let spotifyActivated = false;
 
-    const HELP_STORAGE_KEY =
-        'ts-guided-return-help-seen-v1';
+    const spotifyActivation = createBroadActivation({
+        onActivate: () => {
+            spotifyActivated = true;
+            onOpenSpotify();
+        }
+    });
+    const continueActivation = createBroadActivation({
+        onActivate: () => onContinue()
+    });
+
+    function handlePrimaryKeydown(event: KeyboardEvent): void {
+        if (
+            event.target !== event.currentTarget
+            || (event.key !== 'Enter' && event.key !== ' ')
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        const activation = !opened
+            ? spotifyActivation
+            : returned
+                ? continueActivation
+                : null;
+        activation?.keyboardActivate({detail: 0});
+    }
+
+    function handlePrimaryPointerDown(event: PointerEvent): void {
+        if (!opened) {
+            spotifyActivation.pointerDown(event);
+        } else if (returned) {
+            continueActivation.pointerDown(event);
+        }
+    }
+
+    function handlePrimaryPointerUp(event: PointerEvent): void {
+        if (!opened) {
+            spotifyActivation.pointerUp(event);
+        } else if (returned) {
+            continueActivation.pointerUp(event);
+        }
+    }
+
+    function handlePrimaryPointerCancel(): void {
+        spotifyActivation.pointerCancel();
+        continueActivation.pointerCancel();
+    }
 
     function displayTrackName(
         value: string
@@ -90,22 +136,8 @@
         return 'other';
     }
 
-    function rememberHelp(): void {
-        showDetailedHelp = false;
-
-        localStorage.setItem(
-            HELP_STORAGE_KEY,
-            'true'
-        );
-    }
-
     onMount(() => {
         device = detectDevice();
-
-        showDetailedHelp =
-            localStorage.getItem(
-                HELP_STORAGE_KEY
-            ) !== 'true';
 
         bioButtonObserver = new ResizeObserver(
             updateBioButtonLabel
@@ -124,9 +156,16 @@
 
 <div
         class="guided-overlay"
+        class:primary-spotify-area={!opened || returned}
+        class:spotifyActivated
         role="dialog"
+        tabindex="0"
         aria-modal="true"
         aria-labelledby="guided-heading"
+        on:pointerdown={handlePrimaryPointerDown}
+        on:pointerup={handlePrimaryPointerUp}
+        on:pointercancel={handlePrimaryPointerCancel}
+        on:keydown={handlePrimaryKeydown}
 >
     <section class="guided-card" aria-live="polite">
         <div class="mode-label">
@@ -150,84 +189,24 @@
                 {displayTrackName(track.artistName)}
             </div>
 
-            <div class="steps">
-                <div>
-                    <span>1</span>
-                    Tap the Spotify button below.
-                </div>
-
-                <div>
-                    <span>2</span>
-                    Press Play in Spotify.
-                </div>
-
-                <div>
-                    <span>3</span>
-                    Return here when the song finishes.
-                </div>
-            </div>
-
-            <div class="return-help">
-                <strong>
-                    {#if device === 'ios'}
-                        How to return on iPhone
-                    {:else if device === 'android'}
-                        How to return on Android
-                    {:else}
-                        How to return to TopSpot40
-                    {/if}
-                </strong>
-
-                {#if device === 'ios'}
-                    <p>
-                        Swipe up from the bottom and pause,
-                        then tap TopSpot40, Safari, or Chrome.
-                    </p>
-
-                    {#if showDetailedHelp}
-                        <p class="detail">
-                            On an older iPhone with a Home
-                            button, double-press the Home
-                            button instead.
-                        </p>
-                    {/if}
-                {:else if device === 'android'}
-                    <p>
-                        Swipe up from the bottom and hold,
-                        or tap Recent Apps. Then tap
-                        TopSpot40 or Chrome.
-                    </p>
-                {:else}
-                    <p>
-                        Use your phone’s Recent Apps or
-                        App Switcher, then select
-                        TopSpot40, Safari, or Chrome.
-                    </p>
-                {/if}
-
-                {#if showDetailedHelp}
-                    <button
-                            class="remember-button"
-                            on:click={rememberHelp}
-                    >
-                        Got it — show the short reminder next time
-                    </button>
-                {:else}
-                    <button
-                            class="remember-button"
-                            on:click={() => {
-                                showDetailedHelp = true;
-                            }}
-                    >
-                        Show step-by-step help
-                    </button>
-                {/if}
+            <div class="spotify-cue" aria-hidden="true">
+                <span class="spotify-mark">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4.5 8.1c5.1-1.5 10.8-.8 15.2 1.7" />
+                        <path d="M5.7 12c4.2-1.2 8.9-.6 12.6 1.5" />
+                        <path d="M6.9 15.7c3.2-.9 6.7-.4 9.5 1.2" />
+                    </svg>
+                </span>
+                <span>Tap anywhere else to open in Spotify</span>
             </div>
 
             {#if hasArtistBio}
                 <button
                         bind:this={bioButton}
                         class="artist-bio-button"
+                        on:pointerdown|stopPropagation
+                        on:pointerup|stopPropagation
+                        on:pointercancel|stopPropagation
                         on:click={() => {
                             if (artistBioPlaying) {
                                 onStopArtistBio();
@@ -247,14 +226,10 @@
             {/if}
 
             <button
-                    class="spotify-button"
-                    on:click={onOpenSpotify}
-            >
-                ▶ OPEN IN SPOTIFY
-            </button>
-
-            <button
                     class="back-button"
+                    on:pointerdown|stopPropagation
+                    on:pointerup|stopPropagation
+                    on:pointercancel|stopPropagation
                     on:click={onBackToCar}
             >
                 ← BACK TO CAR PAGE / CHOOSE A TRACK
@@ -281,14 +256,24 @@
                 {displayTrackName(track.artistName)}
             </div>
 
-            {#if hasArtistBio}
-                <p class="bio-instruction">
-                    Pause Spotify first if the song is still playing.
-                </p>
+            <p class="bio-instruction">
+                Pause Spotify first if the song is still playing.
+            </p>
 
+            <div class="continue-cue" aria-hidden="true">
+                <span class="continue-mark">
+                    <img src="/old-dog-icon.png" alt="" />
+                </span>
+                <span>Tap anywhere else to continue to the next track</span>
+            </div>
+
+            {#if hasArtistBio}
                 <button
                         bind:this={bioButton}
                         class="artist-bio-button"
+                        on:pointerdown|stopPropagation
+                        on:pointerup|stopPropagation
+                        on:pointercancel|stopPropagation
                         on:click={() => {
                             if (artistBioPlaying) {
                                 onStopArtistBio();
@@ -308,28 +293,29 @@
             {/if}
 
             <button
-                    class="continue-button"
-                    on:click={onContinue}
-            >
-                ▶ CONTINUE TO NEXT TRACK
-            </button>
-
-            <button
                     class="back-button"
+                    on:pointerdown|stopPropagation
+                    on:pointerup|stopPropagation
+                    on:pointercancel|stopPropagation
                     on:click={onBackToCar}
             >
                 ← BACK TO CAR PAGE / CHOOSE A TRACK
             </button>
 
-            <div class="secondary-actions">
-                <button on:click={onOpenSpotify}>
-                    Open Spotify Again
-                </button>
+            <button
+                    class="recovery-spotify-button"
+                    on:pointerdown|stopPropagation
+                    on:pointerup|stopPropagation
+                    on:pointercancel|stopPropagation
+                    on:click={onOpenSpotify}
+            >
+                Open Spotify Again
+            </button>
 
-                <button on:click={onSkip}>
-                    Song Did Not Play — Skip
-                </button>
-            </div>
+            <p class="safety-note">
+                For safety, make selections only while
+                parked or let a passenger operate the phone.
+            </p>
         {:else}
             <div class="state-label">
                 SPOTIFY OPENED
@@ -444,32 +430,6 @@
         font-size: 1.08rem;
     }
 
-    .steps {
-        display: grid;
-        gap: 9px;
-        margin: 22px 0;
-        text-align: left;
-        color: #ddd;
-    }
-
-    .steps div {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-    }
-
-    .steps span {
-        display: inline-grid;
-        flex: 0 0 30px;
-        width: 30px;
-        height: 30px;
-        place-items: center;
-        border-radius: 50%;
-        color: #111;
-        background: #cfb87c;
-        font-weight: 900;
-    }
-
     .return-help {
         margin: 18px 0;
         padding: 15px;
@@ -478,18 +438,9 @@
         background: #202024;
     }
 
-    .return-help strong {
-        color: #fff;
-    }
-
     .return-help p {
         margin: 8px 0 0;
         line-height: 1.45;
-    }
-
-    .return-help .detail {
-        color: #aaa;
-        font-size: 0.92rem;
     }
 
     .return-help.compact {
@@ -503,12 +454,78 @@
         font-weight: 800;
     }
 
-    .remember-button {
-        margin-top: 12px;
-        padding: 7px 10px;
-        color: #8cc8ff;
-        text-decoration: underline;
+    .primary-spotify-area {
+        cursor: pointer;
+    }
+
+    .spotifyActivated .guided-card {
+        border-color: #38d873;
+        box-shadow: 0 18px 55px rgba(29, 185, 84, 0.32);
+    }
+
+    .spotify-cue {
+        display: grid;
+        justify-items: center;
+        gap: clamp(14px, 3vw, 20px);
+        width: 100%;
+        margin: clamp(26px, 6vw, 40px) 0;
+        padding: 8px 12px;
+        color: #b9f5cc;
+        font-size: 0.95rem;
         background: transparent;
+    }
+
+    .spotify-mark {
+        display: grid;
+        width: clamp(72px, 20vw, 96px);
+        height: clamp(72px, 20vw, 96px);
+        place-items: center;
+        border: clamp(3px, 0.8vw, 4px) solid #1db954;
+        border-radius: 50%;
+        color: #1db954;
+    }
+
+    .spotify-mark svg {
+        width: 68%;
+        height: 68%;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-width: 2.5;
+    }
+
+    .continue-cue {
+        display: grid;
+        justify-items: center;
+        gap: 16px;
+        margin: 28px 0;
+        padding: 8px 12px;
+        color: #d9c990;
+        font-size: clamp(1.04rem, 4vw, 1.16rem);
+        font-weight: 800;
+        line-height: 1.35;
+    }
+
+    .continue-mark {
+        display: grid;
+        width: clamp(76px, 20vw, 92px);
+        height: clamp(76px, 20vw, 92px);
+        place-items: center;
+        overflow: hidden;
+        border: clamp(3px, 0.8vw, 4px) solid #cfb87c;
+        border-radius: 50%;
+        background: #111;
+    }
+
+    .continue-mark img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .continue-cue span:last-child {
+        max-width: min(100%, 390px);
     }
 
     .artist-bio-button {
@@ -537,7 +554,6 @@
         font-size: 0.95rem;
     }
 
-    .spotify-button,
     .continue-button {
         width: 100%;
         min-height: 62px;
@@ -552,6 +568,18 @@
         margin-top: 24px;
         color: #111;
         background: #cfb87c;
+    }
+
+    .recovery-spotify-button {
+        width: auto;
+        min-height: 40px;
+        margin-top: 12px;
+        padding: 8px 14px;
+        border: 1px solid #4d765b;
+        border-radius: 999px;
+        color: #b9f5cc;
+        font-size: 0.84rem;
+        background: #1b2b20;
     }
 
     .secondary-actions {
