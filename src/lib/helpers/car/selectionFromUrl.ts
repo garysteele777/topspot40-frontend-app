@@ -5,7 +5,11 @@ import {
     normalizeLanguagePreference as normalizeLanguage,
     normalizeSelectedLanguages
 } from '$lib/languagePreferences';
-import {normalizeVoices} from '$lib/helpers/normalizeVoices';
+import {
+    narrationFlagsFromVoices,
+    normalizeSelectedVoices,
+    normalizeVoicePlayMode
+} from '$lib/playbackPreferences';
 import {PROGRAM_TYPES} from '$lib/types/program';
 
 export function buildSelectionFromUrl(url: URL): SelectionState {
@@ -33,10 +37,15 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     const rawEndRank = sp.get('endRank');
     const endRank = rawEndRank != null ? Number(rawEndRank) : startRank;
 
-    const voices = normalizeVoices((sp.get('voices') ?? 'intro').split(','));
+    const voices = normalizeSelectedVoices(
+        (sp.get('voices') ?? 'intro').split(',')
+    );
+    const narrationFlags = narrationFlagsFromVoices(voices);
 
+    // Keep malformed-present values as-is for compatibility. Tightening this
+    // URL boundary is a separate input-hardening decision.
     const playbackOrder = (sp.get('playbackOrder') ?? 'up') as PlaybackOrder;
-    const voicePlayMode = sp.get('voicePlayMode') === 'over' ? 'over' : 'before';
+    const voicePlayMode = normalizeVoicePlayMode(sp.get('voicePlayMode'), 'before');
     const pauseMode = sp.get('pauseMode') === 'continuous' ? 'continuous' : 'pause';
     const skipPlayed = sp.get('skipPlayed') === 'true';
 
@@ -66,9 +75,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             startRank: finalStartRank,
             endRank: 9999,
             currentRank,
-            playIntro: voices.includes('intro'),
-            playDetail: voices.includes('detail'),
-            playArtistDescription: voices.includes('artist'),
+            ...narrationFlags,
             textIntro: false,
             textDetail: false,
             textArtistDescription: false,
@@ -97,9 +104,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 startRank: finalStartRank,
                 endRank: finalEndRank,
                 currentRank,
-                playIntro: voices.includes('intro'),
-                playDetail: voices.includes('detail'),
-                playArtistDescription: voices.includes('artist'),
+                ...narrationFlags,
                 textIntro: false,
                 textDetail: false,
                 textArtistDescription: false,
@@ -125,9 +130,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 startRank: finalStartRank,
                 endRank: finalEndRank,
                 currentRank,
-                playIntro: voices.includes('intro'),
-                playDetail: voices.includes('detail'),
-                playArtistDescription: voices.includes('artist'),
+                ...narrationFlags,
                 textIntro: false,
                 textDetail: false,
                 textArtistDescription: false,
@@ -154,9 +157,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             startRank: finalStartRank,
             endRank: finalEndRank,
             currentRank,
-            playIntro: voices.includes('intro'),
-            playDetail: voices.includes('detail'),
-            playArtistDescription: voices.includes('artist'),
+            ...narrationFlags,
             textIntro: false,
             textDetail: false,
             textArtistDescription: false,
@@ -184,8 +185,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             endRank: 9999,
             currentRank,
             playIntro: false,
-            playDetail: voices.includes('detail'),
-            playArtistDescription: voices.includes('artist'),
+            playDetail: narrationFlags.playDetail,
+            playArtistDescription: narrationFlags.playArtistDescription,
             textIntro: false,
             textDetail: false,
             textArtistDescription: false,
@@ -218,8 +219,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             endRank: 9999,
             currentRank,
             playIntro: false,
-            playDetail: voices.includes('detail'),
-            playArtistDescription: voices.includes('artist'),
+            playDetail: narrationFlags.playDetail,
+            playArtistDescription: narrationFlags.playArtistDescription,
             textIntro: false,
             textDetail: false,
             textArtistDescription: false,
@@ -253,9 +254,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         startRank: finalStartRank,
         endRank: finalEndRank,
         currentRank,
-        playIntro: voices.includes('intro'),
-        playDetail: voices.includes('detail'),
-        playArtistDescription: voices.includes('artist'),
+        ...narrationFlags,
         textIntro: false,
         textDetail: false,
         textArtistDescription: false,
