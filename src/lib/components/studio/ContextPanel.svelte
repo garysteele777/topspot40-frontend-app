@@ -13,6 +13,7 @@
 
     import TrackListPanel from '$lib/components/shared/TrackListPanel.svelte';
     import {contextMode} from '$lib/studio/contextMode.store';
+    import {buildProgramHistoryKey, isProgramRankPlayed} from '$lib/program/history';
 
     import {
         artistSummary,
@@ -39,27 +40,11 @@
                 : null;
 
     function isPlayed(rank: number): boolean {
-        const sel = $currentSelection;
-        if (!sel) return false;
-
-        let key: string | null = null;
-
-        if (sel.mode === 'decade_genre') {
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
-            if (decade && genre) key = `DG|${decade}|${genre}`;
-        }
-
-        if (sel.mode === 'collection') {
-            const collection = sel.context?.collection_slug ?? sel.context?.collection;
-            const group = sel.context?.collection_group_slug ?? sel.context?.collectionCategory;
-            if (collection && group) key = `COL|${collection}|${group}`;
-        }
-
-        if (!key) return false;
-
-        const program = $programHistoryStore.find(p => p.key === key);
-        return program?.playedRanks.includes(rank) ?? false;
+        return isProgramRankPlayed(
+            $programHistoryStore,
+            buildProgramHistoryKey($currentSelection),
+            rank
+        );
     }
 
     $: artistId =

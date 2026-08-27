@@ -4,6 +4,7 @@
         resetProgram,
         resetAllPrograms
     } from '$lib/carmode/programHistory';
+    import {calculatePlayedPercent, playedRankCount} from '$lib/program/history';
 
     type HistoryEntry = {
         key: string;
@@ -68,13 +69,13 @@
 
                 return {
                     total: entry?.total ?? 0,
-                    played: entry?.playedRanks.length ?? 0
+                    played: playedRankCount(entry)
                 };
             });
 
             const tracks = rows.reduce((sum, row) => sum + row.total, 0);
             const played = rows.reduce((sum, row) => sum + row.played, 0);
-            const percent = tracks > 0 ? Math.round((played / tracks) * 100) : 0;
+            const percent = calculatePlayedPercent(played, tracks);
 
             return {
                 name: group.name,
@@ -100,8 +101,8 @@
                 (h) => h.key === `COL|${item.slug}|${groupSlug}`
             );
             const tracks = entry?.total ?? 0;
-            const played = entry?.playedRanks.length ?? 0;
-            const percent = tracks > 0 ? Math.round((played / tracks) * 100) : 0;
+            const played = playedRankCount(entry);
+            const percent = calculatePlayedPercent(played, tracks);
 
             return {
                 name: item.name,
@@ -123,8 +124,8 @@
             );
 
             const tracks = rows.reduce((sum, entry) => sum + entry.total, 0);
-            const played = rows.reduce((sum, entry) => sum + entry.playedRanks.length, 0);
-            const percent = tracks > 0 ? Math.round((played / tracks) * 100) : 0;
+            const played = rows.reduce((sum, entry) => sum + playedRankCount(entry), 0);
+            const percent = calculatePlayedPercent(played, tracks);
 
             return {
                 decade: `${decade} All Genres`,
@@ -157,10 +158,8 @@
             .map((entry) => {
                 const parts = entry.key.split('|');
                 const genre = parts[2] ?? 'unknown';
-                const played = entry.playedRanks.length;
-                const percent = entry.total > 0
-                    ? Math.round((played / entry.total) * 100)
-                    : 0;
+                const played = playedRankCount(entry);
+                const percent = calculatePlayedPercent(played, entry.total);
 
                 return {
                     genre,

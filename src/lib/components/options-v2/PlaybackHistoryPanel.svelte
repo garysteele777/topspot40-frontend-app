@@ -19,6 +19,7 @@
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {goto} from '$app/navigation';
     import {favoritesStore} from '$lib/favorites/favorites';
+    import {calculatePlayedPercent, playedRankCount} from '$lib/program/history';
 
     type Language = 'en' | 'es' | 'ptbr';
 
@@ -49,15 +50,10 @@
         return genreIconMap[slug] ?? '🎵';
     }
 
-    function pct(played: number, total: number): number {
-        if (!total || total <= 0) return 0;
-        return Math.round((played / total) * 100);
-    }
-
     function decadeTotals(block: { decade: string; genres: Array<{ played: number; total: number }> }) {
         const totalTracks = block.genres.reduce((sum, r) => sum + (r.total ?? 0), 0);
         const totalPlayed = block.genres.reduce((sum, r) => sum + (r.played ?? 0), 0);
-        const percent = pct(totalPlayed, totalTracks);
+        const percent = calculatePlayedPercent(totalPlayed, totalTracks);
         return {totalTracks, totalPlayed, percent};
     }
 
@@ -192,7 +188,7 @@
         const result: Record<string, number> = {};
 
         for (const p of $programHistory) {
-            result[p.key] = p.playedRanks.length;
+            result[p.key] = playedRankCount(p);
         }
 
         return result;
@@ -264,7 +260,7 @@
                         genreSlug: genre,
                         key,
                         program: p ?? null,
-                        played: p?.playedRanks.length ?? 0,
+                        played: playedRankCount(p),
                         favorites: countFavorites('DG', `${decade}|${genre}`),
                         total: p?.total ?? 40
                     };
@@ -317,7 +313,7 @@
 
 
     function playedCount(p: ProgramHistory): number {
-        return p.playedRanks.length;
+        return playedRankCount(p);
     }
 
     // function isCompleted(p: ProgramHistory): boolean {
@@ -586,7 +582,7 @@
 
                                         <span class="history-row__progress">
                 ✓ {row.played} / {row.total}
-                                            • {pct(row.played, row.total)}%
+                                            • {calculatePlayedPercent(row.played, row.total)}%
                 &nbsp;&nbsp;⭐ {row.favorites}
             </span>
 
@@ -608,7 +604,7 @@
                                                 label={`${getGenreIcon(row.genreSlug)} ${block.decade} ${toTitleCaseFromSlug(row.genreSlug)}`}
                                                 played={row.played}
                                                 total={row.total}
-                                                percent={pct(row.played, row.total)}
+                                                percent={calculatePlayedPercent(row.played, row.total)}
                                                 favorites={row.favorites}
                                                 onPlay={() => {
                                         if (row.program) resumeProgram(row.program);
@@ -649,7 +645,7 @@
                                     {@const collectionSlug = row.key.split('|')[1] ?? ''}
                                     {@const played = playedCount(row)}
                                     {@const total = row.total}
-                                    {@const percent = pct(played, total)}
+                                    {@const percent = calculatePlayedPercent(played, total)}
 
                                     <li class="history-row history-row--genre">
                                         <ProgramRow

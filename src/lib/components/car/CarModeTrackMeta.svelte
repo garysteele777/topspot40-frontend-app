@@ -4,6 +4,7 @@
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import { PROGRAM_TYPES } from '$lib/types/program';
+    import {buildProgramHistoryKey, findProgramHistoryEntry} from '$lib/program/history';
 
     export let currentTrack: LoadedTrack | null = null;
     export let tracks: LoadedTrack[] = [];
@@ -58,18 +59,12 @@
     let programTotal = tracks.length;
 
     $: {
-        const sel = $currentSelection;
-        let key: string | null = null;
-
-        if (sel?.mode === 'decade_genre') {
-            const d = sel.context?.decade;
-            const g = sel.context?.genre;
-            if (d && g) key = `DG|${d}|${g}`;
-        }
-
-        const program = key
-            ? $programHistoryStore.find(p => p.key === key)
-            : null;
+        const program = findProgramHistoryEntry(
+            $programHistoryStore,
+            $currentSelection?.mode === 'decade_genre'
+                ? buildProgramHistoryKey($currentSelection)
+                : null
+        );
 
         if (isRadioStation) {
             // Radio mode: tracks[] is not reliable
