@@ -927,21 +927,6 @@
         font-weight: 700;
     }
 
-    .radio-separator {
-        display: flex;
-        align-items: center;
-        margin: 10px 0 12px;
-        opacity: 0.9;
-    }
-
-    .radio-separator span {
-        padding: 0 8px;
-        font-size: 0.7rem;
-        color: rgba(207, 184, 124, 0.7);
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-    }
-
     .section-header-row {
         display: flex;
         align-items: center;

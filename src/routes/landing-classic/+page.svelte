@@ -283,6 +283,7 @@
         letter-spacing: 0.2px;
 
         background: linear-gradient(90deg, #a7f3d0, #ffffff);
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
 
@@ -327,6 +328,7 @@
         background: linear-gradient(90deg, #a7f3d0, #ffffff);
         background-size: 200% auto;
         background-position: 100% 0;
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
 
