@@ -1668,13 +1668,6 @@
                     collection={headerMode === 'collection' ? uiDecade : undefined}
                     mode={headerMode}
                     programType={$currentSelection.programType}
-                    languages={$currentSelection.languages ?? [$currentSelection.language]}
-                    voices={settings.voices}
-                    playbackOrder={$currentSelection.playbackOrder}
-                    voicePlayMode={settings.voicePlayMode}
-                    pauseMode={settings.pauseMode}
-                    skipPlayed={settings.skipPlayed}
-                    categoryMode="single"
                     compact={carDisplayView === 'drive-in'}
             />
         {/if}
@@ -1834,21 +1827,6 @@
         width: 100%;
         background: #050505;
         color: #fff;
-    }
-
-    .studio-placeholder h1 {
-        font-size: clamp(2.5rem, 6vw, 5rem);
-        line-height: 1;
-        margin: 0 0 1rem;
-    }
-
-    .studio-placeholder p {
-        opacity: 0.75;
-        margin-bottom: 2rem;
-    }
-
-    .studio-placeholder a {
-        color: #cfb87c;
     }
 
     .studio-shell {

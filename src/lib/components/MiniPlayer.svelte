@@ -190,10 +190,4 @@
         text-overflow: ellipsis;
     }
 
-    @media (max-width: 820px) {
-        .auto-play-control {
-            display: none;
-        }
-    }
-
 </style>

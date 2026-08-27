@@ -19,14 +19,6 @@
     export let programType: PlaybackProgramType | undefined;
 
 
-    export let languages: string[] = ['en'];
-    export let voices: string[] = ['intro'];
-
-    export let playbackOrder: import('./CarModeHeader.svelte').PlaybackOrder = 'up';
-    export let voicePlayMode: import('./CarModeHeader.svelte').VoicePlayMode = 'before';
-    export let pauseMode: import('./CarModeHeader.svelte').PauseMode = 'pause';
-    export let skipPlayed: boolean = false;
-    export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
     export let compact: boolean = false;
 
     const modeLabel = (
@@ -150,18 +142,4 @@
         opacity: 0.9;
     }
 
-    .cm-row--primary {
-        opacity: 0.95;
-    }
-
-    .cm-row--secondary {
-        opacity: 0.75;
-        font-size: 0.8rem;
-    }
-
-    .cm-accent {
-        color: #cfb87c;
-        font-weight: 600;
-        text-shadow: 0 0 4px rgba(207, 184, 124, 0.4);
-    }
 </style>

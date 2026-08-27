@@ -212,8 +212,7 @@
         box-sizing: border-box;
     }
 
-    button,
-    a {
+    button {
         font: inherit;
     }
 
@@ -226,31 +225,6 @@
         background: #0b0a07;
     }
 
-
-    .utilitybar {
-        position: absolute;
-        z-index: 30;
-        top: 88px;
-        left: clamp(16px, 3vw, 48px);
-        right: clamp(16px, 3vw, 48px);
-        display: flex;
-        gap: 10px;
-        pointer-events: none;
-    }
-
-    .utility {
-        pointer-events: auto;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        padding: 9px 13px;
-        color: #fff;
-        background: rgba(8, 8, 8, 0.76);
-        border: 1px solid rgba(245, 214, 110, 0.55);
-        border-radius: 10px;
-        text-decoration: none;
-        backdrop-filter: blur(7px);
-    }
 
     .journey {
         position: relative;
@@ -467,23 +441,6 @@
 
         .journey-art {
             object-position: center;
-        }
-
-        .utilitybar {
-            top: 74px;
-        }
-
-        .utility {
-            min-width: 44px;
-            min-height: 44px;
-        }
-
-        .utility {
-            font-size: 0;
-        }
-
-        .utility span {
-            font-size: 20px;
         }
 
         .journey-title {

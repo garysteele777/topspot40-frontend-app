@@ -880,10 +880,6 @@ goto(`/car-page?${params.toString()}`);
         font-weight: 700;
     }
 
-    .all-decades-btn {
-        grid-column: 1 / -1;
-    }
-
     .genre-section {
         margin-top: 14px;
         padding-top: 12px;
