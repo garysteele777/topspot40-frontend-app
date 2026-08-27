@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {onMount, tick} from 'svelte';
     import {fade, fly} from 'svelte/transition';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 
@@ -19,6 +20,82 @@
     let isDragging = false;
 
     let modalEl: HTMLDivElement | null = null;
+    let closeButton: HTMLButtonElement | null = null;
+    let previouslyFocusedElement: HTMLElement | null = null;
+    let wasOpen = false;
+
+    function getFocusableElements(): HTMLElement[] {
+        return modalEl
+            ? Array.from(
+                modalEl.querySelectorAll<HTMLElement>(
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                )
+            )
+            : [];
+    }
+
+    function trapFocus(event: KeyboardEvent): void {
+        const focusable = getFocusableElements();
+
+        if (!focusable.length) {
+            event.preventDefault();
+            modalEl?.focus();
+            return;
+        }
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    }
+
+    function handleKeyDown(event: KeyboardEvent): void {
+        if (!open) return;
+
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            onClose();
+        } else if (event.key === 'Tab') {
+            trapFocus(event);
+        }
+    }
+
+    async function focusModal(): Promise<void> {
+        await tick();
+        if (open) closeButton?.focus();
+    }
+
+    async function restoreFocus(): Promise<void> {
+        await tick();
+        if (!open && previouslyFocusedElement?.isConnected) {
+            previouslyFocusedElement.focus();
+        }
+        previouslyFocusedElement = null;
+    }
+
+    $: if (open && !wasOpen) {
+        wasOpen = true;
+        previouslyFocusedElement =
+            typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+        void focusModal();
+    } else if (!open && wasOpen) {
+        wasOpen = false;
+        void restoreFocus();
+    }
+
+    onMount(() => {
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => window.removeEventListener('keydown', handleKeyDown, true);
+    });
 
     /* ──────────────────────────────
        Parallax state
@@ -145,6 +222,10 @@
     <div
             bind:this={modalEl}
             class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="narration-modal-title"
+            tabindex="-1"
             transition:fly={{ y: 30, duration: 160 }}
             on:touchstart={onTouchStart}
             on:touchmove={onTouchMove}
@@ -170,7 +251,7 @@
             {/if}
 
             <div class="album-text">
-                <h2 class="track-title">{track?.trackName}</h2>
+                <h2 id="narration-modal-title" class="track-title">{track?.trackName}</h2>
                 <p class="track-artist">{track?.artistName}</p>
             </div>
         </div>
@@ -209,7 +290,7 @@
         </div>
 
         <!-- Close button -->
-        <button class="close-btn" on:click={onClose}>✕</button>
+        <button bind:this={closeButton} class="close-btn" on:click={onClose} aria-label="Close narration">✕</button>
     </div>
 {/if}
 
