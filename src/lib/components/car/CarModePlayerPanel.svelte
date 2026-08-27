@@ -14,6 +14,11 @@
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import {PROGRAM_TYPES} from '$lib/types/program';
     import {createTrackListCsv, downloadCsv} from '$lib/program/trackListCsv';
+    import {
+        buildProgramHistoryKey,
+        calculateProgramProgress,
+        isProgramRankPlayed
+    } from '$lib/program/history';
 
 
     import {
@@ -57,41 +62,23 @@
 
     let completed = 0;
     let programTotal = 0;
+    let programProgress = {completed: 0, total: 0, remaining: 0, percent: 0};
 
     $: isArtistSpotlight = $currentSelection?.mode === 'artist_spotlight';
 
     $: {
-        const sel = $currentSelection;
-        let key: string | null = null;
-
-        if (sel?.mode === 'decade_genre') {
-            const d = sel.context?.decade;
-            const g = sel.context?.genre;
-            if (d && g) key = `DG|${d}|${g}`;
-        }
-
-        if (sel?.mode === 'collection') {
-            const collection = sel.context?.collection_slug ?? sel.context?.collection;
-            const group = sel.context?.collection_group_slug ?? sel.context?.collectionCategory;
-            if (collection && group) key = `COL|${collection}|${group}`;
-        }
-
-        if (!key) {
-            completed = 0;
-            programTotal = 0;
-        } else {
-            const program = $programHistoryStore.find(p => p.key === key);
-            programTotal = tracks.length;
-            completed = program?.playedRanks.length ?? 0;
-        }
+        programProgress = calculateProgramProgress(
+            $programHistoryStore,
+            buildProgramHistoryKey($currentSelection),
+            tracks.length
+        );
+        completed = programProgress.completed;
+        programTotal = programProgress.total;
     }
 
-    $: remaining = Math.max(0, programTotal - completed);
+    $: remaining = programProgress.remaining;
 
-    $: percent =
-        programTotal > 0
-            ? (completed / programTotal) * 100
-            : 0;
+    $: percent = programProgress.percent;
 
     /* ─────────────────────────────────────────────
        Favorites logic (Decade only)
@@ -207,27 +194,11 @@
             : null;
 
     function isPlayed(rank: number): boolean {
-        const sel = $currentSelection;
-        if (!sel) return false;
-
-        let key: string | null = null;
-
-        if (sel.mode === 'decade_genre') {
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
-            if (decade && genre) key = `DG|${decade}|${genre}`;
-        }
-
-        if (sel.mode === 'collection') {
-            const collection = sel.context?.collection_slug ?? sel.context?.collection;
-            const group = sel.context?.collection_group_slug ?? sel.context?.collectionCategory;
-            if (collection && group) key = `COL|${collection}|${group}`;
-        }
-
-        if (!key) return false;
-
-        const program = $programHistoryStore.find(p => p.key === key);
-        return program?.playedRanks.includes(rank) ?? false;
+        return isProgramRankPlayed(
+            $programHistoryStore,
+            buildProgramHistoryKey($currentSelection),
+            rank
+        );
     }
 
 

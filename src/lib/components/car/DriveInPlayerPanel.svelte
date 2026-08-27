@@ -6,6 +6,7 @@
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
     import type {ProgramType} from '$lib/favorites/favorites';
+    import {buildProgramHistoryKey, isProgramRankPlayed} from '$lib/program/history';
 
     export let currentTrack: CarModeTrack | null = null;
     export let tracks: CarModeTrack[] = [];
@@ -109,31 +110,11 @@
     }
 
     function isPlayed(rank: number): boolean {
-        const selection = $currentSelection;
-        if (!selection) return false;
-
-        let key: string | null = null;
-
-        if (selection.mode === 'decade_genre') {
-            const decade = selection.context?.decade;
-            const genre = selection.context?.genre;
-            if (decade && genre) key = `DG|${decade}|${genre}`;
-        } else if (selection.mode === 'collection') {
-            const collection =
-                selection.context?.collection_slug ??
-                selection.context?.collection;
-            const group =
-                selection.context?.collection_group_slug ??
-                selection.context?.collectionCategory;
-
-            if (collection && group) key = `COL|${collection}|${group}`;
-        }
-
-        const program = key
-            ? $programHistoryStore.find(item => item.key === key)
-            : null;
-
-        return program?.playedRanks.includes(rank) ?? false;
+        return isProgramRankPlayed(
+            $programHistoryStore,
+            buildProgramHistoryKey($currentSelection),
+            rank
+        );
     }
 
     function jumpToTrack(track: CarModeTrack): void {
