@@ -79,11 +79,19 @@
 
 <header class="header">
 	<div class="logo">TopSpot40</div>
-	<div class="user-profile" bind:this={dropdownRef} on:click={() => (showDropdown = !showDropdown)}>
-		<!-- <img src="/user-avatar.png" alt="User" /> -->
-		 <img
-			src={user?.app_avatar_url || user?.spotify_profile_image || '/user-avatar.png'}
-			alt="User"/>
+	<div class="user-profile" bind:this={dropdownRef}>
+		<button
+			type="button"
+			class="profile-toggle"
+			aria-haspopup="menu"
+			aria-expanded={showDropdown}
+			on:click={() => (showDropdown = !showDropdown)}
+		>
+			<img
+				src={user?.app_avatar_url || user?.spotify_profile_image || '/user-avatar.png'}
+				alt="User"
+			/>
+		</button>
 		{#if showDropdown}
 			<DropdownMenu
 				onManageAccount={() => {
@@ -130,6 +138,12 @@
 
 	.user-profile {
 		position: relative;
+	}
+
+	.profile-toggle {
+		padding: 0;
+		border: 0;
+		background: none;
 		cursor: pointer;
 	}
 

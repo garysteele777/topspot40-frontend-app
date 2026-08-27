@@ -133,7 +133,7 @@
 
 	<section class="features">
 		<div class="features-grid">
-			<div class="feature-card" tabindex="0">
+			<div class="feature-card">
 				<div class="icon">
 					<div class="icon-wrapper">
 						<Music size={36} color="#1db954" />
@@ -142,7 +142,7 @@
 				<h3>Top 40 Rankings</h3>
 				<p>Top 40 songs ranked for every genre and decade.</p>
 			</div>
-			<div class="feature-card" tabindex="0">
+			<div class="feature-card">
 				<div class="icon">
 					<div class="icon-wrapper">
 						<Zap size={36} color="#1db954" />
@@ -151,7 +151,7 @@
 				<h3>Fast & Easy</h3>
 				<p>Explore curated Top 40 programs with rankings, context, and direct Spotify links.</p>
 			</div>
-			<div class="feature-card" tabindex="0">
+			<div class="feature-card">
 				<div class="icon">
 					<div class="icon-wrapper">	
 						<Calendar size={36} color="#1db954" />
@@ -160,7 +160,7 @@
 				<h3>Decades Reimagined</h3>
 				<p>Relive the best songs of your favorite decades with a fresh perspective.</p>
 			</div>
-			<div class="feature-card" tabindex="0">
+			<div class="feature-card">
 				<div class="icon">
 					<div class="icon-wrapper">
 						<Radio size={36} color="#1db954" />
@@ -169,7 +169,7 @@
 				<h3>AI Radio Host</h3>
 				<p>Enjoy unique insights, intros, artist stories, and transitions between songs, only on TopSpot40.</p>
 			</div>
-			<div class="feature-card" tabindex="0">
+			<div class="feature-card">
 				<div class="icon">
 					<div class="icon-wrapper">
 						<Lock size={36} color="#1db954" />
@@ -178,7 +178,7 @@
 				<h3>Spotify Companion</h3>
 				<p>Open tracks in Spotify. Spotify handles playback, advertisements, and account rules.</p>
 			</div>
-			<div class="feature-card" tabindex="0">
+			<div class="feature-card">
 				<div class="icon">
 					<div class="icon-wrapper">
 						<Lightbulb size={36} color="#1db954" />
