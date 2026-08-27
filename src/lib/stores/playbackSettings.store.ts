@@ -2,23 +2,36 @@
 
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import type { DetailLength } from '$lib/types/playback';
+import type {
+    DetailLength,
+    PauseMode,
+    PlaybackOrder,
+    VoicePart,
+    VoicePlayMode
+} from '$lib/types/playback';
+import {
+    normalizeDetailLength,
+    type PlaybackMethod
+} from '$lib/playbackPreferences';
 
-export type PlaybackMethod = 'automatic' | 'guided';
+export type {PlaybackMethod} from '$lib/playbackPreferences';
 const DETAIL_LENGTH_STORAGE_KEY = 'topspot_detail_length';
 
 function initialDetailLength(): DetailLength {
 	if (!browser) return 'short';
-	return localStorage.getItem(DETAIL_LENGTH_STORAGE_KEY) === 'long' ? 'long' : 'short';
+	return normalizeDetailLength(
+		localStorage.getItem(DETAIL_LENGTH_STORAGE_KEY),
+		'short'
+	);
 }
 
 export type PlaybackSettings = {
 	playbackMethod: PlaybackMethod;
-	playbackOrder: 'up' | 'down' | 'shuffle';
+	playbackOrder: PlaybackOrder;
 	skipPlayed: boolean;
-	pauseMode: 'pause' | 'continuous';
-	voices: ('intro' | 'detail' | 'artist')[];
-	voicePlayMode: 'before' | 'over';
+	pauseMode: PauseMode;
+	voices: VoicePart[];
+	voicePlayMode: VoicePlayMode;
 	detailLength: DetailLength;
 };
 
