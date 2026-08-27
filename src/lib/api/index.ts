@@ -9,8 +9,3 @@ export {
   loadCatalogSummary,
   toSlug
 } from './catalog';
-
-export {
-  getTrackSequencePreview,
-  getCollectionSequencePreview
-} from './preview';
