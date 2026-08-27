@@ -19,6 +19,7 @@
     import {ARTIST_ALPHABET_RANGES} from '$lib/artistSpotlights/types';
     import type {ArtistStoryInfo, ArtistTrackItem} from '$lib/artistSpotlights/types';
     import type {Language} from '$lib/types/playback';
+    import {readLanguagePreference} from '$lib/languagePreferences';
 
     let language: Language = 'en';
     let artistId: number | null = null;
@@ -32,8 +33,7 @@
     let invalidRoute = false;
 
     function readLanguage(): Language {
-        const saved = localStorage.getItem('topspot_language');
-        return saved === 'es' || saved === 'ptbr' ? saved : 'en';
+        return readLanguagePreference();
     }
 
     function browserReturnPath(): string {

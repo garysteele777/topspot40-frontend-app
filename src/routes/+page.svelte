@@ -1,6 +1,7 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
+    import {writeLanguagePreference} from '$lib/languagePreferences';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
 
@@ -66,14 +67,9 @@
         ...rotatingMessages[language]
     ];
 
-    function isLandingLanguage(value: string | null): value is LandingLanguage {
-        return value === 'en' || value === 'es' || value === 'ptbr';
-    }
-
     function setLanguage(value: LandingLanguage) {
         language = value;
-        localStorage.setItem('topspot_language', value);
-        localStorage.setItem('tts_language', value);
+        writeLanguagePreference(value);
     }
 
     function discover() {

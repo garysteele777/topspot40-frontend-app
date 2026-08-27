@@ -19,6 +19,7 @@
     import {buildMusicDocuseriesLaunchUrl} from '$lib/musicDocuseries/launchMusicDocuseries';
     import type {MusicDocuseriesCollection, MusicDocuseriesStory} from '$lib/musicDocuseries/types';
     import type {Language} from '$lib/types/playback';
+    import {readStoredLanguagePreference} from '$lib/languagePreferences';
 
     let language: Language = 'en';
     let collection: MusicDocuseriesCollection | null = null;
@@ -54,8 +55,7 @@
     }
 
     onMount(async () => {
-        const savedLanguage = localStorage.getItem('topspot_language');
-        language = savedLanguage === 'es' || savedLanguage === 'ptbr' ? savedLanguage : 'en';
+        language = readStoredLanguagePreference() ?? 'en';
         const collectionSlug = page.params.collectionSlug ?? '';
         const storySlug = page.params.storySlug ?? '';
 

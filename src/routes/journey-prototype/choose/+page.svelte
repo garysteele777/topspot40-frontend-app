@@ -3,6 +3,7 @@
     import {onMount} from 'svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
+    import {readStoredLanguagePreference} from '$lib/languagePreferences';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type ProgramChoice = 'nostalgia' | 'collections' | 'artist' | 'docuseries';
@@ -93,13 +94,9 @@
             showJourneyLayout = journeyScreen.matches;
         }
 
-        const savedLanguage = localStorage.getItem('topspot_language');
+        const savedLanguage = readStoredLanguagePreference();
 
-        if (
-            savedLanguage === 'en' ||
-            savedLanguage === 'es' ||
-            savedLanguage === 'ptbr'
-        ) {
+        if (savedLanguage) {
             language = savedLanguage;
         }
 
