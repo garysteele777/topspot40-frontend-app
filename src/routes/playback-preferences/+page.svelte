@@ -1,5 +1,6 @@
 <script lang="ts">
     import {onMount} from 'svelte';
+    import {goto} from '$app/navigation';
     import {dev} from '$app/environment';
     import {get} from 'svelte/store';
 
@@ -17,6 +18,10 @@
         PlaybackOrder,
         VoicePart
     } from '$lib/types/playback';
+    import {
+        buildCarModePreferencesReturnUrl,
+        getCarModePreferencesReturnUrl
+    } from '$lib/carmode/CarModePreferencesReturn';
 
     const initialPlaybackSettings = get(playbackSettingsStore);
 
@@ -41,8 +46,13 @@
     let skipPlayed = initialPlaybackSettings.skipPlayed;
 
     let hydrated = false;
+    let carModeReturnUrl: URL | null = null;
 
     onMount(() => {
+        carModeReturnUrl = getCarModePreferencesReturnUrl(
+            new URL(window.location.href)
+        );
+
         const savedLanguage = readStoredLanguagePreference();
 
         if (savedLanguage) {
@@ -68,6 +78,11 @@
     }
 
     function goBack() {
+        if (carModeReturnUrl) {
+            void goto(buildCarModePreferencesReturnUrl(carModeReturnUrl, language));
+            return;
+        }
+
         history.back();
     }
 </script>

@@ -28,7 +28,10 @@
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import type {ResumeState} from '$lib/utils/smartResume';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
-    import {createCarModeAutoPlay} from '$lib/carmode/CarModeAutoPlay';
+    import {
+        cancelAllCarModeAutoPlay,
+        createCarModeAutoPlay
+    } from '$lib/carmode/CarModeAutoPlay';
     import {createCarModeNavigation} from '$lib/carmode/CarModeNavigation';
     import {createCarModeNarration} from '$lib/carmode/CarModeNarration';
     import {createCarModeSpotify} from '$lib/carmode/CarModeSpotify';
@@ -70,12 +73,19 @@
 
     import {loadForSelection} from '$lib/carmode/CarMode.loader';
     import {signalTrackFinishedApi} from '$lib/api/playbackApi';
+    import {stopPlaybackApi} from '$lib/api/playbackApi';
 
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
     import {saveResumeState} from '$lib/utils/smartResume';
     import {isSafeCollectionsReturnPath} from '$lib/collections/launchCollection';
     import {isSafeArtistSpotlightsReturnPath} from '$lib/artistSpotlights/launchArtistSpotlight';
+    import {
+        buildCarModePreferencesUrl,
+        findReturnedCarModeTrack,
+        isChangedCarModePreferencesReturn,
+        isUnchangedCarModePreferencesReturn
+    } from '$lib/carmode/CarModePreferencesReturn';
 
     import {
         playbackView,
@@ -107,6 +117,7 @@
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
     let activePlayMode: 'guided' | 'auto' | null = null;
+    let preservePlaybackForPreferences = false;
 
     const AUTO_PLAY_BUFFER_SECONDS = 5;
 
@@ -1024,6 +1035,39 @@
         await autoPlay.handlePlay();
     }
 
+    function openPlaybackPreferences(): void {
+        preservePlaybackForPreferences = true;
+        void goto(buildCarModePreferencesUrl(
+            new URL(window.location.href),
+            get(currentTrack)
+        ));
+    }
+
+    async function invalidateLanguageChangedPlayback(): Promise<void> {
+        cancelAllCarModeAutoPlay();
+        autoPlay.cancel();
+        activePlayMode = null;
+        narration.abandon();
+        stopNarrationAudio();
+        stopBed();
+        guidedReady = false;
+        guidedArtistBioPlaying = false;
+        spotify.close();
+        spotify.reset();
+        stopPlaybackPolling();
+        resetNarrationPhaseState();
+        resetSpotifyStartState();
+        showNarrationModal.set(false);
+        playbackStartInFlight = false;
+        userStartedPlaybackThisSession = false;
+
+        try {
+            await stopPlaybackApi();
+        } catch {
+            // A stopped or expired backend session is already safe to replace.
+        }
+    }
+
     function handleDriveInNext(): void {
         autoPlay.handleNext();
     }
@@ -1458,6 +1502,23 @@
             'focus',
             spotify.handleReturn
         );
+        window.addEventListener('ts-next-track', handleAutoNextTrack);
+        window.addEventListener('ts-guided-track-ready', handleGuidedTrackReady);
+
+        const url = new URL(window.location.href);
+        const languageChangedReturn = isChangedCarModePreferencesReturn(url);
+        const languageUnchangedReturn = isUnchangedCarModePreferencesReturn(url);
+
+        if (languageUnchangedReturn) {
+            // The previous Car Mode instance deliberately kept its session alive.
+            // Do not reload tracks or touch browser/backend playback for this return.
+            return;
+        }
+
+        if (languageChangedReturn) {
+            await invalidateLanguageChangedPlayback();
+        }
+
         const mountedSettings = get(playbackSettingsStore);
 
         if (mountedSettings.playbackMethod === 'automatic') {
@@ -1479,11 +1540,6 @@
             isPlaying.set(false);
         }
 
-        window.addEventListener('ts-next-track', handleAutoNextTrack);
-        window.addEventListener('ts-guided-track-ready', handleGuidedTrackReady);
-
-
-        const url = new URL(window.location.href);
         const hasParams = url.searchParams.toString().length > 0;
 
         setPlaybackView(
@@ -1561,6 +1617,13 @@
             return;
         }
         await loadForSelection(sel, initialRank);
+        if (languageChangedReturn) {
+            const returnedTrack = findReturnedCarModeTrack(get(tracks), url);
+            if (returnedTrack) {
+                currentTrack.set(returnedTrack);
+                currentRank.set(returnedTrack.rank);
+            }
+        }
         playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
         isPlaying.set(false);
@@ -1607,13 +1670,19 @@
             handleGuidedTrackReady
         );
 
-        stopPlaybackPolling();
-        void clearAllPlayback();
+        if (!preservePlaybackForPreferences) {
+            autoPlay.cancel();
+            stopPlaybackPolling();
+            void clearAllPlayback();
+        }
     });
 
 </script>
 
-<PublicJourneyHeader language={$currentSelection?.language ?? 'en'}/>
+<PublicJourneyHeader
+        language={$currentSelection?.language ?? 'en'}
+        onPreferences={openPlaybackPreferences}
+/>
 
 
 <div

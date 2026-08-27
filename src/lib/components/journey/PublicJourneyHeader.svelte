@@ -3,6 +3,8 @@
     import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
 
     export let language: 'en' | 'es' | 'ptbr' = 'en';
+    export let preferencesHref = '/playback-preferences';
+    export let onPreferences: (() => void) | undefined = undefined;
 
     let aboutMenuOpen = false;
     let myMenuOpen = false;
@@ -73,6 +75,13 @@
         showContactModal = true;
     }
 
+    function handlePreferencesClick(event: MouseEvent): void {
+        if (!onPreferences) return;
+
+        event.preventDefault();
+        onPreferences();
+    }
+
     onMount(() => {
         document.addEventListener('click', handleDocumentClick);
 
@@ -138,7 +147,11 @@
                     <a role="menuitem" href="/music-journey">
                         {text[language].progress}
                     </a>
-                    <a role="menuitem" href="/playback-preferences">
+                    <a
+                            role="menuitem"
+                            href={preferencesHref}
+                            on:click={handlePreferencesClick}
+                    >
                         {text[language].preferences}
                     </a>
                 </div>
