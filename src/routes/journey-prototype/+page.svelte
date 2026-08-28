@@ -86,6 +86,10 @@
         if (savedLanguage) {
             language = savedLanguage;
             hasChosenLanguage = true;
+            void goto('/journey-prototype/choose', {
+                replaceState: true
+            });
+            return;
         }
 
         updateLayout();

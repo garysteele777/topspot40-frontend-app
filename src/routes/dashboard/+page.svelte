@@ -11,9 +11,10 @@
     export let data: DashboardData;
 
     $: displayName = data?.user?.display_name?.trim();
+    $: firstName = displayName?.split(/\s+/)[0];
 
-    function openControlCenter() {
-        goto('/options-v4');
+    function chooseExperience() {
+        goto('/journey-prototype/choose');
     }
 </script>
 
@@ -21,9 +22,10 @@
     <main class="dashboard">
         <section class="home">
             <p class="eyebrow">TopSpot40</p>
+
             <h1>
-                {displayName
-                    ? `Welcome back, ${displayName}`
+                {firstName
+                    ? `Welcome back, ${firstName}`
                     : 'Welcome back to TopSpot40'}
             </h1>
 
@@ -31,14 +33,17 @@
                 Your music. Your memories. Your station.
             </p>
 
-            <button class="control-center-button" on:click={openControlCenter}>
+            <button
+                class="control-center-button"
+                on:click={chooseExperience}
+            >
                 <SlidersHorizontal size={21} strokeWidth={1.8} />
-                Open Control Center
+                Choose Your Experience
             </button>
 
             <p class="supporting-copy">
-                Browse TopSpot40 programs, adjust your listening preferences,
-                and start your experience from the Control Center.
+                Choose from Nostalgia Programs, Collections, Artist Spotlights,
+                and Music Docuseries.
             </p>
         </section>
     </main>
@@ -53,7 +58,11 @@
     .dashboard-wrapper {
         min-height: 100vh;
         background:
-            radial-gradient(circle at 50% 10%, rgba(29, 185, 84, 0.12), transparent 32rem),
+            radial-gradient(
+                circle at 50% 10%,
+                rgba(29, 185, 84, 0.12),
+                transparent 32rem
+            ),
             #0c0d0d;
         color: #f5f5f5;
     }
