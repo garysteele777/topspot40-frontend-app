@@ -1,0 +1,163 @@
+<script lang="ts">
+    import {goto} from '$app/navigation';
+    import {onMount} from 'svelte';
+    import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
+    import {readStoredLanguagePreference} from '$lib/languagePreferences';
+    import type {Language} from '$lib/types/playback';
+
+    let language: Language = 'en';
+    let hasLanguage = false;
+
+    const copy = {
+        en: {
+            title: 'Welcome to TopSpot40',
+            description: 'A guided journey through music, memories, and stories.',
+            eyebrow: 'Music discovery through the decades',
+            hero: 'Rediscover the music that shaped your life.',
+            heroText: 'TopSpot40 brings music, memories, and the stories behind the songs together in one guided journey.',
+            free: 'Explore TopSpot40 free through December 31, 2026. No account or credit card required.',
+            start: 'Start Exploring — No Account Required',
+            heroSpotifyNote: 'TopSpot40 requires no account or credit card. A separate Spotify account is required for song playback. Spotify Free or Premium may be used.',
+            glance: 'TopSpot40 at a glance',
+            songs: 'more than 4,400 songs', programs: '64 nostalgia programs', collections: '52 curated collections', artists: 'almost 2,000 artists', languages: 'English, Spanish, and Portuguese',
+            experiences: 'Four TopSpot40 experiences',
+            nostalgia: 'Nostalgia Programs', nostalgiaText: 'Travel through decades and genres with ranked programs built around the music you remember.',
+            collectionsTitle: 'Collections Programs', collectionsText: 'Explore carefully curated musical themes, traditions, and favorites.',
+            artist: 'Artist Spotlights', artistText: 'Discover legendary artists through their music, background, and narrated stories.',
+            docuseries: 'Music Docuseries', docuseriesText: 'Follow documentary-style series about music history, people, movements, and moments.',
+            different: 'Why TopSpot40 is different',
+            differentText: 'This is more than a playlist. TopSpot40 pairs music with narrated introductions, artist stories, history, and discovery—because music can carry us back to the people, places, and moments we remember.',
+            languagesText: 'The experience is available in English, Spanish, and Portuguese.',
+            spotify: 'TopSpot40 guides the experience; Spotify provides music playback. Ads, playback behavior, and song availability depend on your Spotify plan, device, and location.',
+            phil: 'Meet Phil', philText: 'Phil is your friendly TopSpot40 tour guide, here to help make the journey through music feel welcoming, simple, and full of discovery.',
+            created: 'Why I created TopSpot40', createdText: 'I grew up with radio on an Indiana farm, where Casey Kasem’s American Top 40 made songs feel like a journey. I created TopSpot40 to bring the stories, context, and discovery back to music listening.',
+            guide: 'Complete TopSpot40 Discovery Guide', story: 'Read Gary’s complete story',
+            finalTitle: 'Your musical journey is ready.', finalText: 'Explore TopSpot40 free through December 31, 2026. No account or credit card required.'
+        },
+        es: {
+            title: 'Bienvenido a TopSpot40', description: 'Un viaje guiado por la música, los recuerdos y las historias.', eyebrow: 'Descubrimiento musical a través de las décadas', hero: 'Redescubre la música que marcó tu vida.', heroText: 'TopSpot40 reúne música, recuerdos y las historias detrás de las canciones en un viaje guiado.', free: 'Explora TopSpot40 gratis hasta el 31 de diciembre de 2026. No se requiere una cuenta ni tarjeta de crédito.', start: 'Comenzar a explorar — No se requiere cuenta', heroSpotifyNote: 'TopSpot40 no requiere una cuenta ni tarjeta de crédito. Se requiere una cuenta independiente de Spotify para reproducir las canciones. Puedes usar Spotify Free o Premium.',
+            glance: 'TopSpot40 de un vistazo', songs: 'más de 4,400 canciones', programs: '64 programas de nostalgia', collections: '52 colecciones seleccionadas', artists: 'casi 2,000 artistas', languages: 'inglés, español y portugués',
+            experiences: 'Cuatro experiencias TopSpot40', nostalgia: 'Programas de nostalgia', nostalgiaText: 'Viaja por décadas y géneros con programas clasificados basados en la música que recuerdas.', collectionsTitle: 'Programas de colecciones', collectionsText: 'Explora temas musicales, tradiciones y favoritos cuidadosamente seleccionados.', artist: 'Artistas destacados', artistText: 'Descubre artistas legendarios a través de su música, trayectoria e historias narradas.', docuseries: 'Docuseries musicales', docuseriesText: 'Sigue series de estilo documental sobre la historia, las personas, los movimientos y los momentos de la música.',
+            different: 'Por qué TopSpot40 es diferente', differentText: 'Esto es más que una lista de reproducción. TopSpot40 combina música con introducciones narradas, historias de artistas, historia y descubrimiento, porque la música puede llevarnos a las personas, lugares y momentos que recordamos.', languagesText: 'La experiencia está disponible en inglés, español y portugués.', spotify: 'TopSpot40 guía la experiencia; Spotify proporciona la reproducción musical. Los anuncios, el funcionamiento de la reproducción y la disponibilidad de las canciones dependen de tu plan de Spotify, dispositivo y ubicación.',
+            phil: 'Conoce a Phil', philText: 'Phil es tu amable guía de TopSpot40, aquí para hacer que el viaje por la música sea acogedor, sencillo y lleno de descubrimientos.', created: 'Por qué creé TopSpot40', createdText: 'Crecí escuchando la radio en una granja de Indiana, donde American Top 40 de Casey Kasem hacía que las canciones se sintieran como un viaje. Creé TopSpot40 para devolver las historias, el contexto y el descubrimiento a la escucha de música.', guide: 'Guía completa de descubrimiento de TopSpot40', story: 'Lee la historia completa de Gary', finalTitle: 'Tu viaje musical está listo.', finalText: 'Explora TopSpot40 gratis hasta el 31 de diciembre de 2026. No se requiere una cuenta ni tarjeta de crédito.'
+        },
+        ptbr: {
+            title: 'Bem-vindo ao TopSpot40', description: 'Uma jornada guiada por música, memórias e histórias.', eyebrow: 'Descoberta musical através das décadas', hero: 'Redescubra a música que marcou a sua vida.', heroText: 'O TopSpot40 reúne música, memórias e as histórias por trás das canções em uma jornada guiada.', free: 'Explore o TopSpot40 gratuitamente até 31 de dezembro de 2026. Não é necessário ter uma conta nem cartão de crédito.', start: 'Comece a explorar — Não é necessária uma conta', heroSpotifyNote: 'O TopSpot40 não exige conta nem cartão de crédito. É necessária uma conta separada do Spotify para reproduzir as músicas. Você pode usar o Spotify Free ou Premium.',
+            glance: 'TopSpot40 em resumo', songs: 'mais de 4.400 canções', programs: '64 programas de nostalgia', collections: '52 coleções selecionadas', artists: 'quase 2.000 artistas', languages: 'inglês, espanhol e português',
+            experiences: 'Quatro experiências TopSpot40', nostalgia: 'Programas de nostalgia', nostalgiaText: 'Viaje por décadas e gêneros com programas classificados baseados na música de que você se lembra.', collectionsTitle: 'Programas de coleções', collectionsText: 'Explore temas musicais, tradições e favoritos cuidadosamente selecionados.', artist: 'Destaques de artistas', artistText: 'Descubra artistas lendários por meio de sua música, trajetória e histórias narradas.', docuseries: 'Docusséries musicais', docuseriesText: 'Acompanhe séries em estilo documentário sobre a história, as pessoas, os movimentos e os momentos da música.',
+            different: 'Por que o TopSpot40 é diferente', differentText: 'Isto é mais do que uma playlist. O TopSpot40 combina música com introduções narradas, histórias de artistas, história e descoberta, porque a música pode nos levar de volta às pessoas, lugares e momentos de que nos lembramos.', languagesText: 'A experiência está disponível em inglês, espanhol e português.', spotify: 'O TopSpot40 guia a experiência; o Spotify fornece a reprodução das músicas. Anúncios, funcionamento da reprodução e disponibilidade das músicas dependem do seu plano do Spotify, dispositivo e localização.',
+            phil: 'Conheça Phil', philText: 'Phil é seu amigável guia do TopSpot40, aqui para tornar a jornada pela música acolhedora, simples e cheia de descobertas.', created: 'Por que criei o TopSpot40', createdText: 'Cresci ouvindo rádio em uma fazenda em Indiana, onde o American Top 40 de Casey Kasem fazia as canções parecerem uma jornada. Criei o TopSpot40 para trazer as histórias, o contexto e a descoberta de volta à experiência de ouvir música.', guide: 'Guia completo de descoberta do TopSpot40', story: 'Leia a história completa de Gary', finalTitle: 'Sua jornada musical está pronta.', finalText: 'Explore o TopSpot40 gratuitamente até 31 de dezembro de 2026. Não é necessário ter uma conta nem cartão de crédito.'
+        }
+    } as const;
+
+    function startExploring() {
+        goto('/journey-prototype/choose');
+    }
+
+    onMount(() => {
+        const savedLanguage = readStoredLanguagePreference();
+
+        if (!savedLanguage) {
+            void goto('/journey-prototype', {replaceState: true});
+            return;
+        }
+
+        language = savedLanguage;
+        hasLanguage = true;
+    });
+</script>
+
+<svelte:head>
+    <title>{copy[language].title}</title>
+    <meta name="description" content={copy[language].description}/>
+</svelte:head>
+
+{#if hasLanguage}
+    <div class="welcome-page">
+        <PublicJourneyHeader {language}/>
+        <main>
+            <section class="hero" aria-labelledby="welcome-title">
+                <div class="hero-image" aria-hidden="true"></div>
+                <div class="hero-content">
+                    <p class="eyebrow">{copy[language].eyebrow}</p>
+                    <h1 id="welcome-title">{copy[language].hero}</h1>
+                    <p class="hero-text">{copy[language].heroText}</p>
+                    <p class="free-message">{copy[language].free}</p>
+                    <button class="primary-action" type="button" on:click={startExploring}>{copy[language].start}</button>
+                    <p class="hero-spotify-note">{copy[language].heroSpotifyNote}</p>
+                </div>
+            </section>
+
+            <section class="content-section glance" aria-labelledby="glance-title">
+                <h2 id="glance-title">{copy[language].glance}</h2>
+                <div class="stats" role="list">
+                    {#each [copy[language].songs, copy[language].programs, copy[language].collections, copy[language].artists, copy[language].languages] as stat}
+                        <div class="stat" role="listitem">{stat}</div>
+                    {/each}
+                </div>
+            </section>
+
+            <section class="content-section" aria-labelledby="experiences-title">
+                <h2 id="experiences-title">{copy[language].experiences}</h2>
+                <div class="experience-grid">
+                    {#each [['01', copy[language].nostalgia, copy[language].nostalgiaText], ['02', copy[language].collectionsTitle, copy[language].collectionsText], ['03', copy[language].artist, copy[language].artistText], ['04', copy[language].docuseries, copy[language].docuseriesText]] as experience}
+                        <article class="experience-card"><span aria-hidden="true">{experience[0]}</span><h3>{experience[1]}</h3><p>{experience[2]}</p></article>
+                    {/each}
+                </div>
+            </section>
+
+            <section class="content-section difference" aria-labelledby="different-title">
+                <div><p class="eyebrow">TopSpot40</p><h2 id="different-title">{copy[language].different}</h2></div>
+                <div><p>{copy[language].differentText}</p><p>{copy[language].languagesText}</p><p class="spotify-note">{copy[language].spotify}</p></div>
+            </section>
+
+            <section class="content-section phil" aria-labelledby="phil-title">
+                <div class="phil-mark" aria-hidden="true">Phil</div>
+                <div><h2 id="phil-title">{copy[language].phil}</h2><p>{copy[language].philText}</p></div>
+                <!-- Integrate language-specific Phil videos here when approved video URLs are available. -->
+            </section>
+
+            <section class="content-section creator" aria-labelledby="creator-title">
+                <h2 id="creator-title">{copy[language].created}</h2>
+                <p>{copy[language].createdText}</p>
+                <div class="catalog-links"><a href="/catalog/index.html" target="_blank" rel="noopener noreferrer">{copy[language].guide}</a><a href="/catalog/about_topspot40.html" target="_blank" rel="noopener noreferrer">{copy[language].story}</a></div>
+            </section>
+
+            <section class="final-invitation" aria-labelledby="final-title">
+                <h2 id="final-title">{copy[language].finalTitle}</h2><p>{copy[language].finalText}</p>
+                <button class="primary-action" type="button" on:click={startExploring}>{copy[language].start}</button>
+            </section>
+        </main>
+    </div>
+{/if}
+
+<style>
+    :global(html), :global(body) { margin: 0; background: #0b0a07; color: #fff; font-family: Arial, sans-serif; }
+    :global(*) { box-sizing: border-box; }
+    .welcome-page { min-height: 100vh; background: #0b0a07; }
+    main { overflow: hidden; }
+    .hero { position: relative; display: grid; place-items: center; padding: clamp(44px, 6vw, 56px) 24px; isolation: isolate; }
+    .hero-image { position: absolute; z-index: -2; inset: 0; background: linear-gradient(90deg, rgba(7, 7, 5, .96) 0%, rgba(7, 7, 5, .7) 48%, rgba(7, 7, 5, .8) 100%), url('/images/journey/grand-music-library.png') center / cover; }
+    .hero-image::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, #0b0a07); }
+    .hero-content, .content-section, .final-invitation { width: min(1120px, 100%); margin: 0 auto; }
+    .hero-content { max-width: 760px; text-align: center; }
+    .eyebrow { margin: 0 0 14px; color: #f5d66e; font-size: .85rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; } h1, h2, h3 { font-family: Georgia, serif; }
+    h1 { margin-bottom: 20px; color: #f7dc82; font-size: clamp(2.6rem, 6vw, 5.2rem); line-height: 1.02; }
+    h2 { margin-bottom: 22px; color: #f7dc82; font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.1; }
+    h3 { margin-bottom: 10px; color: #fff4d1; font-size: 1.55rem; }
+    p { color: #f6efe0; font-size: clamp(1.05rem, 1.7vw, 1.25rem); line-height: 1.6; }
+    .hero-text { font-size: clamp(1.2rem, 2.3vw, 1.55rem); }.free-message { color: #dff4bb; font-weight: 700; }.hero-spotify-note { max-width: 660px; margin: 16px auto 0; color: #e8dfcb; font-size: clamp(.92rem, 1.45vw, 1rem); line-height: 1.5; }
+    .primary-action { min-height: 58px; padding: 14px 24px; color: #101008; background: #75ef4f; border: 2px solid #b7ff9c; border-radius: 999px; box-shadow: 0 0 28px rgba(78, 255, 73, .35); font: 800 clamp(1rem, 1.8vw, 1.15rem) Arial, sans-serif; cursor: pointer; }
+    .primary-action:hover { background: #93fa73; }.primary-action:focus-visible, a:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+    .content-section { padding: clamp(38px, 5vw, 60px) 24px; }.glance { text-align: center; }
+    .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }.stat { min-height: 112px; display: grid; place-items: center; padding: 18px; color: #f7dc82; background: linear-gradient(145deg, #272014, #15120d); border: 1px solid rgba(245, 214, 110, .4); border-radius: 16px; font-size: 1.08rem; font-weight: 700; line-height: 1.35; }
+    .experience-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }.experience-card { min-height: 260px; padding: 28px; background: #18140e; border: 1px solid rgba(245, 214, 110, .32); border-radius: 18px; }.experience-card span { display: block; margin-bottom: 30px; color: #e54a2e; font-weight: 900; letter-spacing: .12em; }.experience-card p { font-size: 1rem; }
+    .difference { display: grid; grid-template-columns: .9fr 1.1fr; align-items: start; gap: clamp(30px, 5vw, 72px); background: linear-gradient(115deg, #2e2110, #12100c); border-block: 1px solid rgba(245, 214, 110, .2); }.spotify-note { padding-left: 18px; border-left: 4px solid #d9aa28; color: #f7dc82; font-size: 1rem; }
+    .phil { display: grid; grid-template-columns: 125px 1fr; align-items: center; gap: 28px; }.phil-mark { width: 104px; height: 104px; display: grid; place-items: center; color: #f7dc82; background: #1c160d; border: 2px solid #8a6b24; border-radius: 50%; font: 700 1.35rem Georgia, serif; }
+    .creator { max-width: 900px; text-align: center; }.catalog-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 28px; }.catalog-links a { padding: 12px 16px; color: #f7dc82; border: 1px solid #d9aa28; border-radius: 10px; font-weight: 700; text-decoration: none; }.catalog-links a:hover { color: #101008; background: #f5d66e; }
+    .final-invitation { padding: clamp(40px, 5vw, 62px) 24px; text-align: center; }.final-invitation p { max-width: 650px; margin: 0 auto 24px; color: #dff4bb; font-weight: 700; }
+    @media (max-width: 850px) { .stats { grid-template-columns: repeat(2, 1fr); }.experience-grid { grid-template-columns: repeat(2, 1fr); }.difference { grid-template-columns: 1fr; }.phil { grid-template-columns: 1fr; text-align: center; }.phil-mark { margin: 0 auto; } }
+    @media (max-width: 520px) { .hero { padding: 42px 18px; }.content-section, .final-invitation { padding-inline: 18px; }.stats, .experience-grid { grid-template-columns: 1fr; }.stat { min-height: 76px; }.experience-card { min-height: auto; }.primary-action { width: 100%; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+</style>

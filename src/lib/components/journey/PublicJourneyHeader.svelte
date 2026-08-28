@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
+    import {onMount, tick} from 'svelte';
     import { getBackendUrl } from '$lib/config';
     import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
 
@@ -18,9 +18,12 @@
 
     let aboutMenuOpen = false;
     let myMenuOpen = false;
+    let mobileMenuOpen = false;
     let showContactModal = false;
     let aboutMenu: HTMLElement;
     let myMenu: HTMLElement;
+    let mobileMenu: HTMLElement;
+    let mobileMenuTrigger: HTMLButtonElement;
 
     const text = {
         en: {
@@ -33,7 +36,8 @@
             myTopSpot40: 'My TopSpot40',
             progress: 'My Music Journey',
             preferences: 'Playback Preferences',
-            dashboard: 'Dashboard'
+            dashboard: 'Dashboard',
+            menu: 'Menu'
         },
         es: {
             about: 'Acerca de',
@@ -45,7 +49,8 @@
             myTopSpot40: 'Mi TopSpot40',
             progress: 'Progreso de escucha',
             preferences: 'Preferencias de reproducción',
-            dashboard: 'Panel'
+            dashboard: 'Panel',
+            menu: 'Menú'
         },
         ptbr: {
             about: 'Sobre',
@@ -57,7 +62,8 @@
             myTopSpot40: 'Meu TopSpot40',
             progress: 'Progresso de escuta',
             preferences: 'Preferências de reprodução',
-            dashboard: 'Painel'
+            dashboard: 'Painel',
+            menu: 'Menu'
         }
     };
 
@@ -71,6 +77,10 @@
         if (myMenu && !myMenu.contains(target)) {
             myMenuOpen = false;
         }
+
+        if (mobileMenu && !mobileMenu.contains(target)) {
+            mobileMenuOpen = false;
+        }
     }
 
     function toggleAboutMenu() {
@@ -83,8 +93,23 @@
         aboutMenuOpen = false;
     }
 
+    async function handleDocumentKeydown(event: KeyboardEvent) {
+        if (event.key !== 'Escape' || !mobileMenuOpen) return;
+
+        mobileMenuOpen = false;
+        await tick();
+        mobileMenuTrigger?.focus();
+    }
+
+    function toggleMobileMenu() {
+        mobileMenuOpen = !mobileMenuOpen;
+        aboutMenuOpen = false;
+        myMenuOpen = false;
+    }
+
     function openContactModal() {
         aboutMenuOpen = false;
+        mobileMenuOpen = false;
         showContactModal = true;
     }
 
@@ -117,9 +142,11 @@ async function loadAuthenticatedUser() {
     onMount(() => {
         void loadAuthenticatedUser();
         document.addEventListener('click', handleDocumentClick);
+        document.addEventListener('keydown', handleDocumentKeydown);
 
         return () => {
             document.removeEventListener('click', handleDocumentClick);
+            document.removeEventListener('keydown', handleDocumentKeydown);
         };
     });
 </script>
@@ -130,7 +157,7 @@ async function loadAuthenticatedUser() {
         <span>TopSpot<span class="brand-number">40</span></span>
     </a>
 
-    <nav aria-label="TopSpot40 navigation">
+    <nav class="desktop-nav" aria-label="TopSpot40 navigation">
         <div class="my-menu" bind:this={aboutMenu}>
             <button
                     class="my-menu-trigger"
@@ -219,6 +246,50 @@ async function loadAuthenticatedUser() {
             {/if}
         {/if}
     </nav>
+
+    <div class="mobile-menu" bind:this={mobileMenu}>
+        <button
+                class="mobile-menu-trigger"
+                type="button"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-journey-navigation"
+                bind:this={mobileMenuTrigger}
+                on:click|stopPropagation={toggleMobileMenu}
+        >
+            {text[language].menu}
+            <span aria-hidden="true">☰</span>
+        </button>
+
+        {#if mobileMenuOpen}
+            <nav id="mobile-journey-navigation" class="mobile-menu-panel" aria-label="TopSpot40 navigation">
+                <div class="mobile-primary-actions">
+                    <details>
+                        <summary>{text[language].about}</summary>
+                        <a href="/catalog/index.html">{text[language].discover}</a>
+                        <a href="/about">{text[language].aboutTopSpot40}</a>
+                        <button type="button" on:click={openContactModal}>{text[language].contact}</button>
+                    </details>
+
+                    <details>
+                        <summary>{text[language].myTopSpot40}</summary>
+                        <a href="/music-journey">{text[language].progress}</a>
+                        <a href={preferencesHref} on:click={handlePreferencesClick}>{text[language].preferences}</a>
+                    </details>
+
+                    {#if authChecked}
+                        {#if user}
+                            <a class="mobile-account-link" href="/dashboard">{text[language].dashboard}</a>
+                        {:else}
+                            <div class="mobile-account-actions">
+                                <a class="mobile-signin" href="/signin">{text[language].signIn}</a>
+                                <a class="mobile-signup" href="/signup-official">{text[language].signUp}</a>
+                            </div>
+                        {/if}
+                    {/if}
+                </div>
+            </nav>
+        {/if}
+    </div>
 </header>
 
 <div class="contact-modal-host">
@@ -380,6 +451,10 @@ async function loadAuthenticatedUser() {
         object-fit: cover;
     }
 
+    .mobile-menu {
+        display: none;
+    }
+
     @media (max-width: 820px) {
         .topbar {
             min-height: 62px;
@@ -413,8 +488,151 @@ async function loadAuthenticatedUser() {
     }
 
     @media (max-width: 600px) {
-        .brand > span {
+        .topbar {
+            min-height: 58px;
+            gap: 12px;
+            padding: 8px 14px;
+        }
+
+        .brand {
+            min-width: 0;
+            font-size: 20px;
+        }
+
+        .brand img {
+            width: 36px;
+            height: 36px;
+        }
+
+        .desktop-nav {
             display: none;
+        }
+
+        .mobile-menu {
+            position: relative;
+            display: block;
+            flex: 0 0 auto;
+        }
+
+        .mobile-menu-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 8px 12px;
+            color: #fff;
+            background: #171717;
+            border: 1px solid rgba(245, 214, 110, 0.7);
+            border-radius: 10px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .mobile-menu-trigger:hover,
+        .mobile-menu-trigger:focus-visible {
+            color: #f5d66e;
+            outline: 3px solid #fff;
+            outline-offset: 3px;
+        }
+
+        .mobile-menu-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+            position: absolute;
+            z-index: 50;
+            top: calc(100% + 8px);
+            right: 0;
+            width: min(320px, calc(100vw - 28px));
+            padding: 8px;
+            box-sizing: border-box;
+            background: #171717;
+            border: 1px solid rgba(245, 214, 110, 0.7);
+            border-radius: 12px;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.62);
+        }
+
+        .mobile-primary-actions,
+        .mobile-account-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+        }
+
+        .mobile-primary-actions {
+            width: 100%;
+        }
+
+        .mobile-menu-panel details {
+            border-bottom: 1px solid rgba(245, 214, 110, 0.24);
+        }
+
+        .mobile-menu-panel summary,
+        .mobile-menu-panel a,
+        .mobile-menu-panel button {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-height: 44px;
+            padding: 11px 12px;
+            box-sizing: border-box;
+            color: #fff;
+            background: transparent;
+            border: 0;
+            border-radius: 8px;
+            font: inherit;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+        .mobile-menu-panel summary {
+            color: #f5d66e;
+            font-weight: 800;
+            list-style-position: inside;
+        }
+
+        .mobile-menu-panel a:hover,
+        .mobile-menu-panel a:focus-visible,
+        .mobile-menu-panel button:hover,
+        .mobile-menu-panel button:focus-visible,
+        .mobile-menu-panel summary:focus-visible {
+            color: #0d180d;
+            background: #75ef4f;
+            outline: 3px solid #fff;
+            outline-offset: 2px;
+        }
+
+        .mobile-account-actions { padding-top: 8px; }
+
+        .mobile-menu-panel .mobile-signin,
+        .mobile-menu-panel .mobile-signup,
+        .mobile-menu-panel .mobile-account-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .mobile-menu-panel .mobile-signin {
+            border: 1px solid rgba(245, 214, 110, 0.7);
+        }
+
+        .mobile-menu-panel .mobile-signup {
+            color: #f5d66e;
+            border: 2px solid #d9aa28;
+        }
+
+        .mobile-menu-panel .mobile-account-link {
+            margin-top: 8px;
+            color: #f5d66e;
+            border: 1px solid rgba(245, 214, 110, 0.7);
         }
     }
 
