@@ -124,9 +124,6 @@
                     alt="Four TopSpot40 arches featuring a jukebox, record library, spotlight microphone, and documentary projector"
             />
             <div class="shade" aria-hidden="true"></div>
-            <div class="utilitybar">
-                <a class="utility" href="/journey-prototype"><span aria-hidden="true">←</span>{text[language].back}</a>
-            </div>
             <section class="journey-title"><h1>{text[language].title}</h1>
                 <p>{text[language].instruction}</p></section>
             <div class="choice-layer">
@@ -144,17 +141,6 @@
         </main>
     {:else}
         <main class="mobile-page">
-            <div class="mobile-utilitybar">
-                <a class="utility" href="/journey-prototype">
-                    <span aria-hidden="true">←</span>
-                    {text[language].back}
-                </a>
-                <a class="utility" href="/">
-                    <span aria-hidden="true">⌂</span>
-                    {text[language].home}
-                </a>
-            </div>
-
             <section class="mobile-card">
                 <img src="/old-dog-icon.png" alt="" class="mobile-logo"/>
                 <h1>{text[language].title}</h1>
@@ -205,9 +191,9 @@
         box-sizing: border-box;
     }
 
-    button, a {
-        font: inherit;
-    }
+button {
+    font: inherit;
+}
 
     button {
         cursor: pointer;
@@ -246,28 +232,6 @@
         z-index: 2;
         pointer-events: none;
         background: linear-gradient(to bottom, rgba(0, 0, 0, .42), transparent 27%, transparent 70%, rgba(0, 0, 0, .58));
-    }
-
-    .utilitybar {
-        position: absolute;
-        z-index: 10;
-        top: 20px;
-        left: 3%;
-        display: flex;
-        gap: 12px;
-    }
-
-    .utility {
-        display: inline-flex;
-        gap: 7px;
-        padding: 10px 16px;
-        color: #fff;
-        background: rgba(8, 6, 3, .78);
-        border: 1px solid rgba(235, 193, 83, .62);
-        border-radius: 14px;
-        text-decoration: none;
-        font-weight: 700;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, .55);
     }
 
     .journey-title {
@@ -425,14 +389,6 @@
     background:
         radial-gradient(circle at 25% 15%, #4b2f13, transparent 38%),
         #100d09;
-}
-
-.mobile-utilitybar {
-    position: absolute;
-    top: 74px;
-    left: 14px;
-    display: flex;
-    gap: 10px;
 }
 
 .mobile-card {
