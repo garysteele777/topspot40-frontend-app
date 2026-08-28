@@ -1,10 +1,20 @@
 <script lang="ts">
     import {onMount} from 'svelte';
+    import { getBackendUrl } from '$lib/config';
     import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
 
     export let language: 'en' | 'es' | 'ptbr' = 'en';
     export let preferencesHref = '/playback-preferences';
     export let onPreferences: (() => void) | undefined = undefined;
+
+    type HeaderUser = {
+        display_name?: string | null;
+        app_avatar_url?: string | null;
+        spotify_profile_image?: string | null;
+    };
+
+    let user: HeaderUser | null = null;
+    let authChecked = false;
 
     let aboutMenuOpen = false;
     let myMenuOpen = false;
@@ -22,7 +32,8 @@
             signUp: 'Sign Up',
             myTopSpot40: 'My TopSpot40',
             progress: 'My Music Journey',
-            preferences: 'Playback Preferences'
+            preferences: 'Playback Preferences',
+            dashboard: 'Dashboard'
         },
         es: {
             about: 'Acerca de',
@@ -33,7 +44,8 @@
             signUp: 'Registrarse',
             myTopSpot40: 'Mi TopSpot40',
             progress: 'Progreso de escucha',
-            preferences: 'Preferencias de reproducción'
+            preferences: 'Preferencias de reproducción',
+            dashboard: 'Panel'
         },
         ptbr: {
             about: 'Sobre',
@@ -44,7 +56,8 @@
             signUp: 'Cadastrar',
             myTopSpot40: 'Meu TopSpot40',
             progress: 'Progresso de escuta',
-            preferences: 'Preferências de reprodução'
+            preferences: 'Preferências de reprodução',
+            dashboard: 'Painel'
         }
     };
 
@@ -82,7 +95,27 @@
         onPreferences();
     }
 
+async function loadAuthenticatedUser() {
+    try {
+        const response = await fetch(
+            `${getBackendUrl()}/api/auth/me`,
+            {
+                credentials: 'include'
+            }
+        );
+
+        if (response.ok) {
+            user = (await response.json()) as HeaderUser;
+        }
+    } catch {
+        user = null;
+    } finally {
+        authChecked = true;
+    }
+}
+
     onMount(() => {
+        void loadAuthenticatedUser();
         document.addEventListener('click', handleDocumentClick);
 
         return () => {
@@ -158,8 +191,33 @@
             {/if}
         </div>
 
-        <a class="secondary-link signin" href="/signin">{text[language].signIn}</a>
-        <a class="signup" href="/signup-official">{text[language].signUp}</a>
+        {#if authChecked}
+            {#if user}
+                <a class="secondary-link signin" href="/dashboard">
+                    {text[language].dashboard}
+                </a>
+
+                <a
+                    class="profile-link"
+                    href="/dashboard"
+                    aria-label={text[language].dashboard}
+                >
+                    <img
+                        src={user.app_avatar_url ||
+                            user.spotify_profile_image ||
+                            '/old-dog-icon.png'}
+                        alt=""
+                    />
+                </a>
+            {:else}
+                <a class="secondary-link signin" href="/signin">
+                    {text[language].signIn}
+                </a>
+                <a class="signup" href="/signup-official">
+                    {text[language].signUp}
+                </a>
+            {/if}
+        {/if}
     </nav>
 </header>
 
@@ -301,6 +359,25 @@
     .contact-modal-host {
         position: relative;
         z-index: 10000;
+    }
+
+    .profile-link {
+        display: inline-flex;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        overflow: hidden;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #1db954;
+        border-radius: 50%;
+        background: #101010;
+    }
+
+    .profile-link img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     @media (max-width: 820px) {
