@@ -2,6 +2,7 @@
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
     import {writeLanguagePreference} from '$lib/languagePreferences';
+    import { getBackendUrl } from '$lib/config';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
 
@@ -87,9 +88,40 @@
         goto('/journey-prototype');
     }
 
-    onMount(() => {
-        goto('/journey-prototype', {replaceState: true});
-    });
+onMount(() => {
+    let cancelled = false;
+
+    async function routeVisitor() {
+        let destination = '/journey-prototype';
+
+        try {
+            const response = await fetch(
+                `${getBackendUrl()}/api/auth/me`,
+                {
+                    credentials: 'include'
+                }
+            );
+
+            if (response.ok) {
+                destination = '/dashboard';
+            }
+        } catch {
+            destination = '/journey-prototype';
+        }
+
+        if (!cancelled) {
+            await goto(destination, {
+                replaceState: true
+            });
+        }
+    }
+
+    void routeVisitor();
+
+    return () => {
+        cancelled = true;
+    };
+});
 </script>
 
 <main class="page">
