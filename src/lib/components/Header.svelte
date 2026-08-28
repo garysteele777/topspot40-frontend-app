@@ -88,7 +88,7 @@
 			on:click={() => (showDropdown = !showDropdown)}
 		>
 			<img
-				src={user?.app_avatar_url || user?.spotify_profile_image || '/user-avatar.png'}
+				src={user?.app_avatar_url || user?.spotify_profile_image || '/old-dog-icon.png'}
 				alt="User"
 			/>
 		</button>
