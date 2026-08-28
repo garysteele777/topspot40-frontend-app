@@ -2,17 +2,30 @@
     import { goto } from '$app/navigation';
     import { SlidersHorizontal } from 'lucide-svelte';
 
+    type DashboardData = {
+        user: {
+            display_name?: string | null;
+        } | null;
+    };
+
+    export let data: DashboardData;
+
+    $: displayName = data?.user?.display_name?.trim();
+
     function openControlCenter() {
         goto('/options-v4');
     }
-
 </script>
 
 <div class="dashboard-wrapper">
     <main class="dashboard">
         <section class="home">
             <p class="eyebrow">TopSpot40</p>
-            <h1>Welcome to TopSpot40</h1>
+            <h1>
+                {displayName
+                    ? `Welcome back, ${displayName}`
+                    : 'Welcome back to TopSpot40'}
+            </h1>
 
             <p class="tagline">
                 Your music. Your memories. Your station.
