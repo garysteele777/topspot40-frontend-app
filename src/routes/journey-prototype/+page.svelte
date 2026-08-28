@@ -54,7 +54,7 @@
     }
 
     function performContinueJourney() {
-        goto('/journey-prototype/choose');
+        goto('/welcome');
     }
 
     const selectionContinue = createSingleChoiceContinue({
@@ -86,7 +86,7 @@
         if (savedLanguage) {
             language = savedLanguage;
             hasChosenLanguage = true;
-            void goto('/journey-prototype/choose', {
+            void goto('/welcome', {
                 replaceState: true
             });
             return;
