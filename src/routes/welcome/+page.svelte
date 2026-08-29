@@ -133,7 +133,7 @@
             <section class="content-section creator" aria-labelledby="creator-title">
                 <h2 id="creator-title">{copy[language].created}</h2>
                 <p>{copy[language].createdText}</p>
-                <div class="catalog-links"><a href="/catalog/index.html" target="_blank" rel="noopener noreferrer">{copy[language].guide}</a><a href="/catalog/about_topspot40.html" target="_blank" rel="noopener noreferrer">{copy[language].story}</a></div>
+                <div class="catalog-links"><a href="/discovery-guide">{copy[language].guide}</a><a href="/garys-story">{copy[language].story}</a></div>
             </section>
 
             <section class="final-invitation" aria-labelledby="final-title">

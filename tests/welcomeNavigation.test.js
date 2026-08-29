@@ -21,13 +21,16 @@ test('welcome requires a stored language and its primary action opens experience
     assert.match(welcomePage, /<PublicJourneyHeader \{language\}\/>/);
 });
 
-test('welcome keeps the localized rediscovery headlines and safe catalog links', async () => {
+test('welcome keeps the localized rediscovery headlines and internal information-page links', async () => {
     const welcomePage = await source('../src/routes/welcome/+page.svelte');
 
     assert.match(welcomePage, /Rediscover the music that shaped your life\./);
     assert.match(welcomePage, /Redescubre la música que marcó tu vida\./);
     assert.match(welcomePage, /Redescubra a música que marcou a sua vida\./);
-    assert.equal((welcomePage.match(/target="_blank" rel="noopener noreferrer"/g) ?? []).length, 2);
+    assert.match(welcomePage, /href="\/discovery-guide">\{copy\[language\]\.guide\}<\/a>/);
+    assert.match(welcomePage, /href="\/garys-story">\{copy\[language\]\.story\}<\/a>/);
+    assert.doesNotMatch(welcomePage, /target="_blank"/);
+    assert.doesNotMatch(welcomePage, /\/catalog\/(index|about_topspot40)\.html/);
 });
 
 test('welcome repeats the no-account-or-credit-card access message in each language', async () => {

@@ -27,6 +27,8 @@
 
     const text = {
         en: {
+            home: 'TopSpot40 home',
+            navigation: 'TopSpot40 navigation',
             about: 'About',
             discover: 'Discover TopSpot40',
             aboutTopSpot40: 'About TopSpot40',
@@ -40,6 +42,8 @@
             menu: 'Menu'
         },
         es: {
+            home: 'Inicio de TopSpot40',
+            navigation: 'Navegación de TopSpot40',
             about: 'Acerca de',
             discover: 'Descubrir TopSpot40',
             aboutTopSpot40: 'Acerca de TopSpot40',
@@ -53,6 +57,8 @@
             menu: 'Menú'
         },
         ptbr: {
+            home: 'Início do TopSpot40',
+            navigation: 'Navegação do TopSpot40',
             about: 'Sobre',
             discover: 'Descobrir TopSpot40',
             aboutTopSpot40: 'Sobre o TopSpot40',
@@ -152,12 +158,12 @@ async function loadAuthenticatedUser() {
 </script>
 
 <header class="topbar">
-    <a class="brand" href="/" aria-label="TopSpot40 home">
+    <a class="brand" href="/" aria-label={text[language].home}>
         <img src="/old-dog-icon.png" alt=""/>
         <span>TopSpot<span class="brand-number">40</span></span>
     </a>
 
-    <nav class="desktop-nav" aria-label="TopSpot40 navigation">
+    <nav class="desktop-nav" aria-label={text[language].navigation}>
         <div class="my-menu" bind:this={aboutMenu}>
             <button
                     class="my-menu-trigger"
@@ -261,7 +267,7 @@ async function loadAuthenticatedUser() {
         </button>
 
         {#if mobileMenuOpen}
-            <nav id="mobile-journey-navigation" class="mobile-menu-panel" aria-label="TopSpot40 navigation">
+            <nav id="mobile-journey-navigation" class="mobile-menu-panel" aria-label={text[language].navigation}>
                 <div class="mobile-primary-actions">
                     <details>
                         <summary>{text[language].about}</summary>
