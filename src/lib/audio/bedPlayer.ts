@@ -4,7 +4,11 @@ let bedAudio: HTMLAudioElement | null = null;
 let currentBedUrl: string | null = null;
 let bedStartInFlight = false;
 let bedFadeTargetReached = false;
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+let bedAudioContext: AudioContext | null = null;
+let bedGainNode: GainNode | null = null;
+let bedMediaSource: MediaElementAudioSourceNode | null = null;
+let bedMediaSourceAudio: HTMLAudioElement | null = null;
+const API_BASE = import.meta.env?.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 const BED_PLAY_TIMEOUT_MS = 3000;
 const BED_PLAY_TIMEOUT_MESSAGE = 'bed audio play() timeout';
 const SILENT_AUDIO_DATA_URI =
@@ -102,6 +106,60 @@ function sendBedDiagnostic(event: string, state?: BedDiagnosticState): void {
     });
 }
 
+/**
+ * The iOS media element ignores volume for some remote audio streams. Keep the
+ * element at full volume when it is routed through Web Audio and control its
+ * level exclusively with this gain node instead.
+ */
+function usesWebAudioGain(audio: HTMLAudioElement): boolean {
+    return bedGainNode !== null && bedMediaSourceAudio === audio;
+}
+
+function setBedLevel(audio: HTMLAudioElement, level: number): void {
+    if (usesWebAudioGain(audio)) {
+        audio.volume = 1;
+        bedGainNode!.gain.value = level;
+        return;
+    }
+
+    audio.volume = level;
+}
+
+function bedLevel(audio: HTMLAudioElement): number {
+    return usesWebAudioGain(audio) ? bedGainNode!.gain.value : audio.volume;
+}
+
+function disconnectBedAudioSource(audio: HTMLAudioElement): void {
+    if (bedMediaSourceAudio !== audio) return;
+
+    bedMediaSource?.disconnect();
+    bedMediaSource = null;
+    bedMediaSourceAudio = null;
+}
+
+function connectBedAudioSource(audio: HTMLAudioElement): void {
+    if (!bedAudioContext || !bedGainNode || bedMediaSourceAudio === audio) return;
+
+    // One MediaElementSourceNode may be created for an element. Replacement
+    // elements get their own node, while the prior node is detached first.
+    if (bedMediaSourceAudio) {
+        disconnectBedAudioSource(bedMediaSourceAudio);
+    }
+
+    try {
+        bedMediaSource = bedAudioContext.createMediaElementSource(audio);
+        bedMediaSource.connect(bedGainNode);
+        bedMediaSourceAudio = audio;
+        audio.volume = 1;
+    } catch (err) {
+        // Safari/Web Audio is optional: retain HTMLMediaElement.volume as the
+        // working fallback if a graph cannot be created for this element.
+        console.warn('Bed Web Audio connection failed; using element volume:', err);
+        bedMediaSource = null;
+        bedMediaSourceAudio = null;
+    }
+}
+
 export function isBedPlaying(): boolean {
     return currentBedUrl !== null && bedAudio !== null && !bedAudio.paused;
 }
@@ -137,8 +195,24 @@ export async function unlockBedAudio(): Promise<void> {
     }
 
     try {
+        if (!bedAudioContext) {
+            const AudioContextConstructor = window.AudioContext;
+            if (AudioContextConstructor) {
+                bedAudioContext = new AudioContextConstructor();
+                bedGainNode = bedAudioContext.createGain();
+                bedGainNode.gain.value = 0;
+                bedGainNode.connect(bedAudioContext.destination);
+            }
+        }
+
+        if (bedAudioContext?.state !== 'running') {
+            await bedAudioContext?.resume();
+        }
+
+        connectBedAudioSource(bedAudio);
         bedAudio.muted = true;
         bedAudio.setAttribute('playsinline', '');
+        bedAudio.crossOrigin = 'anonymous';
         bedAudio.src = SILENT_AUDIO_DATA_URI;
         await bedAudio.play();
         bedAudio.pause();
@@ -178,6 +252,7 @@ export async function startBedUrl(url: string): Promise<void> {
         bedAudio.pause();
         bedAudio.currentTime = 0;
         bedAudio.src = '';
+        disconnectBedAudioSource(bedAudio);
         bedAudio = null;
         currentBedUrl = null;
     }
@@ -190,9 +265,13 @@ export async function startBedUrl(url: string): Promise<void> {
     currentBedUrl = url;
     bedAudio = bedAudio ?? new Audio();
     bedAudio.muted = false;
+    // Supabase bed URLs need CORS permission before src is set in order to be
+    // usable by createMediaElementSource on iOS and other Web Audio browsers.
+    bedAudio.crossOrigin = 'anonymous';
     bedAudio.src = url;
     bedAudio.loop = true;
-    bedAudio.volume = 0;           // start silent
+    connectBedAudioSource(bedAudio);
+    setBedLevel(bedAudio, 0);      // start silent
     bedAudio.preload = 'auto';
     bedAudio.setAttribute('playsinline', '');
     bedFadeTargetReached = false;
@@ -265,20 +344,21 @@ export async function startBedUrl(url: string): Promise<void> {
     const step = 0.02;
     let fadeAudibleSent = false;
 
+    const audioRef = bedAudio;
     const fadeIn = setInterval(() => {
-        if (!bedAudio) return clearInterval(fadeIn);
+        if (bedAudio !== audioRef) return clearInterval(fadeIn);
 
-        if (bedAudio.volume < targetVolume) {
-            bedAudio.volume = Math.min(targetVolume, bedAudio.volume + step);
+        if (bedLevel(audioRef) < targetVolume) {
+            setBedLevel(audioRef, Math.min(targetVolume, bedLevel(audioRef) + step));
 
-            if (!fadeAudibleSent && bedAudio.volume > 0) {
+            if (!fadeAudibleSent && bedLevel(audioRef) > 0) {
                 fadeAudibleSent = true;
-                sendBedDiagnostic('bed fade audible', audioState(bedAudio));
+                sendBedDiagnostic('bed fade audible', audioState(audioRef));
             }
         } else {
             if (!bedFadeTargetReached) {
                 bedFadeTargetReached = true;
-                sendBedDiagnostic('bed fade target reached', audioState(bedAudio));
+                sendBedDiagnostic('bed fade target reached', audioState(audioRef));
             }
             clearInterval(fadeIn);
         }
@@ -303,14 +383,15 @@ export function stopBed(): void {
     const fadeOut = setInterval(() => {
         if (!audioRef) return clearInterval(fadeOut);
 
-        if (audioRef.volume > 0.02) {
-            audioRef.volume = Math.max(0, audioRef.volume - step);
+        if (bedLevel(audioRef) > 0.02) {
+            setBedLevel(audioRef, Math.max(0, bedLevel(audioRef) - step));
         } else {
             clearInterval(fadeOut);
 
             audioRef.pause();
             audioRef.currentTime = 0;
             audioRef.src = '';
+            disconnectBedAudioSource(audioRef);
 
             if (bedAudio === audioRef) {
                 bedAudio = null;
