@@ -58,3 +58,22 @@ test('welcome separates TopSpot40 access from Spotify playback in each language'
 
     assert.match(welcomePage, /class="primary-action"[\s\S]*?<\/button>\s*<p class="hero-spotify-note">\{copy\[language\]\.heroSpotifyNote\}<\/p>/);
 });
+
+test('welcome embeds the approved localized Phil videos with privacy-preserving playback', async () => {
+    const welcomePage = await source('../src/routes/welcome/+page.svelte');
+
+    for (const [language, id, title] of [
+        ['en', 'yipWQbKHiME', 'Meet Phil — Your Guide to TopSpot40'],
+        ['es', 'WmatRTwhi84', 'Conoce a Phil — Tu Guía de TopSpot40'],
+        ['ptbr', 'RHie47DcfKY', 'Conheça o Phil — Seu Guia do TopSpot40']
+    ]) {
+        assert.match(welcomePage, new RegExp(`${language}: \\{id: '${id}', title: '${title}'\\}`));
+    }
+
+    assert.match(welcomePage, /src=\{`https:\/\/www\.youtube-nocookie\.com\/embed\/\$\{philVideos\[language\]\.id\}`\}/);
+    assert.match(welcomePage, /title=\{philVideos\[language\]\.title\}/);
+    assert.match(welcomePage, /loading="lazy"/);
+    assert.match(welcomePage, /allow="encrypted-media; picture-in-picture"/);
+    assert.match(welcomePage, /allowfullscreen/);
+    assert.doesNotMatch(welcomePage, /autoplay/i);
+});
