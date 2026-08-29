@@ -50,6 +50,12 @@
         }
     } as const;
 
+    const philVideos: Record<Language, {id: string; title: string}> = {
+        en: {id: 'yipWQbKHiME', title: 'Meet Phil — Your Guide to TopSpot40'},
+        es: {id: 'WmatRTwhi84', title: 'Conoce a Phil — Tu Guía de TopSpot40'},
+        ptbr: {id: 'RHie47DcfKY', title: 'Conheça o Phil — Seu Guia do TopSpot40'}
+    };
+
     function startExploring() {
         goto('/journey-prototype/choose');
     }
@@ -112,9 +118,16 @@
             </section>
 
             <section class="content-section phil" aria-labelledby="phil-title">
-                <div class="phil-mark" aria-hidden="true">Phil</div>
                 <div><h2 id="phil-title">{copy[language].phil}</h2><p>{copy[language].philText}</p></div>
-                <!-- Integrate language-specific Phil videos here when approved video URLs are available. -->
+                <div class="phil-video">
+                    <iframe
+                        src={`https://www.youtube-nocookie.com/embed/${philVideos[language].id}`}
+                        title={philVideos[language].title}
+                        loading="lazy"
+                        allow="encrypted-media; picture-in-picture"
+                        allowfullscreen
+                    ></iframe>
+                </div>
             </section>
 
             <section class="content-section creator" aria-labelledby="creator-title">
@@ -154,10 +167,10 @@
     .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }.stat { min-height: 112px; display: grid; place-items: center; padding: 18px; color: #f7dc82; background: linear-gradient(145deg, #272014, #15120d); border: 1px solid rgba(245, 214, 110, .4); border-radius: 16px; font-size: 1.08rem; font-weight: 700; line-height: 1.35; }
     .experience-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }.experience-card { min-height: 260px; padding: 28px; background: #18140e; border: 1px solid rgba(245, 214, 110, .32); border-radius: 18px; }.experience-card span { display: block; margin-bottom: 30px; color: #e54a2e; font-weight: 900; letter-spacing: .12em; }.experience-card p { font-size: 1rem; }
     .difference { display: grid; grid-template-columns: .9fr 1.1fr; align-items: start; gap: clamp(30px, 5vw, 72px); background: linear-gradient(115deg, #2e2110, #12100c); border-block: 1px solid rgba(245, 214, 110, .2); }.spotify-note { padding-left: 18px; border-left: 4px solid #d9aa28; color: #f7dc82; font-size: 1rem; }
-    .phil { display: grid; grid-template-columns: 125px 1fr; align-items: center; gap: 28px; }.phil-mark { width: 104px; height: 104px; display: grid; place-items: center; color: #f7dc82; background: #1c160d; border: 2px solid #8a6b24; border-radius: 50%; font: 700 1.35rem Georgia, serif; }
+    .phil { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: clamp(24px, 4vw, 48px); }.phil-video { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #1c160d; border: 2px solid #8a6b24; border-radius: 14px; box-shadow: 0 12px 30px rgba(0, 0, 0, .35); }.phil-video iframe { display: block; width: 100%; height: 100%; border: 0; }
     .creator { max-width: 900px; text-align: center; }.catalog-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 28px; }.catalog-links a { padding: 12px 16px; color: #f7dc82; border: 1px solid #d9aa28; border-radius: 10px; font-weight: 700; text-decoration: none; }.catalog-links a:hover { color: #101008; background: #f5d66e; }
     .final-invitation { padding: clamp(40px, 5vw, 62px) 24px; text-align: center; }.final-invitation p { max-width: 650px; margin: 0 auto 24px; color: #dff4bb; font-weight: 700; }
-    @media (max-width: 850px) { .stats { grid-template-columns: repeat(2, 1fr); }.experience-grid { grid-template-columns: repeat(2, 1fr); }.difference { grid-template-columns: 1fr; }.phil { grid-template-columns: 1fr; text-align: center; }.phil-mark { margin: 0 auto; } }
+    @media (max-width: 850px) { .stats { grid-template-columns: repeat(2, 1fr); }.experience-grid { grid-template-columns: repeat(2, 1fr); }.difference { grid-template-columns: 1fr; }.phil { grid-template-columns: 1fr; text-align: center; } }
     @media (max-width: 520px) { .hero { padding: 42px 18px; }.content-section, .final-invitation { padding-inline: 18px; }.stats, .experience-grid { grid-template-columns: 1fr; }.stat { min-height: 76px; }.experience-card { min-height: auto; }.primary-action { width: 100%; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
 </style>
