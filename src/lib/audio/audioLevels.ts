@@ -5,4 +5,4 @@
  * Values must remain between 0 and 1.
  */
 export const NARRATION_VOLUME = 0.95;
-export const BED_VOLUME = 0.08;
+export const BED_VOLUME = 0.04;
