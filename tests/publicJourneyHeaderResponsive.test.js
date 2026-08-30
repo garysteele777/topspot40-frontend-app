@@ -45,6 +45,67 @@ test('Escape closes the mobile menu and returns focus to its trigger', async () 
     assert.match(header, /document\.addEventListener\('keydown', handleDocumentKeydown\)/);
 });
 
+test('the shared header preserves accessible desktop dropdown controls and close behavior', async () => {
+    const header = await source();
+
+    assert.match(header, /\{text\[language\]\.about\}\s*<span aria-hidden="true">/);
+    assert.match(header, /\{text\[language\]\.myTopSpot40\}\s*<span aria-hidden="true">/);
+    assert.match(header, /aria-haspopup="menu"\s*aria-expanded=\{aboutMenuOpen\}\s*on:click\|stopPropagation=\{toggleAboutMenu\}/s);
+    assert.match(header, /aria-haspopup="menu"\s*aria-expanded=\{myMenuOpen\}\s*on:click\|stopPropagation=\{toggleMyMenu\}/s);
+    assert.match(header, /function toggleAboutMenu\(\) \{\s*aboutMenuOpen = !aboutMenuOpen;\s*myMenuOpen = false;/s);
+    assert.match(header, /function toggleMyMenu\(\) \{\s*myMenuOpen = !myMenuOpen;\s*aboutMenuOpen = false;/s);
+    assert.match(header, /if \(aboutMenu && !aboutMenu\.contains\(target\)\) \{\s*aboutMenuOpen = false;/s);
+    assert.match(header, /if \(myMenu && !myMenu\.contains\(target\)\) \{\s*myMenuOpen = false;/s);
+    assert.match(header, /document\.addEventListener\('click', handleDocumentClick\)/);
+    assert.match(header, /document\.removeEventListener\('click', handleDocumentClick\)/);
+    assert.match(header, /\{#if aboutMenuOpen\}\s*<div class="my-menu-panel" role="menu">/s);
+    assert.match(header, /\{#if myMenuOpen\}\s*<div class="my-menu-panel" role="menu">/s);
+    assert.match(header, /role="menuitem"/);
+});
+
+test('the global journey header respects language selection when sending the logo home', async () => {
+    const header = await source();
+
+    assert.match(header, /import \{readStoredLanguagePreference\} from '\$lib\/languagePreferences';/);
+    assert.match(header, /function getHomeHref\(\): string \{\s*return readStoredLanguagePreference\(\)\s*\? '\/journey-prototype\/choose'\s*:\ '\/journey-prototype';\s*\}/s);
+    assert.match(header, /<a class="brand" href=\{getHomeHref\(\)\} aria-label=\{text\[language\]\.home\}>/);
+});
+
+test('the logo remains on the Experience Selection Page when a language is selected', async () => {
+    const [header, choosePage] = await Promise.all([
+        source(),
+        readFile(
+            new URL('../src/routes/journey-prototype/choose/+page.svelte', import.meta.url),
+            'utf8'
+        )
+    ]);
+
+    assert.match(header, /\? '\/journey-prototype\/choose'/);
+    assert.match(choosePage, /<PublicJourneyHeader \{language\}\/>/);
+});
+
+test('the logo without a selected language returns to language selection', async () => {
+    const [header, languageSelectionPage] = await Promise.all([
+        source(),
+        readFile(
+            new URL('../src/routes/journey-prototype/+page.svelte', import.meta.url),
+            'utf8'
+        )
+    ]);
+
+    assert.match(header, /readStoredLanguagePreference\(\)\s*\? '\/journey-prototype\/choose'\s*:\ '\/journey-prototype'/s);
+    assert.match(languageSelectionPage, /instruction: 'Select a language to begin\.'/);
+});
+
+test('the global journey header sends Discover TopSpot40 to welcome', async () => {
+    const header = await source();
+
+    assert.match(header, /<a role="menuitem" href="\/welcome">\s*\{text\[language\]\.discover\}/);
+    assert.match(header, /<a href="\/welcome">\{text\[language\]\.discover\}<\/a>/);
+    assert.doesNotMatch(header, /href="\/catalog\/index\.html"/);
+    assert.doesNotMatch(header, /href="\/welcome2"/);
+});
+
 test('welcome and both journey selection pages use the shared responsive header', async () => {
     for (const path of [
         '../src/routes/welcome/+page.svelte',

@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onMount, tick} from 'svelte';
     import { getBackendUrl } from '$lib/config';
+    import {readStoredLanguagePreference} from '$lib/languagePreferences';
     import ContactModal from '$lib/components/profile-components/ContactModal.svelte';
 
     export let language: 'en' | 'es' | 'ptbr' = 'en';
@@ -126,6 +127,12 @@
         onPreferences();
     }
 
+    function getHomeHref(): string {
+        return readStoredLanguagePreference()
+            ? '/journey-prototype/choose'
+            : '/journey-prototype';
+    }
+
 async function loadAuthenticatedUser() {
     try {
         const response = await fetch(
@@ -158,7 +165,7 @@ async function loadAuthenticatedUser() {
 </script>
 
 <header class="topbar">
-    <a class="brand" href="/" aria-label={text[language].home}>
+    <a class="brand" href={getHomeHref()} aria-label={text[language].home}>
         <img src="/old-dog-icon.png" alt=""/>
         <span>TopSpot<span class="brand-number">40</span></span>
     </a>
@@ -178,7 +185,7 @@ async function loadAuthenticatedUser() {
 
             {#if aboutMenuOpen}
                 <div class="my-menu-panel" role="menu">
-                    <a role="menuitem" href="/catalog/index.html">
+                    <a role="menuitem" href="/welcome">
                         {text[language].discover}
                     </a>
                     <a role="menuitem" href="/about">
@@ -271,7 +278,7 @@ async function loadAuthenticatedUser() {
                 <div class="mobile-primary-actions">
                     <details>
                         <summary>{text[language].about}</summary>
-                        <a href="/catalog/index.html">{text[language].discover}</a>
+                        <a href="/welcome">{text[language].discover}</a>
                         <a href="/about">{text[language].aboutTopSpot40}</a>
                         <button type="button" on:click={openContactModal}>{text[language].contact}</button>
                     </details>
