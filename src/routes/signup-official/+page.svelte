@@ -1,8 +1,11 @@
 <script lang="ts">
         import { goto } from '$app/navigation';
+        import { onMount } from 'svelte';
         import { getBackendUrl } from '$lib/config';
+        import { readLanguagePreference } from '$lib/languagePreferences';
         import { supabase } from '$lib/supabaseClient';
 
+        let language: 'en' | 'es' = 'en';
         let email = '';
         let marketingOptIn = false;
         let verificationCode = '';
@@ -10,6 +13,19 @@
         let isLoading = false;
         let errorMessage = '';
         let statusMessage = '';
+
+        const copy = {
+                en: {
+                        back: 'Go Back', title: 'Sign Up', intro: 'Create your TopSpot40 account with your email address.', email: 'Email address', marketing: 'Send me occasional TopSpot40 updates and early-member offers.', optional: 'Optional. You can unsubscribe at any time.', sending: 'Sending code...', send: 'Send sign-up code', sent: 'We sent a sign-up code to', code: 'Six-digit sign-up code', creating: 'Creating account...', verify: 'Verify and create account', differentEmail: 'Use a different email', account: 'Already have a TopSpot40 account?', signIn: 'Sign in', enterEmail: 'Enter your email address.', checkEmail: 'Check your email for your six-digit sign-up code.', wait: 'Please wait about 60 seconds before requesting another sign-up code.', sendError: 'We could not send your sign-up code. Please try again.', enterCode: 'Enter the sign-up code from your email.', signupError: 'TopSpot40 sign-up failed.', completeError: 'We could not complete sign-up.'
+                },
+                es: {
+                        back: 'Volver', title: 'Crear una cuenta', intro: 'Crea tu cuenta de TopSpot40 con tu dirección de correo electrónico.', email: 'Dirección de correo electrónico', marketing: 'Envíame novedades ocasionales de TopSpot40 y ofertas para miembros fundadores.', optional: 'Opcional. Puedes dejar de recibir estos mensajes en cualquier momento.', sending: 'Enviando código...', send: 'Enviar código de registro', sent: 'Enviamos un código de registro a', code: 'Código de registro de seis dígitos', creating: 'Creando cuenta...', verify: 'Verificar y crear cuenta', differentEmail: 'Usar otro correo electrónico', account: '¿Ya tienes una cuenta de TopSpot40?', signIn: 'Iniciar sesión', enterEmail: 'Ingresa tu dirección de correo electrónico.', checkEmail: 'Revisa tu correo electrónico para obtener tu código de registro de seis dígitos.', wait: 'Espera unos 60 segundos antes de solicitar otro código de registro.', sendError: 'No pudimos enviar tu código de registro. Inténtalo de nuevo.', enterCode: 'Ingresa el código de registro de tu correo electrónico.', signupError: 'No se pudo crear tu cuenta de TopSpot40.', completeError: 'No pudimos completar el registro.'
+                }
+        } as const;
+
+        onMount(() => {
+                language = readLanguagePreference() === 'es' ? 'es' : 'en';
+        });
 
         function goBack() {
                 history.back();
@@ -22,7 +38,7 @@
                 const normalizedEmail = email.trim().toLowerCase();
 
                 if (!normalizedEmail) {
-                        errorMessage = 'Enter your email address.';
+                        errorMessage = copy[language].enterEmail;
                         return;
                 }
 
@@ -43,7 +59,7 @@
                         email = normalizedEmail;
                         codeRequested = true;
                         statusMessage =
-                                'Check your email for your six-digit sign-up code.';
+                                copy[language].checkEmail;
                 } catch (error) {
                         console.error('Unable to send sign-up code:', error);
 
@@ -57,10 +73,10 @@
                                 authError?.message?.toLowerCase().includes('seconds')
                         ) {
                                 errorMessage =
-                                        'Please wait about 60 seconds before requesting another sign-up code.';
+                                        copy[language].wait;
                         } else {
                                 errorMessage =
-                                        'We could not send your sign-up code. Please try again.';
+                                        copy[language].sendError;
                         }
                 } finally {
                         isLoading = false;
@@ -74,7 +90,7 @@
                 const token = verificationCode.trim();
 
                 if (!token) {
-                        errorMessage = 'Enter the sign-up code from your email.';
+                        errorMessage = copy[language].enterCode;
                         return;
                 }
 
@@ -119,7 +135,7 @@
                         if (!response.ok) {
                                 throw new Error(
                                         result?.detail ??
-                                                'TopSpot40 sign-up failed.'
+                                                copy[language].signupError
                                 );
                         }
 
@@ -129,8 +145,8 @@
 
                         errorMessage =
                                 error instanceof Error
-                                        ? error.message
-                                        : 'We could not complete sign-up.';
+                                        ? (language === 'es' ? copy[language].completeError : error.message)
+                                        : copy[language].completeError;
                 } finally {
                         isLoading = false;
                 }
@@ -146,21 +162,21 @@
 
 <div class="go-back-button-wrapper">
         <button on:click={goBack} class="go-back-button">
-                Go Back
+                {copy[language].back}
         </button>
 </div>
 
 <div class="signup-container">
         <div class="signup-card">
-                <h1>Sign Up</h1>
+                <h1>{copy[language].title}</h1>
 
                 <p class="intro">
-                        Create your TopSpot40 account with your email address.
+                        {copy[language].intro}
                 </p>
 
                 {#if !codeRequested}
                         <form on:submit|preventDefault={requestCode}>
-                                <label for="email">Email address</label>
+                                <label for="email">{copy[language].email}</label>
 
                                 <input
                                         id="email"
@@ -179,12 +195,12 @@
                                                 disabled={isLoading}
                                         />
                                         <span>
-                                                Send me occasional TopSpot40 updates and early-member offers.
+                                                {copy[language].marketing}
                                         </span>
                                 </label>
 
                                 <p class="marketing-supporting-text">
-                                        Optional. You can unsubscribe at any time.
+                                        {copy[language].optional}
                                 </p>
 
                                 <button
@@ -193,19 +209,19 @@
                                         disabled={isLoading}
                                 >
                                         {isLoading
-                                                ? 'Sending code...'
-                                                : 'Send sign-up code'}
+                                                ? copy[language].sending
+                                                : copy[language].send}
                                 </button>
                         </form>
                 {:else}
                         <form on:submit|preventDefault={verifyCode}>
                                 <p class="code-sent">
-                                        We sent a sign-up code to
+                                        {copy[language].sent}
                                         <strong>{email}</strong>.
                                 </p>
 
                                 <label for="verification-code">
-                                        Six-digit sign-up code
+                                        {copy[language].code}
                                 </label>
 
                                 <input
@@ -226,8 +242,8 @@
                                         disabled={isLoading}
                                 >
                                         {isLoading
-                                                ? 'Creating account...'
-                                                : 'Verify and create account'}
+                                                ? copy[language].creating
+                                                : copy[language].verify}
                                 </button>
 
                                 <button
@@ -236,7 +252,7 @@
                                         on:click={changeEmail}
                                         disabled={isLoading}
                                 >
-                                        Use a different email
+                                        {copy[language].differentEmail}
                                 </button>
                         </form>
                 {/if}
@@ -252,8 +268,8 @@
                 {/if}
 
                 <p class="signin-link">
-                        Already have a TopSpot40 account?
-                        <a href="/signin">Sign in</a>
+                        {copy[language].account}
+                        <a href="/signin">{copy[language].signIn}</a>
                 </p>
 
         </div>

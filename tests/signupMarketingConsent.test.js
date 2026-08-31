@@ -12,7 +12,11 @@ test('signup keeps marketing consent optional and sends it separately from accou
     assert.match(page, /let marketingOptIn = false;/);
     assert.match(page, /type="checkbox"[\s\S]*?bind:checked=\{marketingOptIn\}/);
     assert.match(page, /Send me occasional TopSpot40 updates and early-member offers\./);
+    assert.match(page, /Envíame novedades ocasionales de TopSpot40 y ofertas para miembros fundadores\./);
     assert.match(page, /Optional\. You can unsubscribe at any time\./);
+    assert.match(page, /Opcional\. Puedes dejar de recibir estos mensajes en cualquier momento\./);
+    assert.doesNotMatch(page, /miembros iniciales|cancelar la suscripción/);
+    assert.match(page, /readLanguagePreference/);
     assert.match(page, /\.marketing-opt-in \{[\s\S]*?min-height: 44px;/);
     assert.match(page, /\.marketing-opt-in input\[type="checkbox"\] \{[\s\S]*?width: 20px;[\s\S]*?height: 20px;/);
     assert.match(page, /\.marketing-opt-in input\[type="checkbox"\]:focus-visible \{[\s\S]*?outline:/);

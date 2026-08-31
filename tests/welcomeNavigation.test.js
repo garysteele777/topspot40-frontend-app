@@ -21,15 +21,13 @@ test('welcome requires a stored language and its primary action opens experience
     assert.match(welcomePage, /<PublicJourneyHeader \{language\}\/>/);
 });
 
-test('welcome keeps the localized rediscovery headlines and reserves the creator section for Spanish and Portuguese', async () => {
+test('welcome adds the early-member offer and discovery guide for Spanish while preserving Portuguese creator content', async () => {
     const welcomePage = await source('../src/routes/welcome/+page.svelte');
 
     assert.match(welcomePage, /Rediscover the music that shaped your life\./);
     assert.match(welcomePage, /Redescubre la música que marcó tu vida\./);
     assert.match(welcomePage, /Redescubra a música que marcou a sua vida\./);
-    assert.match(welcomePage, /href="\/discovery-guide">\{copy\[language\]\.guide\}<\/a>/);
-    assert.match(welcomePage, /href="\/garys-story">\{copy\[language\]\.story\}<\/a>/);
-    assert.match(welcomePage, /\{#if language !== 'en'\}[\s\S]*?class="content-section creator"[\s\S]*?\{\/if\}/);
+    assert.match(welcomePage, /\{#if language === 'ptbr'\}[\s\S]*?class="content-section creator"[\s\S]*?\{\/if\}/);
     const englishCopy = welcomePage.match(/en:\s*\{([\s\S]*?)\r?\n\s*\},\r?\n\s*es:/)?.[1] ?? '';
     assert.doesNotMatch(englishCopy, /Indiana farm/);
     assert.match(englishCopy, /earlyMemberTitle: 'Join early and save'/);
@@ -42,9 +40,23 @@ test('welcome keeps the localized rediscovery headlines and reserves the creator
     assert.match(welcomePage, /class="early-member-prices"[\s\S]*?earlyAnnual[\s\S]*?earlyMonthly[\s\S]*?<\/div>\s*<p class="early-member-footnote">[\s\S]*?<p class="regular-pricing">/);
     assert.match(englishCopy, /createAccount: 'Create Free Account'/);
     assert.match(welcomePage, /class="create-account-action" href="\/signup-official">\{copy\[language\]\.createAccount\}<\/a>/);
-    assert.match(welcomePage, /\{#if language === 'en'\}[\s\S]*?class="content-section early-member-section"[\s\S]*?\{\/if\}[\s\S]*?\{#if language === 'en'\}[\s\S]*?class="content-section how-card-section"/);
+    const spanishCopy = welcomePage.match(/es:\s*\{([\s\S]*?)\r?\n\s*\},\r?\n\s*ptbr:/)?.[1] ?? '';
+    assert.match(spanishCopy, /earlyMemberTitle: 'Únete ahora y ahorra'/);
+    assert.match(welcomePage, /OFERTA PARA MIEMBROS FUNDADORES/);
+    assert.match(spanishCopy, /Crea tu cuenta gratuita antes del 31 de diciembre de 2026 y obtendrás el precio especial para miembros fundadores cuando comiencen las suscripciones\./);
+    assert.match(spanishCopy, /El precio especial para miembros fundadores se mantendrá mientras tu suscripción permanezca activa\./);
+    assert.match(spanishCopy, /earlyAnnual: '\$49 al año — la mejor opción'/);
+    assert.match(spanishCopy, /earlyMonthly: '\$4\.99 al mes'/);
+    assert.match(spanishCopy, /A partir del 1 de enero de 2027, el precio regular será de \$69 al año o \$6\.99 al mes\./);
+    assert.match(spanishCopy, /createAccount: 'Crear una cuenta gratis'/);
+    assert.match(spanishCopy, /howTitle: 'Descubre cómo funciona TopSpot40'/);
+    assert.match(spanishCopy, /howText: 'Explora la música, las historias y las cuatro formas de disfrutar TopSpot40\.'/);
+    assert.match(spanishCopy, /howAction: 'Explorar la guía'/);
+    assert.doesNotMatch(spanishCopy, /miembros iniciales/);
+    assert.doesNotMatch(spanishCopy, /created:|guide:|story:/);
+    assert.match(welcomePage, /\{#if language === 'en' \|\| language === 'es'\}[\s\S]*?class="content-section early-member-section"[\s\S]*?\{\/if\}[\s\S]*?\{#if language === 'en' \|\| language === 'es'\}[\s\S]*?class="content-section how-card-section"/);
     assert.match(englishCopy, /howText: 'Explore the music, stories, and four ways to experience TopSpot40\.'/);
-    assert.match(welcomePage, /\{#if language === 'en'\}[\s\S]*?class="content-section how-card-section"[\s\S]*?href="\/discovery-guide">\{copy\[language\]\.howAction\}<\/a>[\s\S]*?\{\/if\}[\s\S]*?<section class="content-section" aria-labelledby="experiences-title">/);
+    assert.match(welcomePage, /\{#if language === 'en' \|\| language === 'es'\}[\s\S]*?class="content-section how-card-section"[\s\S]*?href="\/discovery-guide">\{copy\[language\]\.howAction\}<\/a>[\s\S]*?\{\/if\}[\s\S]*?<section class="content-section" aria-labelledby="experiences-title">/);
     assert.doesNotMatch(welcomePage, /target="_blank"/);
     assert.doesNotMatch(welcomePage, /\/catalog\/(index|about_topspot40)\.html/);
 });

@@ -31,15 +31,15 @@
             figures: ['Más de 4,400 canciones', '64 programas de nostalgia', '52 colecciones seleccionadas', 'Casi 2,000 artistas', 'Inglés, español y portugués'],
             how: 'Cómo funciona TopSpot40', howText: 'TopSpot40 combina detalles de canciones, introducciones narradas, historias de artistas y contexto histórico con enlaces directos a Spotify. Spotify gestiona la reproducción musical, los anuncios, la disponibilidad, las restricciones de cuenta y el funcionamiento de Free o Premium.',
             access: 'Acceso y reproducción', accessText: 'TopSpot40 es gratuito hasta el 31 de diciembre de 2026. No se requiere una cuenta de TopSpot40 ni tarjeta de crédito. Se requiere una cuenta independiente de Spotify para reproducir canciones; se puede usar Spotify Free o Premium.',
-            experiences: 'Cuatro maneras de escuchar', modes: [
+            experiences: 'Cuatro formas de explorar', modes: [
                 ['Programas de nostalgia', 'Viaja por 64 programas de décadas y géneros desde los años 1950 hasta los 2020, organizados en torno a country, pop, rock, R&B soul, latino global, blues jazz, folk acústico y temas de televisión.'],
                 ['Programas de colecciones', 'Explora 52 colecciones especiales seleccionadas, entre ellas favoritos de herencia, canciones de ferrocarril, favoritos patrióticos, Motown, Disney, crooners, himnos, leyendas, música clásica y más.'],
                 ['Artistas destacados', 'Explora artistas destacados mediante historias narradas, grupos de canciones seleccionados y experiencias de escucha centradas en cada artista.'],
-                ['Docuseries musicales', 'Sigue series de estilo documental que integran la historia de la música, las personas, los movimientos y los momentos memorables en un viaje de escucha guiado.']
+                ['Docuseries musicales', 'Sigue series documentales que dan vida a la historia de la música, sus protagonistas, movimientos y momentos memorables.']
             ],
             libraries: 'Explora y comprende las bibliotecas', libraryText: 'Las bibliotecas ofrecen distintos caminos para descubrir: Artistas destacados para los artistas y sus historias, la Biblioteca de nostalgia para programas clasificados por década y género, y la Biblioteca de colecciones para temas y tradiciones musicales seleccionados.',
             multilingual: 'Descubrimiento musical y narración en tres idiomas', multilingualText: 'TopSpot40 está disponible en inglés, español y portugués para que la historia de la música, las historias de artistas y el descubrimiento guiado se disfruten en el idioma preferido de cada oyente.',
-            closing: 'Una invitación a descubrir', closingText: 'TopSpot40 se construye alrededor de la curiosidad: otro artista por conocer, otra historia por escuchar, otra cultura por apreciar y otra canción esperando convertirse en una favorita.', open: 'Leer más', close: 'Mostrar menos'
+            closing: 'Una invitación a descubrir', closingText: 'TopSpot40 se construye alrededor de la curiosidad: otro artista por conocer, otra historia por escuchar, otra cultura por apreciar y otra canción esperando convertirse en una favorita.', start: 'Comenzar a explorar', open: 'Leer más', close: 'Mostrar menos'
         },
         ptbr: {
             title: 'Guia de descoberta do TopSpot40', description: 'Uma introdução guiada à descoberta musical do TopSpot40 através das décadas.',
@@ -78,15 +78,15 @@
             <section class="hero" aria-labelledby="guide-title"><p class="eyebrow">{copy[language].eyebrow}</p><h1 id="guide-title">{copy[language].hero}</h1><p>{copy[language].intro}</p></section>
             <section class="panel" aria-labelledby="overview-title"><h2 id="overview-title">{copy[language].overview}</h2><p>{copy[language].overviewText}</p><div class="figures" role="list">{#each copy[language].figures as figure}<div role="listitem">{figure}</div>{/each}</div></section>
             <section class="panel" aria-labelledby="how-title"><h2 id="how-title">{copy[language].how}</h2><p>{copy[language].howText}</p><aside><h3>{copy[language].access}</h3><p>{copy[language].accessText}</p></aside></section>
-            {#if language === 'en'}
+            {#if language === 'en' || language === 'es'}
                 <section class="panel" aria-labelledby="experiences-title"><h2 id="experiences-title">{copy[language].experiences}</h2><div class="experience-cards">{#each copy[language].modes as mode}<article class="experience-card"><h3>{mode[0]}</h3><p>{mode[1]}</p></article>{/each}</div></section>
             {:else}
                 <section class="panel" aria-labelledby="experiences-title"><h2 id="experiences-title">{copy[language].experiences}</h2><div class="accordions">{#each copy[language].modes as mode, i}<details open={i === 0}><summary>{mode[0]}</summary><p>{mode[1]}</p></details>{/each}</div></section>
             {/if}
-            {#if language !== 'en'}
+            {#if language === 'ptbr'}
                 <section class="two-column"><div class="panel"><h2>{copy[language].libraries}</h2><p>{copy[language].libraryText}</p></div><div class="panel"><h2>{copy[language].multilingual}</h2><p>{copy[language].multilingualText}</p></div></section>
             {/if}
-            <section class="closing" aria-labelledby="closing-title"><h2 id="closing-title">{copy[language].closing}</h2><p>{copy[language].closingText}</p>{#if language === 'en'}<div class="closing-actions"><a class="start-action" href="/journey-prototype/choose">Start Exploring</a><a class="back bottom secondary" href="/welcome">← {copy[language].back}</a></div>{:else}<a class="back bottom" href="/welcome">← {copy[language].back}</a>{/if}</section>
+            <section class="closing" aria-labelledby="closing-title"><h2 id="closing-title">{copy[language].closing}</h2><p>{copy[language].closingText}</p>{#if language === 'en'}<div class="closing-actions"><a class="start-action" href="/journey-prototype/choose">Start Exploring</a><a class="back bottom secondary" href="/welcome">← {copy[language].back}</a></div>{:else if language === 'es'}<div class="closing-actions"><a class="start-action" href="/journey-prototype/choose">{copy[language].start}</a><a class="back bottom secondary" href="/welcome">← {copy[language].back}</a></div>{:else}<a class="back bottom" href="/welcome">← {copy[language].back}</a>{/if}</section>
         </main>
     </div>
 {/if}

@@ -52,13 +52,17 @@ test('discovery guide keeps approved access wording and Spotify playback boundar
         assert.match(page, new RegExp(wording.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
     assert.match(page, /Spotify handles music playback, advertisements, availability, account restrictions, and Free or Premium behavior/);
-    assert.match(page, /\{#if language === 'en'\}[\s\S]*?class="experience-cards"[\s\S]*?\{\/if\}/);
+    assert.match(page, /\{#if language === 'en' \|\| language === 'es'\}[\s\S]*?class="experience-cards"[\s\S]*?\{\/if\}/);
     assert.match(page, /class="start-action" href="\/journey-prototype\/choose">Start Exploring<\/a>/);
+    assert.match(page, /experiences: 'Cuatro formas de explorar'/);
+    assert.match(page, /Sigue series documentales que dan vida a la historia de la música, sus protagonistas, movimientos y momentos memorables\./);
+    assert.match(page, /start: 'Comenzar a explorar'/);
+    assert.match(page, /\{:else if language === 'es'\}[\s\S]*?class="start-action" href="\/journey-prototype\/choose">\{copy\[language\]\.start\}<\/a>[\s\S]*?class="back bottom secondary" href="\/welcome">/);
     assert.match(page, /class="back bottom secondary" href="\/welcome">/);
     assert.match(page, /\['Music Docuseries', 'Follow documentary-style series that bring music history, people, movements, and memorable moments to life\.'\]/);
     const englishCopy = page.match(/en:\s*\{([\s\S]*?)\r?\n\s*\},\r?\n\s*es:/)?.[1] ?? '';
     assert.doesNotMatch(englishCopy, /Browse and understand the libraries/);
     assert.doesNotMatch(englishCopy, /Music discovery and storytelling in three languages/);
-    assert.match(page, /\{#if language !== 'en'\}[\s\S]*?class="two-column"[\s\S]*?\{\/if\}/);
+    assert.match(page, /\{#if language === 'ptbr'\}[\s\S]*?class="two-column"[\s\S]*?\{\/if\}/);
     assert.match(page, /details open=\{i === 0\}/);
 });
