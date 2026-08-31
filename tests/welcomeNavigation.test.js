@@ -21,13 +21,14 @@ test('welcome requires a stored language and its primary action opens experience
     assert.match(welcomePage, /<PublicJourneyHeader \{language\}\/>/);
 });
 
-test('welcome adds the early-member offer and discovery guide for Spanish while preserving Portuguese creator content', async () => {
+test('welcome adds the approved early-member offer and discovery guide in every language without Portuguese creator content', async () => {
     const welcomePage = await source('../src/routes/welcome/+page.svelte');
 
     assert.match(welcomePage, /Rediscover the music that shaped your life\./);
     assert.match(welcomePage, /Redescubre la música que marcó tu vida\./);
     assert.match(welcomePage, /Redescubra a música que marcou a sua vida\./);
-    assert.match(welcomePage, /\{#if language === 'ptbr'\}[\s\S]*?class="content-section creator"[\s\S]*?\{\/if\}/);
+    assert.doesNotMatch(welcomePage, /class="content-section creator"/);
+    assert.doesNotMatch(welcomePage, /created:|createdText:|guide:|story:/);
     const englishCopy = welcomePage.match(/en:\s*\{([\s\S]*?)\r?\n\s*\},\r?\n\s*es:/)?.[1] ?? '';
     assert.doesNotMatch(englishCopy, /Indiana farm/);
     assert.match(englishCopy, /earlyMemberTitle: 'Join early and save'/);
@@ -54,9 +55,20 @@ test('welcome adds the early-member offer and discovery guide for Spanish while 
     assert.match(spanishCopy, /howAction: 'Explorar la guía'/);
     assert.doesNotMatch(spanishCopy, /miembros iniciales/);
     assert.doesNotMatch(spanishCopy, /created:|guide:|story:/);
-    assert.match(welcomePage, /\{#if language === 'en' \|\| language === 'es'\}[\s\S]*?class="content-section early-member-section"[\s\S]*?\{\/if\}[\s\S]*?\{#if language === 'en' \|\| language === 'es'\}[\s\S]*?class="content-section how-card-section"/);
+    const portugueseCopy = welcomePage.match(/ptbr:\s*\{([\s\S]*?)\r?\n\s*\}\r?\n\s*\}/)?.[1] ?? '';
+    assert.match(portugueseCopy, /earlyMemberTitle: 'Entre agora e economize'/);
+    assert.match(portugueseCopy, /Crie sua conta gratuita até 31 de dezembro de 2026 e garanta o preço especial para membros fundadores quando as assinaturas começarem\./);
+    assert.match(portugueseCopy, /O preço especial para membros fundadores será mantido enquanto sua assinatura permanecer ativa\./);
+    assert.match(portugueseCopy, /earlyAnnual: 'US\$ 49 por ano — melhor opção'/);
+    assert.match(portugueseCopy, /earlyMonthly: 'US\$ 4,99 por mês'/);
+    assert.match(portugueseCopy, /A partir de 1º de janeiro de 2027, o preço regular será de US\$ 69 por ano ou US\$ 6,99 por mês\./);
+    assert.match(portugueseCopy, /createAccount: 'Criar conta grátis'/);
+    assert.match(portugueseCopy, /howTitle: 'Veja como o TopSpot40 funciona'/);
+    assert.match(portugueseCopy, /howText: 'Explore a música, as histórias e as quatro maneiras de aproveitar o TopSpot40\.'/);
+    assert.match(portugueseCopy, /howAction: 'Explorar o guia'/);
+    assert.match(welcomePage, /\{#if language === 'en' \|\| language === 'es' \|\| language === 'ptbr'\}[\s\S]*?class="content-section early-member-section"[\s\S]*?\{\/if\}[\s\S]*?\{#if language === 'en' \|\| language === 'es' \|\| language === 'ptbr'\}[\s\S]*?class="content-section how-card-section"/);
     assert.match(englishCopy, /howText: 'Explore the music, stories, and four ways to experience TopSpot40\.'/);
-    assert.match(welcomePage, /\{#if language === 'en' \|\| language === 'es'\}[\s\S]*?class="content-section how-card-section"[\s\S]*?href="\/discovery-guide">\{copy\[language\]\.howAction\}<\/a>[\s\S]*?\{\/if\}[\s\S]*?<section class="content-section" aria-labelledby="experiences-title">/);
+    assert.match(welcomePage, /\{#if language === 'en' \|\| language === 'es' \|\| language === 'ptbr'\}[\s\S]*?class="content-section how-card-section"[\s\S]*?href="\/discovery-guide">\{copy\[language\]\.howAction\}<\/a>[\s\S]*?\{\/if\}[\s\S]*?<section class="content-section" aria-labelledby="experiences-title">/);
     assert.doesNotMatch(welcomePage, /target="_blank"/);
     assert.doesNotMatch(welcomePage, /\/catalog\/(index|about_topspot40)\.html/);
 });

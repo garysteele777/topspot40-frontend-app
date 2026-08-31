@@ -17,6 +17,11 @@ test('signup keeps marketing consent optional and sends it separately from accou
     assert.match(page, /Opcional\. Puedes dejar de recibir estos mensajes en cualquier momento\./);
     assert.doesNotMatch(page, /miembros iniciales|cancelar la suscripción/);
     assert.match(page, /readLanguagePreference/);
+    assert.match(page, /Quero receber novidades ocasionais do TopSpot40 e ofertas para membros fundadores\./);
+    assert.match(page, /Opcional\. Você pode deixar de receber essas mensagens a qualquer momento\./);
+    assert.match(page, /ptbr: \{[\s\S]*?back: 'Voltar'[\s\S]*?title: 'Criar uma conta'[\s\S]*?intro: 'Crie sua conta TopSpot40 com seu endereço de e-mail\.'[\s\S]*?email: 'Endereço de e-mail'[\s\S]*?send: 'Enviar código de cadastro'[\s\S]*?account: 'Já tem uma conta TopSpot40\?'[\s\S]*?signIn: 'Entrar'/);
+    assert.match(page, /savedLanguage === 'es' \|\| savedLanguage === 'ptbr' \? savedLanguage : 'en'/);
+    assert.match(page, /language === 'en' \? error\.message : copy\[language\]\.completeError/);
     assert.match(page, /\.marketing-opt-in \{[\s\S]*?min-height: 44px;/);
     assert.match(page, /\.marketing-opt-in input\[type="checkbox"\] \{[\s\S]*?width: 20px;[\s\S]*?height: 20px;/);
     assert.match(page, /\.marketing-opt-in input\[type="checkbox"\]:focus-visible \{[\s\S]*?outline:/);

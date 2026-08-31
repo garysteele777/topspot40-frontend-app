@@ -46,9 +46,11 @@
         ptbr: {
             title: 'Bem-vindo ao TopSpot40', description: 'Uma jornada guiada por música, memórias e histórias.', eyebrow: 'Descoberta musical através das décadas', hero: 'Redescubra a música que marcou a sua vida.', heroText: 'O TopSpot40 reúne música, memórias e as histórias por trás das canções em uma jornada guiada.', free: 'Explore o TopSpot40 gratuitamente até 31 de dezembro de 2026. Não é necessário ter uma conta nem cartão de crédito.', start: 'Comece a explorar — Não é necessária uma conta', heroSpotifyNote: 'O TopSpot40 não exige conta nem cartão de crédito. É necessária uma conta separada do Spotify para reproduzir as músicas. Você pode usar o Spotify Free ou Premium.',
             glance: 'TopSpot40 em resumo', songs: 'mais de 4.400 canções', programs: '64 programas de nostalgia', collections: '52 coleções selecionadas', artists: 'quase 2.000 artistas', languages: 'inglês, espanhol e português',
+            earlyMemberTitle: 'Entre agora e economize', earlyMemberText: 'Crie sua conta gratuita até 31 de dezembro de 2026 e garanta o preço especial para membros fundadores quando as assinaturas começarem.', earlyMemberFootnote: 'O preço especial para membros fundadores será mantido enquanto sua assinatura permanecer ativa.', earlyAnnual: 'US$ 49 por ano — melhor opção', earlyMonthly: 'US$ 4,99 por mês', regularPricing: 'A partir de 1º de janeiro de 2027, o preço regular será de US$ 69 por ano ou US$ 6,99 por mês.', createAccount: 'Criar conta grátis',
+            howTitle: 'Veja como o TopSpot40 funciona', howText: 'Explore a música, as histórias e as quatro maneiras de aproveitar o TopSpot40.', howAction: 'Explorar o guia',
             experiences: 'Quatro experiências TopSpot40', nostalgia: 'Programas de nostalgia', nostalgiaText: 'Viaje por décadas e gêneros com programas classificados baseados na música de que você se lembra.', collectionsTitle: 'Programas de coleções', collectionsText: 'Explore temas musicais, tradições e favoritos cuidadosamente selecionados.', artist: 'Destaques de artistas', artistText: 'Descubra artistas lendários por meio de sua música, trajetória e histórias narradas.', docuseries: 'Docusséries musicais', docuseriesText: 'Acompanhe séries em estilo documentário sobre a história, as pessoas, os movimentos e os momentos da música.',
             different: 'Por que o TopSpot40 é diferente', differentText: 'Isto é mais do que uma playlist. O TopSpot40 combina música com introduções narradas, histórias de artistas, história e descoberta, porque a música pode nos levar de volta às pessoas, lugares e momentos de que nos lembramos.', languagesText: 'A experiência está disponível em inglês, espanhol e português.', spotify: 'O TopSpot40 guia a experiência; o Spotify fornece a reprodução das músicas. Anúncios, funcionamento da reprodução e disponibilidade das músicas dependem do seu plano do Spotify, dispositivo e localização.',
-            phil: 'Conheça Phil', philText: 'Phil é seu amigável guia do TopSpot40, aqui para tornar a jornada pela música acolhedora, simples e cheia de descobertas.', created: 'Por que criei o TopSpot40', createdText: 'Cresci ouvindo rádio em uma fazenda em Indiana, onde o American Top 40 de Casey Kasem fazia as canções parecerem uma jornada. Criei o TopSpot40 para trazer as histórias, o contexto e a descoberta de volta à experiência de ouvir música.', guide: 'Guia completo de descoberta do TopSpot40', story: 'Leia a história completa de Gary', finalTitle: 'Sua jornada musical está pronta.', finalText: 'Explore o TopSpot40 gratuitamente até 31 de dezembro de 2026. Não é necessário ter uma conta nem cartão de crédito.'
+            phil: 'Conheça Phil', philText: 'Phil é seu amigável guia do TopSpot40, aqui para tornar a jornada pela música acolhedora, simples e cheia de descobertas.', finalTitle: 'Sua jornada musical está pronta.', finalText: 'Explore o TopSpot40 gratuitamente até 31 de dezembro de 2026. Não é necessário ter uma conta nem cartão de crédito.'
         }
     } as const;
 
@@ -105,10 +107,10 @@
                 </div>
             </section>
 
-            {#if language === 'en' || language === 'es'}
+            {#if language === 'en' || language === 'es' || language === 'ptbr'}
                 <section class="content-section early-member-section" aria-labelledby="early-member-title">
                     <div class="early-member-card">
-                        <p class="eyebrow">{language === 'es' ? 'OFERTA PARA MIEMBROS FUNDADORES' : 'Early member welcome'}</p>
+                        <p class="eyebrow">{language === 'es' ? 'OFERTA PARA MIEMBROS FUNDADORES' : language === 'ptbr' ? 'OFERTA PARA MEMBROS FUNDADORES' : 'Early member welcome'}</p>
                         <h2 id="early-member-title">{copy[language].earlyMemberTitle}</h2>
                         <p>{copy[language].earlyMemberText}</p>
                         <div class="early-member-prices" aria-label="Early-member subscription pricing">
@@ -122,7 +124,7 @@
                 </section>
             {/if}
 
-            {#if language === 'en' || language === 'es'}
+            {#if language === 'en' || language === 'es' || language === 'ptbr'}
                 <section class="content-section how-card-section" aria-labelledby="how-card-title">
                     <div class="how-card">
                         <div>
@@ -160,14 +162,6 @@
                     ></iframe>
                 </div>
             </section>
-
-            {#if language === 'ptbr'}
-                <section class="content-section creator" aria-labelledby="creator-title">
-                    <h2 id="creator-title">{copy[language].created}</h2>
-                    <p>{copy[language].createdText}</p>
-                    <div class="catalog-links"><a href="/discovery-guide">{copy[language].guide}</a><a href="/garys-story">{copy[language].story}</a></div>
-                </section>
-            {/if}
 
             <section class="final-invitation" aria-labelledby="final-title">
                 <h2 id="final-title">{copy[language].finalTitle}</h2><p>{copy[language].finalText}</p>

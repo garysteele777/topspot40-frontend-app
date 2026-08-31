@@ -5,7 +5,7 @@
         import { readLanguagePreference } from '$lib/languagePreferences';
         import { supabase } from '$lib/supabaseClient';
 
-        let language: 'en' | 'es' = 'en';
+        let language: 'en' | 'es' | 'ptbr' = 'en';
         let email = '';
         let marketingOptIn = false;
         let verificationCode = '';
@@ -20,11 +20,15 @@
                 },
                 es: {
                         back: 'Volver', title: 'Crear una cuenta', intro: 'Crea tu cuenta de TopSpot40 con tu dirección de correo electrónico.', email: 'Dirección de correo electrónico', marketing: 'Envíame novedades ocasionales de TopSpot40 y ofertas para miembros fundadores.', optional: 'Opcional. Puedes dejar de recibir estos mensajes en cualquier momento.', sending: 'Enviando código...', send: 'Enviar código de registro', sent: 'Enviamos un código de registro a', code: 'Código de registro de seis dígitos', creating: 'Creando cuenta...', verify: 'Verificar y crear cuenta', differentEmail: 'Usar otro correo electrónico', account: '¿Ya tienes una cuenta de TopSpot40?', signIn: 'Iniciar sesión', enterEmail: 'Ingresa tu dirección de correo electrónico.', checkEmail: 'Revisa tu correo electrónico para obtener tu código de registro de seis dígitos.', wait: 'Espera unos 60 segundos antes de solicitar otro código de registro.', sendError: 'No pudimos enviar tu código de registro. Inténtalo de nuevo.', enterCode: 'Ingresa el código de registro de tu correo electrónico.', signupError: 'No se pudo crear tu cuenta de TopSpot40.', completeError: 'No pudimos completar el registro.'
+                },
+                ptbr: {
+                        back: 'Voltar', title: 'Criar uma conta', intro: 'Crie sua conta TopSpot40 com seu endereço de e-mail.', email: 'Endereço de e-mail', marketing: 'Quero receber novidades ocasionais do TopSpot40 e ofertas para membros fundadores.', optional: 'Opcional. Você pode deixar de receber essas mensagens a qualquer momento.', sending: 'Enviando código...', send: 'Enviar código de cadastro', sent: 'Enviamos um código de cadastro para', code: 'Código de cadastro de seis dígitos', creating: 'Criando conta...', verify: 'Verificar e criar conta', differentEmail: 'Usar outro endereço de e-mail', account: 'Já tem uma conta TopSpot40?', signIn: 'Entrar', enterEmail: 'Informe seu endereço de e-mail.', checkEmail: 'Verifique seu e-mail para encontrar o código de cadastro de seis dígitos.', wait: 'Aguarde cerca de 60 segundos antes de solicitar outro código de cadastro.', sendError: 'Não foi possível enviar seu código de cadastro. Tente novamente.', enterCode: 'Informe o código de cadastro enviado para seu e-mail.', signupError: 'Não foi possível criar sua conta TopSpot40.', completeError: 'Não foi possível concluir o cadastro.'
                 }
         } as const;
 
         onMount(() => {
-                language = readLanguagePreference() === 'es' ? 'es' : 'en';
+                const savedLanguage = readLanguagePreference();
+                language = savedLanguage === 'es' || savedLanguage === 'ptbr' ? savedLanguage : 'en';
         });
 
         function goBack() {
@@ -145,7 +149,7 @@
 
                         errorMessage =
                                 error instanceof Error
-                                        ? (language === 'es' ? copy[language].completeError : error.message)
+                                        ? (language === 'en' ? error.message : copy[language].completeError)
                                         : copy[language].completeError;
                 } finally {
                         isLoading = false;
