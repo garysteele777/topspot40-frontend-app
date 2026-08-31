@@ -5,6 +5,8 @@
 		type MarketingPreference
 	} from '$lib/api/marketingPreferences';
 	import { createBillingPortalSession } from '$lib/api/billingPortal';
+	import { onMount } from 'svelte';
+	import { readLanguagePreference } from '$lib/languagePreferences';
 
 	export let visible = false;
 	export let subscriptionStatus: any = null;
@@ -17,6 +19,14 @@
 	let error = '';
 	let success = '';
 	let preference: MarketingPreference | null = null;
+	let language: 'en' | 'es' | 'ptbr' = 'en';
+	const membershipCopy = {
+		en: { complimentary: 'Complimentary Membership', noPayment: 'No payment is required for your complimentary membership.', expires: 'Your complimentary access ends:' },
+		es: { complimentary: 'Membresía de cortesía', noPayment: 'No se requiere pago para tu membresía de cortesía.', expires: 'Tu acceso de cortesía termina:' },
+		ptbr: { complimentary: 'Assinatura de cortesia', noPayment: 'Nenhum pagamento é necessário para sua assinatura de cortesia.', expires: 'Seu acesso de cortesia termina em:' }
+	} as const;
+	$: memberText = membershipCopy[language];
+	onMount(() => { language = readLanguagePreference(); });
 
 	async function loadPreference() {
 		loading = true;
@@ -97,8 +107,8 @@
 				return '2026 promotional access';
 			case 'grace_2027':
 				return '2027 promotional grace period';
-			case 'tester':
-				return 'Tester access';
+			case 'complimentary':
+				return memberText.complimentary;
 			case 'expired':
 				return 'Promotional access expired';
 			case 'none':
@@ -157,6 +167,14 @@
 							Current billing period ends:
 							<strong>{formatDate(subscriptionStatus.current_period_end)}</strong>
 						</p>
+					{/if}
+
+					{#if subscriptionStatus.access_state === 'complimentary'}
+						<p class="status"><strong>{memberText.complimentary}</strong></p>
+						<p class="status">{memberText.noPayment}</p>
+						{#if subscriptionStatus.access_expires_at}
+							<p class="status">{memberText.expires} <strong>{formatDate(subscriptionStatus.access_expires_at)}</strong></p>
+						{/if}
 					{/if}
 
 					{#if subscriptionStatus.status === 'past_due'}

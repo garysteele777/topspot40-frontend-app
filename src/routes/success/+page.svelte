@@ -1,88 +1,95 @@
-<script>
+<script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { getBackendUrl } from '$lib/config';
+	import { readLanguagePreference } from '$lib/languagePreferences';
 
-    let verified = false;
-    let error = null;	
+	let language: 'en' | 'es' | 'ptbr' = 'en';
+	let state: 'verifying' | 'error' = 'verifying';
+	const copy = {
+		en: {
+			verifying: 'Verifying your subscription…',
+			detail: 'Please wait while we confirm your payment.',
+			error: 'We could not verify your subscription. Please return to your account and try again.',
+			account: 'Return to account'
+		},
+		es: {
+			verifying: 'Verificando tu suscripción…',
+			detail: 'Espera mientras confirmamos tu pago.',
+			error: 'No pudimos verificar tu suscripción. Regresa a tu cuenta e inténtalo de nuevo.',
+			account: 'Volver a la cuenta'
+		},
+		ptbr: {
+			verifying: 'Verificando sua assinatura…',
+			detail: 'Aguarde enquanto confirmamos seu pagamento.',
+			error: 'Não foi possível verificar sua assinatura. Volte à sua conta e tente novamente.',
+			account: 'Voltar para a conta'
+		}
+	} as const;
+	$: text = copy[language];
 
 	onMount(async () => {
-		console.log('✅ Payment success page loaded');
-
-		const params = new URLSearchParams(window.location.search);
-		const session_id = params.get('session_id');
-
-		console.log('Session ID:', session_id);
-
-		if (!session_id) {
-			console.error('❌ No session_id found in URL');
+		language = readLanguagePreference();
+		const sessionId = new URLSearchParams(window.location.search).get('session_id');
+		if (!sessionId) {
+			state = 'error';
 			return;
 		}
-
 		try {
-			const res = await fetch(
-				`${getBackendUrl()}/api/verify-subscription?session_id=${session_id}`,
-				{
-					method: 'GET',
-					credentials: 'include'
-				}
+			const response = await fetch(
+				`${getBackendUrl()}/api/verify-subscription?session_id=${encodeURIComponent(sessionId)}`,
+				{ credentials: 'include' }
 			);
-
-			const data = await res.json();
-			console.log('✅ Verify response:', data);
-			if (data.is_active) {
-				verified = true;
-				window.location.href = '/dashboard';
-			} else {
-				window.location.href = '/create-account';
+			const result = await response.json().catch(() => null);
+			if (response.ok && result?.is_active) {
+				await goto('/dashboard', { replaceState: true });
+				return;
 			}
-		} catch (err) {
-			console.error('❌ Error verifying subscription:', err);
+			await goto('/create-account', { replaceState: true });
+		} catch {
+			state = 'error';
 		}
-
 	});
 </script>
 
-<div class="success-container">
-	<h1>🎉 Payment Successful!</h1>
-	<p>Thank you for subscribing to TopSpot40. Your account is now active.</p>
-	<a href="/dashboard" class="btn">Go to Home</a>
-</div>
+<main class="success-container" aria-live="polite">
+	{#if state === 'verifying'}
+		<h1>{text.verifying}</h1>
+		<p>{text.detail}</p>
+	{:else}
+		<h1>{text.error}</h1>
+		<a href="/create-account" class="btn">{text.account}</a>
+	{/if}
+</main>
 
 <style>
 	.success-container {
+		align-items: center;
+		color: white;
 		display: flex;
 		flex-direction: column;
+		gap: 1rem;
 		justify-content: center;
-		align-items: center;
-		height: 100vh;
-		text-align: center;
+		min-height: 100vh;
 		padding: 2rem;
+		text-align: center;
 	}
 
 	h1 {
-		color: #1db954; /* Spotify green */
-		font-size: 2.5rem;
-		margin-bottom: 1rem;
+		color: #1db954;
+		font-size: clamp(2rem, 6vw, 2.5rem);
 	}
 
 	p {
 		font-size: 1.2rem;
-		color: white;
-		max-width: 500px;
 	}
 
 	.btn {
-		display: inline-block;
-		margin-top: 2rem;
-		padding: 0.8rem 1.5rem;
 		background: #1db954;
-		color: white;
 		border-radius: 5px;
+		color: #07140c;
+		font-weight: 700;
+		padding: .8rem 1.5rem;
 		text-decoration: none;
-		font-size: 1.1rem;
-	}
-
-	.btn:hover {
-		background: #17a74b;
 	}
 </style>

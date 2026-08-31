@@ -42,7 +42,14 @@ export const load: LayoutServerLoad = async ({ fetch, cookies }) => {
 
     const subscriptionStatus = await subscriptionRes.json();
 
-    if (!subscriptionStatus.is_subscribed) {
+    const accessState = subscriptionStatus.access_state;
+    const hasAccess = subscriptionStatus.is_subscribed ||
+        accessState === 'free_2026' ||
+        accessState === 'grace_2027' ||
+        accessState === 'complimentary' ||
+        accessState === 'paid';
+
+    if (!hasAccess) {
         throw redirect(302, '/create-account');
     }
 
