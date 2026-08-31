@@ -20,6 +20,8 @@
             heroSpotifyNote: 'TopSpot40 requires no account or credit card. A separate Spotify account is required for song playback. Spotify Free or Premium may be used.',
             glance: 'TopSpot40 at a glance',
             songs: 'more than 4,400 songs', programs: '64 nostalgia programs', collections: '52 curated collections', artists: 'almost 2,000 artists', languages: 'English, Spanish, and Portuguese',
+            earlyMemberTitle: 'Join early and save', earlyMemberText: 'Create your free account by December 31, 2026, and you will qualify for early-member pricing when subscriptions begin.', earlyMemberFootnote: 'Early-member pricing remains available while your subscription remains continuously active.', earlyAnnual: '$49/year — best value', earlyMonthly: '$4.99/month', regularPricing: 'Regular pricing beginning January 1, 2027, will be $69/year or $6.99/month.', createAccount: 'Create Free Account',
+            howTitle: 'See how TopSpot40 works', howText: 'Explore the music, stories, and four ways to experience TopSpot40.', howAction: 'Explore the Discovery Guide',
             experiences: 'Four TopSpot40 experiences',
             nostalgia: 'Nostalgia Programs', nostalgiaText: 'Travel through decades and genres with ranked programs built around the music you remember.',
             collectionsTitle: 'Collections Programs', collectionsText: 'Explore carefully curated musical themes, traditions, and favorites.',
@@ -30,8 +32,6 @@
             languagesText: 'The experience is available in English, Spanish, and Portuguese.',
             spotify: 'TopSpot40 guides the experience; Spotify provides music playback. Ads, playback behavior, and song availability depend on your Spotify plan, device, and location.',
             phil: 'Meet Phil', philText: 'Phil is your friendly TopSpot40 tour guide, here to help make the journey through music feel welcoming, simple, and full of discovery.',
-            created: 'Why I created TopSpot40', createdText: 'I grew up with radio on an Indiana farm, where Casey Kasem’s American Top 40 made songs feel like a journey. I created TopSpot40 to bring the stories, context, and discovery back to music listening.',
-            guide: 'Complete TopSpot40 Discovery Guide', story: 'Read Gary’s complete story',
             finalTitle: 'Your musical journey is ready.', finalText: 'Explore TopSpot40 free through December 31, 2026. No account or credit card required.'
         },
         es: {
@@ -103,6 +103,35 @@
                 </div>
             </section>
 
+            {#if language === 'en'}
+                <section class="content-section early-member-section" aria-labelledby="early-member-title">
+                    <div class="early-member-card">
+                        <p class="eyebrow">Early member welcome</p>
+                        <h2 id="early-member-title">{copy[language].earlyMemberTitle}</h2>
+                        <p>{copy[language].earlyMemberText}</p>
+                        <div class="early-member-prices" aria-label="Early-member subscription pricing">
+                            <p class="early-annual-price">{copy[language].earlyAnnual}</p>
+                            <p class="early-monthly-price">{copy[language].earlyMonthly}</p>
+                        </div>
+                        <p class="early-member-footnote">{copy[language].earlyMemberFootnote}</p>
+                        <p class="regular-pricing">{copy[language].regularPricing}</p>
+                        <a class="create-account-action" href="/signup-official">{copy[language].createAccount}</a>
+                    </div>
+                </section>
+            {/if}
+
+            {#if language === 'en'}
+                <section class="content-section how-card-section" aria-labelledby="how-card-title">
+                    <div class="how-card">
+                        <div>
+                            <h2 id="how-card-title">{copy[language].howTitle}</h2>
+                            <p>{copy[language].howText}</p>
+                        </div>
+                        <a href="/discovery-guide">{copy[language].howAction}</a>
+                    </div>
+                </section>
+            {/if}
+
             <section class="content-section" aria-labelledby="experiences-title">
                 <h2 id="experiences-title">{copy[language].experiences}</h2>
                 <div class="experience-grid">
@@ -130,11 +159,13 @@
                 </div>
             </section>
 
-            <section class="content-section creator" aria-labelledby="creator-title">
-                <h2 id="creator-title">{copy[language].created}</h2>
-                <p>{copy[language].createdText}</p>
-                <div class="catalog-links"><a href="/discovery-guide">{copy[language].guide}</a><a href="/garys-story">{copy[language].story}</a></div>
-            </section>
+            {#if language !== 'en'}
+                <section class="content-section creator" aria-labelledby="creator-title">
+                    <h2 id="creator-title">{copy[language].created}</h2>
+                    <p>{copy[language].createdText}</p>
+                    <div class="catalog-links"><a href="/discovery-guide">{copy[language].guide}</a><a href="/garys-story">{copy[language].story}</a></div>
+                </section>
+            {/if}
 
             <section class="final-invitation" aria-labelledby="final-title">
                 <h2 id="final-title">{copy[language].finalTitle}</h2><p>{copy[language].finalText}</p>
@@ -165,12 +196,14 @@
     .primary-action:hover { background: #93fa73; }.primary-action:focus-visible, a:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
     .content-section { padding: clamp(38px, 5vw, 60px) 24px; }.glance { text-align: center; }
     .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }.stat { min-height: 112px; display: grid; place-items: center; padding: 18px; color: #f7dc82; background: linear-gradient(145deg, #272014, #15120d); border: 1px solid rgba(245, 214, 110, .4); border-radius: 16px; font-size: 1.08rem; font-weight: 700; line-height: 1.35; }
+    .early-member-section { padding-top: 0; padding-bottom: 0; }.early-member-card { padding: clamp(26px, 4vw, 38px); background: linear-gradient(115deg, #273b1d, #161d11); border: 1px solid rgba(182, 242, 159, .5); border-radius: 18px; }.early-member-card .eyebrow { color: #b6f29f; }.early-member-card h2 { margin-bottom: 10px; font-size: clamp(1.7rem, 3vw, 2.4rem); }.early-member-card > p { max-width: 760px; margin-bottom: 0; }.early-member-prices { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }.early-annual-price, .early-monthly-price { margin: 0; padding: 10px 14px; border-radius: 999px; font-size: 1rem; font-weight: 800; }.early-annual-price { color: #10200d; background: #b6f29f; }.early-monthly-price { color: #eaf9df; background: rgba(182, 242, 159, .16); border: 1px solid rgba(182, 242, 159, .55); }.early-member-footnote, .regular-pricing { margin-top: 14px; color: #eaf9df; }.regular-pricing { font-weight: 700; }.create-account-action { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; margin-top: 22px; padding: 13px 22px; color: #10200d; background: #b6f29f; border: 2px solid #d7ffc6; border-radius: 999px; box-shadow: 0 0 24px rgba(182, 242, 159, .28); font-weight: 800; text-decoration: none; }.create-account-action:hover { background: #d7ffc6; }
+    .how-card-section { padding-top: 0; }.how-card { display: flex; align-items: center; justify-content: space-between; gap: 28px; padding: clamp(26px, 4vw, 38px); background: linear-gradient(115deg, #413215, #1a160d); border: 1px solid rgba(245, 214, 110, .58); border-radius: 18px; box-shadow: 0 12px 30px rgba(0, 0, 0, .22); }.how-card h2 { margin-bottom: 10px; font-size: clamp(1.7rem, 3vw, 2.4rem); }.how-card p { max-width: 680px; margin-bottom: 0; }.how-card a { flex: 0 0 auto; padding: 14px 20px; color: #101008; background: #f5d66e; border: 2px solid #f7dc82; border-radius: 999px; font-weight: 800; text-align: center; text-decoration: none; }.how-card a:hover { background: #fff0a8; }
     .experience-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }.experience-card { min-height: 260px; padding: 28px; background: #18140e; border: 1px solid rgba(245, 214, 110, .32); border-radius: 18px; }.experience-card span { display: block; margin-bottom: 30px; color: #e54a2e; font-weight: 900; letter-spacing: .12em; }.experience-card p { font-size: 1rem; }
     .difference { display: grid; grid-template-columns: .9fr 1.1fr; align-items: start; gap: clamp(30px, 5vw, 72px); background: linear-gradient(115deg, #2e2110, #12100c); border-block: 1px solid rgba(245, 214, 110, .2); }.spotify-note { padding-left: 18px; border-left: 4px solid #d9aa28; color: #f7dc82; font-size: 1rem; }
     .phil { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: clamp(24px, 4vw, 48px); }.phil-video { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #1c160d; border: 2px solid #8a6b24; border-radius: 14px; box-shadow: 0 12px 30px rgba(0, 0, 0, .35); }.phil-video iframe { display: block; width: 100%; height: 100%; border: 0; }
     .creator { max-width: 900px; text-align: center; }.catalog-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 28px; }.catalog-links a { padding: 12px 16px; color: #f7dc82; border: 1px solid #d9aa28; border-radius: 10px; font-weight: 700; text-decoration: none; }.catalog-links a:hover { color: #101008; background: #f5d66e; }
     .final-invitation { padding: clamp(40px, 5vw, 62px) 24px; text-align: center; }.final-invitation p { max-width: 650px; margin: 0 auto 24px; color: #dff4bb; font-weight: 700; }
-    @media (max-width: 850px) { .stats { grid-template-columns: repeat(2, 1fr); }.experience-grid { grid-template-columns: repeat(2, 1fr); }.difference { grid-template-columns: 1fr; }.phil { grid-template-columns: 1fr; text-align: center; } }
+    @media (max-width: 850px) { .stats { grid-template-columns: repeat(2, 1fr); }.how-card { align-items: flex-start; flex-direction: column; }.experience-grid { grid-template-columns: repeat(2, 1fr); }.difference { grid-template-columns: 1fr; }.phil { grid-template-columns: 1fr; text-align: center; } }
     @media (max-width: 520px) { .hero { padding: 42px 18px; }.content-section, .final-invitation { padding-inline: 18px; }.stats, .experience-grid { grid-template-columns: 1fr; }.stat { min-height: 76px; }.experience-card { min-height: auto; }.primary-action { width: 100%; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
 </style>

@@ -21,7 +21,7 @@ test('welcome requires a stored language and its primary action opens experience
     assert.match(welcomePage, /<PublicJourneyHeader \{language\}\/>/);
 });
 
-test('welcome keeps the localized rediscovery headlines and internal information-page links', async () => {
+test('welcome keeps the localized rediscovery headlines and reserves the creator section for Spanish and Portuguese', async () => {
     const welcomePage = await source('../src/routes/welcome/+page.svelte');
 
     assert.match(welcomePage, /Rediscover the music that shaped your life\./);
@@ -29,6 +29,22 @@ test('welcome keeps the localized rediscovery headlines and internal information
     assert.match(welcomePage, /Redescubra a música que marcou a sua vida\./);
     assert.match(welcomePage, /href="\/discovery-guide">\{copy\[language\]\.guide\}<\/a>/);
     assert.match(welcomePage, /href="\/garys-story">\{copy\[language\]\.story\}<\/a>/);
+    assert.match(welcomePage, /\{#if language !== 'en'\}[\s\S]*?class="content-section creator"[\s\S]*?\{\/if\}/);
+    const englishCopy = welcomePage.match(/en:\s*\{([\s\S]*?)\r?\n\s*\},\r?\n\s*es:/)?.[1] ?? '';
+    assert.doesNotMatch(englishCopy, /Indiana farm/);
+    assert.match(englishCopy, /earlyMemberTitle: 'Join early and save'/);
+    assert.match(englishCopy, /Create your free account by December 31, 2026, and you will qualify for early-member pricing when subscriptions begin\./);
+    assert.match(englishCopy, /Early-member pricing remains available while your subscription remains continuously active\./);
+    assert.match(englishCopy, /earlyAnnual: '\$49\/year — best value'/);
+    assert.match(englishCopy, /earlyMonthly: '\$4\.99\/month'/);
+    assert.match(englishCopy, /regularPricing: 'Regular pricing beginning January 1, 2027, will be \$69\/year or \$6\.99\/month\.'/);
+    assert.doesNotMatch(englishCopy, /Early annual:|Early monthly:|Regular annual:|Regular monthly:|email updates/);
+    assert.match(welcomePage, /class="early-member-prices"[\s\S]*?earlyAnnual[\s\S]*?earlyMonthly[\s\S]*?<\/div>\s*<p class="early-member-footnote">[\s\S]*?<p class="regular-pricing">/);
+    assert.match(englishCopy, /createAccount: 'Create Free Account'/);
+    assert.match(welcomePage, /class="create-account-action" href="\/signup-official">\{copy\[language\]\.createAccount\}<\/a>/);
+    assert.match(welcomePage, /\{#if language === 'en'\}[\s\S]*?class="content-section early-member-section"[\s\S]*?\{\/if\}[\s\S]*?\{#if language === 'en'\}[\s\S]*?class="content-section how-card-section"/);
+    assert.match(englishCopy, /howText: 'Explore the music, stories, and four ways to experience TopSpot40\.'/);
+    assert.match(welcomePage, /\{#if language === 'en'\}[\s\S]*?class="content-section how-card-section"[\s\S]*?href="\/discovery-guide">\{copy\[language\]\.howAction\}<\/a>[\s\S]*?\{\/if\}[\s\S]*?<section class="content-section" aria-labelledby="experiences-title">/);
     assert.doesNotMatch(welcomePage, /target="_blank"/);
     assert.doesNotMatch(welcomePage, /\/catalog\/(index|about_topspot40)\.html/);
 });

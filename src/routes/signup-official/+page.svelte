@@ -179,9 +179,13 @@
                                                 disabled={isLoading}
                                         />
                                         <span>
-                                                Email me TopSpot40 updates, announcements, and promotions.
+                                                Send me occasional TopSpot40 updates and early-member offers.
                                         </span>
                                 </label>
+
+                                <p class="marketing-supporting-text">
+                                        Optional. You can unsubscribe at any time.
+                                </p>
 
                                 <button
                                         type="submit"
@@ -351,7 +355,9 @@
 
         .marketing-opt-in {
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
+                min-height: 44px;
+                padding: 0.5rem 0;
                 gap: 0.65rem;
                 font-weight: 400;
                 line-height: 1.4;
@@ -359,10 +365,23 @@
         }
 
         .marketing-opt-in input[type="checkbox"] {
-                width: auto;
-                margin-top: 0.2rem;
+                width: 20px;
+                height: 20px;
+                margin: 0;
                 padding: 0;
                 flex: 0 0 auto;
+        }
+
+        .marketing-opt-in input[type="checkbox"]:focus-visible {
+                outline: 3px solid rgba(29, 185, 84, 0.75);
+                outline-offset: 3px;
+        }
+
+        .marketing-supporting-text {
+                margin: -0.3rem 0 0;
+                color: #bbb;
+                font-size: 0.9rem;
+                line-height: 1.4;
         }
 
         input:disabled,
