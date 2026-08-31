@@ -14,7 +14,7 @@ export async function load({ fetch }) {
     const accessState = data?.access_state;
 
     // If already subscribed → go to dashboard
-    if (data.is_subscribed || accessState === 'grace_2027') {
+    if (accessState === 'free_2026' || accessState === 'complimentary' || accessState === 'paid') {
         throw redirect(302, '/dashboard');
     }
 
