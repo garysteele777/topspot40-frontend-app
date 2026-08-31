@@ -34,9 +34,9 @@ test('welcome adds the approved early-member offer and discovery guide in every 
     assert.match(englishCopy, /earlyMemberTitle: 'Join early and save'/);
     assert.match(englishCopy, /Create your free account by December 31, 2026, and you will qualify for early-member pricing when subscriptions begin\./);
     assert.match(englishCopy, /Early-member pricing remains available while your subscription remains continuously active\./);
-    assert.match(englishCopy, /earlyAnnual: '\$49\/year — best value'/);
+    assert.match(englishCopy, /earlyAnnual: '\$49\.99\/year — best value'/);
     assert.match(englishCopy, /earlyMonthly: '\$4\.99\/month'/);
-    assert.match(englishCopy, /regularPricing: 'Regular pricing beginning January 1, 2027, will be \$69\/year or \$6\.99\/month\.'/);
+    assert.match(englishCopy, /regularPricing: 'Regular pricing beginning January 1, 2027, will be \$69\.99\/year or \$6\.99\/month\.'/);
     assert.doesNotMatch(englishCopy, /Early annual:|Early monthly:|Regular annual:|Regular monthly:|email updates/);
     assert.match(welcomePage, /class="early-member-prices"[\s\S]*?earlyAnnual[\s\S]*?earlyMonthly[\s\S]*?<\/div>\s*<p class="early-member-footnote">[\s\S]*?<p class="regular-pricing">/);
     assert.match(englishCopy, /createAccount: 'Create Free Account'/);
@@ -46,9 +46,9 @@ test('welcome adds the approved early-member offer and discovery guide in every 
     assert.match(welcomePage, /OFERTA PARA MIEMBROS FUNDADORES/);
     assert.match(spanishCopy, /Crea tu cuenta gratuita antes del 31 de diciembre de 2026 y obtendrás el precio especial para miembros fundadores cuando comiencen las suscripciones\./);
     assert.match(spanishCopy, /El precio especial para miembros fundadores se mantendrá mientras tu suscripción permanezca activa\./);
-    assert.match(spanishCopy, /earlyAnnual: '\$49 al año — la mejor opción'/);
+    assert.match(spanishCopy, /earlyAnnual: '\$49\.99 al año — la mejor opción'/);
     assert.match(spanishCopy, /earlyMonthly: '\$4\.99 al mes'/);
-    assert.match(spanishCopy, /A partir del 1 de enero de 2027, el precio regular será de \$69 al año o \$6\.99 al mes\./);
+    assert.match(spanishCopy, /A partir del 1 de enero de 2027, el precio regular será de \$69\.99 al año o \$6\.99 al mes\./);
     assert.match(spanishCopy, /createAccount: 'Crear una cuenta gratis'/);
     assert.match(spanishCopy, /howTitle: 'Descubre cómo funciona TopSpot40'/);
     assert.match(spanishCopy, /howText: 'Explora la música, las historias y las cuatro formas de disfrutar TopSpot40\.'/);
@@ -59,9 +59,9 @@ test('welcome adds the approved early-member offer and discovery guide in every 
     assert.match(portugueseCopy, /earlyMemberTitle: 'Entre agora e economize'/);
     assert.match(portugueseCopy, /Crie sua conta gratuita até 31 de dezembro de 2026 e garanta o preço especial para membros fundadores quando as assinaturas começarem\./);
     assert.match(portugueseCopy, /O preço especial para membros fundadores será mantido enquanto sua assinatura permanecer ativa\./);
-    assert.match(portugueseCopy, /earlyAnnual: 'US\$ 49 por ano — melhor opção'/);
+    assert.match(portugueseCopy, /earlyAnnual: 'US\$ 49,99 por ano — melhor opção'/);
     assert.match(portugueseCopy, /earlyMonthly: 'US\$ 4,99 por mês'/);
-    assert.match(portugueseCopy, /A partir de 1º de janeiro de 2027, o preço regular será de US\$ 69 por ano ou US\$ 6,99 por mês\./);
+    assert.match(portugueseCopy, /A partir de 1º de janeiro de 2027, o preço regular será de US\$ 69,99 por ano ou US\$ 6,99 por mês\./);
     assert.match(portugueseCopy, /createAccount: 'Criar conta grátis'/);
     assert.match(portugueseCopy, /howTitle: 'Veja como o TopSpot40 funciona'/);
     assert.match(portugueseCopy, /howText: 'Explore a música, as histórias e as quatro maneiras de aproveitar o TopSpot40\.'/);

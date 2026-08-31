@@ -19,17 +19,17 @@
     const copy = {
         en: {
             free: 'Your 2026 promotional access is active. No payment information is required during 2026.',
-            grace: 'Your promotional grace period is active. Your reserved early-member offer is $49/year (best value) or $4.99/month.',
+            grace: 'Your promotional grace period is active. Your reserved early-member offer is $49.99/year (best value) or $4.99/month.',
             choosePlan: 'Choose your plan'
         },
         es: {
             free: 'Tu acceso promocional de 2026 está activo. No se requiere información de pago durante 2026.',
-            grace: 'Tu período de gracia promocional está activo. Tu oferta reservada para miembros fundadores es de US$49/año (mejor valor) o US$4.99/mes.',
+            grace: 'Tu período de gracia promocional está activo. Tu oferta reservada para miembros fundadores es de US$49.99/año (mejor valor) o US$4.99/mes.',
             choosePlan: 'Elige tu plan'
         },
         ptbr: {
             free: 'Seu acesso promocional de 2026 está ativo. Nenhuma informação de pagamento é necessária durante 2026.',
-            grace: 'Seu período de carência promocional está ativo. Sua oferta reservada para membros fundadores é de US$49/ano (melhor valor) ou US$4,99/mês.',
+            grace: 'Seu período de carência promocional está ativo. Sua oferta reservada para membros fundadores é de US$49,99/ano (melhor valor) ou US$4,99/mês.',
             choosePlan: 'Escolha seu plano'
         }
     } as const;

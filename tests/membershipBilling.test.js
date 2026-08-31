@@ -25,8 +25,12 @@ test('grace access selects the reserved annual and monthly backend endpoints', a
     assert.match(api, /credentials: 'include'/);
     assert.match(page, /checkout\('annual'\)/);
     assert.match(page, /checkout\('monthly'\)/);
-    assert.match(page, /\$49\/year/);
+    assert.match(page, /\$49\.99\/year/);
     assert.match(page, /\$4\.99\/month/);
+    assert.match(page, /US\$49\.99\/año/);
+    assert.match(page, /US\$4\.99\/mes/);
+    assert.match(page, /US\$49,99\/ano/);
+    assert.match(page, /US\$4,99\/mês/);
     assert.match(page, /disabled=\{loadingPlan !== null\}/);
 });
 
@@ -51,6 +55,9 @@ test('grace dashboard notice links members to the plan choices', async () => {
     assert.match(dashboard, /choosePlan: 'Choose your plan'/);
     assert.match(dashboard, /choosePlan: 'Elige tu plan'/);
     assert.match(dashboard, /choosePlan: 'Escolha seu plano'/);
+    assert.match(dashboard, /\$49\.99\/year \(best value\) or \$4\.99\/month/);
+    assert.match(dashboard, /US\$49\.99\/año \(mejor valor\) o US\$4\.99\/mes/);
+    assert.match(dashboard, /US\$49,99\/ano \(melhor valor\) ou US\$4,99\/mês/);
 });
 
 test('source contains no tester membership state', async () => {
