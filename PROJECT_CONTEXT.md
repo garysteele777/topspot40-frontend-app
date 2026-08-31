@@ -322,7 +322,7 @@ Response-shape compatibility was not exhaustively audited.
 
 ## Retired or Inactive Areas
 
-`src/routes/options-v2/+page.svelte.retired` and `src/routes/options-v3/+page.svelte.retired` are retained but inactive.
+The former retired `/options-v2` and `/options-v3` route artifacts have been removed; active options controls are documented under `src/lib/components/options-v2/*`.
 
 ## Known Inconsistencies Requiring Resolution
 
