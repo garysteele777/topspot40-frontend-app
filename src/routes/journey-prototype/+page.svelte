@@ -86,7 +86,7 @@
         if (savedLanguage) {
             language = savedLanguage;
             hasChosenLanguage = true;
-            void goto('/welcome', {
+            void goto('/journey-prototype/choose', {
                 replaceState: true
             });
             return;

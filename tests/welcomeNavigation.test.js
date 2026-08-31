@@ -5,11 +5,11 @@ import {readFile} from 'node:fs/promises';
 
 const source = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('language selection continues and restores stored languages through welcome', async () => {
+test('a new language selection continues through welcome, while a remembered language opens experience selection', async () => {
     const languagePage = await source('../src/routes/journey-prototype/+page.svelte');
 
     assert.match(languagePage, /function performContinueJourney\(\)\s*\{\s*goto\('\/welcome'\);/s);
-    assert.match(languagePage, /if \(savedLanguage\)[\s\S]*?goto\('\/welcome',\s*\{\s*replaceState: true/s);
+    assert.match(languagePage, /if \(savedLanguage\)[\s\S]*?goto\('\/journey-prototype\/choose',\s*\{\s*replaceState: true/s);
 });
 
 test('welcome requires a stored language and its primary action opens experience selection', async () => {
