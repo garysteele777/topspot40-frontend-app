@@ -170,7 +170,6 @@
 					{/if}
 
 					{#if subscriptionStatus.access_state === 'complimentary'}
-						<p class="status"><strong>{memberText.complimentary}</strong></p>
 						<p class="status">{memberText.noPayment}</p>
 						{#if subscriptionStatus.access_expires_at}
 							<p class="status">{memberText.expires} <strong>{formatDate(subscriptionStatus.access_expires_at)}</strong></p>
