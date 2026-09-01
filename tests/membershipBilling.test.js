@@ -77,7 +77,10 @@ test('free and complimentary access suppress payment controls and show the corre
     assert.match(page, /Complimentary Membership/);
     assert.match(page, /status\.access_expires_at/);
     assert.match(modal, /access_state === 'complimentary'/);
+    assert.match(modal, /Current access:[\s\S]*?<strong>\{accessLabel\(subscriptionStatus\)\}<\/strong>/);
     assert.match(modal, /No payment is required/);
+    assert.equal((modal.match(/memberText\.complimentary/g) ?? []).length, 1);
+    assert.match(modal, /access_state === 'complimentary'[\s\S]*?access_expires_at/);
     assert.match(modal, /access_state === 'paid'[\s\S]*?Manage subscription/);
 });
 
