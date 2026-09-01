@@ -83,8 +83,16 @@
 		}
 	} as const;
 
+	function resetCheckoutState() {
+		loadingPlan = null;
+		errorMessage = '';
+	}
+
 	onMount(() => {
 		language = readLanguagePreference();
+		window.addEventListener('pageshow', resetCheckoutState);
+
+		return () => window.removeEventListener('pageshow', resetCheckoutState);
 	});
 	$: text = copy[language];
 
