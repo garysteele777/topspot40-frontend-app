@@ -48,6 +48,16 @@ test('checkout validates Stripe redirects and reports loading and errors accessi
     assert.doesNotMatch(page, /errorMessage = error\.message/);
 });
 
+test('returning from Stripe resets plan selection while checkout requests remain guarded', async () => {
+    const page = await read('../src/routes/create-account/+page.svelte');
+
+    assert.match(page, /function resetCheckoutState\(\) \{\s*loadingPlan = null;\s*errorMessage = '';/);
+    assert.match(page, /window\.addEventListener\('pageshow', resetCheckoutState\)/);
+    assert.match(page, /window\.removeEventListener\('pageshow', resetCheckoutState\)/);
+    assert.match(page, /if \(loadingPlan\) return/);
+    assert.match(page, /disabled=\{loadingPlan !== null\}/);
+});
+
 test('grace dashboard notice links members to the plan choices', async () => {
     const dashboard = await read('../src/routes/dashboard/+layout.svelte');
 
