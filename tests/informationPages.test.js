@@ -40,18 +40,36 @@ test('discovery guide keeps approved access wording and Spotify playback boundar
     for (const wording of [
         'free through December 31, 2026',
         'No TopSpot40 account or credit card is required',
-        'separate Spotify account is required for song playback',
+        'separate Spotify account is required only for song playback',
         'Spotify Free or Premium may be used',
         'gratuito hasta el 31 de diciembre de 2026',
         'cuenta independiente de Spotify para reproducir canciones',
         'Spotify Free o Premium',
         'gratuito até 31 de dezembro de 2026',
-        'conta separada do Spotify para reproduzir músicas',
+        'conta separada do Spotify é necessária apenas para reproduzir músicas',
         'Spotify Free ou Premium'
     ]) {
         assert.match(page, new RegExp(wording.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
     assert.match(page, /Spotify handles music playback, advertisements, availability, account restrictions, and Free or Premium behavior/);
+    for (const assertion of [
+        /Guided Play/,
+        /Auto Play/,
+        /works with Spotify Free or Premium/,
+        /Available only on desktop and laptop computers/,
+        /Mobile browser restrictions/,
+        /Spotify Premium is recommended/,
+        /Spotify Free advertisements can cause songs and TopSpot40 narration to fall out of sync/,
+        /Nothing is missing on mobile/,
+        /Music Docuseries[\s\S]*?can be watched without Spotify/
+    ]) {
+        assert.match(page, assertion);
+    }
+    assert.match(page, /class="playback-cards">[\s\S]*?\{copy\[language\]\.guidedPlay\}[\s\S]*?\{copy\[language\]\.guidedPlayText\}[\s\S]*?\{copy\[language\]\.autoPlay\}[\s\S]*?\{copy\[language\]\.autoPlayText\}/);
+    for (const language of ['en', 'es', 'ptbr']) {
+        assert.match(page, new RegExp(`${language}:\\s*\\{[\\s\\S]*?guidedPlay:`));
+        assert.match(page, new RegExp(`${language}:\\s*\\{[\\s\\S]*?autoPlay:`));
+    }
     assert.match(page, /<section class="panel" aria-labelledby="experiences-title">[\s\S]*?class="experience-cards"[\s\S]*?\{#each copy\[language\]\.modes as mode\}/);
     assert.match(page, /experiences: 'Cuatro formas de explorar'/);
     assert.match(page, /Sigue series documentales que dan vida a la historia de la música, sus protagonistas, movimientos y momentos memorables\./);

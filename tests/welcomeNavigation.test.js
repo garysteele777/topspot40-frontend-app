@@ -85,21 +85,32 @@ test('welcome repeats the no-account-or-credit-card access message in each langu
     }
 });
 
-test('welcome separates TopSpot40 access from Spotify playback in each language', async () => {
+test('welcome explains transparent Spotify playback and device behavior in each language', async () => {
     const welcomePage = await source('../src/routes/welcome/+page.svelte');
 
-    for (const message of [
-        'TopSpot40 requires no account or credit card. A separate Spotify account is required for song playback. Spotify Free or Premium may be used.',
-        'TopSpot40 no requiere una cuenta ni tarjeta de crédito. Se requiere una cuenta independiente de Spotify para reproducir las canciones. Puedes usar Spotify Free o Premium.',
-        'O TopSpot40 não exige conta nem cartão de crédito. É necessária uma conta separada do Spotify para reproduzir as músicas. Você pode usar o Spotify Free ou Premium.',
-        'TopSpot40 guides the experience; Spotify provides music playback. Ads, playback behavior, and song availability depend on your Spotify plan, device, and location.',
-        'TopSpot40 guía la experiencia; Spotify proporciona la reproducción musical. Los anuncios, el funcionamiento de la reproducción y la disponibilidad de las canciones dependen de tu plan de Spotify, dispositivo y ubicación.',
-        'O TopSpot40 guia a experiência; o Spotify fornece a reprodução das músicas. Anúncios, funcionamento da reprodução e disponibilidade das músicas dependem do seu plano do Spotify, dispositivo e localização.'
-    ]) {
-        assert.match(welcomePage, new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    const localizedCopy = {
+        en: [
+            /required only for song playback/, /Spotify Free or Premium may be used/, /Music Docuseries can be watched without Spotify/,
+            /All content is available on every device/, /Phones and tablets use Guided Play/, /Auto Play is available only on desktops and laptops/,
+            /Spotify Premium is recommended/, /Spotify Free advertisements can cause songs and narration to fall out of sync/
+        ],
+        es: [
+            /Solo se requiere una cuenta independiente de Spotify para reproducir canciones/, /Spotify Free o Premium/, /docuseries musicales pueden verse sin Spotify/i,
+            /Todo el contenido est\u00e1 disponible en cada dispositivo/, /tel\u00e9fonos y las tabletas usan Reproducci\u00f3n guiada/, /Reproducci\u00f3n autom\u00e1tica est\u00e1 disponible solo en computadoras de escritorio y port\u00e1tiles/,
+            /Se recomienda Spotify Premium/, /anuncios de Spotify Free pueden hacer que las canciones y la narraci\u00f3n se desincronicen/
+        ],
+        ptbr: [
+            /necess\u00e1ria apenas para reproduzir m\u00fasicas/, /Spotify Free ou Premium/, /docuss\u00e9ries musicais podem ser assistidas sem Spotify/i,
+            /Todo o conte\u00fado est\u00e1 dispon\u00edvel em todos os dispositivos/, /Telefones e tablets usam Reprodu\u00e7\u00e3o guiada/, /Reprodu\u00e7\u00e3o autom\u00e1tica est\u00e1 dispon\u00edvel apenas em computadores de mesa e notebooks/,
+            /Spotify Premium \u00e9 recomendado/, /an\u00fancios do Spotify Free podem deixar as m\u00fasicas e a narra\u00e7\u00e3o fora de sincronia/
+        ]
+    };
+    for (const assertions of Object.values(localizedCopy)) {
+        for (const assertion of assertions) assert.match(welcomePage, assertion);
     }
 
-    assert.match(welcomePage, /class="primary-action"[\s\S]*?<\/button>\s*<p class="hero-spotify-note">\{copy\[language\]\.heroSpotifyNote\}<\/p>/);
+    assert.match(welcomePage, /class="device-notice">\{copy\[language\]\.deviceNotice\}<\/p>\s*<button class="primary-action"/);
+    assert.match(welcomePage, /class="content-section listening"[\s\S]*?class="listening-grid"[\s\S]*?\{copy\[language\]\.guidedPlay\}[\s\S]*?\{copy\[language\]\.autoPlay\}[\s\S]*?class="docuseries-playback-note">\{copy\[language\]\.docuseriesPlaybackNote\}/);
 });
 
 test('welcome embeds the approved localized Phil videos with privacy-preserving playback', async () => {
@@ -118,5 +129,7 @@ test('welcome embeds the approved localized Phil videos with privacy-preserving 
     assert.match(welcomePage, /loading="lazy"/);
     assert.match(welcomePage, /allow="encrypted-media; picture-in-picture"/);
     assert.match(welcomePage, /allowfullscreen/);
-    assert.doesNotMatch(welcomePage, /autoplay/i);
+    const iframeMarkup = welcomePage.match(/<iframe\b[\s\S]*?<\/iframe>/)?.[0] ?? '';
+    assert.notEqual(iframeMarkup, '');
+    assert.doesNotMatch(iframeMarkup, /\bautoplay\b/i);
 });
