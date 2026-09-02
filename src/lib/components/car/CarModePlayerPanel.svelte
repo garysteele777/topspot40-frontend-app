@@ -4,6 +4,7 @@
     import CarModeNarration from './CarModeNarration.svelte';
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
     import CarModeTicker from './CarModeTicker.svelte';
+    import ReportProblemButton from './ReportProblemButton.svelte';
     import {favoritesStore} from '$lib/favorites/favorites';
     import TrackListPanel from '$lib/components/shared/TrackListPanel.svelte';
 
@@ -49,6 +50,8 @@
     export let showNarrationModal: boolean;
     export let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     export let setShowNarrationModal: (v: boolean) => void;
+    export let onReportProblem: (() => void) | undefined;
+    export let onReportNarration: ((mode: 'intro' | 'detail' | 'artist') => void) | undefined;
 
     let isFav = false;
     let favBurst = false;
@@ -329,6 +332,7 @@
                 onOpenTrackList={!isRadioMode ? (() => showTrackList = true) : undefined}
         />
     </div>
+    <div class="report-slot"><ReportProblemButton language={$currentSelection?.language ?? 'en'} onReport={() => onReportProblem?.()} /></div>
 
     <CarModeNarrationModal
             track={currentTrack}
@@ -336,6 +340,7 @@
             open={showNarrationModal}
             initialMode={narrationModalInitialMode}
             onClose={() => setShowNarrationModal(false)}
+            onReport={(mode) => onReportNarration?.(mode)}
     />
 
     {#if showTrackList}
@@ -385,6 +390,7 @@
 
 </div>
 <style>
+    .report-slot { display:flex; justify-content:center; margin-top:12px; }
     /* ─────────────────────────────────────────────
        Progress + Next Section
     ───────────────────────────────────────────── */

@@ -3,6 +3,13 @@
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
     import DriveInPlayerPanel from '$lib/components/car/DriveInPlayerPanel.svelte';
     import GuidedPlaybackPanel from '$lib/components/car/GuidedPlaybackPanel.svelte';
+    import ReportProblemModal from '$lib/components/car/ReportProblemModal.svelte';
+    import {
+        buildContentIssueContext,
+        getReportDeviceType,
+        type ContentIssueContext,
+        type ContentIssueType
+    } from '$lib/reporting/contentIssue';
     import {derived} from 'svelte/store';
     import {PROGRAM_TYPES} from '$lib/types/program';
     import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
@@ -118,6 +125,42 @@
     let playbackStartInFlight = false;
     let activePlayMode: 'guided' | 'auto' | null = null;
     let preservePlaybackForPreferences = false;
+    let reportContext: ContentIssueContext | null = null;
+    let reportInitialIssueType: ContentIssueType | undefined;
+
+    function openReportProblem(initialIssueType?: ContentIssueType): void {
+        const track = get(currentTrack);
+        if (!track) {
+            return;
+        }
+
+        const settings = get(playbackSettingsStore);
+        const playbackMode = activePlayMode ?? (
+            settings.playbackMethod === 'guided' ? 'guided' : 'auto'
+        );
+
+        reportInitialIssueType = initialIssueType;
+        reportContext = buildContentIssueContext({
+            track,
+            selection: get(currentSelection),
+            playbackPhase: get(playbackPhase),
+            playbackMode,
+            deviceType: getReportDeviceType(),
+            route: typeof window === 'undefined' ? '/car-page' : window.location.pathname,
+            timestamp: new Date().toISOString()
+        });
+        showNarrationModal.set(false);
+    }
+
+    function openNarrationReport(mode: 'intro' | 'detail' | 'artist'): void {
+        openReportProblem(
+            mode === 'intro'
+                ? 'intro_content'
+                : mode === 'detail'
+                    ? 'detail_content'
+                    : 'artist_bio_content'
+        );
+    }
 
     const AUTO_PLAY_BUFFER_SECONDS = 5;
 
@@ -1764,6 +1807,8 @@
                         onAutoPlay={handleAutoPlay}
                         onBackToOptions={backToOptions}
                         onUseClassicView={() => setCarDisplayView('classic')}
+                        onReportProblem={() => openReportProblem()}
+                        onReportNarration={openNarrationReport}
                 />
             {:else}
                 {#if !isSmallScreen}
@@ -1794,6 +1839,8 @@
                         onPlayPause={handleGuidedPlay}
                         activePlayMode={activePlayMode}
                         onBackToOptions={backToOptions}
+                        onReportProblem={() => openReportProblem()}
+                        onReportNarration={openNarrationReport}
                 />
             {/if}
 
@@ -1810,6 +1857,8 @@
                         onContinue={continueGuidedPlayback}
                         onSkip={skipGuidedTrack}
                         onBackToCar={returnToGuidedCarPage}
+                        language={$currentSelection?.language ?? 'en'}
+                        onReportProblem={() => openReportProblem()}
                 />
             {/if}
 
@@ -1817,6 +1866,17 @@
         {:else}
             <p class="text-gray-400 italic text-center mt-10">{$status}</p>
         {/if}
+
+        <ReportProblemModal
+            open={reportContext !== null}
+            context={reportContext}
+            language={reportContext?.selected_language ?? $currentSelection?.language ?? 'en'}
+            initialIssueType={reportInitialIssueType}
+            onClose={() => {
+                reportContext = null;
+                reportInitialIssueType = undefined;
+            }}
+        />
 
         {#if $pauseMessage}
             <div class="pause-banner">

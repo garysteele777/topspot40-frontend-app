@@ -2,6 +2,7 @@
     import {onDestroy, onMount} from 'svelte';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import {createBroadActivation} from '$lib/interactions/broadActivation.js';
+    import ReportProblemButton from './ReportProblemButton.svelte';
 
     export let track: CarModeTrack;
     export let opened = false;
@@ -14,6 +15,8 @@
     export let onContinue: () => void;
     export let onSkip: () => void;
     export let onBackToCar: () => void;
+    export let language = 'en';
+    export let onReportProblem: (() => void) | undefined;
 
     type DeviceType = 'ios' | 'android' | 'other';
 
@@ -234,6 +237,7 @@
             >
                 ← BACK TO CAR PAGE / CHOOSE A TRACK
             </button>
+            <ReportProblemButton {language} onReport={() => onReportProblem?.()} />
 
             <p class="safety-note">
                 For safety, make selections only while
@@ -311,6 +315,7 @@
             >
                 Open Spotify Again
             </button>
+            <ReportProblemButton {language} onReport={() => onReportProblem?.()} />
 
             <p class="safety-note">
                 For safety, make selections only while
@@ -369,6 +374,7 @@
                     Song Did Not Play — Skip
                 </button>
             </div>
+            <ReportProblemButton {language} onReport={() => onReportProblem?.()} />
         {/if}
     </section>
 </div>

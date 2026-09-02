@@ -1,11 +1,16 @@
 import { getBackendUrl } from '$lib/config';
 
-type FeedbackPayload = {
-	type: 'feedback';
+export type FeedbackType = 'bug' | 'feature' | 'feedback';
+export type FeedbackCategory = 'contact' | 'general_feedback' | 'content_issue';
+
+export type FeedbackPayload = {
+	type: FeedbackType;
 	message: string;
 	title?: string;
 	email?: string;
 	route?: string;
+	category?: FeedbackCategory;
+	metadata?: Record<string, unknown>;
 };
 
 type FeedbackResponse = {

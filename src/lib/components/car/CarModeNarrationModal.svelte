@@ -10,6 +10,7 @@
     export let onClose: () => void;
     export let languages: string[] = ['en'];
     export let initialMode: InfoMode = 'intro';
+    export let onReport: ((mode: InfoMode) => void) | undefined;
 
     /* ──────────────────────────────
        Swipe / drag physics
@@ -189,6 +190,13 @@
 
     $: selectedLanguages = languages?.length ? languages : ['en'];
 
+    $: reportInformationLabel =
+        selectedLanguages[0] === 'es'
+            ? 'Informar un problema con esta información.'
+            : selectedLanguages[0] === 'ptbr' || selectedLanguages[0] === 'pt-BR'
+                ? 'Informar um problema com estas informações.'
+                : 'Report a problem with this information.';
+
     $: languageEntries = Object.entries(textsByLanguage).filter(([lang]) =>
         selectedLanguages.includes(lang)
     );
@@ -255,6 +263,9 @@
                 <p class="track-artist">{track?.artistName}</p>
             </div>
         </div>
+        <button class="report-info" type="button" on:click={() => onReport?.(mode)}>
+            {reportInformationLabel}
+        </button>
 
 
         <!-- Main text navigator -->
@@ -406,6 +417,7 @@
         font-size: 1.25rem;
         cursor: pointer;
     }
+    .report-info { width: 100%; min-height: 44px; margin-top: 18px; border: 1px solid #9b8050; border-radius: 999px; background: #24211b; color: #fff; font: inherit; cursor: pointer; }
 
     .hero-wrap {
         width: min(100%, 420px);

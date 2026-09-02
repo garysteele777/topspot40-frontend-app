@@ -25,6 +25,7 @@
 		try {
 			await submitFeedback({
 				type: 'feedback',
+				category: 'contact',
 				title: 'Contact Us message',
 				message: message.trim(),
 				email: email.trim(),
