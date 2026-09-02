@@ -47,6 +47,7 @@
         try {
             await submitFeedbackRequest({
                 type: 'feedback',
+                category: 'contact',
                 title: 'Landing page contact message',
                 message,
                 route: window.location.pathname

@@ -22,6 +22,7 @@
 		try {
 			await submitFeedbackRequest({
 				type: 'feedback',
+				category: 'general_feedback',
 				message: feedback.trim(),
 				route: window.location.pathname
 			});

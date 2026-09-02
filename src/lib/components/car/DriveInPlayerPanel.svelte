@@ -1,6 +1,7 @@
 <script lang="ts">
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
     import DriveInJukeboxPanel from '$lib/components/car/DriveInJukeboxPanel.svelte';
+    import ReportProblemButton from './ReportProblemButton.svelte';
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
@@ -29,6 +30,8 @@
     export let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     export let setShowNarrationModal: (value: boolean) => void;
     export let activePlayMode: 'guided' | 'auto' | null = null;
+    export let onReportProblem: (() => void) | undefined;
+    export let onReportNarration: ((mode: 'intro' | 'detail' | 'artist') => void) | undefined;
 
     let showTrackList = false;
 
@@ -265,6 +268,12 @@
             </div>
         </div>
     </div>
+    <div class="drive-in-report-slot">
+        <ReportProblemButton
+                language={$currentSelection?.language ?? 'en'}
+                onReport={() => onReportProblem?.()}
+        />
+    </div>
 </section>
 
 <CarModeNarrationModal
@@ -275,6 +284,7 @@
         open={showNarrationModal}
         initialMode={narrationModalInitialMode}
         onClose={() => setShowNarrationModal(false)}
+        onReport={(mode) => onReportNarration?.(mode)}
 />
 
 {#if showTrackList}
@@ -483,8 +493,10 @@
     }
 
     .track-copy h1 {
+        color: #eadfc8;
         font-size: clamp(15px, 1.7vw, 30px);
         line-height: 1;
+        text-transform: capitalize;
     }
 
     .track-copy h2 {
@@ -614,6 +626,12 @@
         display: grid;
         grid-template-columns: 1fr 1.2fr;
         gap: 6%;
+    }
+
+    .drive-in-report-slot {
+        display: flex;
+        justify-content: center;
+        padding: 10px 0 16px;
     }
 
     .back-button,
