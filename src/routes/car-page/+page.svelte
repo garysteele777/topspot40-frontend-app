@@ -62,6 +62,10 @@
         stopBed,
         unlockBedAudio
     } from '$lib/audio/bedPlayer';
+    import {
+        publicAudioUrl,
+        resolveSequenceNarrationUrls
+    } from '$lib/audio/sequenceNarration';
 
 
     import {
@@ -277,17 +281,18 @@
 
         const language = sel.language ?? 'en';
         const bucket = language === 'ptbr' ? 'audio-ptbr' : `audio-${language}`;
+        const narrationUrls = resolveSequenceNarrationUrls(
+            track,
+            language,
+            settings.detailLength
+        );
 
         let url: string | null = null;
         let fallbackUrl: string | undefined;
 
-        if (kind === 'detail' && track.spotifyTrackId) {
-            const detailFolder =
-                settings.detailLength === 'long' ? 'detail' : 'short-detail';
-            const fallbackFolder =
-                settings.detailLength === 'long' ? 'short-detail' : 'detail';
-            url = `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/${detailFolder}/${track.spotifyTrackId}.mp3`;
-            fallbackUrl = `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/${fallbackFolder}/${track.spotifyTrackId}.mp3`;
+        if (kind === 'detail') {
+            url = narrationUrls.detail;
+            fallbackUrl = narrationUrls.detailFallback;
         }
 
         if (kind === 'artist') {
@@ -301,16 +306,7 @@
         }
 
         if (kind === 'intro') {
-            const decade = track.decadeSlug;
-            const genre = track.genreSlug;
-            const rank = track.rank;
-
-            if (decade && genre && rank) {
-                const rankText = String(rank).padStart(2, '0');
-
-                url =
-                    `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/intro/${decade}_${genre}_${rankText}.mp3`;
-            }
+            url = narrationUrls.intro;
         }
 
         if (!url) return;
@@ -551,14 +547,6 @@
         showNarrationModal.set(v);
     }
 
-    function publicAudioUrl(
-        audioKey: { bucket: string; key: string } | null | undefined
-    ): string | null {
-        if (!audioKey?.bucket || !audioKey.key) return null;
-
-        return `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${audioKey.bucket}/${audioKey.key}`;
-    }
-
     function guidedNarrationUrls(trackObj: CarModeTrack): {
         phase: 'intro' | 'detail' | 'artist';
         url: string;
@@ -570,10 +558,12 @@
         if (!sel) return [];
 
         const language = sel.language ?? 'en';
-        const bucket =
-            language === 'ptbr'
-                ? 'audio-ptbr'
-                : `audio-${language}`;
+        const bucket = language === 'ptbr' ? 'audio-ptbr' : `audio-${language}`;
+        const narrationUrls = resolveSequenceNarrationUrls(
+            trackObj,
+            language,
+            settings.detailLength
+        );
 
         const result: {
             phase: 'intro' | 'detail' | 'artist';
@@ -582,20 +572,7 @@
         }[] = [];
 
         if (settings.voices.includes('intro')) {
-            let url = publicAudioUrl(trackObj.introKey);
-
-            if (
-                !url &&
-                sel.mode === 'decade_genre' &&
-                trackObj.decadeSlug &&
-                trackObj.genreSlug
-            ) {
-                const rankText = String(trackObj.rank).padStart(2, '0');
-
-                url =
-                    `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/` +
-                    `${bucket}/intro/${trackObj.decadeSlug}_${trackObj.genreSlug}_${rankText}.mp3`;
-            }
+            let url = narrationUrls.intro;
 
             if (!url && sel.mode === 'collection') {
                 const collectionSlug =
@@ -616,16 +593,8 @@
         }
 
         if (settings.voices.includes('detail')) {
-            const detailFolder =
-                settings.detailLength === 'long' ? 'detail' : 'short-detail';
-            const fallbackFolder =
-                settings.detailLength === 'long' ? 'short-detail' : 'detail';
-            const url = trackObj.spotifyTrackId
-                ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/${detailFolder}/${trackObj.spotifyTrackId}.mp3`
-                : null;
-            const fallbackUrl = trackObj.spotifyTrackId
-                ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/${fallbackFolder}/${trackObj.spotifyTrackId}.mp3`
-                : undefined;
+            const url = narrationUrls.detail;
+            const fallbackUrl = narrationUrls.detailFallback;
 
             if (url) result.push({phase: 'detail', url, fallbackUrl});
         }

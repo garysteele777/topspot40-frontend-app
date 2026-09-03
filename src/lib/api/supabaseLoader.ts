@@ -23,6 +23,13 @@ export type SequenceItem = {
 
     genreSlug?: string;
     genre_slug?: string;
+
+    introUrl?: string | null;
+    detailUrl?: string | null;
+    shortDetailUrl?: string | null;
+    introKey?: {bucket: string; key: string} | null;
+    detailKey?: {bucket: string; key: string} | null;
+    shortDetailKey?: {bucket: string; key: string} | null;
 };
 
 export type DecadeGenreResponse = {

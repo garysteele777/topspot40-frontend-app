@@ -32,7 +32,12 @@ export type LoadedTrack = {
 
     introKey?: AudioKey | null;
     detailKey?: AudioKey | null;
+    shortDetailKey?: AudioKey | null;
     artistKey?: AudioKey | null;
+
+    introUrl?: string | null;
+    detailUrl?: string | null;
+    shortDetailUrl?: string | null;
 
     // ─────────────────────────────
     // ⭐ Favorites support (new)
@@ -179,7 +184,11 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
 
     const introKeyVal = firstDefined(raw, ['introKey']);
     const detailKeyVal = firstDefined(raw, ['detailKey']);
+    const shortDetailKeyVal = firstDefined(raw, ['shortDetailKey']);
     const artistKeyVal = firstDefined(raw, ['artistKey']);
+    const introUrlVal = firstDefined(raw, ['introUrl']);
+    const detailUrlVal = firstDefined(raw, ['detailUrl']);
+    const shortDetailUrlVal = firstDefined(raw, ['shortDetailUrl']);
 
     const yearReleased = asNumber(yearReleasedVal, undefined);
 
@@ -237,7 +246,12 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
 
         introKey: asAudioKey(introKeyVal),
         detailKey: asAudioKey(detailKeyVal),
+        shortDetailKey: asAudioKey(shortDetailKeyVal),
         artistKey: asAudioKey(artistKeyVal),
+
+        introUrl: asString(introUrlVal, null),
+        detailUrl: asString(detailUrlVal, null),
+        shortDetailUrl: asString(shortDetailUrlVal, null),
 
     };
 }
