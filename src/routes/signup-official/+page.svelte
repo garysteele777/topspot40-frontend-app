@@ -4,6 +4,7 @@
         import { getBackendUrl } from '$lib/config';
         import { readLanguagePreference } from '$lib/languagePreferences';
         import { supabase } from '$lib/supabaseClient';
+        import posthog from 'posthog-js';
 
         let language: 'en' | 'es' | 'ptbr' = 'en';
         let email = '';
@@ -141,6 +142,18 @@
                                         result?.detail ??
                                                 copy[language].signupError
                                 );
+                        }
+
+                        if (
+                                result?.created === true &&
+                                typeof result?.user_id === 'string'
+                        ) {
+                                try {
+                                        posthog.identify(result.user_id);
+                                        posthog.capture('signup_completed', { language });
+                                } catch (analyticsError) {
+                                        console.error('Unable to record completed signup:', analyticsError);
+                                }
                         }
 
                         await goto('/create-account');

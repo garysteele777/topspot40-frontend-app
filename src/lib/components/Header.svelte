@@ -9,6 +9,7 @@
 	import { goto } from '$app/navigation';
 	import { getBackendUrl } from '$lib/config';
 	import { supabase } from '$lib/supabaseClient';
+	import posthog from 'posthog-js';
 
 	let dropdownRef: HTMLElement; // reference to the dropdown container
 	let showDropdown = false;
@@ -53,6 +54,12 @@
 			window.alert('TopSpot40 could not fully log you out. Please try again.');
 			isLoggingOut = false;
 			return;
+		}
+
+		try {
+			posthog.reset();
+		} catch (analyticsError) {
+			console.error('Unable to reset analytics identity:', analyticsError);
 		}
 
 		await goto('/signin', { replaceState: true });

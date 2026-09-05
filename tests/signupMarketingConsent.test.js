@@ -29,3 +29,41 @@ test('signup keeps marketing consent optional and sends it separately from accou
     assert.match(page, /await goto\('\/create-account'\);/);
     assert.doesNotMatch(page, /marketingOptIn\s*\?\s*.*create-account/);
 });
+
+test('completed signup is recorded without sending the email to PostHog', async () => {
+    const page = await readFile(
+        new URL('../src/routes/signup-official/+page.svelte', import.meta.url),
+        'utf8'
+    );
+
+    assert.match(page, /import posthog from 'posthog-js';/);
+    assert.match(page, /result\?\.created === true/);
+    assert.match(page, /typeof result\?\.user_id === 'string'/);
+    assert.match(page, /posthog\.identify\(result\.user_id\);/);
+    assert.match(page, /posthog\.capture\('signup_completed', \{ language \}\);/);
+    assert.doesNotMatch(page, /posthog\.capture\('signup_completed',\s*\{[^}]*\bemail\b[^}]*\}\);/);
+
+    const responseCheck = page.indexOf('if (!response.ok)');
+    const capture = page.indexOf("posthog.capture('signup_completed'");
+    const navigation = page.indexOf("await goto('/create-account')");
+
+    assert.ok(responseCheck < capture);
+    assert.ok(capture < navigation);
+});
+
+test('successful logout resets the PostHog identity', async () => {
+    const header = await readFile(
+        new URL('../src/lib/components/Header.svelte', import.meta.url),
+        'utf8'
+    );
+
+    assert.match(header, /import posthog from 'posthog-js';/);
+    assert.match(header, /posthog\.reset\(\);/);
+
+    const failureCheck = header.indexOf('if (backendError || supabaseError)');
+    const reset = header.indexOf('posthog.reset()');
+    const navigation = header.indexOf("await goto('/signin'");
+
+    assert.ok(failureCheck < reset);
+    assert.ok(reset < navigation);
+});
