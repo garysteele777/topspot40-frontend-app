@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { submitFeedback as submitFeedbackRequest } from '$lib/api/feedback';
+	import posthog from 'posthog-js';
 
 	export let visible = false;
 	export let onClose: () => void;
@@ -26,6 +27,15 @@
 				message: feedback.trim(),
 				route: window.location.pathname
 			});
+
+			try {
+			        posthog.capture('feedback_submitted', {
+			                source: 'profile_feedback',
+			                category: 'general_feedback'
+			        });
+			} catch (analyticsError) {
+			        console.error('Unable to record feedback submission:', analyticsError);
+			}
 
 			submitted = true;
 		} catch (err) {

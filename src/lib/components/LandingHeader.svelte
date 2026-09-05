@@ -1,5 +1,6 @@
 <script>
     import { submitFeedback as submitFeedbackRequest } from '$lib/api/feedback';
+    import posthog from 'posthog-js';
 
     let showContactUsModal = false;
     let showFeedbackForm = false;
@@ -52,6 +53,15 @@
                 message,
                 route: window.location.pathname
             });
+
+            try {
+                posthog.capture('feedback_submitted', {
+                    source: 'landing_contact',
+                    category: 'contact'
+                });
+            } catch (analyticsError) {
+                console.error('Unable to record feedback submission:', analyticsError);
+            }
 
             showThankYou = true;
             showFeedbackForm = false;

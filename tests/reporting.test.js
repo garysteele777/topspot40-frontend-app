@@ -85,6 +85,45 @@ test('feedback entry points send their approved categories', async () => {
     assert.match(feedback, /category:\s*'general_feedback'/);
 });
 
+test('feedback analytics records successful submissions without user-entered content', async () => {
+    const [landing, feedback] = await Promise.all([
+        read('../src/lib/components/LandingHeader.svelte'),
+        read('../src/lib/components/profile-components/FeedbackModal.svelte')
+    ]);
+
+    assert.match(landing, /import posthog from 'posthog-js'/);
+    assert.match(feedback, /import posthog from 'posthog-js'/);
+
+    const landingSubmit = landing.indexOf('await submitFeedbackRequest({');
+    const landingCapture = landing.indexOf("posthog.capture('feedback_submitted'");
+    const feedbackSubmit = feedback.indexOf('await submitFeedbackRequest({');
+    const feedbackCapture = feedback.indexOf("posthog.capture('feedback_submitted'");
+
+    assert.ok(landingSubmit >= 0 && landingCapture > landingSubmit);
+    assert.ok(feedbackSubmit >= 0 && feedbackCapture > feedbackSubmit);
+
+    assert.match(
+        landing,
+        /posthog\.capture\('feedback_submitted',\s*\{[\s\S]*?source:\s*'landing_contact',[\s\S]*?category:\s*'contact'/
+    );
+    assert.match(
+        feedback,
+        /posthog\.capture\('feedback_submitted',\s*\{[\s\S]*?source:\s*'profile_feedback',[\s\S]*?category:\s*'general_feedback'/
+    );
+
+    const landingAnalytics =
+        landing.match(/posthog\.capture\('feedback_submitted',\s*\{([\s\S]*?)\}\);/)?.[1] ?? '';
+    const feedbackAnalytics =
+        feedback.match(/posthog\.capture\('feedback_submitted',\s*\{([\s\S]*?)\}\);/)?.[1] ?? '';
+
+    for (const analyticsPayload of [landingAnalytics, feedbackAnalytics]) {
+        assert.doesNotMatch(
+            analyticsPayload,
+            /\b(message|email|title|route|metadata)\s*:/
+        );
+    }
+});
+
 test('report modal supports multiple localized problem selections and compatible metadata', async () => {
     const [button, modal] = await Promise.all([
         read('../src/lib/components/car/ReportProblemButton.svelte'),
