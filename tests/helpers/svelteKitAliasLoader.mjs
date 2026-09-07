@@ -6,17 +6,17 @@ function sourceUrl(path) {
 
 export async function resolve(specifier, context, nextResolve) {
     if (specifier === '$app/environment') {
-        return {
-            url: new URL('./testAppEnvironment.ts', import.meta.url).href,
-            shortCircuit: true
-        };
+        return nextResolve(
+            new URL('./testAppEnvironment.ts', import.meta.url).href,
+            context
+        );
     }
 
     if (specifier.startsWith('$lib/')) {
-        return {
-            url: sourceUrl(`lib/${specifier.slice('$lib/'.length)}.ts`),
-            shortCircuit: true
-        };
+        return nextResolve(
+            sourceUrl(`lib/${specifier.slice('$lib/'.length)}.ts`),
+            context
+        );
     }
 
     return nextResolve(specifier, context);
