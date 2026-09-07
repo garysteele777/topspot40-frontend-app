@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { createEarlyMemberCheckout, createStandardCheckout, type SubscriptionStatus } from '$lib/api/membership';
+	import posthog from 'posthog-js';
 	import { readLanguagePreference } from '$lib/languagePreferences';
 
 	export let data: { subscriptionStatus?: SubscriptionStatus };
@@ -120,6 +121,16 @@
 				plan === 'standard'
 					? await createStandardCheckout()
 					: await createEarlyMemberCheckout(plan);
+
+			try {
+			        posthog.capture('checkout_started', {
+			                offer: plan === 'standard' ? 'standard' : 'early_member',
+			                plan
+			        });
+			} catch (analyticsError) {
+			        console.error('Unable to record checkout start:', analyticsError);
+			}
+
 			window.location.assign(url);
 		} catch {
 			errorMessage = text.error;

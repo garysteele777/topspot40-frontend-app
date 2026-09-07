@@ -48,6 +48,33 @@ test('checkout validates Stripe redirects and reports loading and errors accessi
     assert.doesNotMatch(page, /errorMessage = error\.message/);
 });
 
+test('checkout analytics records successful checkout starts without sensitive data', async () => {
+    const page = await read('../src/routes/create-account/+page.svelte');
+
+    assert.match(page, /import posthog from 'posthog-js'/);
+
+    const checkoutRequest = page.indexOf("const url =");
+    const checkoutCapture = page.indexOf("posthog.capture('checkout_started'");
+    const checkoutRedirect = page.indexOf("window.location.assign(url);");
+
+    assert.ok(checkoutRequest >= 0);
+    assert.ok(checkoutCapture > checkoutRequest);
+    assert.ok(checkoutRedirect > checkoutCapture);
+
+    assert.match(
+        page,
+        /posthog\.capture\('checkout_started',\s*\{[\s\S]*?offer:\s*plan === 'standard' \? 'standard' : 'early_member',[\s\S]*?plan/
+    );
+
+    const analyticsPayload =
+        page.match(/posthog\.capture\('checkout_started',\s*\{([\s\S]*?)\}\);/)?.[1] ?? '';
+
+    assert.doesNotMatch(
+        analyticsPayload,
+        /\b(email|customer|stripe|url|payment|card|subscription_id)\s*:/
+    );
+});
+
 test('returning from Stripe resets plan selection while checkout requests remain guarded', async () => {
     const page = await read('../src/routes/create-account/+page.svelte');
 
