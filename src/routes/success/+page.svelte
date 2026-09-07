@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { getBackendUrl } from '$lib/config';
 	import { readLanguagePreference } from '$lib/languagePreferences';
+        import posthog from 'posthog-js';
 
 	let language: 'en' | 'es' | 'ptbr' = 'en';
 	let state: 'verifying' | 'error' = 'verifying';
@@ -42,6 +43,15 @@
 			);
 			const result = await response.json().catch(() => null);
 			if (response.ok && result?.is_active) {
+                                try {
+                                        posthog.capture('membership_activated', {
+                                                offer: result.offer ?? 'unknown',
+                                                plan: result.plan ?? 'unknown'
+                                        });
+                                } catch (analyticsError) {
+                                        console.error('Unable to record membership activation:', analyticsError);
+                                }
+
 				await goto('/dashboard', { replaceState: true });
 				return;
 			}

@@ -131,6 +131,33 @@ test('routing preserves active member access while grace members can view their 
     assert.match(dashboardLayout, /accessState === 'complimentary'/);
 });
 
+test('membership activation analytics records verified memberships without sensitive data', async () => {
+    const success = await read('../src/routes/success/+page.svelte');
+
+    assert.match(success, /import posthog from 'posthog-js'/);
+
+    const activeBranch = success.indexOf("if (response.ok && result?.is_active) {");
+    const capture = success.indexOf("posthog.capture('membership_activated'");
+    const redirect = success.indexOf("await goto('/dashboard', { replaceState: true });");
+
+    assert.ok(activeBranch >= 0);
+    assert.ok(capture > activeBranch);
+    assert.ok(redirect > capture);
+
+    assert.match(
+        success,
+        /posthog\.capture\('membership_activated',\s*\{[\s\S]*?offer:\s*result\.offer \?\? 'unknown',[\s\S]*?plan:\s*result\.plan \?\? 'unknown'/
+    );
+
+    const analyticsPayload =
+        success.match(/posthog\.capture\('membership_activated',\s*\{([\s\S]*?)\}\);/)?.[1] ?? '';
+
+    assert.doesNotMatch(
+        analyticsPayload,
+        /\b(session_id|sessionId|subscription_id|customer|email|payment|card|url)\s*:/
+    );
+});
+
 test('customer-facing membership additions have English, Spanish, and Brazilian Portuguese copy', async () => {
     const page = await read('../src/routes/create-account/+page.svelte');
     const success = await read('../src/routes/success/+page.svelte');
