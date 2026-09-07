@@ -10,6 +10,7 @@
 	import { getBackendUrl } from '$lib/config';
 	import { supabase } from '$lib/supabaseClient';
 	import posthog from 'posthog-js';
+	import { resetPostHog } from '$lib/analytics/posthog';
 
 	let dropdownRef: HTMLElement; // reference to the dropdown container
 	let showDropdown = false;
@@ -57,7 +58,7 @@
 		}
 
 		try {
-			posthog.reset();
+			resetPostHog(posthog);
 		} catch (analyticsError) {
 			console.error('Unable to reset analytics identity:', analyticsError);
 		}

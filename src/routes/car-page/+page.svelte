@@ -42,6 +42,8 @@
     import {createCarModeNavigation} from '$lib/carmode/CarModeNavigation';
     import {createCarModeNarration} from '$lib/carmode/CarModeNarration';
     import {createCarModeSpotify} from '$lib/carmode/CarModeSpotify';
+    import posthog from 'posthog-js';
+    import { captureSpotifyOpen } from '$lib/analytics/posthog';
     import {
         programHistoryStore,
         type ProgramKey
@@ -703,7 +705,23 @@
 
     const spotify = createCarModeSpotify({
         getGuidedReady: () => guidedReady,
-        setStatus: message => status.set(message)
+        setStatus: message => status.set(message),
+        captureSpotifyOpen: track => {
+            const selection = get(currentSelection);
+            const context = selection?.context;
+            captureSpotifyOpen(posthog, {
+                mode: selection?.mode ?? null,
+                language: selection?.language ?? null,
+                decade: context?.decade ?? track.decadeSlug ?? null,
+                genre: context?.genre ?? track.genreSlug ?? null,
+                collection: context?.collection ?? context?.collection_slug ?? track.collection_name ?? null,
+                track_id: track.id ?? null,
+                ranking_id: track.rankingId,
+                track_rank: track.rank,
+                spotify_track_id: track.spotifyTrackId ?? null,
+                action_source: activePlayMode === 'auto' ? 'auto_play' : 'guided_play'
+            });
+        }
     });
     const spotifyState = spotify.state;
 

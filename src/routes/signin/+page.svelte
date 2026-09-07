@@ -2,6 +2,8 @@
         import { goto } from '$app/navigation';
         import { getBackendUrl } from '$lib/config';
         import { supabase } from '$lib/supabaseClient';
+        import posthog from 'posthog-js';
+        import { identifyPostHogUser } from '$lib/analytics/posthog';
 
         let email = '';
         let verificationCode = '';
@@ -120,6 +122,8 @@
                                                 'TopSpot40 sign-in failed.'
                                 );
                         }
+
+                        identifyPostHogUser(posthog, { id: result?.user_id });
 
                         await goto('/dashboard');
                 } catch (error) {
