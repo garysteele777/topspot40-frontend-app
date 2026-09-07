@@ -50,3 +50,10 @@ export function resetPostHog(client: PostHogClient): void { client.reset(); }
 export function captureSpotifyOpen(client: PostHogClient, properties: Record<string, string | number | null>): void {
     client.capture('spotify_opened', properties, { send_instantly: true, transport: 'sendBeacon' });
 }
+
+export function captureProgramStarted(
+    client: PostHogClient,
+    properties: Record<string, string | number | null>
+): void {
+    client.capture('program_started', properties);
+}

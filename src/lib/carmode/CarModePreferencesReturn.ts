@@ -4,6 +4,7 @@ import type {Language} from '$lib/types/playback';
 const RETURN_PATH = '/car-page';
 const CONTRACT_PARAM = 'carModePreferencesReturn';
 const LANGUAGE_CHANGED_PARAM = 'carModeLanguageChanged';
+const PROGRAM_STARTED_PARAM = 'carModeProgramStarted';
 
 export type CarModeTrackIdentity = Pick<
     CarModeTrack,
@@ -12,11 +13,13 @@ export type CarModeTrackIdentity = Pick<
 
 export function buildCarModePreferencesUrl(
     currentUrl: URL,
-    track: CarModeTrackIdentity | null
+    track: CarModeTrackIdentity | null,
+    programStarted = false
 ): string {
     const returnUrl = new URL(currentUrl.href);
 
     returnUrl.searchParams.set(CONTRACT_PARAM, '1');
+    returnUrl.searchParams.set(PROGRAM_STARTED_PARAM, String(programStarted));
     returnUrl.searchParams.delete('currentRankingId');
     returnUrl.searchParams.delete('currentSpotifyTrackId');
     returnUrl.searchParams.delete('currentRank');

@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 register('./helpers/svelteKitAliasLoader.mjs', import.meta.url);
 
 const {
+    captureProgramStarted,
     captureSpotifyOpen,
     identifyPostHogUser,
     resetPostHog,
@@ -107,4 +108,28 @@ test('Spotify captures use an immediate beacon before Android navigation', () =>
         Object.defineProperty(globalThis, 'navigator', { configurable: true, value: originalNavigator });
         Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: originalLocalStorage });
     }
+});
+
+test('program started capture sends only the provided non-sensitive program properties', () => {
+    const posthog = client();
+
+    captureProgramStarted(posthog, {
+        program_type: 'PROGRAM_DG',
+        playback_method: 'guided',
+        language: 'en',
+        decade: '1980s',
+        genre: 'pop'
+    });
+
+    assert.deepEqual(posthog.calls, [[
+        'capture',
+        'program_started',
+        {
+            program_type: 'PROGRAM_DG',
+            playback_method: 'guided',
+            language: 'en',
+            decade: '1980s',
+            genre: 'pop'
+        }
+    ]]);
 });

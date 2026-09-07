@@ -153,3 +153,39 @@ test('Auto cancellation invalidates queued advancement before a language-refresh
 
     assert.equal(advanced, 0);
 });
+
+test('Car Mode preferences return preserves whether program playback had actually started', () => {
+    const carUrl = new URL(
+        'https://topspot.test/car-page?mode=nostalgia&decade=1980s&genre=pop&language=en'
+    );
+
+    const notStartedPath = buildCarModePreferencesUrl(
+        carUrl,
+        tracks[0],
+        false
+    );
+    const startedPath = buildCarModePreferencesUrl(
+        carUrl,
+        tracks[0],
+        true
+    );
+
+    const notStartedReturn = getCarModePreferencesReturnUrl(
+        new URL(notStartedPath, carUrl.origin)
+    );
+    const startedReturn = getCarModePreferencesReturnUrl(
+        new URL(startedPath, carUrl.origin)
+    );
+
+    assert.ok(notStartedReturn);
+    assert.ok(startedReturn);
+
+    assert.equal(
+        notStartedReturn.searchParams.get('carModeProgramStarted'),
+        'false'
+    );
+    assert.equal(
+        startedReturn.searchParams.get('carModeProgramStarted'),
+        'true'
+    );
+});

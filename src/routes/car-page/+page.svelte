@@ -40,10 +40,14 @@
         createCarModeAutoPlay
     } from '$lib/carmode/CarModeAutoPlay';
     import {createCarModeNavigation} from '$lib/carmode/CarModeNavigation';
+    import {
+        buildProgramStartedProperties,
+        createProgramStartedTracker
+    } from '$lib/carmode/CarModeAnalytics';
     import {createCarModeNarration} from '$lib/carmode/CarModeNarration';
     import {createCarModeSpotify} from '$lib/carmode/CarModeSpotify';
     import posthog from 'posthog-js';
-    import { captureSpotifyOpen } from '$lib/analytics/posthog';
+    import { captureProgramStarted, captureSpotifyOpen } from '$lib/analytics/posthog';
     import {
         programHistoryStore,
         type ProgramKey
@@ -131,6 +135,25 @@
     let playbackStartInFlight = false;
     let activePlayMode: 'guided' | 'auto' | null = null;
     let preservePlaybackForPreferences = false;
+
+    const programStartedTracker = createProgramStartedTracker({
+        capture: properties => captureProgramStarted(posthog, properties),
+        alreadyStarted: false
+    });
+
+    function captureProgramStartedOnce(): void {
+        const selection = get(currentSelection);
+        if (!selection) return;
+
+        const settings = get(playbackSettingsStore);
+
+        programStartedTracker.captureOnce(
+            buildProgramStartedProperties(
+                selection,
+                settings.playbackMethod
+            )
+        );
+    }
     let reportContext: ContentIssueContext | null = null;
     let reportInitialIssueType: ContentIssueType | undefined;
 
@@ -1033,6 +1056,8 @@
 
     async function handleGuidedPlay() {
         activePlayMode = 'guided';
+        if (!$currentTrack) return;
+        captureProgramStartedOnce();
         await handlePlayPause();
     }
 
@@ -1062,6 +1087,8 @@
     );
 
     async function handleAutoPlay() {
+        if (!$currentTrack) return;
+        captureProgramStartedOnce();
         await autoPlay.handlePlay();
     }
 
@@ -1069,7 +1096,8 @@
         preservePlaybackForPreferences = true;
         void goto(buildCarModePreferencesUrl(
             new URL(window.location.href),
-            get(currentTrack)
+            get(currentTrack),
+            programStartedTracker.hasStarted()
         ));
     }
 
@@ -1538,6 +1566,13 @@
         const url = new URL(window.location.href);
         const languageChangedReturn = isChangedCarModePreferencesReturn(url);
         const languageUnchangedReturn = isUnchangedCarModePreferencesReturn(url);
+
+        if (
+            (languageChangedReturn || languageUnchangedReturn) &&
+            url.searchParams.get('carModeProgramStarted') === 'true'
+        ) {
+            programStartedTracker.markStarted();
+        }
 
         if (languageUnchangedReturn) {
             // The previous Car Mode instance deliberately kept its session alive.
