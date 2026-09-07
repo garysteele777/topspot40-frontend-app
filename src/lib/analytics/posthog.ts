@@ -57,3 +57,10 @@ export function captureProgramStarted(
 ): void {
     client.capture('program_started', properties);
 }
+
+export function captureLanguageSelected(
+    client: PostHogClient,
+    language: string
+): void {
+    client.capture('language_selected', { language });
+}

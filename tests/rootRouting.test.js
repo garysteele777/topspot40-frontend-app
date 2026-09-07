@@ -67,7 +67,7 @@ test('language selection preserves the first-visit path and skips welcome for a 
 
     assert.match(languagePage, /let hasChosenLanguage = false;/);
     assert.match(languagePage, /function setLanguage\(value: LandingLanguage\) \{[\s\S]*?writeLanguagePreference\(value\);/);
-    assert.match(languagePage, /function performContinueJourney\(\) \{\s*goto\('\/welcome'\);/s);
+    assert.match(languagePage, /function performContinueJourney\(\) \{\s*captureLanguageSelected\(posthog, language\);\s*goto\('\/welcome'\);/s);
     assert.match(languagePage, /if \(savedLanguage\)[\s\S]*?goto\('\/journey-prototype\/choose',\s*\{\s*replaceState: true/s);
     assert.doesNotMatch(languagePage, /goto\('\/'/);
 });

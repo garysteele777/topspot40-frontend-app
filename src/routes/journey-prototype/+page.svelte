@@ -1,12 +1,14 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
+    import posthog from 'posthog-js';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
     import {
         readStoredLanguagePreference,
         writeLanguagePreference
     } from '$lib/languagePreferences';
+    import {captureLanguageSelected} from '$lib/analytics/posthog';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
 
@@ -54,6 +56,7 @@
     }
 
     function performContinueJourney() {
+        captureLanguageSelected(posthog, language);
         goto('/welcome');
     }
 

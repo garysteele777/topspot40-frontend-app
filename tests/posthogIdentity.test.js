@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 register('./helpers/svelteKitAliasLoader.mjs', import.meta.url);
 
 const {
+    captureLanguageSelected,
     captureProgramStarted,
     captureSpotifyOpen,
     identifyPostHogUser,
@@ -131,5 +132,17 @@ test('program started capture sends only the provided non-sensitive program prop
             decade: '1980s',
             genre: 'pop'
         }
+    ]]);
+});
+
+test('language selected capture sends only the chosen language', () => {
+    const posthog = client();
+
+    captureLanguageSelected(posthog, 'es');
+
+    assert.deepEqual(posthog.calls, [[
+        'capture',
+        'language_selected',
+        { language: 'es' }
     ]]);
 });
