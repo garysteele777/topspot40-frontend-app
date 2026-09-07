@@ -1,6 +1,13 @@
 <script lang="ts">
+	import posthog from 'posthog-js';
+	import { captureSpotifyOpen } from '$lib/analytics/posthog';
+
 	function goBack() {
 		history.back();
+	}
+
+	function openSpotifyPremium(): void {
+		captureSpotifyOpen(posthog, { action_source: 'premium_upgrade' });
 	}
 </script>
 
@@ -15,7 +22,7 @@
 		TopSpot40 is moving toward a Spotify companion model where Spotify handles
 		playback, advertisements, and account restrictions.
 	</p>
-	<a href="https://www.spotify.com/premium/" target="_blank" rel="noopener noreferrer">
+	<a href="https://www.spotify.com/premium/" target="_blank" rel="noopener noreferrer" on:click={openSpotifyPremium}>
 		Learn about Spotify Premium
 	</a>
 </main>

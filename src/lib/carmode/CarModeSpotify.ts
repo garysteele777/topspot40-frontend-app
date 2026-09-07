@@ -4,6 +4,7 @@ import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 export type CarModeSpotifyDependencies = {
     getGuidedReady: () => boolean;
     setStatus: (message: string) => void;
+    captureSpotifyOpen?: (track: CarModeTrack) => void;
 };
 
 export function createCarModeSpotify(
@@ -80,6 +81,8 @@ export function createCarModeSpotify(
         );
 
         const spotifyUrl = `https://open.spotify.com/track/${track.spotifyTrackId}`;
+
+        dependencies.captureSpotifyOpen?.(track);
 
         if (isMobile()) {
             // On mobile, use the same browser tab.

@@ -3,11 +3,15 @@
     import LandingHeader from '$lib/components/LandingHeader.svelte';
     import { page } from '$app/stores'; 
     import { onMount } from 'svelte';
+    import posthog from 'posthog-js';
+    import { initializePostHog } from '$lib/analytics/posthog';
 
     let {children} = $props();
     let deferredPrompt: any = null;
 
     onMount(() => {
+        initializePostHog(posthog);
+
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }

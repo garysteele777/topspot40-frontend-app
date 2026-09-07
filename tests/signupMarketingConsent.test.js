@@ -36,10 +36,10 @@ test('completed signup is recorded without sending the email to PostHog', async 
         'utf8'
     );
 
-    assert.match(page, /import posthog from 'posthog-js';/);
+    assert.match(page, /import \{ identifyPostHogUser \} from '\$lib\/analytics\/posthog';/);
     assert.match(page, /result\?\.created === true/);
     assert.match(page, /typeof result\?\.user_id === 'string'/);
-    assert.match(page, /posthog\.identify\(result\.user_id\);/);
+    assert.match(page, /identifyPostHogUser\(posthog, \{ id: result\.user_id \}\);/);
     assert.match(page, /posthog\.capture\('signup_completed', \{ language \}\);/);
     assert.doesNotMatch(page, /posthog\.capture\('signup_completed',\s*\{[^}]*\bemail\b[^}]*\}\);/);
 
@@ -57,11 +57,11 @@ test('successful logout resets the PostHog identity', async () => {
         'utf8'
     );
 
-    assert.match(header, /import posthog from 'posthog-js';/);
-    assert.match(header, /posthog\.reset\(\);/);
+    assert.match(header, /import \{ resetPostHog \} from '\$lib\/analytics\/posthog';/);
+    assert.match(header, /resetPostHog\(posthog\);/);
 
     const failureCheck = header.indexOf('if (backendError || supabaseError)');
-    const reset = header.indexOf('posthog.reset()');
+    const reset = header.indexOf('resetPostHog(posthog)');
     const navigation = header.indexOf("await goto('/signin'");
 
     assert.ok(failureCheck < reset);
