@@ -7,8 +7,9 @@
         import posthog from 'posthog-js';
         import { identifyPostHogUser } from '$lib/analytics/posthog';
 
-        let language: 'en' | 'es' | 'ptbr' = 'en';
+        let language: 'en' | 'es' | 'pt-BR' = 'en';
         let email = '';
+        let displayName = '';
         let marketingOptIn = false;
         let verificationCode = '';
         let codeRequested = false;
@@ -23,18 +24,26 @@
                 es: {
                         back: 'Volver', title: 'Crear una cuenta', intro: 'Crea tu cuenta de TopSpot40 con tu dirección de correo electrónico.', email: 'Dirección de correo electrónico', marketing: 'Envíame novedades ocasionales de TopSpot40 y ofertas para miembros fundadores.', optional: 'Opcional. Puedes dejar de recibir estos mensajes en cualquier momento.', sending: 'Enviando código...', send: 'Enviar código de registro', sent: 'Enviamos un código de registro a', code: 'Código de registro de seis dígitos', creating: 'Creando cuenta...', verify: 'Verificar y crear cuenta', differentEmail: 'Usar otro correo electrónico', account: '¿Ya tienes una cuenta de TopSpot40?', signIn: 'Iniciar sesión', enterEmail: 'Ingresa tu dirección de correo electrónico.', checkEmail: 'Revisa tu correo electrónico para obtener tu código de registro de seis dígitos.', wait: 'Espera unos 60 segundos antes de solicitar otro código de registro.', sendError: 'No pudimos enviar tu código de registro. Inténtalo de nuevo.', enterCode: 'Ingresa el código de registro de tu correo electrónico.', signupError: 'No se pudo crear tu cuenta de TopSpot40.', completeError: 'No pudimos completar el registro.'
                 },
-                ptbr: {
+                'pt-BR': {
                         back: 'Voltar', title: 'Criar uma conta', intro: 'Crie sua conta TopSpot40 com seu endereço de e-mail.', email: 'Endereço de e-mail', marketing: 'Quero receber novidades ocasionais do TopSpot40 e ofertas para membros fundadores.', optional: 'Opcional. Você pode deixar de receber essas mensagens a qualquer momento.', sending: 'Enviando código...', send: 'Enviar código de cadastro', sent: 'Enviamos um código de cadastro para', code: 'Código de cadastro de seis dígitos', creating: 'Criando conta...', verify: 'Verificar e criar conta', differentEmail: 'Usar outro endereço de e-mail', account: 'Já tem uma conta TopSpot40?', signIn: 'Entrar', enterEmail: 'Informe seu endereço de e-mail.', checkEmail: 'Verifique seu e-mail para encontrar o código de cadastro de seis dígitos.', wait: 'Aguarde cerca de 60 segundos antes de solicitar outro código de cadastro.', sendError: 'Não foi possível enviar seu código de cadastro. Tente novamente.', enterCode: 'Informe o código de cadastro enviado para seu e-mail.', signupError: 'Não foi possível criar sua conta TopSpot40.', completeError: 'Não foi possível concluir o cadastro.'
                 }
         } as const;
 
         onMount(() => {
                 const savedLanguage = readLanguagePreference();
-                language = savedLanguage === 'es' || savedLanguage === 'ptbr' ? savedLanguage : 'en';
+                language = savedLanguage === 'es' ? 'es' : savedLanguage === 'ptbr' ? 'pt-BR' : 'en';
         });
 
         function goBack() {
                 history.back();
+        }
+
+        function displayNameText(): string {
+                return language === 'es' ? 'Nombre para mostrar' : language === 'pt-BR' ? 'Nome de exibição' : 'Display name';
+        }
+
+        function displayNameHint(): string {
+                return language === 'es' ? 'Ingresa un nombre para mostrar de 2 a 50 caracteres.' : language === 'pt-BR' ? 'Informe um nome de exibição de 2 a 50 caracteres.' : 'Enter a display name between 2 and 50 characters.';
         }
 
         async function requestCode() {
@@ -42,9 +51,15 @@
                 statusMessage = '';
 
                 const normalizedEmail = email.trim().toLowerCase();
+                const normalizedDisplayName = displayName.trim();
 
                 if (!normalizedEmail) {
                         errorMessage = copy[language].enterEmail;
+                        return;
+                }
+
+                if (normalizedDisplayName.length < 2 || normalizedDisplayName.length > 50) {
+                        errorMessage = displayNameHint();
                         return;
                 }
 
@@ -131,7 +146,9 @@
                                         },
                                         body: JSON.stringify({
                                                 access_token: supabaseAccessToken,
-                                                marketing_opt_in: marketingOptIn
+                                                marketing_opt_in: marketingOptIn,
+                                                display_name: displayName.trim(),
+                                                preferred_language: language
                                         })
                                 }
                         );
@@ -157,7 +174,11 @@
                                 }
                         }
 
-                        await goto('/create-account');
+                        if (result?.legacy_linked) {
+                                await goto(result?.profile_completion_required ? '/complete-profile' : '/dashboard');
+                        } else {
+                                await goto('/create-account');
+                        }
                 } catch (error) {
                         console.error('Unable to complete sign-up:', error);
 
@@ -205,6 +226,19 @@
                                         disabled={isLoading}
                                         required
                                 />
+
+                                <label for="display-name">{displayNameText()}</label>
+                                <input
+                                        id="display-name"
+                                        type="text"
+                                        bind:value={displayName}
+                                        autocomplete="nickname"
+                                        minlength="2"
+                                        maxlength="50"
+                                        disabled={isLoading}
+                                        required
+                                />
+                                <p class="marketing-supporting-text">{language === 'es' ? 'De 2 a 50 caracteres' : language === 'pt-BR' ? 'De 2 a 50 caracteres' : '2–50 characters'}</p>
 
                                 <label class="marketing-opt-in">
                                         <input
