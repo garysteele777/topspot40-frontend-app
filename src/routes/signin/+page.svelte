@@ -1,16 +1,25 @@
 <script lang="ts">
         import { goto } from '$app/navigation';
+        import { onMount } from 'svelte';
         import { getBackendUrl } from '$lib/config';
+        import { readLanguagePreference } from '$lib/languagePreferences';
         import { supabase } from '$lib/supabaseClient';
         import posthog from 'posthog-js';
         import { identifyPostHogUser } from '$lib/analytics/posthog';
 
+        let language: 'en' | 'es' | 'pt-BR' = 'en';
         let email = '';
         let verificationCode = '';
         let codeRequested = false;
         let isLoading = false;
         let errorMessage = '';
         let statusMessage = '';
+        const localized = {
+                en: { back: 'Go Back', title: 'Sign In', intro: 'Sign in to continue to your TopSpot40 account.', email: 'Email address', send: 'Send sign-in code', sending: 'Sending code...', sent: 'Check your email for your six-digit sign-in code.', code: 'Six-digit sign-in code', verify: 'Verify and sign in', signing: 'Signing in...', different: 'Use a different email', signup: 'Sign Up', enterEmail: 'Enter your email address.', enterCode: 'Enter the sign-in code from your email.', wait: 'Please wait about 60 seconds before requesting another sign-in code.', startError: 'We could not start sign-in. If you are new to TopSpot40, choose Sign Up.', completeError: 'We could not complete sign-in.' },
+                es: { back: 'Volver', title: 'Iniciar sesion', intro: 'Inicia sesion para continuar en tu cuenta TopSpot40.', email: 'Correo electronico', send: 'Enviar codigo de acceso', sending: 'Enviando codigo...', sent: 'Revisa tu correo para encontrar tu codigo de seis digitos.', code: 'Codigo de acceso de seis digitos', verify: 'Verificar e iniciar sesion', signing: 'Iniciando sesion...', different: 'Usar otro correo', signup: 'Crear cuenta', enterEmail: 'Ingresa tu correo electronico.', enterCode: 'Ingresa el codigo de tu correo.', wait: 'Espera unos 60 segundos antes de solicitar otro codigo.', startError: 'No pudimos iniciar sesion. Si eres nuevo, crea una cuenta.', completeError: 'No pudimos completar el inicio de sesion.' },
+                'pt-BR': { back: 'Voltar', title: 'Entrar', intro: 'Entre para continuar na sua conta TopSpot40.', email: 'Endereco de e-mail', send: 'Enviar codigo de acesso', sending: 'Enviando codigo...', sent: 'Verifique seu e-mail para encontrar o codigo de seis digitos.', code: 'Codigo de acesso de seis digitos', verify: 'Verificar e entrar', signing: 'Entrando...', different: 'Usar outro e-mail', signup: 'Criar conta', enterEmail: 'Informe seu endereco de e-mail.', enterCode: 'Informe o codigo enviado para seu e-mail.', wait: 'Aguarde cerca de 60 segundos antes de solicitar outro codigo.', startError: 'Nao foi possivel iniciar sessao. Se voce e novo, crie uma conta.', completeError: 'Nao foi possivel concluir o acesso.' }
+        } as const;
+        $: text = localized[language];
 
         function goBack() {
                 history.back();
@@ -23,7 +32,7 @@
                 const normalizedEmail = email.trim().toLowerCase();
 
                 if (!normalizedEmail) {
-                        errorMessage = 'Enter your email address.';
+                        errorMessage = text.enterEmail;
                         return;
                 }
 
@@ -33,7 +42,7 @@
                         const { error } = await supabase.auth.signInWithOtp({
                                 email: normalizedEmail,
                                 options: {
-                                        shouldCreateUser: true
+                                        shouldCreateUser: false
                                 }
                         });
 
@@ -43,8 +52,7 @@
 
                         email = normalizedEmail;
                         codeRequested = true;
-                        statusMessage =
-                                'Check your email for your six-digit sign-in code.';
+                        statusMessage = text.sent;
                 } catch (error) {
                         console.error('Unable to send sign-in code:', error);
 
@@ -58,10 +66,10 @@
                                 authError?.message?.toLowerCase().includes('seconds')
                         ) {
                                 errorMessage =
-                                        'Please wait about 60 seconds before requesting another sign-in code.';
+                                text.wait;
                         } else {
                                 errorMessage =
-                                        'We could not send your sign-in code. Please try again.';
+                                text.startError;
                         }
                 } finally {
                         isLoading = false;
@@ -75,7 +83,7 @@
                 const token = verificationCode.trim();
 
                 if (!token) {
-                        errorMessage = 'Enter the sign-in code from your email.';
+                        errorMessage = text.enterCode;
                         return;
                 }
 
@@ -119,20 +127,21 @@
                         if (!response.ok) {
                                 throw new Error(
                                         result?.detail ??
-                                                'TopSpot40 sign-in failed.'
+                                                text.completeError
                                 );
                         }
 
                         identifyPostHogUser(posthog, { id: result?.user_id });
 
-                        await goto('/dashboard');
+                        if (result?.profile_completion_required) {
+                                await goto('/complete-profile');
+                        } else {
+                                await goto('/dashboard');
+                        }
                 } catch (error) {
                         console.error('Unable to verify sign-in code:', error);
 
-                        errorMessage =
-                                error instanceof Error
-                                        ? error.message
-                                        : 'We could not complete sign-in.';
+                        errorMessage = text.completeError;
                 } finally {
                         isLoading = false;
                 }
@@ -144,24 +153,29 @@
                 errorMessage = '';
                 statusMessage = '';
         }
+
+        onMount(() => {
+                const savedLanguage = readLanguagePreference();
+                language = savedLanguage === 'es' ? 'es' : savedLanguage === 'ptbr' ? 'pt-BR' : 'en';
+        });
 </script>
 
 <div class="go-back-button-wrapper">
         <button on:click={goBack} class="go-back-button">
-                Go Back
+                {text.back}
         </button>
 </div>
 
 <div class="signin-container">
         <div class="signin-card">
-                <h1>Sign In</h1>
+                <h1>{text.title}</h1>
                 <p class="intro">
-                        Sign in to continue to your TopSpot40 account.
+                        {text.intro}
                 </p>
 
                 {#if !codeRequested}
                         <form on:submit|preventDefault={requestCode}>
-                                <label for="email">Email address</label>
+                                <label for="email">{text.email}</label>
 
                                 <input
                                         id="email"
@@ -179,19 +193,19 @@
                                         disabled={isLoading}
                                 >
                                         {isLoading
-                                                ? 'Sending code...'
-                                                : 'Send sign-in code'}
+                                                ? text.sending
+                                                : text.send}
                                 </button>
                         </form>
                 {:else}
                         <form on:submit|preventDefault={verifyCode}>
                                 <p class="code-sent">
-                                        We sent a sign-in code to
+                                        {text.sent}
                                         <strong>{email}</strong>.
                                 </p>
 
                                 <label for="verification-code">
-                                        Six-digit sign-in code
+                                        {text.code}
                                 </label>
 
                                 <input
@@ -212,8 +226,8 @@
                                         disabled={isLoading}
                                 >
                                         {isLoading
-                                                ? 'Signing in...'
-                                                : 'Verify and sign in'}
+                                                ? text.signing
+                                                : text.verify}
                                 </button>
 
                                 <button
@@ -222,7 +236,7 @@
                                         on:click={changeEmail}
                                         disabled={isLoading}
                                 >
-                                        Use a different email
+                                        {text.different}
                                 </button>
                         </form>
                 {/if}
@@ -237,6 +251,7 @@
                         </p>
                 {/if}
 
+                <p class="signin-link"><a href="/signup-official">{text.signup}</a></p>
         </div>
 </div>
 

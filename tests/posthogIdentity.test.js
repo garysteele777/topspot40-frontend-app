@@ -40,10 +40,12 @@ test('the normal sign-in path identifies from its successful backend session res
     const page = await readFile(new URL('../src/routes/signin/+page.svelte', import.meta.url), 'utf8');
     const responseCheck = page.indexOf('if (!response.ok)');
     const identify = page.indexOf('identifyPostHogUser(posthog, { id: result?.user_id })');
-    const navigation = page.indexOf("await goto('/dashboard')");
+    const dashboardNavigation = page.indexOf("await goto('/dashboard')");
+    const completionNavigation = page.indexOf("await goto('/complete-profile')");
 
     assert.ok(responseCheck < identify);
-    assert.ok(identify < navigation);
+    assert.ok(identify < dashboardNavigation);
+    assert.ok(identify < completionNavigation);
 });
 
 test('restored authenticated sessions identify from /api/auth/me and may set its returned email', async () => {
