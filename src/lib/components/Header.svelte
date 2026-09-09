@@ -3,7 +3,6 @@
 	import { onMount, onDestroy } from 'svelte';
 	import DropdownMenu from './DropdownMenu.svelte';
 	import { browser } from '$app/environment';
-	import ContactModal from './profile-components/ContactModal.svelte';
 	import FeedbackModal from './profile-components/FeedbackModal.svelte';
 	import MarketingPreferenceModal from './profile-components/MarketingPreferenceModal.svelte';
 	import { goto } from '$app/navigation';
@@ -15,7 +14,6 @@
 	let dropdownRef: HTMLElement; // reference to the dropdown container
 	let showDropdown = false;
 	let showFeedbackModal = false;
-	let showContactModal = false;
 	let showMarketingModal = false;
 	let isLoggingOut = false;
 
@@ -110,11 +108,6 @@
 					showFeedbackModal = true;
 					showDropdown = false;
 				}}
-				onContact={() => {
-					console.log('Contact clicked!');
-					showContactModal = true;
-					showDropdown = false;
-				}}
 				onLogout={handleLogout}
 			/>
 		{/if}
@@ -123,9 +116,6 @@
 
 <!-- Feedback Modal -->
 <FeedbackModal visible={showFeedbackModal} onClose={() => (showFeedbackModal = false)} />
-
-<!-- Contact Us Modal -->
-<ContactModal visible={showContactModal} onClose={() => (showContactModal = false)} />
 
 <!-- Manage Account / Marketing Preference Modal -->
 <MarketingPreferenceModal
