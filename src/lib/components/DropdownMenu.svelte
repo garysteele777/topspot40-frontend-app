@@ -1,16 +1,43 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { readLanguagePreference } from '$lib/languagePreferences';
+
 	// Props for the parent to handle clicks
 	export let onManageAccount: () => void;
 	export let onFeedback: () => void;
-	export let onContact: () => void;
 	export let onLogout: () => void;
 
-	function handleClick(type: 'manage-account' | 'feedback' | 'contact' | 'logout') {
+	let language: 'en' | 'es' | 'ptbr' = 'en';
+
+	const copy = {
+		en: {
+			manageAccount: 'Manage Account / Subscription',
+			feedback: 'Feedback',
+			logout: 'Logout'
+		},
+		es: {
+			manageAccount: 'Administrar cuenta / suscripción',
+			feedback: 'Comentarios',
+			logout: 'Cerrar sesión'
+		},
+		ptbr: {
+			manageAccount: 'Gerenciar conta / assinatura',
+			feedback: 'Feedback',
+			logout: 'Sair'
+		}
+	} as const;
+
+	$: text = copy[language];
+
+	function handleClick(type: 'manage-account' | 'feedback' | 'logout') {
 		if (type === 'manage-account') onManageAccount?.();
 		else if (type === 'feedback') onFeedback?.();
-		else if (type === 'contact') onContact?.();
 		else if (type === 'logout') onLogout?.();
 	}
+
+	onMount(() => {
+		language = readLanguagePreference();
+	});
 </script>
 
 <!-- $lib/components/DropdownMenu.svelte -->
@@ -25,27 +52,19 @@
 	<ul>
 		<li>
 			<button type="button" on:click={() => handleClick('manage-account')}>
-				Manage Account / Subscription
+				{text.manageAccount}
 			</button>
 		</li>
-		<li>Stats & Analytics</li>
-		<li>Notifications</li>
 
 		<li>
 			<button type="button" on:click={() => handleClick('feedback')}>
-				Feedback
-			</button>
-		</li>
-
-		<li>
-			<button type="button" on:click={() => handleClick('contact')}>
-				Contact Us
+				{text.feedback}
 			</button>
 		</li>
 
 		<li>
 			<button type="button" on:click={() => handleClick('logout')}>
-				Logout
+				{text.logout}
 			</button>
 		</li>
 	</ul>

@@ -393,6 +393,27 @@
                 line-height: 1.5;
         }
 
+        .signin-link {
+                margin-top: 1.5rem;
+                text-align: center;
+                color: #ddd;
+        }
+
+        .signin-link a {
+                color: #7ee29c;
+                font-weight: 700;
+        }
+
+        .signin-link a:hover {
+                color: #b7f7c9;
+        }
+
+        .signin-link a:focus-visible {
+                outline: 3px solid #7ee29c;
+                outline-offset: 3px;
+                border-radius: 0.2rem;
+        }
+
         @media (max-width: 640px) {
                 .signin-card {
                         padding: 1.5rem;
