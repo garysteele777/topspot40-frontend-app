@@ -5,6 +5,7 @@
     import {programHistoryStore} from '$lib/carmode/programHistory';
     import { PROGRAM_TYPES } from '$lib/types/program';
     import {buildProgramHistoryKey, findProgramHistoryEntry} from '$lib/program/history';
+    import {getCarModePlaybackPhaseCopy} from '$lib/carmode/playbackPhaseCopy';
 
     export let currentTrack: LoadedTrack | null = null;
     export let tracks: LoadedTrack[] = [];
@@ -13,6 +14,7 @@
     export let duration = 1;
     export let progress = 0;
     export let phase: PlaybackPhase | null | undefined = 'idle';
+    export let language: string | null | undefined = 'en';
 
 
     function toTitleCase(str?: string | null) {
@@ -31,15 +33,9 @@
     $: titleCased = toTitleCase(currentTrack?.trackName);
     $: artistCased = toTitleCase(currentTrack?.artistName);
 
-    $: phaseLabel =
-        phase === 'intro' ? 'Now playing intro…' :
-            phase === 'detail' ? 'Now playing story…' :
-                phase === 'artist' ? 'Now playing artist bio…' :
-                    phase === 'track' ? 'Now playing track…' :
-                        phase === 'paused' ? 'Playback paused' :
-                            '';
-
     let expand = false;
+
+    $: phaseLabel = getCarModePlaybackPhaseCopy(phase, language).meta;
 
     $: effectiveDuration =
         phase === 'track' && currentTrack?.durationMs

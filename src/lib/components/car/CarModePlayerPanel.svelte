@@ -3,7 +3,6 @@
     import CarModeTrackMeta from './CarModeTrackMeta.svelte';
     import CarModeNarration from './CarModeNarration.svelte';
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
-    import CarModeTicker from './CarModeTicker.svelte';
     import ReportProblemButton from './ReportProblemButton.svelte';
     import {favoritesStore} from '$lib/favorites/favorites';
     import TrackListPanel from '$lib/components/shared/TrackListPanel.svelte';
@@ -13,7 +12,6 @@
 
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
-    import {PROGRAM_TYPES} from '$lib/types/program';
     import {createTrackListCsv, downloadCsv} from '$lib/program/trackListCsv';
     import {
         buildProgramHistoryKey,
@@ -184,18 +182,6 @@
     }
 
 
-    $: isFavoritesProgram =
-        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG ||
-        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_COL;
-
-
-    $: favoriteTickerText =
-        isFavoritesProgram && currentTrack
-            ? `From Rank #${currentTrack.sourceRank ?? currentTrack.rank}
-           • Decade: ${currentTrack.decadeName ?? currentTrack.decadeSlug ?? ''}
-           • Genre: ${currentTrack.genreName ?? currentTrack.genreSlug ?? ''}`
-            : null;
-
     function isPlayed(rank: number): boolean {
         return isProgramRankPlayed(
             $programHistoryStore,
@@ -296,19 +282,10 @@
                     {duration}
                     {progress}
                     {phase}
+                    language={$currentSelection?.language ?? 'en'}
             />
         </div>
     </div>
-
-    <!-- Phase ticker -->
-    <CarModeTicker
-            text={
-        favoriteTickerText ??
-        phase ??
-        ''
-    }
-    />
-
 
     {#if !isRadioMode && !isArtistSpotlight}
         <div class="progress-line">
