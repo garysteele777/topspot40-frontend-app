@@ -9,6 +9,7 @@
 
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
+    import type {Language} from '$lib/stores/selection';
 
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
@@ -25,6 +26,18 @@
         toggleFavorite,
         type ProgramType
     } from '$lib/favorites/favorites';
+
+    type ProgressCopy = {
+        completed: string;
+        of: string;
+        remaining: string;
+    };
+
+    const progressCopy: Record<Language, ProgressCopy> = {
+        en: {completed: 'Completed', of: 'of', remaining: 'Remaining'},
+        es: {completed: 'Completadas', of: 'de', remaining: 'Restantes'},
+        ptbr: {completed: 'Concluídas', of: 'de', remaining: 'Restantes'}
+    };
 
     /* ─────────────────────────────────────────────
        Props
@@ -80,6 +93,8 @@
     $: remaining = programProgress.remaining;
 
     $: percent = programProgress.percent;
+
+    $: localizedProgressCopy = progressCopy[$currentSelection?.language ?? 'en'];
 
     /* ─────────────────────────────────────────────
        Favorites logic (Decade only)
@@ -231,6 +246,7 @@
                 onPlayPause={onPlayPause}
                 {activePlayMode}
                 hideMeta={true}
+                language={$currentSelection?.language ?? 'en'}
         />
     </div>
 
@@ -289,9 +305,9 @@
 
     {#if !isRadioMode && !isArtistSpotlight}
         <div class="progress-line">
-            Completed {completed} of {programTotal} ({Math.round(percent)}%)
+            {localizedProgressCopy.completed} {completed} {localizedProgressCopy.of} {programTotal} ({Math.round(percent)}%)
             <span class="dot">•</span>
-            Remaining {remaining}
+            {localizedProgressCopy.remaining} {remaining}
         </div>
 
         <div class="overall-progress">
@@ -307,6 +323,7 @@
                 onBackToOptions={onBackToOptions}
                 onOpenModal={() => setShowNarrationModal(true)}
                 onOpenTrackList={!isRadioMode ? (() => showTrackList = true) : undefined}
+                language={$currentSelection?.language ?? 'en'}
         />
     </div>
     <div class="report-slot"><ReportProblemButton language={$currentSelection?.language ?? 'en'} onReport={() => onReportProblem?.()} /></div>
