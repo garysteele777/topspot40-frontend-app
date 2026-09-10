@@ -1,8 +1,54 @@
 <script lang="ts">
+    import type {Language} from '$lib/stores/selection';
+
+    type ControlCopy = {
+        previous: string;
+        previousAria: string;
+        guided: string;
+        guidedAria: string;
+        pause: string;
+        pauseAria: string;
+        next: string;
+        nextAria: string;
+    };
+
+    const controlCopy: Record<Language, ControlCopy> = {
+        en: {
+            previous: 'Previous',
+            previousAria: 'Play previous track',
+            guided: 'Guided',
+            guidedAria: 'Start Guided Playback',
+            pause: 'Pause',
+            pauseAria: 'Pause Guided Playback',
+            next: 'Next',
+            nextAria: 'Play next track'
+        },
+        es: {
+            previous: 'Anterior',
+            previousAria: 'Reproducir la canción anterior',
+            guided: 'Guiada',
+            guidedAria: 'Iniciar reproducción guiada',
+            pause: 'Pausa',
+            pauseAria: 'Pausar reproducción guiada',
+            next: 'Siguiente',
+            nextAria: 'Reproducir la siguiente canción'
+        },
+        ptbr: {
+            previous: 'Anterior',
+            previousAria: 'Tocar a faixa anterior',
+            guided: 'Guiada',
+            guidedAria: 'Iniciar reprodução guiada',
+            pause: 'Pausar',
+            pauseAria: 'Pausar reprodução guiada',
+            next: 'Próxima',
+            nextAria: 'Tocar a próxima faixa'
+        }
+    };
     export let coverUrl = "/default_album.png";
     export let trackTitle = "Unknown Track";
     export let artistName = "Unknown Artist";
     export let isPlaying = false;
+    export let language: Language = 'en';
     export let hideMeta = false; // ✅ NEW prop
 
     export let onPrev: () => void;
@@ -48,19 +94,21 @@
 
     <div class="controls-overlay">
         <div class="control-item">
-            <button class="btn" on:click={onPrev} aria-label="Previous">
+            <button class="btn" on:click={onPrev} aria-label={controlCopy[language].previousAria}>
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                     <path d="M6 6h2v12H6V6zm11.5 6L10 18V6l7.5 6z"/>
                 </svg>
             </button>
-            <span>Previous</span>
+            <span>{controlCopy[language].previous}</span>
         </div>
 
         <div class="control-item">
             <button
                     class="btn play"
                     on:click={handlePlayClick}
-                    aria-label="Guided Play"
+                    aria-label={isPlaying && activePlayMode === 'guided'
+                        ? controlCopy[language].pauseAria
+                        : controlCopy[language].guidedAria}
             >
                 {#if isPlaying && activePlayMode === 'guided'}
                     <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
@@ -74,18 +122,18 @@
             </button>
             <span>
             {isPlaying && activePlayMode === 'guided'
-                ? 'Pause'
-                : 'Guided'}
+                ? controlCopy[language].pause
+                : controlCopy[language].guided}
         </span>
         </div>
 
         <div class="control-item">
-            <button class="btn" on:click={onNext} aria-label="Next">
+            <button class="btn" on:click={onNext} aria-label={controlCopy[language].nextAria}>
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                     <path d="M16 6h2v12h-2V6zM6.5 12L14 18V6l-7.5 6z"/>
                 </svg>
             </button>
-            <span>Next</span>
+            <span>{controlCopy[language].next}</span>
         </div>
     </div>
 
