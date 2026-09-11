@@ -14,6 +14,62 @@
         formatDriveInTrackPosition
     } from '$lib/carmode/classicViewLabels';
 
+    type DriveInTransportCopy = {
+        previous: string;
+        previousAria: string;
+        guided: string;
+        guidedAria: string;
+        guidedPauseAria: string;
+        auto: string;
+        autoAria: string;
+        autoPauseAria: string;
+        pause: string;
+        next: string;
+        nextAria: string;
+    };
+
+    const driveInTransportCopy: Record<Language, DriveInTransportCopy> = {
+        en: {
+            previous: 'Previous',
+            previousAria: 'Previous track',
+            guided: 'Guided Play',
+            guidedAria: 'Start Guided Playback',
+            guidedPauseAria: 'Pause Guided Playback',
+            auto: 'Auto Play',
+            autoAria: 'Start Auto Play',
+            autoPauseAria: 'Pause Auto Play',
+            pause: 'Pause',
+            next: 'Next',
+            nextAria: 'Next track'
+        },
+        es: {
+            previous: 'Anterior',
+            previousAria: 'Pista anterior',
+            guided: 'Guiada',
+            guidedAria: 'Iniciar reproducción guiada',
+            guidedPauseAria: 'Pausar reproducción guiada',
+            auto: 'Automática',
+            autoAria: 'Iniciar reproducción automática',
+            autoPauseAria: 'Pausar reproducción automática',
+            pause: 'Pausa',
+            next: 'Siguiente',
+            nextAria: 'Pista siguiente'
+        },
+        ptbr: {
+            previous: 'Anterior',
+            previousAria: 'Faixa anterior',
+            guided: 'Guiada',
+            guidedAria: 'Iniciar reprodução guiada',
+            guidedPauseAria: 'Pausar reprodução guiada',
+            auto: 'Automática',
+            autoAria: 'Iniciar reprodução automática',
+            autoPauseAria: 'Pausar reprodução automática',
+            pause: 'Pausar',
+            next: 'Próxima',
+            nextAria: 'Próxima faixa'
+        }
+    };
+
     export let currentTrack: CarModeTrack | null = null;
     export let tracks: CarModeTrack[] = [];
     export let phase: PlaybackPhase | null = null;
@@ -40,6 +96,8 @@
     export let onReportNarration: ((mode: 'intro' | 'detail' | 'artist') => void) | undefined;
 
     let showTrackList = false;
+
+    $: transportCopy = driveInTransportCopy[language];
 
     $: narrationActive = [
         'prelude',
@@ -193,9 +251,9 @@
         </div>
 
         <div class="primary-controls">
-            <button type="button" on:click={onPrev} aria-label="Previous track">
+            <button type="button" on:click={onPrev} aria-label={transportCopy.previousAria}>
                 <span class="control-icon">|◀</span>
-                <span>Previous</span>
+                <span>{transportCopy.previous}</span>
             </button>
 
             <button
@@ -205,15 +263,15 @@
                     on:click={onPlayPause}
                     aria-label={
             isPlaying && activePlayMode === 'guided'
-                ? 'Pause Guided Play'
-                : 'Guided Play'
+                ? transportCopy.guidedPauseAria
+                : transportCopy.guidedAria
         }
             >
     <span class="control-icon">
         {isPlaying && activePlayMode === 'guided' ? 'Ⅱ' : '▶'}
     </span>
                 <span>
-        {isPlaying && activePlayMode === 'guided' ? 'Pause' : 'Guided Play'}
+        {isPlaying && activePlayMode === 'guided' ? transportCopy.pause : transportCopy.guided}
     </span>
             </button>
 
@@ -224,21 +282,21 @@
                     on:click={onAutoPlay}
                     aria-label={
             isPlaying && activePlayMode === 'auto'
-                ? 'Pause Auto Play'
-                : 'Auto Play'
+                ? transportCopy.autoPauseAria
+                : transportCopy.autoAria
         }
             >
     <span class="control-icon">
         {isPlaying && activePlayMode === 'auto' ? 'Ⅱ' : '▶'}
     </span>
                 <span>
-        {isPlaying && activePlayMode === 'auto' ? 'Pause' : 'Auto Play'}
+        {isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
     </span>
             </button>
 
-            <button type="button" on:click={onNext} aria-label="Next track">
+            <button type="button" on:click={onNext} aria-label={transportCopy.nextAria}>
                 <span class="control-icon">▶|</span>
-                <span>Next</span>
+                <span>{transportCopy.next}</span>
             </button>
 
             <button
