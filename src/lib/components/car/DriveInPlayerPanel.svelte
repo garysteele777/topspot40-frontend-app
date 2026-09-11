@@ -8,6 +8,7 @@
     import type {PlaybackPhase} from '$lib/helpers/car/types';
     import type {ProgramType} from '$lib/favorites/favorites';
     import {buildProgramHistoryKey, isProgramRankPlayed} from '$lib/program/history';
+    import {narrationActionCopy} from '$lib/carmode/narrationActionCopy';
     import type {Language} from '$lib/stores/selection';
     import {
         classicViewCopy,
@@ -305,7 +306,7 @@
                     on:click={() => setShowNarrationModal(true)}
             >
                 <span class="control-icon">ⓘ</span>
-                <span>More Info</span>
+                <span>{narrationActionCopy[language].moreInfo}</span>
             </button>
 
             <button
@@ -314,13 +315,13 @@
                     on:click={() => (showTrackList = true)}
             >
                 <span class="control-icon">☷</span>
-                <span>Track List</span>
+                <span>{narrationActionCopy[language].trackList}</span>
             </button>
         </div>
 
         <div class="secondary-controls">
             <button type="button" class="back-button" on:click={onBackToOptions}>
-                ← Change Music
+                ← {narrationActionCopy[language].changeMusic}
             </button>
 
             <div class="view-switch" aria-label={classicViewCopy[language].playbackView}>

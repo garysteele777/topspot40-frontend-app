@@ -17,6 +17,10 @@ const carModeNarration = await readFile(
     new URL('../src/lib/components/car/CarModeNarration.svelte', import.meta.url),
     'utf8'
 );
+const narrationActionCopy = await readFile(
+    new URL('../src/lib/carmode/narrationActionCopy.ts', import.meta.url),
+    'utf8'
+);
 
 const expectedCopy = {
     en: {
@@ -92,7 +96,8 @@ test('classic Car Mode progress and supporting actions are localized for EN, ES,
     assert.match(carModePlayerPanel, /\{localizedProgressCopy\.remaining\} \{remaining\}/);
     assert.match(carModePlayerPanel, /<CarModeNarration[\s\S]*?language=\{\$currentSelection\?\.language \?\? 'en'\}/);
     assert.match(carModeNarration, /export let language: Language = 'en';/);
-    assert.match(carModeNarration, /const actionCopy: Record<Language, NarrationActionCopy>/);
+    assert.match(carModeNarration, /import \{narrationActionCopy\} from '\$lib\/carmode\/narrationActionCopy';/);
+    assert.match(narrationActionCopy, /export const narrationActionCopy: Record<Language, NarrationActionCopy>/);
 
     for (const [locale, labels] of Object.entries(expectedProgress)) {
         const localeBlock = carModePlayerPanel.match(new RegExp(`${locale}: \\{([\\s\\S]*?)\\n        \\}`, 'm'))?.[1] ?? '';
@@ -102,7 +107,7 @@ test('classic Car Mode progress and supporting actions are localized for EN, ES,
     }
 
     for (const [locale, labels] of Object.entries(expectedActions)) {
-        const localeBlock = carModeNarration.match(new RegExp(`${locale}: \\{([\\s\\S]*?)\\n        \\}`, 'm'))?.[1] ?? '';
+        const localeBlock = narrationActionCopy.match(new RegExp(`${locale}: \\{([\\s\\S]*?)\\n    \\}`, 'm'))?.[1] ?? '';
         for (const [key, value] of Object.entries(labels)) {
             assert.match(localeBlock, new RegExp(`${key}: '${value}'`));
         }

@@ -1,34 +1,11 @@
 <script lang="ts">
     import type {LoadedTrack as BaseLoadedTrack} from '$lib/utils/normalizeTrack';
     import type {Language} from '$lib/stores/selection';
+    import {narrationActionCopy} from '$lib/carmode/narrationActionCopy';
 
     // Extend LoadedTrack locally to allow optional intro_short
     type NarrationTrack = BaseLoadedTrack & {
         intro_short?: string | null;
-    };
-
-    type NarrationActionCopy = {
-        moreInfo: string;
-        trackList: string;
-        changeMusic: string;
-    };
-
-    const actionCopy: Record<Language, NarrationActionCopy> = {
-        en: {
-            moreInfo: 'More Info',
-            trackList: 'Track List',
-            changeMusic: 'Change Music'
-        },
-        es: {
-            moreInfo: 'Más información',
-            trackList: 'Lista de canciones',
-            changeMusic: 'Cambiar música'
-        },
-        ptbr: {
-            moreInfo: 'Mais informações',
-            trackList: 'Lista de faixas',
-            changeMusic: 'Mudar música'
-        }
     };
 
     export let track: NarrationTrack | null = null;
@@ -46,18 +23,18 @@
     <div class="narration-inline">
         <div class="button-row">
             <button class="more-btn" on:click={onOpenModal}>
-                {actionCopy[language].moreInfo} →
+                {narrationActionCopy[language].moreInfo} →
             </button>
 
             {#if onOpenTrackList}
                 <button class="track-list-btn" on:click={onOpenTrackList}>
-                    🎵 {actionCopy[language].trackList}
+                    🎵 {narrationActionCopy[language].trackList}
                 </button>
             {/if}
 
             {#if onBackToOptions}
                 <button class="back-btn" on:click={onBackToOptions}>
-                    ← {actionCopy[language].changeMusic}
+                    ← {narrationActionCopy[language].changeMusic}
                 </button>
             {/if}
         </div>

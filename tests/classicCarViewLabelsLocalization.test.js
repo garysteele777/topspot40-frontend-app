@@ -23,6 +23,10 @@ const driveInPanel = await readFile(
     new URL('../src/lib/components/car/DriveInPlayerPanel.svelte', import.meta.url),
     'utf8'
 );
+const narrationActionCopy = await readFile(
+    new URL('../src/lib/carmode/narrationActionCopy.ts', import.meta.url),
+    'utf8'
+);
 
 const expectedCopy = {
     en: {carMode: 'CAR MODE', of: 'of', driveInView: 'Drive-In View'},
@@ -63,4 +67,32 @@ test('Drive-In View uses the active Car Mode language for its stationary labels'
     assert.match(driveInPanel, /classicViewCopy\[language\]\.carView/);
     assert.match(driveInPanel, /classicViewCopy\[language\]\.driveInView/);
     assert.match(carPage, /<DriveInPlayerPanel[\s\S]*?language=\{\$currentSelection\.language\}/);
+});
+
+test('Drive-In View action labels reuse approved Car View copy for EN, ES, and PT-BR', () => {
+    const expectedActions = {
+        en: {moreInfo: 'More Info', trackList: 'Track List', changeMusic: 'Change Music'},
+        es: {moreInfo: 'Más información', trackList: 'Lista de canciones', changeMusic: 'Cambiar música'},
+        ptbr: {moreInfo: 'Mais informações', trackList: 'Lista de faixas', changeMusic: 'Mudar música'}
+    };
+
+    assert.match(driveInPanel, /import \{narrationActionCopy\} from '\$lib\/carmode\/narrationActionCopy';/);
+    assert.match(driveInPanel, /narrationActionCopy\[language\]\.moreInfo/);
+    assert.match(driveInPanel, /narrationActionCopy\[language\]\.trackList/);
+    assert.match(driveInPanel, /narrationActionCopy\[language\]\.changeMusic/);
+
+    for (const [locale, labels] of Object.entries(expectedActions)) {
+        const localeBlock = narrationActionCopy.match(
+            new RegExp(`${locale}: \\{([\\s\\S]*?)\\n    \\}`, 'm')
+        )?.[1] ?? '';
+        for (const [key, value] of Object.entries(labels)) {
+            assert.match(localeBlock, new RegExp(`${key}: '${value}'`));
+        }
+    }
+});
+
+test('Drive-In View action handlers remain unchanged', () => {
+    assert.match(driveInPanel, /on:click=\{\(\) => setShowNarrationModal\(true\)\}/);
+    assert.match(driveInPanel, /on:click=\{\(\) => \(showTrackList = true\)\}/);
+    assert.match(driveInPanel, /class="back-button" on:click=\{onBackToOptions\}/);
 });
