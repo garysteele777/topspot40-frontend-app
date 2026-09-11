@@ -29,6 +29,7 @@ export type CarModeNarrationDependencies = {
     setIsPlaying: (playing: boolean) => void;
     resetGuidedReadyState: () => void;
     setGuidedReady: (ready: boolean) => void;
+    onNarrationStart?: (phase: CarModeNarrationPhase, track: CarModeTrack) => void;
 };
 
 export function createCarModeNarration(
@@ -111,6 +112,7 @@ export function createCarModeNarration(
                     }
 
                     dependencies.setPlaybackPhase(narration.phase);
+                    dependencies.onNarrationStart?.(narration.phase, track);
                     await dependencies.playNarration(
                         narration.url,
                         narration.fallbackUrl,

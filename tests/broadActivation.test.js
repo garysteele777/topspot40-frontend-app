@@ -30,29 +30,14 @@ test('a title or empty-card-area tap continues to the next track', () => {
     assert.equal(screen.activations, 1);
 });
 
-test('Artist Bio, Back, and Open Spotify Again do not bubble into Continue', () => {
+test('Guided Playback has no broad overlay activation after moving to explicit controls', () => {
     const panel = readFileSync(
         new URL('../src/lib/components/car/GuidedPlaybackPanel.svelte', import.meta.url),
         'utf8'
     );
-    const returnedStart = panel.indexOf('{:else if returned}');
-    const returnedScreen = panel.slice(
-        returnedStart,
-        panel.lastIndexOf('{:else}', panel.indexOf('SPOTIFY OPENED'))
-    );
-
-    for (const className of [
-        'artist-bio-button',
-        'back-button',
-        'recovery-spotify-button'
-    ]) {
-        assert.match(
-            returnedScreen,
-            new RegExp(
-                `class="${className}"[\\s\\S]*on:pointerup\\|stopPropagation[\\s\\S]*on:click=`
-            )
-        );
-    }
+    assert.doesNotMatch(panel, /createBroadActivation|handlePrimaryPointer|continueActivation/);
+    assert.match(panel, /Open this song in Spotify/);
+    assert.match(panel, /Spotify is paused — Continue/);
 });
 
 test('rapid page taps continue only once', () => {

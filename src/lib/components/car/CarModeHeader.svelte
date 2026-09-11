@@ -12,6 +12,7 @@
     import type {PlaybackProgramType} from '$lib/types/program';
     import type {Language} from '$lib/stores/selection';
     import {classicViewCopy} from '$lib/carmode/classicViewLabels';
+    import NarrationOptions from './NarrationOptions.svelte';
 
     // Props (runtime)
     export let decade: string | undefined;
@@ -23,6 +24,10 @@
 
 
     export let compact: boolean = false;
+    export let detailLength: 'short' | 'long' = 'short';
+    export let artistStoriesEnabled = false;
+    export let onDetailLengthChange: (value: 'short' | 'long') => void;
+    export let onArtistStoriesChange: (value: boolean) => void;
 
     const modeLabel = (
         m: import('./CarModeHeader.svelte').BrowseMode,
@@ -90,6 +95,8 @@
             {/if}
 
         </div>
+
+        <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {onDetailLengthChange} {onArtistStoriesChange}/>
 
     </div>
 </div>
