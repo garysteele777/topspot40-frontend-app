@@ -14,6 +14,7 @@
         classicViewCopy,
         formatDriveInTrackPosition
     } from '$lib/carmode/classicViewLabels';
+    import {getCarModePlaybackPhaseCopy} from '$lib/carmode/playbackPhaseCopy';
 
     type DriveInTransportCopy = {
         previous: string;
@@ -110,20 +111,15 @@
         'artist'
     ].includes(phase ?? '');
 
-    $: phaseLabel =
-        phase === 'intro'
-            ? 'Track Intro'
-            : phase === 'detail'
-                ? 'More About the Song'
-                : phase === 'artist'
-                    ? 'Artist Bio'
-                    : phase === 'collection_intro'
-                        ? 'Collection Introduction'
-                        : phase === 'set_intro'
-                            ? 'Program Introduction'
-                            : phase === 'liner'
-                                ? 'TopSpot40'
-                                : '';
+    const driveInPhaseCopy: Record<Language, Partial<Record<PlaybackPhase, string>>> = {
+        en: {intro: 'Track Intro', detail: 'More About the Song', artist: 'Artist Bio', collection_intro: 'Collection Introduction', set_intro: 'Program Introduction', liner: 'TopSpot40'},
+        es: {intro: 'Introducción de la canción', detail: 'Más sobre la canción', artist: 'Biografía del artista', collection_intro: 'Introducción de la colección', set_intro: 'Introducción del programa', liner: 'TopSpot40'},
+        ptbr: {intro: 'Introdução da música', detail: 'Mais sobre a música', artist: 'Biografia do artista', collection_intro: 'Introdução da coleção', set_intro: 'Introdução do programa', liner: 'TopSpot40'}
+    };
+
+    $: phaseLabel = phase
+        ? driveInPhaseCopy[language][phase] ?? getCarModePlaybackPhaseCopy(phase, language).meta
+        : '';
 
     $: effectiveDuration =
         phase === 'track' && currentTrack?.durationMs
@@ -363,6 +359,7 @@
             {programGroup}
             programLabel={trackListProgramLabel}
             exportFileName={trackListExportName}
+            {language}
     />
 {/if}
 

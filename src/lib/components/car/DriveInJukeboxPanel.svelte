@@ -8,6 +8,21 @@
         toggleFavorite,
         type ProgramType
     } from '$lib/favorites/favorites';
+    import type {Language} from '$lib/stores/selection';
+
+    type JukeboxCopy = {
+        dialogLabel: string; heading: string; close: string; export: string; exportHint: string;
+        page: (current: number, total: number) => string; playing: string; alreadyPlayed: string;
+        favorite: (trackName: string) => string; previous: string; previousAria: string;
+        next: string; nextAria: string; playRank: (rank: number) => string; selectTrack: string;
+        selectTrackAria: (rank: number, trackName: string, artistName: string) => string; empty: string;
+    };
+
+    const jukeboxCopy: Record<Language, JukeboxCopy> = {
+        en: {dialogLabel: 'TopSpot40 jukebox track selector', heading: 'Choose Track to Play', close: 'Close jukebox', export: 'Export CSV', exportHint: 'Save this track list as a CSV for playlist transfer tools that work with Spotify and other music services.', page: (current, total) => `Page ${current} of ${total}`, playing: 'Playing', alreadyPlayed: 'Already played', favorite: trackName => `Favorite ${trackName}`, previous: 'Previous', previousAria: 'Previous five tracks', next: 'Next', nextAria: 'Next five tracks', playRank: rank => `Play #${rank}`, selectTrack: 'Select a Track', selectTrackAria: (rank, trackName, artistName) => `Select track #${rank}: ${trackName} by ${artistName}`, empty: 'No tracks available.'},
+        es: {dialogLabel: 'Selector de canciones de la jukebox TopSpot40', heading: 'Elige una canción para reproducir', close: 'Cerrar jukebox', export: 'Exportar CSV', exportHint: 'Guarda esta lista de canciones como CSV para herramientas de transferencia de playlists compatibles con Spotify y otros servicios de música.', page: (current, total) => `Página ${current} de ${total}`, playing: 'Reproduciendo', alreadyPlayed: 'Ya reproducida', favorite: trackName => `Agregar ${trackName} a favoritos`, previous: 'Anterior', previousAria: 'Cinco canciones anteriores', next: 'Siguiente', nextAria: 'Siguientes cinco canciones', playRank: rank => `Reproducir n.º ${rank}`, selectTrack: 'Selecciona una canción', selectTrackAria: (rank, trackName, artistName) => `Seleccionar canción n.º ${rank}: ${trackName} de ${artistName}`, empty: 'No hay canciones disponibles.'},
+        ptbr: {dialogLabel: 'Seletor de faixas da jukebox TopSpot40', heading: 'Escolha uma faixa para tocar', close: 'Fechar jukebox', export: 'Exportar CSV', exportHint: 'Salve esta lista de faixas como CSV para ferramentas de transferência de playlists compatíveis com Spotify e outros serviços de música.', page: (current, total) => `Página ${current} de ${total}`, playing: 'Tocando', alreadyPlayed: 'Já reproduzida', favorite: trackName => `Adicionar ${trackName} aos favoritos`, previous: 'Anterior', previousAria: 'Cinco faixas anteriores', next: 'Próxima', nextAria: 'Próximas cinco faixas', playRank: rank => `Tocar nº ${rank}`, selectTrack: 'Selecione uma faixa', selectTrackAria: (rank, trackName, artistName) => `Selecionar faixa nº ${rank}: ${trackName} de ${artistName}`, empty: 'Não há faixas disponíveis.'}
+    };
 
     export let tracks: CarModeTrack[] = [];
     export let currentTrack: CarModeTrack | null = null;
@@ -16,12 +31,13 @@
     };
     export let variant: 'modal' | 'embedded' = 'modal';
     export let eyebrow = 'TopSpot40 Drive-In';
-    export let heading = 'Choose Track to Play';
+    export let heading = '';
     export let programLabel = '';
     export let exportFileName = 'TopSpot40 Track List.csv';
     export let isPlayed: (rank: number) => boolean = () => false;
     export let programType: ProgramType | null = null;
     export let programGroup: string | null = null;
+    export let language: Language = 'en';
 
     const PAGE_SIZE = 5;
 
@@ -30,6 +46,7 @@
     let lastCurrentIdentity = '';
 
     $: embedded = variant === 'embedded';
+    $: copy = jukeboxCopy[language];
 
     $: favoriteRefresh = $favoritesStore;
     $: sortedTracks = [...tracks].sort((a, b) => a.rank - b.rank);
@@ -133,7 +150,7 @@
         class:jukebox-embedded={embedded}
         role={embedded ? 'region' : 'dialog'}
         aria-modal={embedded ? undefined : 'true'}
-        aria-label="TopSpot40 jukebox track selector"
+        aria-label={copy.dialogLabel}
 >
     <div class="jukebox-cabinet" class:embedded>
         {#if !embedded}
@@ -141,7 +158,7 @@
                     type="button"
                     class="close-button"
                     on:click={onClose}
-                    aria-label="Close jukebox"
+                    aria-label={copy.close}
             >
                 ✕
             </button>
@@ -150,7 +167,7 @@
             <header>
                 <div>
                     <span class="eyebrow">{eyebrow}</span>
-                    <h2>{heading}</h2>
+                    <h2>{heading || copy.heading}</h2>
 
                     {#if programLabel}
                         <div class="program-label">{programLabel}</div>
@@ -165,7 +182,7 @@
                                 on:click={exportCsv}
                                 aria-describedby="export-csv-hint"
                         >
-                            ↓ Export CSV
+                            ↓ {copy.export}
                         </button>
 
                         <div
@@ -173,13 +190,12 @@
                                 class="export-tooltip"
                                 role="tooltip"
                         >
-                            Save this track list as a CSV for playlist transfer tools that work with Spotify and other
-                            music services.
+                            {copy.exportHint}
                         </div>
                     </div>
 
                     <div class="page-label">
-                        Page {pageIndex + 1} of {pageCount}
+                        {copy.page(pageIndex + 1, pageCount)}
                     </div>
                 </div>
             </header>
@@ -201,6 +217,7 @@
                             }
                         }}
                             aria-pressed={embedded ? undefined : selectedIdentity === trackIdentity(track)}
+                            aria-label={copy.selectTrackAria(track.rank, track.trackName, track.artistName)}
                     >
                         <span class="selection-code">
                             {selectionCode(index)}
@@ -218,9 +235,9 @@
 
                         <span class="status-icons">
                             {#if isCurrent(track)}
-                                <span class="now-playing">Playing</span>
+                                <span class="now-playing">{copy.playing}</span>
                             {:else if isPlayed(track.rank)}
-                                <span class="played" title="Already played">✓</span>
+                                <span class="played" title={copy.alreadyPlayed}>✓</span>
                             {/if}
 
                             <button
@@ -250,13 +267,16 @@
                                         );
                                     }
                                 }}
-                                    aria-label={`Favorite ${track.trackName}`}
+                                    aria-label={copy.favorite(track.trackName)}
                             >
                                 ★
                             </button>
                         </span>
                     </div>
                 {/each}
+                {#if visibleTracks.length === 0}
+                    <p class="empty-tracks">{copy.empty}</p>
+                {/if}
             </div>
 
             <footer>
@@ -265,10 +285,10 @@
                         class="page-turn"
                         on:click={previousPage}
                         disabled={pageIndex === 0}
-                        aria-label="Previous five tracks"
+                        aria-label={copy.previousAria}
                 >
                     ‹
-                    <span>Previous</span>
+                    <span>{copy.previous}</span>
                 </button>
 
                 {#if !embedded}
@@ -280,8 +300,8 @@
                     >
                         <span aria-hidden="true">▶</span>
                         {selectedTrack
-                            ? `Play #${selectedTrack.rank}`
-                            : 'Select a Track'}
+                            ? copy.playRank(selectedTrack.rank)
+                            : copy.selectTrack}
                     </button>
                 {/if}
 
@@ -290,9 +310,9 @@
                         class="page-turn"
                         on:click={nextPage}
                         disabled={pageIndex === pageCount - 1}
-                        aria-label="Next five tracks"
+                        aria-label={copy.nextAria}
                 >
-                    <span>Next</span>
+                    <span>{copy.next}</span>
                     ›
                 </button>
             </footer>

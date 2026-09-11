@@ -1,10 +1,12 @@
 import {writable} from 'svelte/store';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+import type {Language} from '$lib/stores/selection';
 
 export type CarModeSpotifyDependencies = {
     getGuidedReady: () => boolean;
     setStatus: (message: string) => void;
     captureSpotifyOpen?: (track: CarModeTrack) => void;
+    getLanguage?: () => Language;
 };
 
 export function createCarModeSpotify(
@@ -21,13 +23,19 @@ export function createCarModeSpotify(
         state.set({opened: false, returned: false});
     }
 
+    function waitingPageUrl(): string {
+        const language = dependencies.getLanguage?.() ?? 'en';
+        const normalizedLanguage = language === 'ptbr' ? 'pt-BR' : language;
+        return `/spotify-wait?language=${normalizedLanguage}`;
+    }
+
     function prepareAutoWindow(): void {
         try {
             if (isMobile()) {
                 // Mobile browsers behave better with a normal tab/window.
                 // Reserve it now while we're still inside the user's tap.
                 spotifyWindow = window.open(
-                    '/spotify-wait',
+                    waitingPageUrl(),
                     'topspot40-guided-spotify'
                 );
 
@@ -41,7 +49,7 @@ export function createCarModeSpotify(
             const top = 30;
 
             spotifyWindow = window.open(
-                '/spotify-wait',
+                waitingPageUrl(),
                 'topspot40-guided-spotify',
                 `popup=yes,width=${width},height=${height},left=${left},top=${top}`
             );
@@ -119,7 +127,7 @@ export function createCarModeSpotify(
     function returnToWaitingPage(): void {
         try {
             if (spotifyWindow && !spotifyWindow.closed) {
-                spotifyWindow.location.href = `${window.location.origin}/spotify-wait`;
+                spotifyWindow.location.href = `${window.location.origin}${waitingPageUrl()}`;
             }
         } catch {
             console.warn('Auto Play: could not return Spotify window to waiting page');

@@ -1,17 +1,32 @@
+<script lang="ts">
+    import {page} from '$app/stores';
+
+    type WaitLanguage = 'en' | 'es' | 'ptbr';
+    let language: WaitLanguage = 'en';
+    const copy: Record<WaitLanguage, {title: string; heading: string; message: string; logoAlt: string}> = {
+        en: {title: 'TopSpot40 Auto Play', heading: 'AUTO PLAY', message: 'Spotify will start after the introduction.', logoAlt: 'TopSpot40'},
+        es: {title: 'Reproducción automática de TopSpot40', heading: 'REPRODUCCIÓN AUTOMÁTICA', message: 'Spotify comenzará después de la introducción.', logoAlt: 'TopSpot40'},
+        ptbr: {title: 'Reprodução automática do TopSpot40', heading: 'REPRODUÇÃO AUTOMÁTICA', message: 'O Spotify começará após a introdução.', logoAlt: 'TopSpot40'}
+    };
+    $: requestedLanguage = $page.url.searchParams.get('language');
+    $: language = requestedLanguage === 'es' ? 'es' : requestedLanguage === 'ptbr' || requestedLanguage === 'pt-BR' ? 'ptbr' : 'en';
+    $: text = copy[language];
+</script>
+
 <svelte:head>
-    <title>TopSpot40 Auto Play</title>
+    <title>{text.title}</title>
 </svelte:head>
 
 <div class="spotify-wait">
     <img
             src="/docuseries/topspot_docuseries_logo.png"
-            alt="TopSpot40"
+            alt={text.logoAlt}
             class="logo"
     />
 
-    <h1>AUTO PLAY</h1>
+    <h1>{text.heading}</h1>
 
-    <p>Spotify will start after the introduction.</p>
+    <p>{text.message}</p>
 
     <div class="waiting-dots" aria-hidden="true">
         <span></span>
