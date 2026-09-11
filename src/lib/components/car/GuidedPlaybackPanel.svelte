@@ -14,9 +14,83 @@
     export let onReportProblem: (() => void) | undefined;
 
     type DeviceType = 'ios' | 'android' | 'computer';
+    type CopyLanguage = 'en' | 'es' | 'ptbr';
+
+    const copy: Record<CopyLanguage, Record<string, string>> = {
+        en: {
+            mode: 'GUIDED PLAYBACK', narrationComplete: 'NARRATION COMPLETE', ready: 'Ready to hear the song?',
+            beforeSpotify: 'Before you open Spotify', stepOne: 'Select “Open this song in Spotify,” then press Play in Spotify.',
+            stepTwo: 'Listen to this song. When it ends, immediately pause Spotify before the next queued song starts.',
+            stepThree: 'Return to this TopSpot40 page and select “Spotify is paused — Continue.”',
+            warning: 'Important: Spotify may automatically start the next queued song if you do not pause it.',
+            optionalLead: 'Want to move on early?', optional: 'Pause Spotify and return to TopSpot40 whenever you’re ready to continue.',
+            returnHeading: 'How to get back to TopSpot40', chooseDevice: 'Choose your device', computer: 'Computer',
+            androidHelp: 'Tap the Recent Apps button (||| or square), then tap Chrome or TopSpot40.',
+            iosHelp: 'Swipe up from the bottom and hold, then tap Safari, Chrome, or TopSpot40. On an older iPhone, double-press the Home button.',
+            computerHelp: 'Pause Spotify, then return to the TopSpot40 browser tab. If the Spotify app opened, select your browser from the Windows taskbar or Mac Dock.',
+            openSong: 'Open this song in Spotify', welcome: 'Welcome back', pausedQuestion: 'Is Spotify paused?',
+            pausedHelp: 'Pause Spotify before continuing so another song does not play. You can return at any time—you do not have to finish the song.',
+            continue: 'Spotify is paused — Continue', openAgain: 'Open Spotify Again', skip: 'Song did not play — Skip',
+            report: 'Having trouble? Report a problem', back: '← BACK TO CAR PAGE / CHOOSE A TRACK',
+            safety: 'For safety, make selections only while parked or let a passenger operate the phone.',
+            spotifyOpened: 'SPOTIFY OPENED', playInSpotify: 'Play the song in Spotify',
+            compactIos: 'When it finishes, swipe up and pause, then return to TopSpot40, Safari, or Chrome.',
+            compactAndroid: 'When it finishes, open Recent Apps and return to TopSpot40 or Chrome.',
+            compactComputer: 'When it finishes, return to this TopSpot40 window.'
+        },
+        es: {
+            mode: 'Reproducción guiada', narrationComplete: 'Narración completada', ready: '¿Listo para escuchar la canción?',
+            beforeSpotify: 'Antes de abrir Spotify', stepOne: 'Selecciona «Abrir esta canción en Spotify» y luego pulsa Reproducir en Spotify.',
+            stepTwo: 'Escucha la canción. Cuando termine, pausa Spotify inmediatamente antes de que empiece la siguiente canción en la cola.',
+            stepThree: 'Regresa a esta página de TopSpot40 y selecciona «Spotify está en pausa — Continuar».',
+            warning: 'Importante: Spotify puede reproducir automáticamente la siguiente canción en la cola si no lo pausas.',
+            optionalLead: '¿Quieres avanzar antes?', optional: 'Pausa Spotify y regresa a TopSpot40 cuando quieras continuar.',
+            returnHeading: 'Cómo volver a TopSpot40', chooseDevice: 'Elige tu dispositivo', computer: 'Computadora',
+            androidHelp: 'Toca el botón Aplicaciones recientes (||| o cuadrado) y luego toca Chrome o TopSpot40.',
+            iosHelp: 'Desliza hacia arriba desde la parte inferior y mantén pulsado; luego toca Safari, Chrome o TopSpot40. En un iPhone antiguo, pulsa dos veces el botón de inicio.',
+            computerHelp: 'Pausa Spotify y vuelve a la pestaña de TopSpot40 en el navegador. Si se abrió la aplicación de Spotify, selecciona el navegador desde la barra de tareas de Windows o el Dock de Mac.',
+            openSong: 'Abrir esta canción en Spotify', welcome: 'Ya estás de vuelta', pausedQuestion: '¿Spotify está en pausa?',
+            pausedHelp: 'Pausa Spotify antes de continuar para evitar que se reproduzca otra canción. Puedes regresar en cualquier momento; no tienes que terminar la canción.',
+            continue: 'Spotify está en pausa — Continuar', openAgain: 'Abrir Spotify de nuevo', skip: 'La canción no se reprodujo — Omitir',
+            report: '¿Tienes problemas? Informa de un problema', back: '← VOLVER A LA PÁGINA DEL AUTO / ELEGIR UNA CANCIÓN',
+            safety: 'Por seguridad, haz las selecciones solo cuando estés estacionado o deja que un pasajero use el teléfono.',
+            spotifyOpened: 'SPOTIFY ABIERTO', playInSpotify: 'Reproduce la canción en Spotify',
+            compactIos: 'Cuando termine, desliza hacia arriba, pausa y vuelve a TopSpot40, Safari o Chrome.',
+            compactAndroid: 'Cuando termine, abre Aplicaciones recientes y vuelve a TopSpot40 o Chrome.',
+            compactComputer: 'Cuando termine, vuelve a esta ventana de TopSpot40.'
+        },
+        ptbr: {
+            mode: 'Reprodução guiada', narrationComplete: 'Narração concluída', ready: 'Pronto para ouvir a música?',
+            beforeSpotify: 'Antes de abrir o Spotify', stepOne: 'Selecione “Abrir esta música no Spotify” e depois pressione Reproduzir no Spotify.',
+            stepTwo: 'Ouça a música. Quando ela terminar, pause o Spotify imediatamente, antes que a próxima música da fila comece.',
+            stepThree: 'Volte a esta página do TopSpot40 e selecione “Spotify pausado — Continuar”.',
+            warning: 'Importante: O Spotify pode iniciar automaticamente a próxima música da fila se você não pausá-lo.',
+            optionalLead: 'Quer avançar antes?', optional: 'Pause o Spotify e volte ao TopSpot40 quando quiser continuar.',
+            returnHeading: 'Como voltar ao TopSpot40', chooseDevice: 'Escolha seu dispositivo', computer: 'Computador',
+            androidHelp: 'Toque no botão Apps recentes (||| ou quadrado) e depois toque em Chrome ou TopSpot40.',
+            iosHelp: 'Deslize para cima a partir da parte inferior e segure; depois toque em Safari, Chrome ou TopSpot40. Em um iPhone antigo, pressione duas vezes o botão de Início.',
+            computerHelp: 'Pause o Spotify e volte à aba do TopSpot40 no navegador. Se o aplicativo do Spotify for aberto, selecione o navegador na barra de tarefas do Windows ou no Dock do Mac.',
+            openSong: 'Abrir esta música no Spotify', welcome: 'Você voltou', pausedQuestion: 'O Spotify está pausado?',
+            pausedHelp: 'Pause o Spotify antes de continuar para evitar que outra música seja reproduzida. Você pode voltar a qualquer momento; não precisa ouvir a música até o fim.',
+            continue: 'Spotify pausado — Continuar', openAgain: 'Abrir o Spotify novamente', skip: 'A música não tocou — Pular',
+            report: 'Está com problemas? Informe um problema', back: '← VOLTAR À PÁGINA DO CARRO / ESCOLHER UMA MÚSICA',
+            safety: 'Por segurança, faça as seleções apenas quando estiver estacionado ou deixe um passageiro operar o telefone.',
+            spotifyOpened: 'SPOTIFY ABERTO', playInSpotify: 'Reproduza a música no Spotify',
+            compactIos: 'Quando terminar, deslize para cima, pause e volte ao TopSpot40, Safari ou Chrome.',
+            compactAndroid: 'Quando terminar, abra Apps recentes e volte ao TopSpot40 ou Chrome.',
+            compactComputer: 'Quando terminar, volte a esta janela do TopSpot40.'
+        }
+    };
 
     let device: DeviceType = 'computer';
     let spotifyActivated = false;
+    let copyLanguage: CopyLanguage = 'en';
+    $: copyLanguage = language === 'es'
+        ? 'es'
+        : language === 'ptbr' || language === 'pt-BR'
+            ? 'ptbr'
+            : 'en';
+    $: text = copy[copyLanguage];
 
     function openSpotify(): void {
         spotifyActivated = true;
@@ -79,16 +153,16 @@
 >
     <section class="guided-card" aria-live="polite">
         <div class="mode-label">
-            GUIDED PLAYBACK
+            {text.mode}
         </div>
 
         {#if !opened}
             <div class="state-label">
-                NARRATION COMPLETE
+                {text.narrationComplete}
             </div>
 
             <h2 id="guided-heading">
-                Ready to hear the song?
+                {text.ready}
             </h2>
 
             <div class="track-name">
@@ -104,47 +178,42 @@
                     aria-labelledby="return-help-heading"
             >
                 <h3 id="return-help-heading">
-                    Before you open Spotify
+                    {text.beforeSpotify}
                 </h3>
 
                 <ol class="return-help-steps">
                     <li>
-                        Select “Open this song in Spotify,” then press Play
-                        in Spotify.
+                        {text.stepOne}
                     </li>
                     <li>
-                        Listen to this song. When it ends, immediately pause
-                        Spotify before the next queued song starts.
+                        {text.stepTwo}
                     </li>
                     <li>
-                        Return to this TopSpot40 page and select “Spotify is
-                        paused — Continue.”
+                        {text.stepThree}
                     </li>
                 </ol>
 
                 <p class="return-help-warning">
-                    Important: Spotify may automatically start the next
-                    queued song if you do not pause it.
+                    {text.warning}
                 </p>
 
                 <p class="return-help-optional">
-                    <strong>Want to move on early?</strong> Pause Spotify and
-                    return to TopSpot40 whenever you’re ready to continue.
+                    <strong>{text.optionalLead}</strong> {text.optional}
                 </p>
 
                 <h3 class="device-help-heading">
-                    How to get back to TopSpot40
+                    {text.returnHeading}
                 </h3>
 
                 <div
                         class="device-selector"
                         role="group"
-                        aria-label="Choose your device"
+                        aria-label={text.chooseDevice}
                 >
                     {#each [
                         ['android', 'Android'],
                         ['ios', 'iPhone'],
-                        ['computer', 'Computer']
+                        ['computer', text.computer]
                     ] as [value, label]}
                         <button
                                 type="button"
@@ -164,16 +233,11 @@
 
                 <div class="device-instruction" aria-live="polite">
                     {#if device === 'android'}
-                        Tap the Recent Apps button (||| or square), then
-                        tap Chrome or TopSpot40.
+                        {text.androidHelp}
                     {:else if device === 'ios'}
-                        Swipe up from the bottom and hold, then tap
-                        Safari, Chrome, or TopSpot40. On an older iPhone,
-                        double-press the Home button.
+                        {text.iosHelp}
                     {:else}
-                        Pause Spotify, then return to the TopSpot40
-                        browser tab. If the Spotify app opened, select
-                        your browser from the Windows taskbar or Mac Dock.
+                        {text.computerHelp}
                     {/if}
                 </div>
             </section>
@@ -183,7 +247,7 @@
                     class="spotify-button"
                     on:click={openSpotify}
             >
-                Open this song in Spotify
+                {text.openSong}
             </button>
 
 
@@ -194,23 +258,20 @@
                     on:pointercancel|stopPropagation
                     on:click={onBackToCar}
             >
-                ← BACK TO CAR PAGE / CHOOSE A TRACK
+                {text.back}
             </button>
             <ReportProblemButton
                     {language}
-                    buttonLabel={language === 'en'
-                        ? 'Having trouble? Report a problem'
-                        : undefined}
+                    buttonLabel={text.report}
                     onReport={() => onReportProblem?.()}
             />
 
             <p class="safety-note">
-                For safety, make selections only while
-                parked or let a passenger operate the phone.
+                {text.safety}
             </p>
         {:else if returned}
             <h2 id="guided-heading">
-                Welcome back
+                {text.welcome}
             </h2>
 
             <div class="track-name">
@@ -222,12 +283,11 @@
             </div>
 
             <p class="return-question">
-                Is Spotify paused?
+                {text.pausedQuestion}
             </p>
 
             <p class="bio-instruction">
-                Pause Spotify before continuing so another song does not play.
-                You can return at any time—you do not have to finish the song.
+                {text.pausedHelp}
             </p>
 
             <button
@@ -235,7 +295,7 @@
                     class="continue-button"
                     on:click={onContinue}
             >
-                Spotify is paused — Continue
+                {text.continue}
             </button>
 
 
@@ -246,7 +306,7 @@
                     on:pointercancel|stopPropagation
                     on:click={onBackToCar}
             >
-                ← BACK TO CAR PAGE / CHOOSE A TRACK
+                {text.back}
             </button>
 
             <button
@@ -256,34 +316,31 @@
                     on:pointercancel|stopPropagation
                     on:click={openSpotify}
             >
-                Open Spotify Again
+                {text.openAgain}
             </button>
             <button
                     type="button"
                     class="skip-button"
                     on:click={onSkip}
             >
-                Song did not play — Skip
+                {text.skip}
             </button>
             <ReportProblemButton
                     {language}
-                    buttonLabel={language === 'en'
-                        ? 'Having trouble? Report a problem'
-                        : undefined}
+                    buttonLabel={text.report}
                     onReport={() => onReportProblem?.()}
             />
 
             <p class="safety-note">
-                For safety, make selections only while
-                parked or let a passenger operate the phone.
+                {text.safety}
             </p>
         {:else}
             <div class="state-label">
-                SPOTIFY OPENED
+                {text.spotifyOpened}
             </div>
 
             <h2 id="guided-heading">
-                Play the song in Spotify
+                {text.playInSpotify}
             </h2>
 
             <div class="track-name">
@@ -297,19 +354,15 @@
             <div class="return-help compact">
                 {#if device === 'ios'}
                     <p>
-                        When it finishes, swipe up and pause,
-                        then return to TopSpot40, Safari,
-                        or Chrome.
+                        {text.compactIos}
                     </p>
                 {:else if device === 'android'}
                     <p>
-                        When it finishes, open Recent Apps
-                        and return to TopSpot40 or Chrome.
+                        {text.compactAndroid}
                     </p>
                 {:else}
                     <p>
-                        When it finishes, return to this
-                        TopSpot40 window.
+                        {text.compactComputer}
                     </p>
                 {/if}
             </div>
@@ -318,23 +371,21 @@
                     class="continue-button"
                     on:click={onContinue}
             >
-                Spotify is paused — Continue
+                {text.continue}
             </button>
 
             <div class="secondary-actions">
                 <button on:click={openSpotify}>
-                    Open Spotify Again
+                    {text.openAgain}
                 </button>
 
                 <button on:click={onSkip}>
-                    Song did not play — Skip
+                    {text.skip}
                 </button>
             </div>
             <ReportProblemButton
                     {language}
-                    buttonLabel={language === 'en'
-                        ? 'Having trouble? Report a problem'
-                        : undefined}
+                    buttonLabel={text.report}
                     onReport={() => onReportProblem?.()}
             />
         {/if}
