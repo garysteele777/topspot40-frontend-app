@@ -96,8 +96,17 @@
     export let activePlayMode: 'guided' | 'auto' | null = null;
     export let onReportProblem: (() => void) | undefined;
     export let onReportNarration: ((mode: 'intro' | 'detail' | 'artist') => void) | undefined;
+    export let openTrackList = false;
+    export let onTrackListClosed: (() => void) | undefined;
 
     let showTrackList = false;
+
+    $: if (openTrackList) showTrackList = true;
+
+    function closeTrackList(): void {
+        showTrackList = false;
+        onTrackListClosed?.();
+    }
 
     $: transportCopy = driveInTransportCopy[language];
 
@@ -182,7 +191,7 @@
     }
 
     function jumpToTrack(track: CarModeTrack): void {
-        showTrackList = false;
+        closeTrackList();
         onJumpToTrack?.(track);
     }
 </script>
@@ -353,7 +362,7 @@
             {tracks}
             {currentTrack}
             onJumpToTrack={jumpToTrack}
-            onClose={() => (showTrackList = false)}
+            onClose={closeTrackList}
             {isPlayed}
             {programType}
             {programGroup}

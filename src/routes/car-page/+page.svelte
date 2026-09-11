@@ -212,6 +212,8 @@
     type CarDisplayView = 'classic' | 'drive-in';
     let carDisplayView: CarDisplayView = 'drive-in';
     let isSmallScreen = false;
+    let openGuidedTrackList = false;
+    let guidedReturnActionInProgress = false;
     let carScreen: MediaQueryList | null = null;
 
     function updateCarLayout() {
@@ -806,6 +808,55 @@
         }
 
         await nextTrack();
+    }
+
+    async function finishGuidedCycleWithoutStartingAudio(): Promise<void> {
+        spotify.close();
+
+        guidedReady = false;
+        spotify.reset();
+        isPlaying.set(false);
+        playbackPhase.set('idle');
+
+        const sel = get(currentSelection);
+        const track = get(currentTrack);
+        const isRadioProgram =
+            sel?.programType === 'RADIO_DG' ||
+            sel?.programType === 'RADIO_COL' ||
+            sel?.programType === 'RADIO_ARTIST';
+
+        if (isRadioProgram) {
+            await signalTrackFinishedApi({
+                rankingId: track?.rankingId ?? null,
+                spotifyTrackId: track?.spotifyTrackId ?? null
+            });
+            return;
+        }
+
+        navigation.completeCurrentTrack();
+    }
+
+    async function chooseNextGuidedTrack(): Promise<void> {
+        if (guidedReturnActionInProgress) return;
+        guidedReturnActionInProgress = true;
+
+        try {
+            await finishGuidedCycleWithoutStartingAudio();
+            openGuidedTrackList = true;
+        } finally {
+            guidedReturnActionInProgress = false;
+        }
+    }
+
+    async function returnToCarModeAfterGuidedPlayback(): Promise<void> {
+        if (guidedReturnActionInProgress) return;
+        guidedReturnActionInProgress = true;
+
+        try {
+            await finishGuidedCycleWithoutStartingAudio();
+        } finally {
+            guidedReturnActionInProgress = false;
+        }
     }
 
     function returnToGuidedCarPage(): void {
@@ -1808,6 +1859,8 @@
                         onUseClassicView={() => setCarDisplayView('classic')}
                         onReportProblem={() => openReportProblem()}
                         onReportNarration={openNarrationReport}
+                        openTrackList={openGuidedTrackList}
+                        onTrackListClosed={() => (openGuidedTrackList = false)}
                 />
             {:else}
                 {#if !isSmallScreen}
@@ -1840,6 +1893,8 @@
                         onBackToOptions={backToOptions}
                         onReportProblem={() => openReportProblem()}
                         onReportNarration={openNarrationReport}
+                        openTrackList={openGuidedTrackList}
+                        onTrackListClosed={() => (openGuidedTrackList = false)}
                 />
             {/if}
 
@@ -1852,6 +1907,8 @@
                         onContinue={continueGuidedPlayback}
                         onSkip={skipGuidedTrack}
                         onBackToCar={returnToGuidedCarPage}
+                        onChooseNextTrack={chooseNextGuidedTrack}
+                        onReturnToCarMode={returnToCarModeAfterGuidedPlayback}
                         language={$currentSelection?.language ?? 'en'}
                         onReportProblem={() => openReportProblem()}
                 />

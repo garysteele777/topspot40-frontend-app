@@ -64,10 +64,19 @@
     export let setShowNarrationModal: (v: boolean) => void;
     export let onReportProblem: (() => void) | undefined;
     export let onReportNarration: ((mode: 'intro' | 'detail' | 'artist') => void) | undefined;
+    export let openTrackList = false;
+    export let onTrackListClosed: (() => void) | undefined;
 
     let isFav = false;
     let favBurst = false;
     let showTrackList = false;
+
+    $: if (openTrackList) showTrackList = true;
+
+    function closeTrackList(): void {
+        showTrackList = false;
+        onTrackListClosed?.();
+    }
 
     $: favoriteRefresh = $favoritesStore;
 
@@ -365,7 +374,7 @@
 
                         <button
                                 class="close-btn"
-                                on:click={() => showTrackList = false}
+                                on:click={closeTrackList}
                                 type="button"
                         >
                             ✕
@@ -380,7 +389,7 @@
                         {isPlayed}
                         {programType}
                         {programGroup}
-                        closeOnJump={() => showTrackList = false}
+                        closeOnJump={closeTrackList}
                 />
             </div>
         </div>

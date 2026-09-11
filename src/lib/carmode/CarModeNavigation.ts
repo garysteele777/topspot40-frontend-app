@@ -69,6 +69,27 @@ export function createCarModeNavigation(
         dependencies.setUserStartedPlayback(true);
     }
 
+    function recordCurrentTrackCompletion(current: CarModeTrack): void {
+        const rankingId = current.rankingId;
+        const rank = current.rank;
+        const playedKey = rankingId ?? rank;
+
+        if (playedKey != null && !playedRanks.includes(playedKey)) {
+            playedRanks.push(playedKey);
+        }
+
+        const selection = dependencies.getSelection();
+        if (selection) {
+            const key = historyKey(selection, current);
+            if (key) markRankPlayed(key, current.rank);
+        }
+    }
+
+    function completeCurrentTrack(): void {
+        const current = dependencies.getCurrentTrack();
+        if (current) recordCurrentTrackCompletion(current);
+    }
+
     async function next(releaseAutoLock = false): Promise<void> {
         if (nextTrackLock) return;
         nextTrackLock = true;
@@ -87,17 +108,9 @@ export function createCarModeNavigation(
 
         if (rankingId == null && rank == null) return;
 
-        const playedKey = rankingId ?? rank;
-
-        if (playedKey != null && !playedRanks.includes(playedKey)) {
-            playedRanks.push(playedKey);
-        }
+        recordCurrentTrackCompletion(current);
 
         const selection = dependencies.getSelection();
-        if (selection) {
-            const key = historyKey(selection, current);
-            if (key) markRankPlayed(key, current.rank);
-        }
 
         const isRadio =
             selection?.programType === 'RADIO_DG' ||
@@ -189,5 +202,12 @@ export function createCarModeNavigation(
         dependencies.setUserStartedPlayback(true);
     }
 
-    return {jumpTo, next, previous, setPlayedRanks, resetPlayedRanks};
+    return {
+        jumpTo,
+        next,
+        previous,
+        completeCurrentTrack,
+        setPlayedRanks,
+        resetPlayedRanks
+    };
 }

@@ -37,7 +37,7 @@ test('Guided Playback has no broad overlay activation after moving to explicit c
     );
     assert.doesNotMatch(panel, /createBroadActivation|handlePrimaryPointer|continueActivation/);
     assert.match(panel, /Open this song in Spotify/);
-    assert.match(panel, /Spotify is paused — Continue/);
+    assert.match(panel, /Continue the program/);
 });
 
 test('rapid page taps continue only once', () => {
