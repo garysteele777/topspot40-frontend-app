@@ -2,8 +2,17 @@
     import {onMount, tick} from 'svelte';
     import {fade, fly} from 'svelte/transition';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import type {Language} from '$lib/stores/selection';
 
     type InfoMode = 'intro' | 'detail' | 'artist';
+
+    type NarrationModalCopy = {intro: string; detail: string; artist: string; unavailable: string; artistFallback: string; close: string;};
+
+    const narrationModalCopy: Record<Language, NarrationModalCopy> = {
+        en: {intro: 'Intro', detail: 'Detail', artist: 'Artist', unavailable: 'No narration available for this track.', artistFallback: 'Artist', close: 'Close narration'},
+        es: {intro: 'Introducción', detail: 'Detalles', artist: 'Artista', unavailable: 'No hay narración disponible para esta canción.', artistFallback: 'Artista', close: 'Cerrar narración'},
+        ptbr: {intro: 'Introdução', detail: 'Detalhes', artist: 'Artista', unavailable: 'Não há narração disponível para esta faixa.', artistFallback: 'Artista', close: 'Fechar narração'}
+    };
 
     export let track: CarModeTrack | null = null;
     export let open = false;
@@ -152,6 +161,7 @@
 
     type TextsByLanguage = Record<string, LanguageTexts>;
     let mode: InfoMode = 'intro';
+    let primaryLanguage: Language = 'en';
 
     // Reset whenever modal opens
     $: if (open) {
@@ -178,17 +188,20 @@
                     'intro';
     }
 
-    $: headerLabel =
-        mode === 'intro' ? 'Intro' :
-            mode === 'detail' ? 'Detail' :
-                'Artist';
-
     $: textsByLanguage =
         ((track as typeof track & {
             textsByLanguage?: TextsByLanguage;
         })?.textsByLanguage) ?? {};
 
     $: selectedLanguages = languages?.length ? languages : ['en'];
+
+    $: primaryLanguage = selectedLanguages[0] === 'es'
+        ? 'es'
+        : selectedLanguages[0] === 'ptbr' || selectedLanguages[0] === 'pt-BR'
+            ? 'ptbr'
+            : 'en';
+    $: copy = narrationModalCopy[primaryLanguage];
+    $: headerLabel = mode === 'intro' ? copy.intro : mode === 'detail' ? copy.detail : copy.artist;
 
     $: reportInformationLabel =
         selectedLanguages[0] === 'es'
@@ -252,7 +265,7 @@
                 <div class="hero-wrap">
                     <img
                             src={headerImage}
-                            alt={track?.artistName ?? 'Artist'}
+                            alt={track?.artistName ?? copy.artistFallback}
                             class="hero-art"
                     />
                 </div>
@@ -291,17 +304,17 @@
             {:else}
                 <p transition:fade>
                     {mode === 'intro'
-                        ? (track?.intro ?? 'No narration available for this track.')
+                        ? (track?.intro ?? copy.unavailable)
                         : mode === 'detail'
-                            ? (track?.detail ?? 'No narration available for this track.')
-                            : (track?.artistText ?? 'No narration available for this track.')}
+                            ? (track?.detail ?? copy.unavailable)
+                            : (track?.artistText ?? copy.unavailable)}
                 </p>
             {/if}
 
         </div>
 
         <!-- Close button -->
-        <button bind:this={closeButton} class="close-btn" on:click={onClose} aria-label="Close narration">✕</button>
+        <button bind:this={closeButton} class="close-btn" on:click={onClose} aria-label={copy.close}>✕</button>
     </div>
 {/if}
 

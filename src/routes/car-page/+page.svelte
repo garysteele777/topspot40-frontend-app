@@ -728,6 +728,7 @@
     }
 
     const spotify = createCarModeSpotify({
+        getLanguage: () => $currentSelection?.language ?? 'en',
         getGuidedReady: () => guidedReady,
         setStatus: message => status.set(message),
         captureSpotifyOpen: track => {
