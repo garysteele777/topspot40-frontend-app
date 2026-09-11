@@ -8,6 +8,11 @@
     import type {PlaybackPhase} from '$lib/helpers/car/types';
     import type {ProgramType} from '$lib/favorites/favorites';
     import {buildProgramHistoryKey, isProgramRankPlayed} from '$lib/program/history';
+    import type {Language} from '$lib/stores/selection';
+    import {
+        classicViewCopy,
+        formatDriveInTrackPosition
+    } from '$lib/carmode/classicViewLabels';
 
     export let currentTrack: CarModeTrack | null = null;
     export let tracks: CarModeTrack[] = [];
@@ -17,6 +22,7 @@
     export let duration = 0;
     export let progress = 0;
     export let programTitle = '';
+    export let language: Language = 'en';
 
     export let onPrev: () => void;
     export let onNext: () => void;
@@ -144,7 +150,7 @@
         </div>
 
         <div class="marquee-copy">
-            <span>Now Playing</span>
+            <span>{classicViewCopy[language].nowPlaying}</span>
             <strong>{programTitle}</strong>
         </div>
 
@@ -165,7 +171,7 @@
 
             {#if currentTrack}
                 <div class="rank">
-                    Track {currentTrack.rank} of {tracks.length}
+                    {formatDriveInTrackPosition(currentTrack.rank, tracks.length, language)}
                     {#if currentTrack.yearReleased}
                         <span>•</span>
                         {currentTrack.yearReleased}
@@ -259,11 +265,11 @@
                 ← Change Music
             </button>
 
-            <div class="view-switch" aria-label="Playback view">
-                <button type="button" on:click={onUseClassicView}>Car View</button>
+            <div class="view-switch" aria-label={classicViewCopy[language].playbackView}>
+                <button type="button" on:click={onUseClassicView}>{classicViewCopy[language].carView}</button>
                 <span aria-hidden="true"></span>
                 <button type="button" class="active" aria-current="true">
-                    Drive-In View
+                    {classicViewCopy[language].driveInView}
                 </button>
             </div>
         </div>

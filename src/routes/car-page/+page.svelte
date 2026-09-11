@@ -1820,6 +1820,7 @@
                         progress={$progress}
                         phase={$playbackPhase}
                         programTitle={driveInProgramTitle}
+                        language={$currentSelection.language}
                         showNarrationModal={$showNarrationModal}
                         {narrationModalInitialMode}
                         setShowNarrationModal={setNarrationModalOpen}
