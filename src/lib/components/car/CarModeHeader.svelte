@@ -10,6 +10,8 @@
 
 <script lang="ts">
     import type {PlaybackProgramType} from '$lib/types/program';
+    import type {Language} from '$lib/stores/selection';
+    import {classicViewCopy} from '$lib/carmode/classicViewLabels';
 
     // Props (runtime)
     export let decade: string | undefined;
@@ -17,6 +19,7 @@
     export let collection: string | undefined; // ✅ ADD THIS
     export let mode: import('./CarModeHeader.svelte').BrowseMode = 'decade_genre';
     export let programType: PlaybackProgramType | undefined;
+    export let language: Language = 'en';
 
 
     export let compact: boolean = false;
@@ -54,7 +57,7 @@
 <div class="cm-panel" class:compact>
     <div class="cm-main">
         <div class="cm-row cm-row--title">
-            <span class="cm-tag">🚗 Car Mode</span>
+            <span class="cm-tag">🚗 {compact ? 'Car Mode' : classicViewCopy[language].carMode}</span>
 
             {#if mode === 'decade_genre'}
                 <span class="cm-main-text">

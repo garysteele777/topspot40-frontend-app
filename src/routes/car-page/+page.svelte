@@ -33,6 +33,7 @@
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
+    import {classicViewCopy} from '$lib/carmode/classicViewLabels';
     import type {ResumeState} from '$lib/utils/smartResume';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import {
@@ -1802,6 +1803,7 @@
                     collection={headerMode === 'collection' ? uiDecade : undefined}
                     mode={headerMode}
                     programType={$currentSelection.programType}
+                    language={$currentSelection.language}
                     compact={carDisplayView === 'drive-in'}
             />
         {/if}
@@ -1839,7 +1841,7 @@
                                 type="button"
                                 on:click={() => setCarDisplayView('drive-in')}
                         >
-                            🎞 Drive-In View
+                            🎞 {classicViewCopy[$currentSelection?.language ?? 'en'].driveInView}
                         </button>
                     </div>
                 {/if}

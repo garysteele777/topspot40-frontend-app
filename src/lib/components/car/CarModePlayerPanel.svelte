@@ -10,6 +10,7 @@
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
     import type {Language} from '$lib/stores/selection';
+    import {formatClassicTrackPosition} from '$lib/carmode/classicViewLabels';
 
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
@@ -280,7 +281,11 @@
             </button>
 
             <span>
-            {currentTrack.rank} of {tracks.length}
+            {formatClassicTrackPosition(
+                currentTrack.rank,
+                tracks.length,
+                $currentSelection?.language ?? 'en'
+            )}
                 {#if currentTrack.yearReleased}
                 • {currentTrack.yearReleased}
             {/if}
