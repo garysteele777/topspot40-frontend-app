@@ -1,16 +1,11 @@
 <script lang="ts">
-    import {onDestroy, onMount} from 'svelte';
+    import {onMount} from 'svelte';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
-    import {createBroadActivation} from '$lib/interactions/broadActivation.js';
     import ReportProblemButton from './ReportProblemButton.svelte';
 
     export let track: CarModeTrack;
     export let opened = false;
     export let returned = false;
-    export let hasArtistBio = false;
-    export let artistBioPlaying = false;
-    export let onPlayArtistBio: () => Promise<void>;
-    export let onStopArtistBio: () => void;
     export let onOpenSpotify: () => void;
     export let onContinue: () => void;
     export let onSkip: () => void;
@@ -18,60 +13,14 @@
     export let language = 'en';
     export let onReportProblem: (() => void) | undefined;
 
-    type DeviceType = 'ios' | 'android' | 'other';
+    type DeviceType = 'ios' | 'android' | 'computer';
 
-    let device: DeviceType = 'other';
-    let bioButton: HTMLButtonElement | null = null;
-    let showArtistInBioLabel = false;
-    let bioButtonObserver: ResizeObserver | null = null;
+    let device: DeviceType = 'computer';
     let spotifyActivated = false;
 
-    const spotifyActivation = createBroadActivation({
-        onActivate: () => {
-            spotifyActivated = true;
-            onOpenSpotify();
-        }
-    });
-    const continueActivation = createBroadActivation({
-        onActivate: () => onContinue()
-    });
-
-    function handlePrimaryKeydown(event: KeyboardEvent): void {
-        if (
-            event.target !== event.currentTarget
-            || (event.key !== 'Enter' && event.key !== ' ')
-        ) {
-            return;
-        }
-
-        event.preventDefault();
-        const activation = !opened
-            ? spotifyActivation
-            : returned
-                ? continueActivation
-                : null;
-        activation?.keyboardActivate({detail: 0});
-    }
-
-    function handlePrimaryPointerDown(event: PointerEvent): void {
-        if (!opened) {
-            spotifyActivation.pointerDown(event);
-        } else if (returned) {
-            continueActivation.pointerDown(event);
-        }
-    }
-
-    function handlePrimaryPointerUp(event: PointerEvent): void {
-        if (!opened) {
-            spotifyActivation.pointerUp(event);
-        } else if (returned) {
-            continueActivation.pointerUp(event);
-        }
-    }
-
-    function handlePrimaryPointerCancel(): void {
-        spotifyActivation.pointerCancel();
-        continueActivation.pointerCancel();
+    function openSpotify(): void {
+        spotifyActivated = true;
+        onOpenSpotify();
     }
 
     function displayTrackName(
@@ -93,30 +42,6 @@
         );
     }
 
-    function updateBioButtonLabel(): void {
-        if (!bioButton) return;
-
-        const artist = displayTrackName(track.artistName);
-        const personalized =
-            `▶ PLAY ${artist.toLocaleUpperCase()} BIO`;
-        const context =
-            document.createElement('canvas').getContext('2d');
-
-        if (!context) {
-            showArtistInBioLabel = false;
-            return;
-        }
-
-        context.font = getComputedStyle(bioButton).font;
-        showArtistInBioLabel =
-            context.measureText(personalized).width
-            <= bioButton.clientWidth - 36;
-    }
-
-    $: if (bioButton && track.artistName) {
-        queueMicrotask(updateBioButtonLabel);
-    }
-
     function detectDevice(): DeviceType {
         const userAgent =
             navigator.userAgent.toLowerCase();
@@ -136,39 +61,21 @@
             return 'android';
         }
 
-        return 'other';
+        return 'computer';
     }
 
     onMount(() => {
         device = detectDevice();
-
-        bioButtonObserver = new ResizeObserver(
-            updateBioButtonLabel
-        );
-
-        if (bioButton) {
-            bioButtonObserver.observe(bioButton);
-            updateBioButtonLabel();
-        }
-    });
-
-    onDestroy(() => {
-        bioButtonObserver?.disconnect();
     });
 </script>
 
 <div
         class="guided-overlay"
-        class:primary-spotify-area={!opened || returned}
         class:spotifyActivated
         role="dialog"
         tabindex="0"
         aria-modal="true"
         aria-labelledby="guided-heading"
-        on:pointerdown={handlePrimaryPointerDown}
-        on:pointerup={handlePrimaryPointerUp}
-        on:pointercancel={handlePrimaryPointerCancel}
-        on:keydown={handlePrimaryKeydown}
 >
     <section class="guided-card" aria-live="polite">
         <div class="mode-label">
@@ -192,41 +99,93 @@
                 {displayTrackName(track.artistName)}
             </div>
 
-            <div class="spotify-cue" aria-hidden="true">
-                <span class="spotify-mark">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4.5 8.1c5.1-1.5 10.8-.8 15.2 1.7" />
-                        <path d="M5.7 12c4.2-1.2 8.9-.6 12.6 1.5" />
-                        <path d="M6.9 15.7c3.2-.9 6.7-.4 9.5 1.2" />
-                    </svg>
-                </span>
-                <span>Tap anywhere else to open in Spotify</span>
-            </div>
+            <section
+                    class="return-help pre-spotify-return-help"
+                    aria-labelledby="return-help-heading"
+            >
+                <h3 id="return-help-heading">
+                    Before you open Spotify
+                </h3>
 
-            {#if hasArtistBio}
-                <button
-                        bind:this={bioButton}
-                        class="artist-bio-button"
-                        on:pointerdown|stopPropagation
-                        on:pointerup|stopPropagation
-                        on:pointercancel|stopPropagation
-                        on:click={() => {
-                            if (artistBioPlaying) {
-                                onStopArtistBio();
-                            } else {
-                                void onPlayArtistBio();
-                            }
-                        }}
+                <ol class="return-help-steps">
+                    <li>
+                        Select “Open this song in Spotify,” then press Play
+                        in Spotify.
+                    </li>
+                    <li>
+                        Listen to this song. When it ends, immediately pause
+                        Spotify before the next queued song starts.
+                    </li>
+                    <li>
+                        Return to this TopSpot40 page and select “Spotify is
+                        paused — Continue.”
+                    </li>
+                </ol>
+
+                <p class="return-help-warning">
+                    Important: Spotify may automatically start the next
+                    queued song if you do not pause it.
+                </p>
+
+                <p class="return-help-optional">
+                    <strong>Want to move on early?</strong> Pause Spotify and
+                    return to TopSpot40 whenever you’re ready to continue.
+                </p>
+
+                <h3 class="device-help-heading">
+                    How to get back to TopSpot40
+                </h3>
+
+                <div
+                        class="device-selector"
+                        role="group"
+                        aria-label="Choose your device"
                 >
-                    {#if artistBioPlaying}
-                        ■ STOP ARTIST BIO
-                    {:else if showArtistInBioLabel}
-                        ▶ PLAY {displayTrackName(track.artistName).toLocaleUpperCase()} BIO
+                    {#each [
+                        ['android', 'Android'],
+                        ['ios', 'iPhone'],
+                        ['computer', 'Computer']
+                    ] as [value, label]}
+                        <button
+                                type="button"
+                                class:active-device={device === value}
+                                aria-pressed={device === value}
+                                on:pointerdown|stopPropagation
+                                on:pointerup|stopPropagation
+                                on:pointercancel|stopPropagation
+                                on:click|stopPropagation={() => {
+                                    device = value as DeviceType;
+                                }}
+                        >
+                            {label}
+                        </button>
+                    {/each}
+                </div>
+
+                <div class="device-instruction" aria-live="polite">
+                    {#if device === 'android'}
+                        Tap the Recent Apps button (||| or square), then
+                        tap Chrome or TopSpot40.
+                    {:else if device === 'ios'}
+                        Swipe up from the bottom and hold, then tap
+                        Safari, Chrome, or TopSpot40. On an older iPhone,
+                        double-press the Home button.
                     {:else}
-                        ▶ PLAY ARTIST BIO
+                        Pause Spotify, then return to the TopSpot40
+                        browser tab. If the Spotify app opened, select
+                        your browser from the Windows taskbar or Mac Dock.
                     {/if}
-                </button>
-            {/if}
+                </div>
+            </section>
+
+            <button
+                    type="button"
+                    class="spotify-button"
+                    on:click={openSpotify}
+            >
+                Open this song in Spotify
+            </button>
+
 
             <button
                     class="back-button"
@@ -237,19 +196,21 @@
             >
                 ← BACK TO CAR PAGE / CHOOSE A TRACK
             </button>
-            <ReportProblemButton {language} onReport={() => onReportProblem?.()} />
+            <ReportProblemButton
+                    {language}
+                    buttonLabel={language === 'en'
+                        ? 'Having trouble? Report a problem'
+                        : undefined}
+                    onReport={() => onReportProblem?.()}
+            />
 
             <p class="safety-note">
                 For safety, make selections only while
                 parked or let a passenger operate the phone.
             </p>
         {:else if returned}
-            <div class="state-label">
-                WELCOME BACK
-            </div>
-
             <h2 id="guided-heading">
-                Did the song finish?
+                Welcome back
             </h2>
 
             <div class="track-name">
@@ -260,41 +221,23 @@
                 {displayTrackName(track.artistName)}
             </div>
 
-            <p class="bio-instruction">
-                Pause Spotify first if the song is still playing.
+            <p class="return-question">
+                Is Spotify paused?
             </p>
 
-            <div class="continue-cue" aria-hidden="true">
-                <span class="continue-mark">
-                    <img src="/old-dog-icon.png" alt="" />
-                </span>
-                <span>Tap anywhere else to continue to the next track</span>
-            </div>
+            <p class="bio-instruction">
+                Pause Spotify before continuing so another song does not play.
+                You can return at any time—you do not have to finish the song.
+            </p>
 
-            {#if hasArtistBio}
-                <button
-                        bind:this={bioButton}
-                        class="artist-bio-button"
-                        on:pointerdown|stopPropagation
-                        on:pointerup|stopPropagation
-                        on:pointercancel|stopPropagation
-                        on:click={() => {
-                            if (artistBioPlaying) {
-                                onStopArtistBio();
-                            } else {
-                                void onPlayArtistBio();
-                            }
-                        }}
-                >
-                    {#if artistBioPlaying}
-                        ■ STOP ARTIST BIO
-                    {:else if showArtistInBioLabel}
-                        ▶ PLAY {displayTrackName(track.artistName).toLocaleUpperCase()} BIO
-                    {:else}
-                        ▶ PLAY ARTIST BIO
-                    {/if}
-                </button>
-            {/if}
+            <button
+                    type="button"
+                    class="continue-button"
+                    on:click={onContinue}
+            >
+                Spotify is paused — Continue
+            </button>
+
 
             <button
                     class="back-button"
@@ -311,11 +254,24 @@
                     on:pointerdown|stopPropagation
                     on:pointerup|stopPropagation
                     on:pointercancel|stopPropagation
-                    on:click={onOpenSpotify}
+                    on:click={openSpotify}
             >
                 Open Spotify Again
             </button>
-            <ReportProblemButton {language} onReport={() => onReportProblem?.()} />
+            <button
+                    type="button"
+                    class="skip-button"
+                    on:click={onSkip}
+            >
+                Song did not play — Skip
+            </button>
+            <ReportProblemButton
+                    {language}
+                    buttonLabel={language === 'en'
+                        ? 'Having trouble? Report a problem'
+                        : undefined}
+                    onReport={() => onReportProblem?.()}
+            />
 
             <p class="safety-note">
                 For safety, make selections only while
@@ -362,19 +318,25 @@
                     class="continue-button"
                     on:click={onContinue}
             >
-                SONG FINISHED — CONTINUE
+                Spotify is paused — Continue
             </button>
 
             <div class="secondary-actions">
-                <button on:click={onOpenSpotify}>
+                <button on:click={openSpotify}>
                     Open Spotify Again
                 </button>
 
                 <button on:click={onSkip}>
-                    Song Did Not Play — Skip
+                    Song did not play — Skip
                 </button>
             </div>
-            <ReportProblemButton {language} onReport={() => onReportProblem?.()} />
+            <ReportProblemButton
+                    {language}
+                    buttonLabel={language === 'en'
+                        ? 'Having trouble? Report a problem'
+                        : undefined}
+                    onReport={() => onReportProblem?.()}
+            />
         {/if}
     </section>
 </div>
@@ -449,6 +411,80 @@
         line-height: 1.45;
     }
 
+    .pre-spotify-return-help {
+        margin: 22px 0 14px;
+        text-align: left;
+    }
+
+    .pre-spotify-return-help h3 {
+        margin: 0;
+        color: #fff;
+        font-size: 1.1rem;
+    }
+
+    .return-help-steps {
+        display: grid;
+        gap: 8px;
+        margin: 14px 0;
+        padding-left: 1.35rem;
+    }
+
+    .return-help-warning {
+        color: #ffe29a;
+        font-weight: 800;
+    }
+
+    .return-help-optional {
+        margin-top: 10px;
+        color: #c6c6c6;
+        font-size: 0.92rem;
+        line-height: 1.45;
+    }
+
+    .return-help-optional strong {
+        color: #e7e7e7;
+        font-weight: 800;
+    }
+
+    .device-selector {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .device-selector button {
+        min-height: 42px;
+        padding: 8px 10px;
+        border: 1px solid #5b6978;
+        border-radius: 10px;
+        color: #dcecff;
+        background: #292f36;
+    }
+
+    .device-selector button.active-device {
+        border-color: #75ef4f;
+        color: #111;
+        background: #75ef4f;
+    }
+
+    .device-instruction {
+        min-height: 3.1em;
+        margin-top: 12px;
+        color: #fff;
+        line-height: 1.45;
+    }
+
+    .device-selector button:focus-visible,
+    .spotify-button:focus-visible {
+        outline: 3px solid #fff;
+        outline-offset: 3px;
+    }
+
+    .device-help-heading {
+        margin-top: 22px !important;
+    }
+
     .return-help.compact {
         margin-top: 22px;
     }
@@ -460,104 +496,35 @@
         font-weight: 800;
     }
 
-    .primary-spotify-area {
-        cursor: pointer;
-    }
-
     .spotifyActivated .guided-card {
         border-color: #38d873;
         box-shadow: 0 18px 55px rgba(29, 185, 84, 0.32);
     }
 
-    .spotify-cue {
-        display: grid;
-        justify-items: center;
-        gap: clamp(14px, 3vw, 20px);
+    .spotify-button {
         width: 100%;
-        margin: clamp(26px, 6vw, 40px) 0;
-        padding: 8px 12px;
-        color: #b9f5cc;
-        font-size: 0.95rem;
-        background: transparent;
-    }
-
-    .spotify-mark {
-        display: grid;
-        width: clamp(72px, 20vw, 96px);
-        height: clamp(72px, 20vw, 96px);
-        place-items: center;
-        border: clamp(3px, 0.8vw, 4px) solid #1db954;
-        border-radius: 50%;
-        color: #1db954;
-    }
-
-    .spotify-mark svg {
-        width: 68%;
-        height: 68%;
-        fill: none;
-        stroke: currentColor;
-        stroke-linecap: round;
-        stroke-width: 2.5;
-    }
-
-    .continue-cue {
-        display: grid;
-        justify-items: center;
-        gap: 16px;
-        margin: 28px 0;
-        padding: 8px 12px;
-        color: #d9c990;
-        font-size: clamp(1.04rem, 4vw, 1.16rem);
-        font-weight: 800;
-        line-height: 1.35;
-    }
-
-    .continue-mark {
-        display: grid;
-        width: clamp(76px, 20vw, 92px);
-        height: clamp(76px, 20vw, 92px);
-        place-items: center;
-        overflow: hidden;
-        border: clamp(3px, 0.8vw, 4px) solid #cfb87c;
-        border-radius: 50%;
-        background: #111;
-    }
-
-    .continue-mark img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center;
-    }
-
-    .continue-cue span:last-child {
-        max-width: min(100%, 390px);
-    }
-
-    .artist-bio-button {
-        width: 100%;
-        min-height: 56px;
-        margin-bottom: 12px;
-        padding: 12px 18px;
-        overflow: hidden;
-        border: 1px solid #cfb87c;
+        min-height: 62px;
+        margin: 20px 0 12px;
+        padding: 14px 18px;
         border-radius: 999px;
-        color: #cfb87c;
+        color: #111;
         font-size: 1.05rem;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        background: #29251d;
+        font-weight: 800;
+        background: #1db954;
     }
 
-    .artist-bio-button:focus-visible {
-        outline: 3px solid #fff;
-        outline-offset: 3px;
-    }
 
     .bio-instruction {
         margin: 20px 0 10px;
         color: #ddd;
         font-size: 0.95rem;
+    }
+
+    .return-question {
+        margin: 22px 0 0;
+        color: #fff;
+        font-size: 1.3rem;
+        font-weight: 900;
     }
 
     .continue-button {
@@ -586,6 +553,18 @@
         color: #b9f5cc;
         font-size: 0.84rem;
         background: #1b2b20;
+    }
+
+    .skip-button {
+        width: auto;
+        min-height: 40px;
+        margin-top: 12px;
+        padding: 8px 14px;
+        border: 1px solid #765b5b;
+        border-radius: 999px;
+        color: #ffd1d1;
+        font-size: 0.84rem;
+        background: #2b1b1b;
     }
 
     .secondary-actions {
@@ -621,6 +600,10 @@
         }
 
         .secondary-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .device-selector {
             grid-template-columns: 1fr;
         }
     }

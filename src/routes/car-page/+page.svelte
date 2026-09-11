@@ -46,6 +46,7 @@
         createProgramStartedTracker
     } from '$lib/carmode/CarModeAnalytics';
     import {createCarModeNarration} from '$lib/carmode/CarModeNarration';
+    import {artistStoryIdentity, shouldPlayArtistStory} from '$lib/carmode/ArtistStories';
     import {createCarModeSpotify} from '$lib/carmode/CarModeSpotify';
     import posthog from 'posthog-js';
     import { captureProgramStarted, captureSpotifyOpen } from '$lib/analytics/posthog';
@@ -129,8 +130,9 @@
 
     let lastProgramKey: string | null = null;
     let artistBioPlayedThisSet = false;
+    let artistStoriesEnabled = false;
+    let artistStoriesPlayed = new Set<string>();
     let guidedReady = false;
-    let guidedArtistBioPlaying = false;
     let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
@@ -274,6 +276,8 @@
         currentTrack.set(null);
         currentRank.set(1);
         artistBioPlayedThisSet = false;
+        artistStoriesEnabled = false;
+        artistStoriesPlayed = new Set<string>();
         navigation.resetPlayedRanks();
 
         await loadForSelection(sel, 1);
@@ -566,9 +570,7 @@
 
 
     function setNarrationModalOpen(v: boolean): void {
-        if (v && !guidedArtistBioPlaying) {
-            narrationModalInitialMode = 'intro';
-        }
+        if (v) narrationModalInitialMode = 'intro';
 
         showNarrationModal.set(v);
     }
@@ -625,16 +627,14 @@
             if (url) result.push({phase: 'detail', url, fallbackUrl});
         }
 
-        if (settings.voices.includes('artist')) {
-            const url =
-                publicAudioUrl(trackObj.artistKey) ??
-                (
-                    trackObj.spotifyArtistId
-                        ? `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/${bucket}/artist/${trackObj.spotifyArtistId}.mp3`
-                        : null
-                );
-
-            if (url) result.push({phase: 'artist', url});
+        const artistBioUrl = guidedArtistBioUrl(trackObj);
+        if (shouldPlayArtistStory(
+            artistStoriesEnabled,
+            artistStoriesPlayed,
+            trackObj,
+            artistBioUrl !== null
+        ) && artistBioUrl) {
+            result.push({phase: 'artist', url: artistBioUrl});
         }
 
         return result;
@@ -658,44 +658,6 @@
                     : null
             )
         );
-    }
-
-    async function playGuidedArtistBio(): Promise<void> {
-        const track = get(currentTrack);
-        const url = track ? guidedArtistBioUrl(track) : null;
-        if (!track || !url || guidedArtistBioPlaying) return;
-
-        guidedArtistBioPlaying = true;
-        narrationModalInitialMode = 'artist';
-        showNarrationModal.set(true);
-        playbackPhase.set('artist');
-
-        try {
-            await unlockBedAudio();
-            await startBedUrl(guidedBedAudioUrl(track));
-            await playNarrationUrlAndWait(
-                url,
-                undefined,
-                updateGuidedNarrationTiming
-            );
-        } finally {
-            stopBed();
-            resetGuidedNarrationTiming();
-            guidedArtistBioPlaying = false;
-            showNarrationModal.set(false);
-            narrationModalInitialMode = 'intro';
-            playbackPhase.set('track');
-        }
-    }
-
-    function stopGuidedArtistBio(): void {
-        stopNarration();
-        stopBed();
-        resetGuidedNarrationTiming();
-        guidedArtistBioPlaying = false;
-        showNarrationModal.set(false);
-        narrationModalInitialMode = 'intro';
-        playbackPhase.set('track');
     }
 
     function guidedBedAudioUrl(trackObj: CarModeTrack): string {
@@ -766,6 +728,14 @@
         setIsPlaying: playing => isPlaying.set(playing),
         resetGuidedReadyState: () => (guidedReady = false),
         setGuidedReady: ready => (guidedReady = ready)
+        ,onNarrationStart: (phase, track) => {
+            if (phase === 'artist') {
+                artistStoriesPlayed = new Set([
+                    ...artistStoriesPlayed,
+                    artistStoryIdentity(track)
+                ]);
+            }
+        }
     });
 
     async function startGuidedTrack(
@@ -777,8 +747,6 @@
     }
 
     function openGuidedSpotify() {
-        stopGuidedArtistBio();
-
         const track = get(currentTrack);
         spotify.open(track);
     }
@@ -1111,7 +1079,6 @@
         stopNarrationAudio();
         stopBed();
         guidedReady = false;
-        guidedArtistBioPlaying = false;
         spotify.close();
         spotify.reset();
         stopPlaybackPolling();
@@ -1391,6 +1358,8 @@
 
             if (key !== lastProgramKey) {
                 lastProgramKey = key;
+                artistStoriesEnabled = false;
+                artistStoriesPlayed = new Set<string>();
             }
 
             const history = $programHistoryStore.find(p => p.key === key);
@@ -1798,14 +1767,18 @@
     {:else}
 
         {#if $currentSelection}
-            <CarModeHeader
+                <CarModeHeader
                     decade={uiDecade}
                     genre={uiGenre}
                     collection={headerMode === 'collection' ? uiDecade : undefined}
                     mode={headerMode}
                     programType={$currentSelection.programType}
                     language={$currentSelection.language}
-                    compact={carDisplayView === 'drive-in'}
+                        compact={carDisplayView === 'drive-in'}
+                        detailLength={settings.detailLength}
+                        {artistStoriesEnabled}
+                        onDetailLengthChange={(detailLength) => playbackSettingsStore.update(current => ({...current, detailLength}))}
+                        onArtistStoriesChange={(enabled) => (artistStoriesEnabled = enabled)}
             />
         {/if}
 
@@ -1875,10 +1848,6 @@
                         track={$currentTrack}
                         opened={$spotifyState.opened}
                         returned={$spotifyState.returned}
-                        hasArtistBio={guidedArtistBioUrl($currentTrack) !== null}
-                        artistBioPlaying={guidedArtistBioPlaying}
-                        onPlayArtistBio={playGuidedArtistBio}
-                        onStopArtistBio={stopGuidedArtistBio}
                         onOpenSpotify={openGuidedSpotify}
                         onContinue={continueGuidedPlayback}
                         onSkip={skipGuidedTrack}

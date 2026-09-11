@@ -1,13 +1,15 @@
 <script lang="ts">
     export let language = 'en';
     export let onReport: () => void;
+    export let buttonLabel: string | undefined = undefined;
 
-    $: label =
+    $: defaultLabel =
         language === 'es'
             ? 'Informar un problema'
             : language === 'ptbr' || language === 'pt-BR'
                 ? 'Informar um problema'
                 : 'Report a Problem';
+    $: label = buttonLabel ?? defaultLabel;
 </script>
 
 <button

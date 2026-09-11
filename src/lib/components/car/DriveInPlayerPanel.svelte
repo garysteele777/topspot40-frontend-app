@@ -536,6 +536,7 @@
         transform: translateY(0);
     }
 
+
     .track-copy {
         position: absolute;
         z-index: 5;
@@ -605,6 +606,7 @@
         color: #e8c86f;
         font-size: clamp(9px, 1vw, 18px);
         text-shadow: 0 2px 5px #000;
+        transform: translateY(8px);
     }
 
     .progress-rail {
@@ -747,6 +749,7 @@
             left: 20%;
             width: 60%;
         }
+
 
         .auto-play-control {
             display: none;
