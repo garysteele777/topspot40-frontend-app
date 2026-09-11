@@ -47,15 +47,20 @@ test('classic Car View labels have approved EN, ES, and PT-BR copy', () => {
 test('classic-view labels use Car Mode current selection language', () => {
     assert.match(header, /export let language: Language = 'en';/);
     assert.match(header, /classicViewCopy\[language\]\.carMode/);
-    assert.match(header, /compact \? 'Car Mode' : classicViewCopy\[language\]\.carMode/);
+    assert.doesNotMatch(header, /compact \? 'Car Mode'/);
     assert.match(carPage, /language=\{\$currentSelection\.language\}/);
     assert.match(carPage, /classicViewCopy\[\$currentSelection\?\.language \?\? 'en'\]\.driveInView/);
     assert.match(playerPanel, /formatClassicTrackPosition\([\s\S]*?\$currentSelection\?\.language \?\? 'en'/);
     assert.match(labels, /return `\$\{current\} \$\{classicViewCopy\[language\]\.of\} \$\{total\}`;/);
 });
 
-test('Drive-In View remains unchanged', () => {
+test('Drive-In View uses the active Car Mode language for its stationary labels', () => {
     assert.match(driveInPanel, /<section class="drive-in-shell" aria-label="TopSpot40 Drive-In View">/);
-    assert.match(driveInPanel, /Track \{currentTrack\.rank\} of \{tracks\.length\}/);
-    assert.match(driveInPanel, />\s*Drive-In View\s*</);
+    assert.match(driveInPanel, /export let language: Language = 'en';/);
+    assert.match(driveInPanel, /classicViewCopy\[language\]\.nowPlaying/);
+    assert.match(driveInPanel, /formatDriveInTrackPosition\(currentTrack\.rank, tracks\.length, language\)/);
+    assert.match(driveInPanel, /aria-label=\{classicViewCopy\[language\]\.playbackView\}/);
+    assert.match(driveInPanel, /classicViewCopy\[language\]\.carView/);
+    assert.match(driveInPanel, /classicViewCopy\[language\]\.driveInView/);
+    assert.match(carPage, /<DriveInPlayerPanel[\s\S]*?language=\{\$currentSelection\.language\}/);
 });

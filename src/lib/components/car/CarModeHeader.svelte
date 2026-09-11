@@ -57,7 +57,7 @@
 <div class="cm-panel" class:compact>
     <div class="cm-main">
         <div class="cm-row cm-row--title">
-            <span class="cm-tag">🚗 {compact ? 'Car Mode' : classicViewCopy[language].carMode}</span>
+            <span class="cm-tag">🚗 {classicViewCopy[language].carMode}</span>
 
             {#if mode === 'decade_genre'}
                 <span class="cm-main-text">
