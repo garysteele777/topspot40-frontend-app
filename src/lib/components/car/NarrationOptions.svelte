@@ -3,21 +3,21 @@
     import type {Language} from '$lib/stores/selection';
 
     export let language: Language = 'en';
-    export let detailLength: 'short' | 'long' = 'short';
+    export let detailLength: 'off' | 'short' | 'long' = 'short';
     export let artistStoriesEnabled = false;
-    export let onDetailLengthChange: (value: 'short' | 'long') => void;
+    export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
     export let onArtistStoriesChange: (value: boolean) => void;
 
     const copy: Record<Language, Record<string, string>> = {
-        en: { detailsLabel: 'Details', biosLabel: 'Artist bios', shortDetails: 'Short', longDetails: 'Long', storiesOff: 'Off', storiesOn: 'On', title: 'Narration options', details: 'Track details', detailsHelp: 'Choose how much you hear about each song.', short: 'Short', long: 'Long', stories: 'Artist bios', storiesHelp: 'Hear each available artist bio once during this program.', off: 'Off', on: 'On', close: 'Close' },
-        es: { detailsLabel: 'Detalles', biosLabel: 'Biografías de artistas', shortDetails: 'Breves', longDetails: 'Largos', storiesOff: 'Desactivadas', storiesOn: 'Activadas', title: 'Opciones de narración', details: 'Detalles de la canción', detailsHelp: 'Elige cuánto quieres escuchar sobre cada canción.', short: 'Breves', long: 'Largos', stories: 'Biografías de artistas', storiesHelp: 'Escucha una vez durante este programa cada biografía de artista disponible.', off: 'Desactivado', on: 'Activado', close: 'Cerrar' },
-        ptbr: { detailsLabel: 'Detalhes', biosLabel: 'Biografias dos artistas', shortDetails: 'Curtos', longDetails: 'Longos', storiesOff: 'Desativadas', storiesOn: 'Ativadas', title: 'Opções de narração', details: 'Detalhes da música', detailsHelp: 'Escolha quanto deseja ouvir sobre cada música.', short: 'Curtos', long: 'Longos', stories: 'Biografias dos artistas', storiesHelp: 'Ouça uma vez durante este programa cada biografia de artista disponível.', off: 'Desativado', on: 'Ativado', close: 'Fechar' }
+        en: { detailsLabel: 'Details', biosLabel: 'Artist bios', offDetails: 'Off', shortDetails: 'Short', longDetails: 'Long', storiesOff: 'Off', storiesOn: 'On', title: 'Narration options', details: 'Track details', detailsHelp: 'Choose how much you hear about each song.', short: 'Short', long: 'Long', stories: 'Artist bios', storiesHelp: 'Hear each available artist bio once during this program.', off: 'Off', on: 'On', close: 'Close' },
+        es: { detailsLabel: 'Detalles', biosLabel: 'Biografías de artistas', offDetails: 'Desactivados', shortDetails: 'Breves', longDetails: 'Largos', storiesOff: 'Desactivadas', storiesOn: 'Activadas', title: 'Opciones de narración', details: 'Detalles de la canción', detailsHelp: 'Elige cuánto quieres escuchar sobre cada canción.', short: 'Breves', long: 'Largos', stories: 'Biografías de artistas', storiesHelp: 'Escucha una vez durante este programa cada biografía de artista disponible.', off: 'Desactivado', on: 'Activado', close: 'Cerrar' },
+        ptbr: { detailsLabel: 'Detalhes', biosLabel: 'Biografias dos artistas', offDetails: 'Desativados', shortDetails: 'Curtos', longDetails: 'Longos', storiesOff: 'Desativadas', storiesOn: 'Ativadas', title: 'Opções de narração', details: 'Detalhes da música', detailsHelp: 'Escolha quanto deseja ouvir sobre cada música.', short: 'Curtos', long: 'Longos', stories: 'Biografias dos artistas', storiesHelp: 'Ouça uma vez durante este programa cada biografia de artista disponível.', off: 'Desativado', on: 'Ativado', close: 'Fechar' }
     };
     let open = false;
     let trigger: HTMLButtonElement;
     let panel: HTMLDivElement;
     $: text = copy[language];
-    $: detailValue = detailLength === 'short' ? text.shortDetails : text.longDetails;
+    $: detailValue = detailLength === 'off' ? text.offDetails : detailLength === 'short' ? text.shortDetails : text.longDetails;
     $: biosValue = artistStoriesEnabled ? text.storiesOn : text.storiesOff;
     $: summary = `${text.detailsLabel}: ${detailValue} • ${text.biosLabel}: ${biosValue}`;
 
@@ -44,6 +44,7 @@
         <section aria-labelledby="detail-options-title">
             <h3 id="detail-options-title">{text.details}</h3><p>{text.detailsHelp}</p>
             <div class="choices" role="group" aria-label={text.details}>
+                <button type="button" class:selected={detailLength === 'off'} aria-pressed={detailLength === 'off'} on:click={() => onDetailLengthChange('off')}>{text.offDetails}</button>
                 <button type="button" class:selected={detailLength === 'short'} aria-pressed={detailLength === 'short'} on:click={() => onDetailLengthChange('short')}>{text.short}</button>
                 <button type="button" class:selected={detailLength === 'long'} aria-pressed={detailLength === 'long'} on:click={() => onDetailLengthChange('long')}>{text.long}</button>
             </div>
@@ -72,6 +73,6 @@
     .backdrop { position:fixed; inset:0; z-index:1100; background:rgba(0,0,0,.5); }
     .panel { position:fixed; z-index:1101; top:50%; left:50%; width:min(390px,calc(100vw - 32px)); max-height:min(560px,calc(100dvh - 32px)); overflow:auto; transform:translate(-50%,-50%); padding:20px; border:1px solid #676767; border-radius:14px; background:#181818; color:#fff; box-shadow:0 18px 48px rgba(0,0,0,.6); }
     h2 { margin:0 0 16px; font-size:1.3rem; } h3 { margin:0; font-size:1rem; } p { margin:5px 0 10px; color:#c7c7c7; font-size:.9rem; line-height:1.35; } section + section { margin-top:20px; }
-    .choices { display:grid; grid-template-columns:1fr 1fr; gap:8px; } .choices button, .close { min-height:44px; border:1px solid #666; border-radius:9px; background:#303030; color:#fff; cursor:pointer; font:inherit; font-weight:800; } .choices button.selected { border-color:#1db954; background:#1db954; color:#111; } .close { width:100%; margin-top:20px; }
+    .choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .choices button, .close { min-height:44px; border:1px solid #666; border-radius:9px; background:#303030; color:#fff; cursor:pointer; font:inherit; font-weight:800; overflow-wrap:anywhere; } .choices button.selected { border-color:#1db954; background:#1db954; color:#111; } .close { width:100%; margin-top:20px; }
     @media (max-width:480px) { .panel { top:auto; bottom:0; width:100%; max-height:min(78dvh,620px); transform:translateX(-50%); border-radius:16px 16px 0 0; } .summary { max-width:calc(100vw - 24px); white-space:normal; } }
 </style>

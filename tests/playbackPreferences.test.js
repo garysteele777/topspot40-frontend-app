@@ -32,6 +32,7 @@ const {get} = await import('svelte/store');
 const {playbackSettingsStore} = await import('../src/lib/stores/playbackSettings.store.ts');
 const {buildSelectionFromUrl} = await import('../src/lib/helpers/car/selectionFromUrl.ts');
 const {buildSelectionFromResume} = await import('../src/lib/options/applyResume.ts');
+const {resolveSequenceNarrationUrls} = await import('../src/lib/audio/sequenceNarration.ts');
 
 test('keeps the playback settings defaults at guided Intro+Detail/shuffle/continuous/skip=true/before/short', () => {
     assert.deepEqual(get(playbackSettingsStore), {
@@ -78,6 +79,7 @@ test('keeps valid and malformed-present URL values on their existing paths', () 
 });
 
 test('normalizes invalid values to each caller-supplied fallback', () => {
+    assert.equal(normalizeDetailLength('off', 'short'), 'off');
     assert.equal(normalizePlaybackMethod('invalid', 'guided'), 'guided');
     assert.equal(normalizePlaybackOrder('invalid', 'up'), 'up');
     assert.equal(normalizePauseMode('invalid', 'pause'), 'pause');
@@ -119,6 +121,22 @@ test('keeps Detail Length as the only durably persisted playback preference', ()
     writes.length = 0;
     playbackSettingsStore.update(settings => ({...settings, detailLength: 'long'}));
     assert.deepEqual(writes, [['topspot_detail_length', 'long']]);
+
+    writes.length = 0;
+    playbackSettingsStore.update(settings => ({...settings, detailLength: 'off'}));
+    assert.deepEqual(writes, [['topspot_detail_length', 'off']]);
+});
+
+test('Details Off preserves intro resolution but does not request detail narration', () => {
+    const urls = resolveSequenceNarrationUrls({
+        rank: 1,
+        introUrl: 'https://example.test/intro.mp3',
+        detailUrl: 'https://example.test/detail.mp3',
+        shortDetailUrl: 'https://example.test/short.mp3'
+    }, 'en', 'off');
+    assert.equal(urls.intro, 'https://example.test/intro.mp3');
+    assert.equal(urls.detail, null);
+    assert.equal(urls.detailFallback, undefined);
 });
 
 test('keeps old resume snapshots compatible while applying their existing fallbacks', () => {

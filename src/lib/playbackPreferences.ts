@@ -22,7 +22,7 @@ const VALID_VOICES = new Set<VoicePart>(['intro', 'detail', 'artist']);
 const VALID_PLAYBACK_ORDERS = new Set<PlaybackOrder>(['up', 'down', 'shuffle']);
 const VALID_PAUSE_MODES = new Set<PauseMode>(['pause', 'continuous']);
 const VALID_VOICE_PLAY_MODES = new Set<VoicePlayMode>(['before', 'over']);
-const VALID_DETAIL_LENGTHS = new Set<DetailLength>(['short', 'long']);
+const VALID_DETAIL_LENGTHS = new Set<DetailLength>(['off', 'short', 'long']);
 
 function normalizeEnum<T extends string>(
     value: unknown,

@@ -7,6 +7,7 @@
     export let opened = false;
     export let returned = false;
     export let onOpenSpotify: () => void;
+    export let spotifyOpenedThisProgram = false;
     export let onContinue: () => void | Promise<void>;
     export let onSkip: () => void | Promise<void>;
     export let onBackToCar: () => void;
@@ -42,7 +43,10 @@
             spotifyOpened: 'SPOTIFY OPENED', playInSpotify: 'Play the song in Spotify',
             compactIos: 'When it finishes, swipe up and pause, then return to TopSpot40, Safari, or Chrome.',
             compactAndroid: 'When it finishes, open Recent Apps and return to TopSpot40 or Chrome.',
-            compactComputer: 'When it finishes, return to this TopSpot40 window.'
+            compactComputer: 'When it finishes, return to this TopSpot40 window.',
+            compactReminder: 'Pause Spotify when the song ends, then return to TopSpot40.',
+            showInstructions: 'Show instructions',
+            hideInstructions: 'Hide instructions'
         },
         es: {
             mode: 'Reproducción guiada', narrationComplete: 'Narración completada', ready: '¿Listo para escuchar la canción?',
@@ -67,7 +71,10 @@
             spotifyOpened: 'SPOTIFY ABIERTO', playInSpotify: 'Reproduce la canción en Spotify',
             compactIos: 'Cuando termine, desliza hacia arriba, pausa y vuelve a TopSpot40, Safari o Chrome.',
             compactAndroid: 'Cuando termine, abre Aplicaciones recientes y vuelve a TopSpot40 o Chrome.',
-            compactComputer: 'Cuando termine, vuelve a esta ventana de TopSpot40.'
+            compactComputer: 'Cuando termine, vuelve a esta ventana de TopSpot40.',
+            compactReminder: 'Cuando termine la canción, pausa Spotify y vuelve a TopSpot40.',
+            showInstructions: 'Mostrar instrucciones',
+            hideInstructions: 'Ocultar instrucciones'
         },
         ptbr: {
             mode: 'Reprodução guiada', narrationComplete: 'Narração concluída', ready: 'Pronto para ouvir a música?',
@@ -92,12 +99,16 @@
             spotifyOpened: 'SPOTIFY ABERTO', playInSpotify: 'Reproduza a música no Spotify',
             compactIos: 'Quando terminar, deslize para cima, pause e volte ao TopSpot40, Safari ou Chrome.',
             compactAndroid: 'Quando terminar, abra Apps recentes e volte ao TopSpot40 ou Chrome.',
-            compactComputer: 'Quando terminar, volte a esta janela do TopSpot40.'
+            compactComputer: 'Quando terminar, volte a esta janela do TopSpot40.',
+            compactReminder: 'Quando a música terminar, pause o Spotify e volte ao TopSpot40.',
+            showInstructions: 'Mostrar instruções',
+            hideInstructions: 'Ocultar instruções'
         }
     };
 
     let device: DeviceType = 'computer';
     let spotifyActivated = false;
+    let instructionsExpanded = false;
     let returnActionPending = false;
     let copyLanguage: CopyLanguage = 'en';
     $: copyLanguage = language === 'es'
@@ -106,6 +117,7 @@
             ? 'ptbr'
             : 'en';
     $: text = copy[copyLanguage];
+    $: showFullInstructions = device === 'computer' || !spotifyOpenedThisProgram || instructionsExpanded;
 
     function openSpotify(): void {
         spotifyActivated = true;
@@ -198,8 +210,10 @@
                 {displayTrackName(track.artistName)}
             </div>
 
+            {#if showFullInstructions}
             <section
                     class="return-help pre-spotify-return-help"
+                    id="guided-spotify-instructions"
                     aria-labelledby="return-help-heading"
             >
                 <h3 id="return-help-heading">
@@ -266,6 +280,19 @@
                     {/if}
                 </div>
             </section>
+            {#if device !== 'computer' && spotifyOpenedThisProgram}
+                <button type="button" class="instructions-toggle" aria-expanded="true" aria-controls="guided-spotify-instructions" on:click={() => instructionsExpanded = false}>
+                    {text.hideInstructions}
+                </button>
+            {/if}
+            {:else}
+                <div id="guided-spotify-instructions" class="compact-repeat-guidance">
+                    <p>{text.compactReminder}</p>
+                    <button type="button" class="instructions-toggle" aria-expanded="false" aria-controls="guided-spotify-instructions" on:click={() => instructionsExpanded = true}>
+                        {text.showInstructions}
+                    </button>
+                </div>
+            {/if}
 
             <button
                     type="button"
@@ -498,6 +525,29 @@
         margin: 0;
         color: #fff;
         font-size: 1.1rem;
+    }
+
+    .compact-repeat-guidance {
+        margin: 20px 0 10px;
+        padding: 14px;
+        border-radius: 14px;
+        color: #fff;
+        background: #202024;
+    }
+
+    .compact-repeat-guidance p {
+        margin: 0;
+        line-height: 1.45;
+    }
+
+    .instructions-toggle {
+        min-height: 44px;
+        margin-top: 10px;
+        padding: 8px 14px;
+        border: 1px solid #6b83a6;
+        border-radius: 999px;
+        color: #fff;
+        background: #354866;
     }
 
     .return-help-steps {

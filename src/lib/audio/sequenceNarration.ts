@@ -1,4 +1,5 @@
 import type {AudioKey} from '$lib/utils/normalizeTrack';
+import type {DetailLength} from '$lib/types/playback';
 
 export const SUPABASE_PUBLIC_AUDIO_BASE =
     'https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public';
@@ -61,8 +62,18 @@ function legacyDetailUrl(
 export function resolveSequenceNarrationUrls(
     track: SequenceNarrationTrack,
     language: string,
-    detailLength: 'long' | 'short'
+    detailLength: DetailLength
 ): SequenceNarrationUrls {
+    if (detailLength === 'off') {
+        return {
+            intro:
+                nonEmptyUrl(track.introUrl) ??
+                publicAudioUrl(track.introKey) ??
+                legacyIntroUrl(track, language),
+            detail: null,
+            detailFallback: undefined
+        };
+    }
     const wantsLong = detailLength === 'long';
     const primaryUrl = wantsLong ? track.detailUrl : track.shortDetailUrl;
     const fallbackUrl = wantsLong ? track.shortDetailUrl : track.detailUrl;

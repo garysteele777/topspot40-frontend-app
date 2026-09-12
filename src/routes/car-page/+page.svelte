@@ -132,6 +132,7 @@
     let artistBioPlayedThisSet = false;
     let artistStoriesEnabled = false;
     let artistStoriesPlayed = new Set<string>();
+    let guidedSpotifyOpenedThisProgram = false;
     let guidedReady = false;
     let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     let userStartedPlaybackThisSession = false;
@@ -622,7 +623,7 @@
             if (url) result.push({phase: 'intro', url});
         }
 
-        if (settings.voices.includes('detail')) {
+        if (settings.voices.includes('detail') && settings.detailLength !== 'off') {
             const url = narrationUrls.detail;
             const fallbackUrl = narrationUrls.detailFallback;
 
@@ -750,7 +751,9 @@
 
     function openGuidedSpotify() {
         const track = get(currentTrack);
-        spotify.open(track);
+        if (spotify.open(track)) {
+            guidedSpotifyOpenedThisProgram = true;
+        }
     }
 
     async function continueAutoPlayback() {
@@ -1411,6 +1414,7 @@
                 lastProgramKey = key;
                 artistStoriesEnabled = false;
                 artistStoriesPlayed = new Set<string>();
+                guidedSpotifyOpenedThisProgram = false;
             }
 
             const history = $programHistoryStore.find(p => p.key === key);
@@ -1904,6 +1908,7 @@
                         opened={$spotifyState.opened}
                         returned={$spotifyState.returned}
                         onOpenSpotify={openGuidedSpotify}
+                        spotifyOpenedThisProgram={guidedSpotifyOpenedThisProgram}
                         onContinue={continueGuidedPlayback}
                         onSkip={skipGuidedTrack}
                         onBackToCar={returnToGuidedCarPage}
