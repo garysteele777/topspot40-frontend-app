@@ -103,7 +103,7 @@ test('reopening Spotify delegates only to the existing current-track Spotify han
     );
 
     assert.match(panel, /function openSpotify\(\): void \{[\s\S]*onOpenSpotify\(\);[\s\S]*\}/);
-    assert.match(page, /function openGuidedSpotify\(\) \{[\s\S]*const track = get\(currentTrack\);[\s\S]*spotify\.open\(track\);[\s\S]*\}/);
+    assert.match(page, /function openGuidedSpotify\(\) \{[\s\S]*const track = get\(currentTrack\);[\s\S]*if \(spotify\.open\(track\)\)/);
     assert.match(page, /onOpenSpotify=\{openGuidedSpotify\}/);
     const reopenAction = panel.slice(
         panel.indexOf('class="next-action spotify-next-action"'),
@@ -120,6 +120,26 @@ test('guided playback state conditions and post-Spotify states remain unchanged'
     assert.match(panel, /When it finishes, swipe up and pause,/);
     assert.match(panel, /When it finishes, open Recent Apps/);
     assert.match(panel, /When it finishes, return to this/);
+});
+
+test('mobile repeat-use guidance is session-only, compact, and inert until Spotify is explicitly opened', () => {
+    const route = readFileSync(new URL('../src/routes/car-page/+page.svelte', import.meta.url), 'utf8');
+    assert.match(panel, /spotifyOpenedThisProgram/);
+    assert.match(panel, /showFullInstructions = device === 'computer' \|\| !spotifyOpenedThisProgram \|\| instructionsExpanded/);
+    assert.match(panel, /compactReminder: 'Pause Spotify when the song ends, then return to TopSpot40.'/);
+    assert.match(panel, /aria-expanded="false" aria-controls="guided-spotify-instructions"/);
+    assert.match(panel, /Show instructions/);
+    assert.match(panel, /Hide instructions/);
+    assert.match(panel, /Cuando termine la canción, pausa Spotify y vuelve a TopSpot40\./);
+    assert.match(panel, /Mostrar instrucciones/);
+    assert.match(panel, /Ocultar instrucciones/);
+    assert.match(panel, /Quando a música terminar, pause o Spotify e volte ao TopSpot40\./);
+    assert.match(panel, /Mostrar instruções/);
+    assert.match(panel, /Ocultar instruções/);
+    assert.match(panel, /compact-repeat-guidance[\s\S]*text\.compactReminder[\s\S]*instructions-toggle[\s\S]*text\.showInstructions[\s\S]*spotify-button/);
+    assert.match(route, /guidedSpotifyOpenedThisProgram = false/);
+    assert.match(route, /if \(spotify\.open\(track\)\) \{[\s\S]*guidedSpotifyOpenedThisProgram = true/);
+    assert.doesNotMatch(panel, /localStorage|sessionStorage/);
 });
 
 test('guided return help contains the exact Spanish pre-Spotify, device, and return copy', () => {

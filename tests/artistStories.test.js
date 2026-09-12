@@ -58,9 +58,9 @@ test('Narration options summary is accessible, localized, and placed beneath the
     assert.doesNotMatch(control, /Artist stories|Historias de artistas|Histórias dos artistas/);
 });
 
-test('Narration summary represents each Short/Long and Artist bios Off/On combination', () => {
+test('Narration summary represents Details Off/Short/Long and Artist bios Off/On combinations', () => {
     const control = readFileSync(new URL('../src/lib/components/car/NarrationOptions.svelte', import.meta.url), 'utf8');
-    assert.match(control, /detailLength === 'short' \? text\.shortDetails : text\.longDetails/);
+    assert.match(control, /detailLength === 'off' \? text\.offDetails/);
     assert.match(control, /artistStoriesEnabled \? text\.storiesOn : text\.storiesOff/);
     for (const summary of [
         ['Details: Short', 'Artist bios: Off'],
@@ -103,6 +103,8 @@ test('Narration options changes the shared detail preference and leaves current 
     assert.match(route, /resolveSequenceNarrationUrls\([\s\S]*settings\.detailLength/);
     assert.match(control, /onDetailLengthChange\('short'\)/);
     assert.match(control, /onDetailLengthChange\('long'\)/);
+    assert.match(control, /onDetailLengthChange\('off'\)/);
+    assert.match(route, /settings\.voices\.includes\('detail'\) && settings\.detailLength !== 'off'/);
     assert.doesNotMatch(control, /stopNarration|startGuidedTrack|openSpotify/);
 });
 

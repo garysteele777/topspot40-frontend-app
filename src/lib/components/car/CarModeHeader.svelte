@@ -24,9 +24,9 @@
 
 
     export let compact: boolean = false;
-    export let detailLength: 'short' | 'long' = 'short';
+    export let detailLength: 'off' | 'short' | 'long' = 'short';
     export let artistStoriesEnabled = false;
-    export let onDetailLengthChange: (value: 'short' | 'long') => void;
+    export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
     export let onArtistStoriesChange: (value: boolean) => void;
 
     const modeLabel = (

@@ -49,11 +49,14 @@
     {#if isSelected('detail')}
         <div class="detail-length">
             <div class="detail-length-label">Detail length</div>
-            <div class="grid grid-2">
-                <button class:selected={detailLength === 'short'} on:click={() => detailLength = 'short'}>
+            <div class="grid grid-3">
+                <button type="button" class:selected={detailLength === 'off'} aria-pressed={detailLength === 'off'} on:click={() => detailLength = 'off'}>
+                    Off
+                </button>
+                <button type="button" class:selected={detailLength === 'short'} aria-pressed={detailLength === 'short'} on:click={() => detailLength = 'short'}>
                     Short
                 </button>
-                <button class:selected={detailLength === 'long'} on:click={() => detailLength = 'long'}>
+                <button type="button" class:selected={detailLength === 'long'} aria-pressed={detailLength === 'long'} on:click={() => detailLength = 'long'}>
                     Long
                 </button>
             </div>
@@ -117,8 +120,8 @@
         font-weight: 600;
     }
 
-    .grid-2 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .detail-length {

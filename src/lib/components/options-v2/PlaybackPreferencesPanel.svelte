@@ -48,7 +48,7 @@
                     v === 'intro'
                         ? 'Intro'
                         : v === 'detail'
-                            ? `Detail (${detailLength === 'short' ? 'Short' : 'Long'})`
+                            ? `Detail (${detailLength === 'off' ? 'Off' : detailLength === 'short' ? 'Short' : 'Long'})`
                             : 'Artist'
                 )
                 .join('+');

@@ -21,7 +21,7 @@ export type Language = 'en' | 'es' | 'ptbr';
 
 export type VoicePart = 'intro' | 'detail' | 'artist';
 
-export type DetailLength = 'short' | 'long';
+export type DetailLength = 'off' | 'short' | 'long';
 
 export type PlaybackOrder = 'up' | 'down' | 'shuffle';
 

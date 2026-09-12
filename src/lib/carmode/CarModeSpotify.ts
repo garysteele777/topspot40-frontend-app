@@ -68,10 +68,10 @@ export function createCarModeSpotify(
         }
     }
 
-    function open(track: CarModeTrack | null): void {
+    function open(track: CarModeTrack | null): boolean {
         if (!track?.spotifyTrackId) {
             dependencies.setStatus('Spotify link is not available for this track.');
-            return;
+            return false;
         }
 
         state.set({opened: true, returned: false});
@@ -96,7 +96,7 @@ export function createCarModeSpotify(
             // On mobile, use the same browser tab.
             // Android Back should return naturally to Car Mode.
             window.location.href = spotifyUrl;
-            return;
+            return true;
         }
 
         if (spotifyWindow && !spotifyWindow.closed) {
@@ -109,6 +109,7 @@ export function createCarModeSpotify(
         }
 
         spotifyWindow?.focus();
+        return true;
     }
 
     function close(): void {
