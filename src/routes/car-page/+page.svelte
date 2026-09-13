@@ -76,6 +76,7 @@
         resolveSequenceNarrationUrls
     } from '$lib/audio/sequenceNarration';
     import {
+        audioDebugEnabled,
         isAudioDebugEnabled,
         logAudioDebug
     } from '$lib/audio/audioDebug';
@@ -2043,7 +2044,7 @@
 
 </div>
 
-{#if isAudioDebugEnabled()}
+{#if $audioDebugEnabled}
     <AudioDiagnosticPanel />
 {/if}
 

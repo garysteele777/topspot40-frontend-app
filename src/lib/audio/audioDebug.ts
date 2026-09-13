@@ -8,21 +8,70 @@ export type AudioDebugEntry = {
 };
 
 const MAX_ENTRIES = 250;
+const AUDIO_DEBUG_SESSION_KEY = 'topspot_audio_debug_enabled';
 const entries = writable<AudioDebugEntry[]>([]);
 export const audioDebugEntries = {subscribe: entries.subscribe};
+const enabled = writable(false);
+export const audioDebugEnabled = {subscribe: enabled.subscribe};
 
 let enabledOverride: boolean | null = null;
 let nextAudioElementId = 1;
 const audioElementIds = new WeakMap<HTMLMediaElement, number>();
 const instrumentedAudioElements = new WeakSet<HTMLMediaElement>();
 
-export function isAudioDebugEnabled(search?: string): boolean {
+type AudioDebugSessionStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+
+function getSessionStorage(): AudioDebugSessionStorage | null {
+    if (!browser || typeof window === 'undefined') return null;
+
+    try {
+        return window.sessionStorage;
+    } catch {
+        return null;
+    }
+}
+
+function isAudioDebugRequested(search: string | undefined): boolean {
+    return new URLSearchParams(search ?? '').get('audioDebug') === '1';
+}
+
+function hasAudioDebugSession(storage: AudioDebugSessionStorage | null): boolean {
+    try {
+        return storage?.getItem(AUDIO_DEBUG_SESSION_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
+
+// Called by the root layout, allowing a diagnostic URL to be opened before
+// navigating into Car Mode. Only the enabled flag is session-persisted.
+export function activateAudioDebugFromSearch(
+    search?: string,
+    storage: AudioDebugSessionStorage | null = getSessionStorage()
+): boolean {
+    const active = isAudioDebugRequested(search) || hasAudioDebugSession(storage);
+
+    if (isAudioDebugRequested(search)) {
+        try {
+            storage?.setItem(AUDIO_DEBUG_SESSION_KEY, '1');
+        } catch {
+            // Diagnostics remain active for this loaded page if storage is unavailable.
+        }
+    }
+
+    enabled.set(active);
+    return active;
+}
+
+export function isAudioDebugEnabled(
+    search?: string,
+    storage: AudioDebugSessionStorage | null = getSessionStorage()
+): boolean {
     if (enabledOverride !== null) return enabledOverride;
-    if (search !== undefined) return new URLSearchParams(search).get('audioDebug') === '1';
     const runtimeSearch = browser && typeof window !== 'undefined'
         ? window.location?.search
         : undefined;
-    return new URLSearchParams(runtimeSearch ?? '').get('audioDebug') === '1';
+    return isAudioDebugRequested(search ?? runtimeSearch) || hasAudioDebugSession(storage);
 }
 
 // Test-only seam; no setting is persisted or exposed to application users.
@@ -74,6 +123,18 @@ export function logAudioDebug(
 
 export function clearAudioDebugLog(): void {
     entries.set([]);
+}
+
+export function disableAudioDebug(
+    storage: AudioDebugSessionStorage | null = getSessionStorage()
+): void {
+    try {
+        storage?.removeItem(AUDIO_DEBUG_SESSION_KEY);
+    } catch {
+        // Clearing diagnostics must still clear the in-memory log.
+    }
+    clearAudioDebugLog();
+    enabled.set(false);
 }
 
 export function audioDebugElementId(audio: HTMLMediaElement): number {

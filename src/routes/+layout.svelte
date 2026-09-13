@@ -3,11 +3,19 @@
     import LandingHeader from '$lib/components/LandingHeader.svelte';
     import { page } from '$app/stores'; 
     import { onMount } from 'svelte';
+    import { browser } from '$app/environment';
     import posthog from 'posthog-js';
     import { initializePostHog } from '$lib/analytics/posthog';
+    import { activateAudioDebugFromSearch } from '$lib/audio/audioDebug';
 
     let {children} = $props();
     let deferredPrompt: any = null;
+
+    // A diagnostic link may be opened before the user chooses a program.
+    // Preserve only the enabled flag through same-tab navigation; entries stay in memory.
+    $effect(() => {
+        if (browser) activateAudioDebugFromSearch($page.url.search);
+    });
 
     onMount(() => {
         initializePostHog(posthog);

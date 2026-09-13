@@ -2,7 +2,8 @@
     import {
         audioDebugEntries,
         clearAudioDebugLog,
-        copyAudioDebugLog
+        copyAudioDebugLog,
+        disableAudioDebug
     } from '$lib/audio/audioDebug';
 
     let copied = false;
@@ -12,6 +13,10 @@
         copied = true;
         window.setTimeout(() => (copied = false), 1500);
     }
+
+    function disableDiagnostics(): void {
+        disableAudioDebug();
+    }
 </script>
 
 <aside class="audio-debug" aria-label="Audio diagnostics">
@@ -20,6 +25,7 @@
         <span>{$audioDebugEntries.length} events</span>
         <button type="button" on:click={copyLog}>{copied ? 'Copied' : 'Copy Log'}</button>
         <button type="button" on:click={clearAudioDebugLog}>Clear Log</button>
+        <button type="button" on:click={disableDiagnostics}>Disable Diagnostics</button>
     </div>
     <ol aria-live="polite">
         {#each $audioDebugEntries as entry}
