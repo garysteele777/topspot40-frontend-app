@@ -103,7 +103,7 @@ test('reopening Spotify delegates only to the existing current-track Spotify han
     );
 
     assert.match(panel, /function openSpotify\(\): void \{[\s\S]*onOpenSpotify\(\);[\s\S]*\}/);
-    assert.match(page, /function openGuidedSpotify\(\) \{[\s\S]*const track = get\(currentTrack\);[\s\S]*if \(spotify\.open\(track\)\)/);
+    assert.match(page, /function openGuidedSpotify\(\): boolean \{[\s\S]*const track = get\(currentTrack\);[\s\S]*const opened = spotify\.open\(track\);/);
     assert.match(page, /onOpenSpotify=\{openGuidedSpotify\}/);
     const reopenAction = panel.slice(
         panel.indexOf('class="next-action spotify-next-action"'),
@@ -138,7 +138,7 @@ test('mobile repeat-use guidance is session-only, compact, and inert until Spoti
     assert.match(panel, /Ocultar instruções/);
     assert.match(panel, /compact-repeat-guidance[\s\S]*text\.compactReminder[\s\S]*instructions-toggle[\s\S]*text\.showInstructions[\s\S]*spotify-button/);
     assert.match(route, /guidedSpotifyOpenedThisProgram = false/);
-    assert.match(route, /if \(spotify\.open\(track\)\) \{[\s\S]*guidedSpotifyOpenedThisProgram = true/);
+    assert.match(route, /const opened = spotify\.open\(track\);[\s\S]*if \(opened\) \{[\s\S]*guidedSpotifyOpenedThisProgram = true[\s\S]*return opened;/);
     assert.doesNotMatch(panel, /localStorage|sessionStorage/);
 });
 

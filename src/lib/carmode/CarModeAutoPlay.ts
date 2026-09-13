@@ -28,7 +28,7 @@ export type CarModeAutoPlayDependencies = {
     ) => Promise<boolean>;
     prepareSpotifyWindow: () => void;
     isMobile: () => boolean;
-    openSpotify: () => void;
+    openSpotify: () => boolean;
     closeSpotify: () => void;
     continueAutoPlayback: () => Promise<void>;
     nextTrack: () => Promise<void>;
@@ -93,8 +93,11 @@ export function createCarModeAutoPlay(
             return;
         }
 
+        if (!dependencies.openSpotify()) {
+            return;
+        }
+
         handoffToken = token;
-        dependencies.openSpotify();
         startTimer(track);
     }
 

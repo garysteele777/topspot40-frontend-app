@@ -784,11 +784,15 @@
         return started;
     }
 
-    function openGuidedSpotify() {
+    function openGuidedSpotify(): boolean {
         const track = get(currentTrack);
-        if (spotify.open(track)) {
+        const opened = spotify.open(track);
+
+        if (opened) {
             guidedSpotifyOpenedThisProgram = true;
         }
+
+        return opened;
     }
 
     async function continueAutoPlayback() {

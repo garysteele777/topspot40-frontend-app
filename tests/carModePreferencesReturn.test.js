@@ -154,6 +154,49 @@ test('Auto cancellation invalidates queued advancement before a language-refresh
     assert.equal(advanced, 0);
 });
 
+test('Auto Play does not advance when the Spotify handoff fails', async () => {
+    let advanced = 0;
+    let spotifyOpens = 0;
+    let activePlayMode = null;
+
+    const track = {
+        ...tracks[0],
+        durationSeconds: 0.01
+    };
+
+    const auto = createCarModeAutoPlay({
+        getActivePlayMode: () => activePlayMode,
+        setActivePlayMode: mode => { activePlayMode = mode; },
+        getCurrentTrack: () => track,
+        getIsPlaying: () => false,
+        setIsPlaying: () => {},
+        getPlaybackPhase: () => 'track',
+        setPlaybackPhase: () => {},
+        pauseNarration: () => {},
+        takePausedNarrationPhase: () => null,
+        abandonNarration: () => {},
+        startNarration: async () => true,
+        prepareSpotifyWindow: () => {},
+        isMobile: () => true,
+        openSpotify: () => {
+            spotifyOpens += 1;
+            return false;
+        },
+        closeSpotify: () => {},
+        continueAutoPlayback: async () => { advanced += 1; },
+        nextTrack: async () => {},
+        previousTrack: async () => {},
+        startPreviousAutoPlayback: async () => {}
+    }, 0);
+
+    await auto.handlePlay();
+    await new Promise(resolve => setTimeout(resolve, 40));
+
+    assert.equal(spotifyOpens, 1);
+    assert.equal(advanced, 0);
+
+    auto.cancel();
+});
 test('Car Mode preferences return preserves whether program playback had actually started', () => {
     const carUrl = new URL(
         'https://topspot.test/car-page?mode=nostalgia&decade=1980s&genre=pop&language=en'
