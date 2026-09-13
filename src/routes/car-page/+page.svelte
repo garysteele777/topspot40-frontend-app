@@ -3,6 +3,7 @@
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
     import DriveInPlayerPanel from '$lib/components/car/DriveInPlayerPanel.svelte';
     import GuidedPlaybackPanel from '$lib/components/car/GuidedPlaybackPanel.svelte';
+    import AudioDiagnosticPanel from '$lib/components/car/AudioDiagnosticPanel.svelte';
     import ReportProblemModal from '$lib/components/car/ReportProblemModal.svelte';
     import {
         buildContentIssueContext,
@@ -74,6 +75,10 @@
         publicAudioUrl,
         resolveSequenceNarrationUrls
     } from '$lib/audio/sequenceNarration';
+    import {
+        isAudioDebugEnabled,
+        logAudioDebug
+    } from '$lib/audio/audioDebug';
 
 
     import {
@@ -139,6 +144,7 @@
     let playbackStartInFlight = false;
     let activePlayMode: 'guided' | 'auto' | null = null;
     let preservePlaybackForPreferences = false;
+    let lastAudioDebugState = '';
 
     const programStartedTracker = createProgramStartedTracker({
         capture: properties => captureProgramStarted(posthog, properties),
@@ -260,6 +266,22 @@
     }
 
     $: settings = $playbackSettingsStore;
+    $: if (isAudioDebugEnabled()) {
+        const track = $currentTrack;
+        const state = `${activePlayMode ?? 'none'}|${guidedReady}|${$isPlaying}|${$playbackPhase}|${track?.rankingId ?? track?.rank ?? 'none'}`;
+        if (state !== lastAudioDebugState) {
+            lastAudioDebugState = state;
+            logAudioDebug('Guided playback state', {
+                mode: activePlayMode ?? 'none',
+                guidedReady,
+                isPlaying: $isPlaying,
+                playbackPhase: $playbackPhase,
+                trackRank: track?.rank ?? null,
+                trackName: track?.trackName ?? null,
+                artistName: track?.artistName ?? null
+            });
+        }
+    }
 
     function stopNarrationAudio() {
         // Kill any browser-side narration audio still playing
@@ -745,8 +767,20 @@
         trackObj: CarModeTrack,
         startPhase: 'intro' | 'detail' = 'intro'
     ): Promise<boolean> {
+        logAudioDebug('Guided narration start requested', {
+            trackRank: trackObj.rank,
+            trackName: trackObj.trackName,
+            artistName: trackObj.artistName,
+            narrationPhase: startPhase
+        });
         spotify.reset();
-        return narration.start(trackObj, startPhase);
+        const started = await narration.start(trackObj, startPhase);
+        logAudioDebug('Guided narration start completed', {
+            started,
+            playbackPhase: get(playbackPhase),
+            trackRank: trackObj.rank
+        });
+        return started;
     }
 
     function openGuidedSpotify() {
@@ -766,6 +800,7 @@
     }
 
     async function continueGuidedPlayback() {
+        logAudioDebug('Spotify return action', {action: 'Let Spotify choose the next track'});
         spotify.close();
 
         guidedReady = false;
@@ -790,6 +825,7 @@
     }
 
     async function skipGuidedTrack() {
+        logAudioDebug('Spotify return action', {action: 'Skip'});
         spotify.close();
 
         guidedReady = false;
@@ -840,6 +876,7 @@
     }
 
     async function chooseNextGuidedTrack(): Promise<void> {
+        logAudioDebug('Spotify return action', {action: 'Choose the next track yourself'});
         if (guidedReturnActionInProgress) return;
         guidedReturnActionInProgress = true;
 
@@ -852,6 +889,7 @@
     }
 
     async function returnToCarModeAfterGuidedPlayback(): Promise<void> {
+        logAudioDebug('Spotify return action', {action: 'Return to Car Mode'});
         if (guidedReturnActionInProgress) return;
         guidedReturnActionInProgress = true;
 
@@ -1082,6 +1120,11 @@
         activePlayMode = 'guided';
         if (!$currentTrack) return;
         captureProgramStartedOnce();
+        logAudioDebug('Guided action', {
+            trackRank: $currentTrack?.rank ?? null,
+            trackName: $currentTrack?.trackName ?? null,
+            playbackPhase: get(playbackPhase)
+        });
         await handlePlayPause();
     }
 
@@ -1163,6 +1206,11 @@
         const activeSettings = get(playbackSettingsStore);
 
         if (activeSettings.playbackMethod === 'guided') {
+            logAudioDebug(get(isPlaying) ? 'Pause action' : 'Guided action', {
+                trackRank: $currentTrack?.rank ?? null,
+                playbackPhase: get(playbackPhase),
+                guidedReady
+            });
             if (guidedReady) {
                 return;
             }
@@ -1355,6 +1403,12 @@
     });
 
     async function handleJumpToTrack(track: CarModeTrack): Promise<void> {
+        logAudioDebug('Track List action', {
+            trackRank: track.rank,
+            trackName: track.trackName,
+            artistName: track.artistName,
+            playbackPhase: get(playbackPhase)
+        });
         if (activePlayMode === 'auto') {
             currentTrack.set(track);
             currentRank.set(track.rank);
@@ -1369,10 +1423,20 @@
     }
 
     async function nextTrack(releaseAutoLock = false): Promise<void> {
+        logAudioDebug('Next action', {
+            trackRank: get(currentTrack)?.rank ?? null,
+            playbackPhase: get(playbackPhase),
+            releaseAutoLock
+        });
         await navigation.next(releaseAutoLock);
     }
 
     async function prevTrack(startAutoPlay = false): Promise<void> {
+        logAudioDebug('Previous action', {
+            trackRank: get(currentTrack)?.rank ?? null,
+            playbackPhase: get(playbackPhase),
+            startAutoPlay
+        });
         await navigation.previous(startAutoPlay);
     }
 
@@ -1553,6 +1617,33 @@
         playbackPhase.set('track');
     }
 
+    function handleAudioDebugVisibilityChange(): void {
+        logAudioDebug('visibilitychange', {
+            visibilityState: document.visibilityState,
+            playbackPhase: get(playbackPhase),
+            guidedReady
+        });
+        spotify.handleReturn();
+    }
+
+    function handleAudioDebugFocus(): void {
+        logAudioDebug('focus', {playbackPhase: get(playbackPhase), guidedReady});
+        spotify.handleReturn();
+    }
+
+    function handleAudioDebugBlur(): void {
+        logAudioDebug('blur', {playbackPhase: get(playbackPhase), guidedReady});
+    }
+
+    function handleAudioDebugPageHide(): void {
+        logAudioDebug('pagehide', {playbackPhase: get(playbackPhase), guidedReady});
+    }
+
+    function handleAudioDebugPageShow(): void {
+        logAudioDebug('pageshow', {playbackPhase: get(playbackPhase), guidedReady});
+        spotify.handleReturn();
+    }
+
 
     // ─────────────────────────────────────────────
     // Lifecycle
@@ -1580,12 +1671,15 @@
 
         document.addEventListener(
             'visibilitychange',
-            spotify.handleReturn
+            handleAudioDebugVisibilityChange
         );
         window.addEventListener(
             'focus',
-            spotify.handleReturn
+            handleAudioDebugFocus
         );
+        window.addEventListener('blur', handleAudioDebugBlur);
+        window.addEventListener('pagehide', handleAudioDebugPageHide);
+        window.addEventListener('pageshow', handleAudioDebugPageShow);
         window.addEventListener('ts-next-track', handleAutoNextTrack);
         window.addEventListener('ts-guided-track-ready', handleGuidedTrackReady);
 
@@ -1744,13 +1838,16 @@
 
         document.removeEventListener(
             'visibilitychange',
-            spotify.handleReturn
+            handleAudioDebugVisibilityChange
         );
 
         window.removeEventListener(
             'focus',
-            spotify.handleReturn
+            handleAudioDebugFocus
         );
+        window.removeEventListener('blur', handleAudioDebugBlur);
+        window.removeEventListener('pagehide', handleAudioDebugPageHide);
+        window.removeEventListener('pageshow', handleAudioDebugPageShow);
 
         window.removeEventListener(
             'ts-next-track',
@@ -1945,6 +2042,10 @@
 
 
 </div>
+
+{#if isAudioDebugEnabled()}
+    <AudioDiagnosticPanel />
+{/if}
 
 <style>
 

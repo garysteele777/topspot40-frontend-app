@@ -1,4 +1,8 @@
 import {BED_VOLUME} from '$lib/audio/audioLevels';
+import {
+    instrumentAudioElement,
+    logAudioPlayCall
+} from '$lib/audio/audioDebug';
 
 let bedAudio: HTMLAudioElement | null = null;
 let currentBedUrl: string | null = null;
@@ -165,7 +169,26 @@ export function isBedPlaying(): boolean {
 }
 
 async function playWithTimeout(audio: HTMLAudioElement): Promise<void> {
+	instrumentAudioElement(audio, 'bed', 'reused');
+	logAudioPlayCall(audio, 'bed', 'called');
     const playPromise = audio.play();
+	let pendingTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(
+		() => {
+			pendingTimer = undefined;
+			logAudioPlayCall(audio, 'bed', 'pending');
+		},
+		1000
+	);
+	void playPromise.then(
+		() => {
+			if (pendingTimer !== undefined) clearTimeout(pendingTimer);
+			logAudioPlayCall(audio, 'bed', 'resolved');
+		},
+		error => {
+			if (pendingTimer !== undefined) clearTimeout(pendingTimer);
+			logAudioPlayCall(audio, 'bed', 'rejected', error);
+		}
+	);
     void playPromise.catch(() => {
         // The awaited race handles the failure path; prevent a late rejection from surfacing separately.
     });
@@ -192,6 +215,9 @@ async function playWithTimeout(audio: HTMLAudioElement): Promise<void> {
 export async function unlockBedAudio(): Promise<void> {
     if (!bedAudio) {
         bedAudio = new Audio();
+		instrumentAudioElement(bedAudio, 'bed', 'created');
+	} else {
+		instrumentAudioElement(bedAudio, 'bed', 'reused');
     }
 
     try {
@@ -214,7 +240,27 @@ export async function unlockBedAudio(): Promise<void> {
         bedAudio.setAttribute('playsinline', '');
         bedAudio.crossOrigin = 'anonymous';
         bedAudio.src = SILENT_AUDIO_DATA_URI;
-        await bedAudio.play();
+        const unlockAudio = bedAudio;
+        logAudioPlayCall(unlockAudio, 'bed', 'called');
+        const playPromise = unlockAudio.play();
+        let pendingTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(
+            () => {
+                pendingTimer = undefined;
+                logAudioPlayCall(unlockAudio, 'bed', 'pending');
+            },
+            1000
+        );
+        void playPromise.then(
+            () => {
+                if (pendingTimer !== undefined) clearTimeout(pendingTimer);
+                logAudioPlayCall(unlockAudio, 'bed', 'resolved');
+            },
+            error => {
+                if (pendingTimer !== undefined) clearTimeout(pendingTimer);
+                logAudioPlayCall(unlockAudio, 'bed', 'rejected', error);
+            }
+        );
+        await playPromise;
         bedAudio.pause();
         bedAudio.currentTime = 0;
         bedAudio.muted = false;
@@ -263,7 +309,9 @@ export async function startBedUrl(url: string): Promise<void> {
     });
     sendBedDiagnostic('bed start pre-src state', audioState(bedAudio));
     currentBedUrl = url;
+    const reusingBedAudio = bedAudio !== null;
     bedAudio = bedAudio ?? new Audio();
+    instrumentAudioElement(bedAudio, 'bed', reusingBedAudio ? 'reused' : 'created');
     bedAudio.muted = false;
     // Supabase bed URLs need CORS permission before src is set in order to be
     // usable by createMediaElementSource on iOS and other Web Audio browsers.

@@ -2,6 +2,7 @@ import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 import {markRankPlayed, type ProgramKey} from '$lib/carmode/programHistory';
 import type {PlaybackSettings} from '$lib/stores/playbackSettings.store';
 import type {SelectionState} from '$lib/stores/selection';
+import {logAudioDebug} from '$lib/audio/audioDebug';
 
 type NarrationStopOptions = {
     resolvePhase?: boolean;
@@ -61,6 +62,11 @@ export function createCarModeNavigation(
     }
 
     async function jumpTo(track: CarModeTrack): Promise<void> {
+        logAudioDebug('Track List selection', {
+            trackRank: track.rank,
+            trackName: track.trackName,
+            artistName: track.artistName
+        });
         await dependencies.stopPlayback();
         dependencies.setCurrentTrack(track);
         dependencies.setCurrentRank(track.rank);
@@ -91,8 +97,12 @@ export function createCarModeNavigation(
     }
 
     async function next(releaseAutoLock = false): Promise<void> {
-        if (nextTrackLock) return;
+        if (nextTrackLock) {
+            logAudioDebug('Next ignored: navigation lock held');
+            return;
+        }
         nextTrackLock = true;
+        logAudioDebug('navigation lock changed', {locked: true, action: 'Next'});
 
         dependencies.stopCurrentNarrationPhase({resolvePhase: false});
         dependencies.stopBed();
@@ -153,6 +163,7 @@ export function createCarModeNavigation(
             const playback = dependencies.playTrack(nextTrack);
             if (releaseAutoLock) {
                 nextTrackLock = false;
+                logAudioDebug('navigation lock changed', {locked: false, action: 'Next auto release'});
             }
             await playback;
             dependencies.setUserStartedPlayback(true);
@@ -161,11 +172,13 @@ export function createCarModeNavigation(
         if (!releaseAutoLock) {
             setTimeout(() => {
                 nextTrackLock = false;
+                logAudioDebug('navigation lock changed', {locked: false, action: 'Next delayed release'});
             }, 500);
         }
     }
 
     async function previous(startAutoPlay = false): Promise<void> {
+        logAudioDebug('Previous requested', {startAutoPlay});
         const current = dependencies.getCurrentTrack();
         const tracks = dependencies.getTracks();
 

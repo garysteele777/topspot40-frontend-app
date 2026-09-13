@@ -1,4 +1,8 @@
 import {NARRATION_VOLUME} from '$lib/audio/audioLevels';
+import {
+    instrumentAudioElement,
+    logAudioPlayCall
+} from '$lib/audio/audioDebug';
 
 let narrationAudio: HTMLAudioElement | null = null;
 let cancelPendingWait: (() => void) | null = null;
@@ -31,6 +35,7 @@ export async function playNarrationUrl(url: string, fallbackUrl?: string): Promi
 	const play = async (audioUrl: string, alternateUrl?: string): Promise<void> => {
 		const audio = new Audio(audioUrl);
 		narrationAudio = audio;
+		instrumentAudioElement(audio, 'narration', 'created');
         audio.volume = NARRATION_VOLUME;
 		audio.preload = 'auto';
 
@@ -41,7 +46,23 @@ export async function playNarrationUrl(url: string, fallbackUrl?: string): Promi
 		}, {once: true});
 
 		try {
-			await audio.play();
+			logAudioPlayCall(audio, 'narration', 'called');
+			const playPromise = audio.play();
+			let pendingTimer: number | null = window.setTimeout(() => {
+				pendingTimer = null;
+				logAudioPlayCall(audio, 'narration', 'pending');
+			}, 1000);
+			void playPromise.then(
+				() => {
+					if (pendingTimer !== null) window.clearTimeout(pendingTimer);
+					logAudioPlayCall(audio, 'narration', 'resolved');
+				},
+				error => {
+					if (pendingTimer !== null) window.clearTimeout(pendingTimer);
+					logAudioPlayCall(audio, 'narration', 'rejected', error);
+				}
+			);
+			await playPromise;
 		} catch (error) {
 			if (narrationAudio !== audio) return;
 			narrationAudio = null;
@@ -65,6 +86,7 @@ function playNarrationUrlOnceAndWait(
 	return new Promise((resolve) => {
 		const audio = new Audio(url);
 		narrationAudio = audio;
+		instrumentAudioElement(audio, 'narration', 'created');
         audio.volume = NARRATION_VOLUME;
 		audio.preload = 'auto';
 		let settled = false;
@@ -120,12 +142,25 @@ function playNarrationUrlOnceAndWait(
 		audio.addEventListener('ended', () => finish('ended'), {once: true});
 		audio.addEventListener('error', () => finish('error'), {once: true});
 
-		void audio.play()
+		logAudioPlayCall(audio, 'narration', 'called');
+		const playPromise = audio.play();
+		let pendingTimer: number | null = window.setTimeout(() => {
+			pendingTimer = null;
+			logAudioPlayCall(audio, 'narration', 'pending');
+		}, 1000);
+
+		void playPromise
 			.then(() => {
+				if (pendingTimer !== null) window.clearTimeout(pendingTimer);
+				logAudioPlayCall(audio, 'narration', 'resolved');
 				publishTiming();
 				timingTimer = window.setInterval(publishTiming, 100);
 			})
-			.catch(() => finish('error'));
+			.catch(error => {
+				if (pendingTimer !== null) window.clearTimeout(pendingTimer);
+				logAudioPlayCall(audio, 'narration', 'rejected', error);
+				finish('error');
+			});
 	});
 }
 

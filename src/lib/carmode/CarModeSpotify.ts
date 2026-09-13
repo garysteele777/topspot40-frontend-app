@@ -1,6 +1,7 @@
 import {writable} from 'svelte/store';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 import type {Language} from '$lib/stores/selection';
+import {logAudioDebug} from '$lib/audio/audioDebug';
 
 export type CarModeSpotifyDependencies = {
     getGuidedReady: () => boolean;
@@ -20,6 +21,7 @@ export function createCarModeSpotify(
     }
 
     function reset(): void {
+        logAudioDebug('Spotify state reset');
         state.set({opened: false, returned: false});
     }
 
@@ -69,7 +71,13 @@ export function createCarModeSpotify(
     }
 
     function open(track: CarModeTrack | null): boolean {
+        logAudioDebug('Spotify open requested', {
+            trackRank: track?.rank ?? null,
+            trackName: track?.trackName ?? null,
+            artistName: track?.artistName ?? null
+        });
         if (!track?.spotifyTrackId) {
+            logAudioDebug('Spotify open unavailable');
             dependencies.setStatus('Spotify link is not available for this track.');
             return false;
         }
@@ -93,6 +101,7 @@ export function createCarModeSpotify(
         dependencies.captureSpotifyOpen?.(track);
 
         if (isMobile()) {
+            logAudioDebug('Spotify mobile navigation selected');
             // On mobile, use the same browser tab.
             // Android Back should return naturally to Car Mode.
             window.location.href = spotifyUrl;
@@ -100,8 +109,10 @@ export function createCarModeSpotify(
         }
 
         if (spotifyWindow && !spotifyWindow.closed) {
+            logAudioDebug('Spotify existing window reused');
             spotifyWindow.location.href = spotifyUrl;
         } else {
+            logAudioDebug('Spotify window created');
             spotifyWindow = window.open(
                 spotifyUrl,
                 'topspot40-guided-spotify'
@@ -140,9 +151,14 @@ export function createCarModeSpotify(
             !dependencies.getGuidedReady() ||
             document.visibilityState === 'hidden'
         ) {
+            logAudioDebug('Spotify return ignored', {
+                guidedReady: dependencies.getGuidedReady(),
+                pageHidden: document.visibilityState === 'hidden'
+            });
             return;
         }
 
+        logAudioDebug('Spotify return accepted');
         state.update(current =>
             current.opened ? {...current, returned: true} : current
         );
