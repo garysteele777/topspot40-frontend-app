@@ -4,6 +4,8 @@
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
+    import posthog from 'posthog-js';
+    import {captureProgramSelected} from '$lib/analytics/posthog';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type Genre =
@@ -107,6 +109,12 @@
             voicePlayMode: 'before',
             pauseMode: 'continuous',
             skipPlayed: 'false'
+        });
+
+        captureProgramSelected(posthog, {
+            program_type: 'nostalgia',
+            decade: selectedDecade || 'ALL',
+            genre: selectedGenre
         });
 
         goto(`/car-page?${params.toString()}`);

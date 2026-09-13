@@ -9,6 +9,7 @@ register('./helpers/svelteKitAliasLoader.mjs', import.meta.url);
 const {
     captureExperienceSelected,
     captureLanguageSelected,
+    captureProgramSelected,
     captureProgramStarted,
     captureSpotifyOpen,
     identifyPostHogUser,
@@ -159,5 +160,25 @@ test('experience selected capture sends only the stable experience type', () => 
         'capture',
         'experience_selected',
         { experience_type: 'collections' }
+    ]]);
+});
+
+test('program selected capture sends only the provided stable program properties', () => {
+    const posthog = client();
+
+    captureProgramSelected(posthog, {
+        program_type: 'collections',
+        collection_group_slug: 'decades',
+        collection_slug: 'best-of-1980s'
+    });
+
+    assert.deepEqual(posthog.calls, [[
+        'capture',
+        'program_selected',
+        {
+            program_type: 'collections',
+            collection_group_slug: 'decades',
+            collection_slug: 'best-of-1980s'
+        }
     ]]);
 });

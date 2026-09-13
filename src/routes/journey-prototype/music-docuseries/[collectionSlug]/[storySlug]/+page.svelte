@@ -20,6 +20,8 @@
     import type {MusicDocuseriesCollection, MusicDocuseriesStory} from '$lib/musicDocuseries/types';
     import type {Language} from '$lib/types/playback';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
+    import posthog from 'posthog-js';
+    import {captureProgramSelected} from '$lib/analytics/posthog';
 
     let language: Language = 'en';
     let collection: MusicDocuseriesCollection | null = null;
@@ -46,6 +48,12 @@
 
     function startStory(): void {
         if (!collection || !story) return;
+        captureProgramSelected(posthog, {
+            program_type: 'docuseries',
+            collection_slug: collection.slug,
+            story_slug: story.slug
+        });
+
         void goto(buildMusicDocuseriesLaunchUrl({
             collectionSlug: collection.slug,
             storySlug: story.slug,

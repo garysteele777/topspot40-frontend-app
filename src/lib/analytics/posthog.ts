@@ -73,3 +73,10 @@ export function captureExperienceSelected(
         experience_type: experienceType
     });
 }
+
+export function captureProgramSelected(
+    client: PostHogClient,
+    properties: Record<string, string | number | null>
+): void {
+    client.capture('program_selected', properties);
+}

@@ -150,3 +150,34 @@ test('experience analytics fires only when the selected journey is committed', a
         /function performContinueJourney\(\)\s*\{\s*if \(!selectedProgram\) return;\s*captureExperienceSelected\(posthog, selectedProgram\);\s*goto\(routes\[selectedProgram\]\);\s*\}/s
     );
 });
+
+test('program selection analytics fires at each confirmed program launch point', async () => {
+    const nostalgiaPage = await source('../src/routes/journey-prototype/genre/+page.svelte');
+    const collectionPage = await source('../src/routes/journey-prototype/collections/[groupSlug]/[collectionSlug]/+page.svelte');
+    const artistPage = await source('../src/routes/journey-prototype/artist-spotlights/[artistId]/+page.svelte');
+    const docuseriesPage = await source('../src/routes/journey-prototype/music-docuseries/[collectionSlug]/[storySlug]/+page.svelte');
+
+    const nostalgiaCapture = nostalgiaPage.indexOf('captureProgramSelected(posthog, {');
+    const nostalgiaNavigation = nostalgiaPage.indexOf('goto(`/car-page?${params.toString()}`);');
+
+    assert.ok(nostalgiaCapture >= 0);
+    assert.ok(nostalgiaNavigation > nostalgiaCapture);
+    assert.match(nostalgiaPage, /program_type: 'nostalgia'/);
+    assert.match(nostalgiaPage, /decade: selectedDecade \|\| 'ALL'/);
+    assert.match(nostalgiaPage, /genre: selectedGenre/);
+
+    assert.match(
+        collectionPage,
+        /captureProgramSelected\(posthog,\s*\{\s*program_type: 'collections',\s*collection_group_slug: group\.slug,\s*collection_slug: collection\.slug\s*\}\);\s*void goto\(url\);/s
+    );
+
+    assert.match(
+        artistPage,
+        /captureProgramSelected\(posthog,\s*\{\s*program_type: 'artist',\s*artist_id: artistId\s*\}\);\s*void goto\(buildArtistSpotlightJourneyLaunchUrl\(\{/s
+    );
+
+    assert.match(
+        docuseriesPage,
+        /captureProgramSelected\(posthog,\s*\{\s*program_type: 'docuseries',\s*collection_slug: collection\.slug,\s*story_slug: story\.slug\s*\}\);\s*void goto\(buildMusicDocuseriesLaunchUrl\(\{/s
+    );
+});

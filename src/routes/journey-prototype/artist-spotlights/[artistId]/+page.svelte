@@ -20,6 +20,8 @@
     import type {ArtistStoryInfo, ArtistTrackItem} from '$lib/artistSpotlights/types';
     import type {Language} from '$lib/types/playback';
     import {readLanguagePreference} from '$lib/languagePreferences';
+    import posthog from 'posthog-js';
+    import {captureProgramSelected} from '$lib/analytics/posthog';
 
     let language: Language = 'en';
     let artistId: number | null = null;
@@ -82,6 +84,11 @@
 
     function startArtistSpotlight(): void {
         if (artistId === null || !artistName || tracks.length === 0) return;
+
+        captureProgramSelected(posthog, {
+            program_type: 'artist',
+            artist_id: artistId
+        });
 
         void goto(buildArtistSpotlightJourneyLaunchUrl({
             artistId,

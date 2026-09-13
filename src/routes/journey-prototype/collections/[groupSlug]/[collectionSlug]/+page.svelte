@@ -21,6 +21,8 @@
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     import type {Language} from '$lib/types/playback';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
+    import posthog from 'posthog-js';
+    import {captureProgramSelected} from '$lib/analytics/posthog';
 
     let language: Language = 'en';
     let group: JourneyCollectionGroup | null = null;
@@ -110,6 +112,12 @@
             skipPlayed: settings.skipPlayed,
             totalTracks: collection.totalTracks || tracks.length,
             returnTo
+        });
+
+        captureProgramSelected(posthog, {
+            program_type: 'collections',
+            collection_group_slug: group.slug,
+            collection_slug: collection.slug
         });
 
         void goto(url);
