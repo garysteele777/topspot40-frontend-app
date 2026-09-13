@@ -14,6 +14,7 @@ const {
     isUnchangedCarModePreferencesReturn
 } = await import('../src/lib/carmode/CarModePreferencesReturn.ts');
 const {createCarModeNarration} = await import('../src/lib/carmode/CarModeNarration.ts');
+const {createCarModeSpotify} = await import('../src/lib/carmode/CarModeSpotify.ts');
 const {
     cancelAllCarModeAutoPlay,
     createCarModeAutoPlay
@@ -123,6 +124,66 @@ test('Guided narration cancellation invalidates an in-flight narration and never
     assert.equal(bedUrl, 'english-bed.mp3');
 });
 
+test('desktop Spotify open reports failure when the popup is blocked', () => {
+    const originalNavigator = globalThis.navigator;
+    const originalWindow = globalThis.window;
+    const originalLocalStorage = globalThis.localStorage;
+
+    Object.defineProperty(globalThis, 'navigator', {
+        configurable: true,
+        value: {userAgent: 'Desktop Test Browser'}
+    });
+
+    Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: {
+            open: () => null,
+            focus: () => {},
+            screen: {
+                availWidth: 1920
+            }
+        }
+    });
+
+    Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: {
+            setItem: () => {}
+        }
+    });
+
+    try {
+        let captures = 0;
+
+        const spotify = createCarModeSpotify({
+            getGuidedReady: () => true,
+            setStatus: () => {},
+            captureSpotifyOpen: () => {
+                captures += 1;
+            }
+        });
+
+        const opened = spotify.open(tracks[0]);
+
+        assert.equal(opened, false);
+        assert.equal(captures, 0);
+    } finally {
+        Object.defineProperty(globalThis, 'navigator', {
+            configurable: true,
+            value: originalNavigator
+        });
+
+        Object.defineProperty(globalThis, 'window', {
+            configurable: true,
+            value: originalWindow
+        });
+
+        Object.defineProperty(globalThis, 'localStorage', {
+            configurable: true,
+            value: originalLocalStorage
+        });
+    }
+});
 test('Auto cancellation invalidates queued advancement before a language-refresh session reset', async () => {
     let advanced = 0;
     const auto = createCarModeAutoPlay({

@@ -82,26 +82,31 @@ export function createCarModeSpotify(
             return false;
         }
 
-        state.set({opened: true, returned: false});
+        const activeTrack = track;
+        const spotifyUrl = `https://open.spotify.com/track/${activeTrack.spotifyTrackId}`;
 
-        localStorage.setItem(
-            'ts-guided-playback-v1',
-            JSON.stringify({
-                rankingId: track.rankingId,
-                rank: track.rank,
-                spotifyTrackId: track.spotifyTrackId,
-                trackName: track.trackName,
-                artistName: track.artistName,
-                openedAt: new Date().toISOString()
-            })
-        );
+        function recordSpotifyOpen(): void {
+            state.set({opened: true, returned: false});
 
-        const spotifyUrl = `https://open.spotify.com/track/${track.spotifyTrackId}`;
+            localStorage.setItem(
+                'ts-guided-playback-v1',
+                JSON.stringify({
+                    rankingId: activeTrack.rankingId,
+                    rank: activeTrack.rank,
+                    spotifyTrackId: activeTrack.spotifyTrackId,
+                    trackName: activeTrack.trackName,
+                    artistName: activeTrack.artistName,
+                    openedAt: new Date().toISOString()
+                })
+            );
 
-        dependencies.captureSpotifyOpen?.(track);
+            dependencies.captureSpotifyOpen?.(activeTrack);
+        }
 
         if (isMobile()) {
             logAudioDebug('Spotify mobile navigation selected');
+            recordSpotifyOpen();
+
             // On mobile, use the same browser tab.
             // Android Back should return naturally to Car Mode.
             window.location.href = spotifyUrl;
@@ -117,9 +122,15 @@ export function createCarModeSpotify(
                 spotifyUrl,
                 'topspot40-guided-spotify'
             );
+
+            if (!spotifyWindow) {
+                logAudioDebug('Spotify popup blocked');
+                return false;
+            }
         }
 
-        spotifyWindow?.focus();
+        recordSpotifyOpen();
+        spotifyWindow.focus();
         return true;
     }
 
