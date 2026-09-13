@@ -15,9 +15,15 @@ const enabled = writable(false);
 export const audioDebugEnabled = {subscribe: enabled.subscribe};
 
 let enabledOverride: boolean | null = null;
+let enabledInMemory = false;
+let explicitlyDisabled = false;
 let nextAudioElementId = 1;
 const audioElementIds = new WeakMap<HTMLMediaElement, number>();
 const instrumentedAudioElements = new WeakSet<HTMLMediaElement>();
+
+enabled.subscribe(value => {
+    enabledInMemory = value;
+});
 
 type AudioDebugSessionStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
@@ -49,9 +55,11 @@ export function activateAudioDebugFromSearch(
     search?: string,
     storage: AudioDebugSessionStorage | null = getSessionStorage()
 ): boolean {
-    const active = isAudioDebugRequested(search) || hasAudioDebugSession(storage);
+    const requested = isAudioDebugRequested(search);
+    if (requested) explicitlyDisabled = false;
+    const active = !explicitlyDisabled && (requested || hasAudioDebugSession(storage));
 
-    if (isAudioDebugRequested(search)) {
+    if (requested) {
         try {
             storage?.setItem(AUDIO_DEBUG_SESSION_KEY, '1');
         } catch {
@@ -68,10 +76,16 @@ export function isAudioDebugEnabled(
     storage: AudioDebugSessionStorage | null = getSessionStorage()
 ): boolean {
     if (enabledOverride !== null) return enabledOverride;
+    if (explicitlyDisabled) return false;
     const runtimeSearch = browser && typeof window !== 'undefined'
         ? window.location?.search
         : undefined;
-    return isAudioDebugRequested(search ?? runtimeSearch) || hasAudioDebugSession(storage);
+    // Once root-layout activation succeeds, the panel and every event writer use
+    // this same in-memory state. Session storage only carries that state across
+    // navigation; it never holds diagnostic entries.
+    return enabledInMemory ||
+        isAudioDebugRequested(search ?? runtimeSearch) ||
+        hasAudioDebugSession(storage);
 }
 
 // Test-only seam; no setting is persisted or exposed to application users.
@@ -128,6 +142,7 @@ export function clearAudioDebugLog(): void {
 export function disableAudioDebug(
     storage: AudioDebugSessionStorage | null = getSessionStorage()
 ): void {
+    explicitlyDisabled = true;
     try {
         storage?.removeItem(AUDIO_DEBUG_SESSION_KEY);
     } catch {

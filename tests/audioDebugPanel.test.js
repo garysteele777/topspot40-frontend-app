@@ -12,8 +12,7 @@ const {
     clearAudioDebugLog,
     disableAudioDebug,
     isAudioDebugEnabled,
-    logAudioDebug,
-    setAudioDebugEnabledForTest
+    logAudioDebug
 } = await import('../src/lib/audio/audioDebug.ts');
 
 function createSessionStorage() {
@@ -45,19 +44,21 @@ test('audioDebug=1 activates a diagnostic session that persists through navigati
     assert.equal(activateAudioDebugFromSearch('?audioDebug=1', storage), true);
     assert.equal(isAudioDebugEnabled('', storage), true);
     assert.equal(activateAudioDebugFromSearch('', storage), true);
+    logAudioDebug('Guided action');
+    assert.equal(readEntries().at(-1)?.event, 'Guided action');
+    clearAudioDebugLog();
 });
 
 test('disabling diagnostics clears the session flag and in-memory log', () => {
     const storage = createSessionStorage();
     activateAudioDebugFromSearch('?audioDebug=1', storage);
-    setAudioDebugEnabledForTest(true);
     logAudioDebug('test event');
     assert.equal(readEntries().length, 1);
-    setAudioDebugEnabledForTest(null);
 
     disableAudioDebug(storage);
 
     assert.equal(isAudioDebugEnabled('', storage), false);
+    assert.equal(isAudioDebugEnabled('?audioDebug=1', storage), false);
     assert.deepEqual(readEntries(), []);
     clearAudioDebugLog();
 });
