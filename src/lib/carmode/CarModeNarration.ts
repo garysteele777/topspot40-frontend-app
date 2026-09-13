@@ -1,7 +1,4 @@
-import type {
-    NarrationPlaybackResult,
-    NarrationTiming
-} from '$lib/audio/narrationPlayer';
+import type {NarrationTiming} from '$lib/audio/narrationPlayer';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 import type {PlaybackPhase} from '$lib/helpers/car/types';
 
@@ -22,9 +19,8 @@ export type CarModeNarrationDependencies = {
     playNarration: (
         url: string,
         fallbackUrl: string | undefined,
-        onTiming: (timing: NarrationTiming) => void,
-        onStarted: () => void
-    ) => Promise<NarrationPlaybackResult>;
+        onTiming: (timing: NarrationTiming) => void
+    ) => Promise<void>;
     stopNarration: () => void;
     updateTiming: (timing: NarrationTiming) => void;
     resetTiming: () => void;
@@ -33,7 +29,6 @@ export type CarModeNarrationDependencies = {
     setIsPlaying: (playing: boolean) => void;
     resetGuidedReadyState: () => void;
     setGuidedReady: (ready: boolean) => void;
-    onPlaybackFailure?: () => void;
     onNarrationStart?: (phase: CarModeNarrationPhase, track: CarModeTrack) => void;
 };
 
@@ -42,7 +37,6 @@ export function createCarModeNarration(
 ) {
     let runId = 0;
     let pausedPhase: 'intro' | 'detail' | null = null;
-    let active = false;
 
     const trackToken = (track: CarModeTrack): string =>
         `${track.rankingId ?? track.rank}|${track.spotifyTrackId ?? ''}`;
@@ -69,20 +63,11 @@ export function createCarModeNarration(
 
     function abandon(): void {
         invalidate();
-        active = false;
         dependencies.stopNarration();
         dependencies.stopBed();
         dependencies.resetTiming();
         dependencies.setIsPlaying(false);
-        dependencies.setPlaybackPhase('idle');
-        dependencies.resetGuidedReadyState();
         pausedPhase = null;
-    }
-
-    function suspendForPageHide(): void {
-        // Do not leave an iOS-suspended play() promise owning the transport.
-        // Completed narration is represented by guidedReady and has no active run.
-        if (active) abandon();
     }
 
     async function start(
@@ -91,15 +76,7 @@ export function createCarModeNarration(
     ): Promise<boolean> {
         const activeRunId = ++runId;
 
-        // Every Guided entry shares this coordinator. Tear down an older run
-        // before changing phase/track so a late play() resolution cannot leak.
-        dependencies.stopNarration();
-        dependencies.stopBed();
-        dependencies.resetTiming();
         dependencies.resetGuidedReadyState();
-        dependencies.setIsPlaying(false);
-        dependencies.setPlaybackPhase('idle');
-        active = true;
 
         const token = trackToken(track);
         const narrations = dependencies.getNarrations(track);
@@ -113,10 +90,12 @@ export function createCarModeNarration(
                     : narrations.slice(narrationStartIndex)
                 : narrations;
 
-        try {
-            if (narrationSequence.length > 0) {
-                await dependencies.unlockBed();
+        dependencies.setIsPlaying(true);
 
+        if (narrationSequence.length > 0) {
+            await dependencies.unlockBed();
+
+            try {
                 await dependencies.startBed(dependencies.getBedUrl(track));
 
                 if (activeRunId !== runId) return false;
@@ -134,61 +113,35 @@ export function createCarModeNarration(
 
                     dependencies.setPlaybackPhase(narration.phase);
                     dependencies.onNarrationStart?.(narration.phase, track);
-                    const result = await dependencies.playNarration(
+                    await dependencies.playNarration(
                         narration.url,
                         narration.fallbackUrl,
-                        dependencies.updateTiming,
-                        () => {
-                            if (activeRunId === runId) {
-                                // This is the first point at which the UI may truthfully
-                                // offer Pause: HTMLMediaElement.play() has resolved.
-                                dependencies.setIsPlaying(true);
-                            }
-                        }
+                        dependencies.updateTiming
                     );
 
                     if (activeRunId !== runId) return false;
-
-                    if (result !== 'ended') {
-                        dependencies.setIsPlaying(false);
-                        dependencies.setPlaybackPhase('idle');
-                        dependencies.resetGuidedReadyState();
-                        if (result === 'error') dependencies.onPlaybackFailure?.();
-                        return false;
-                    }
                 }
-            }
-
-            const activeTrack = dependencies.getCurrentTrack();
-
-            if (
-                !activeTrack ||
-                trackToken(activeTrack) !== token ||
-                activeRunId !== runId
-            ) {
-                return false;
-            }
-
-            dependencies.setIsPlaying(false);
-            dependencies.setPlaybackPhase('track');
-            dependencies.setGuidedReady(true);
-            return true;
-        } catch {
-            if (activeRunId === runId) {
-                dependencies.setIsPlaying(false);
-                dependencies.setPlaybackPhase('idle');
-                dependencies.resetGuidedReadyState();
-                dependencies.onPlaybackFailure?.();
-            }
-            return false;
-        } finally {
-            if (activeRunId === runId) {
-                active = false;
+            } finally {
                 dependencies.stopBed();
                 dependencies.resetTiming();
             }
         }
+
+        const activeTrack = dependencies.getCurrentTrack();
+
+        if (
+            !activeTrack ||
+            trackToken(activeTrack) !== token ||
+            activeRunId !== runId
+        ) {
+            return false;
+        }
+
+        dependencies.setIsPlaying(false);
+        dependencies.setPlaybackPhase('track');
+        dependencies.setGuidedReady(true);
+        return true;
     }
 
-    return {start, pause, takePausedPhase, abandon, suspendForPageHide};
+    return {start, pause, takePausedPhase, abandon};
 }

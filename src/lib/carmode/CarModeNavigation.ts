@@ -3,6 +3,11 @@ import {markRankPlayed, type ProgramKey} from '$lib/carmode/programHistory';
 import type {PlaybackSettings} from '$lib/stores/playbackSettings.store';
 import type {SelectionState} from '$lib/stores/selection';
 
+type NarrationStopOptions = {
+    resolvePhase?: boolean;
+    preserveResolve?: boolean;
+};
+
 export type CarModeNavigationDependencies = {
     getCurrentTrack: () => CarModeTrack | null;
     getTracks: () => CarModeTrack[];
@@ -11,7 +16,7 @@ export type CarModeNavigationDependencies = {
     setCurrentTrack: (track: CarModeTrack) => void;
     setCurrentRank: (rank: number) => void;
     stopNarrationAudio: () => void;
-    cancelGuidedNarration: () => void;
+    stopCurrentNarrationPhase: (options?: NarrationStopOptions) => void;
     stopBed: () => void;
     stopPlayback: () => Promise<void>;
     markUserStartedPlayback: () => void;
@@ -56,7 +61,6 @@ export function createCarModeNavigation(
     }
 
     async function jumpTo(track: CarModeTrack): Promise<void> {
-        dependencies.cancelGuidedNarration();
         await dependencies.stopPlayback();
         dependencies.setCurrentTrack(track);
         dependencies.setCurrentRank(track.rank);
@@ -90,74 +94,74 @@ export function createCarModeNavigation(
         if (nextTrackLock) return;
         nextTrackLock = true;
 
-        try {
-            dependencies.cancelGuidedNarration();
-            dependencies.stopBed();
-            await dependencies.stopPlayback();
+        dependencies.stopCurrentNarrationPhase({resolvePhase: false});
+        dependencies.stopBed();
+        await dependencies.stopPlayback();
 
-            const current = dependencies.getCurrentTrack();
-            const tracks = dependencies.getTracks();
+        const current = dependencies.getCurrentTrack();
+        const tracks = dependencies.getTracks();
 
-            if (!current || tracks.length === 0) return;
+        if (!current || tracks.length === 0) return;
 
-            const rankingId = current.rankingId;
-            const rank = current.rank;
+        const rankingId = current.rankingId;
+        const rank = current.rank;
 
-            if (rankingId == null && rank == null) return;
+        if (rankingId == null && rank == null) return;
 
-            recordCurrentTrackCompletion(current);
+        recordCurrentTrackCompletion(current);
 
-            const selection = dependencies.getSelection();
+        const selection = dependencies.getSelection();
 
-            const isRadio =
-                selection?.programType === 'RADIO_DG' ||
-                selection?.programType === 'RADIO_COL' ||
-                selection?.programType === 'RADIO_ARTIST';
+        const isRadio =
+            selection?.programType === 'RADIO_DG' ||
+            selection?.programType === 'RADIO_COL' ||
+            selection?.programType === 'RADIO_ARTIST';
 
-            if (!isRadio) {
-                const settings = dependencies.getPlaybackSettings();
-                const orderedTracks = [...tracks];
+        if (!isRadio) {
+            const settings = dependencies.getPlaybackSettings();
+            const orderedTracks = [...tracks];
 
-                if (settings.playbackOrder === 'down') {
-                    orderedTracks.sort((a, b) => b.rank - a.rank);
-                } else if (settings.playbackOrder === 'up') {
-                    orderedTracks.sort((a, b) => a.rank - b.rank);
-                }
-
-                const currentIndex =
-                    rankingId != null
-                        ? orderedTracks.findIndex(track => track.rankingId === rankingId)
-                        : orderedTracks.findIndex(track => track.rank === rank);
-
-                if (currentIndex === -1) return;
-
-                let nextTrack = settings.skipPlayed
-                    ? orderedTracks
-                        .slice(currentIndex + 1)
-                        .find(track => !playedRanks.includes(track.rank))
-                    : null;
-
-                if (!nextTrack) {
-                    nextTrack = orderedTracks[(currentIndex + 1) % orderedTracks.length];
-                }
-
-                dependencies.setCurrentRank(nextTrack.rank);
-                dependencies.setCurrentTrack(nextTrack);
-
-                await new Promise(resolve => setTimeout(resolve, 50));
-
-                dependencies.markUserStartedPlayback();
-                const playback = dependencies.playTrack(nextTrack);
-                // Auto Play deliberately permits the next transport event while
-                // the replacement track is being prepared. The finally below
-                // still guarantees every failure path releases the lock.
-                if (releaseAutoLock) nextTrackLock = false;
-                await playback;
-                dependencies.setUserStartedPlayback(true);
+            if (settings.playbackOrder === 'down') {
+                orderedTracks.sort((a, b) => b.rank - a.rank);
+            } else if (settings.playbackOrder === 'up') {
+                orderedTracks.sort((a, b) => a.rank - b.rank);
             }
-        } finally {
-            // A failed or timed-out media start must never leave the transport inert.
-            nextTrackLock = false;
+
+            const currentIndex =
+                rankingId != null
+                    ? orderedTracks.findIndex(track => track.rankingId === rankingId)
+                    : orderedTracks.findIndex(track => track.rank === rank);
+
+            if (currentIndex === -1) return;
+
+            let nextTrack = settings.skipPlayed
+                ? orderedTracks
+                    .slice(currentIndex + 1)
+                    .find(track => !playedRanks.includes(track.rank))
+                : null;
+
+            if (!nextTrack) {
+                nextTrack = orderedTracks[(currentIndex + 1) % orderedTracks.length];
+            }
+
+            dependencies.setCurrentRank(nextTrack.rank);
+            dependencies.setCurrentTrack(nextTrack);
+
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            dependencies.markUserStartedPlayback();
+            const playback = dependencies.playTrack(nextTrack);
+            if (releaseAutoLock) {
+                nextTrackLock = false;
+            }
+            await playback;
+            dependencies.setUserStartedPlayback(true);
+        }
+
+        if (!releaseAutoLock) {
+            setTimeout(() => {
+                nextTrackLock = false;
+            }, 500);
         }
     }
 
@@ -167,8 +171,8 @@ export function createCarModeNavigation(
 
         if (!current || tracks.length === 0) return;
 
-        dependencies.cancelGuidedNarration();
         dependencies.stopNarrationAudio();
+        dependencies.stopCurrentNarrationPhase();
         dependencies.stopBed();
         await dependencies.stopPlayback();
 

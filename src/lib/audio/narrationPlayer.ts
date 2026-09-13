@@ -10,12 +10,6 @@ export type NarrationTiming = {
 };
 
 type NarrationTimingListener = (timing: NarrationTiming) => void;
-export type NarrationPlaybackResult = 'ended' | 'error' | 'cancelled';
-export type NarrationStartedListener = () => void;
-
-// iOS can leave a media play promise pending after returning from another app.
-// A pending promise must not leave Guided Playback showing a false "Pause" state.
-export const NARRATION_PLAY_TIMEOUT_MS = 3000;
 
 export function stopNarration(): void {
 	const audio = narrationAudio;
@@ -64,10 +58,8 @@ export async function playNarrationUrl(url: string, fallbackUrl?: string): Promi
 
 function playNarrationUrlOnceAndWait(
 	url: string,
-	onTiming?: NarrationTimingListener,
-	onStarted?: NarrationStartedListener,
-	playTimeoutMs = NARRATION_PLAY_TIMEOUT_MS
-): Promise<NarrationPlaybackResult> {
+	onTiming?: NarrationTimingListener
+): Promise<'ended' | 'error' | 'cancelled'> {
 	stopNarration();
 
 	return new Promise((resolve) => {
@@ -77,7 +69,6 @@ function playNarrationUrlOnceAndWait(
 		audio.preload = 'auto';
 		let settled = false;
 		let timingTimer: number | null = null;
-		let playTimeout: number | null = null;
 
 		const publishTiming = (complete = false) => {
 			const audioDuration =
@@ -101,24 +92,15 @@ function playNarrationUrlOnceAndWait(
 
 		onTiming?.({elapsed: 0, duration: 0, progress: 0});
 
-		const finish = (result: NarrationPlaybackResult) => {
+		const finish = (result: 'ended' | 'error' | 'cancelled') => {
 			if (settled) return;
 			settled = true;
-			if (playTimeout !== null) {
-				window.clearTimeout(playTimeout);
-				playTimeout = null;
-			}
 			if (timingTimer !== null) {
 				window.clearInterval(timingTimer);
 				timingTimer = null;
 			}
 			if (result === 'ended') {
 				publishTiming(true);
-			} else {
-				// Prevent a late iOS play resolution from starting audio after the
-				// coordinator has already rolled the UI back to Guided.
-				audio.pause();
-				audio.currentTime = 0;
 			}
 			if (narrationAudio === audio) {
 				narrationAudio = null;
@@ -140,44 +122,20 @@ function playNarrationUrlOnceAndWait(
 
 		void audio.play()
 			.then(() => {
-				if (settled) {
-					audio.pause();
-					return;
-				}
-				if (playTimeout !== null) {
-					window.clearTimeout(playTimeout);
-					playTimeout = null;
-				}
-				onStarted?.();
 				publishTiming();
 				timingTimer = window.setInterval(publishTiming, 100);
 			})
 			.catch(() => finish('error'));
-
-		playTimeout = window.setTimeout(() => finish('error'), playTimeoutMs);
 	});
 }
 
 export async function playNarrationUrlAndWait(
 	url: string,
 	fallbackUrl?: string,
-	onTiming?: NarrationTimingListener,
-	onStarted?: NarrationStartedListener,
-	playTimeoutMs = NARRATION_PLAY_TIMEOUT_MS
-): Promise<NarrationPlaybackResult> {
-	const result = await playNarrationUrlOnceAndWait(
-		url,
-		onTiming,
-		onStarted,
-		playTimeoutMs
-	);
+	onTiming?: NarrationTimingListener
+): Promise<void> {
+	const result = await playNarrationUrlOnceAndWait(url, onTiming);
 	if (result === 'error' && fallbackUrl) {
-		return playNarrationUrlOnceAndWait(
-			fallbackUrl,
-			onTiming,
-			onStarted,
-			playTimeoutMs
-		);
+		await playNarrationUrlOnceAndWait(fallbackUrl, onTiming);
 	}
-	return result;
 }
