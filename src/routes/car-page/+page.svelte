@@ -730,7 +730,10 @@
         setPlaybackPhase: phase => playbackPhase.set(phase),
         setIsPlaying: playing => isPlaying.set(playing),
         resetGuidedReadyState: () => (guidedReady = false),
-        setGuidedReady: ready => (guidedReady = ready)
+        setGuidedReady: ready => (guidedReady = ready),
+        onPlaybackFailure: () => {
+            status.set('Narration could not start. Tap Guided to try again.');
+        }
         ,onNarrationStart: (phase, track) => {
             if (phase === 'artist') {
                 artistStoriesPlayed = new Set([
@@ -814,6 +817,7 @@
     }
 
     async function finishGuidedCycleWithoutStartingAudio(): Promise<void> {
+        narration.abandon();
         spotify.close();
 
         guidedReady = false;
@@ -863,6 +867,7 @@
     }
 
     function returnToGuidedCarPage(): void {
+        narration.abandon();
         spotify.close();
 
         guidedReady = false;
@@ -1313,6 +1318,7 @@
         stopNarrationAudio();
 
         if (get(playbackSettingsStore).playbackMethod === 'guided') {
+            narration.abandon();
             return;
         }
 
@@ -1323,8 +1329,7 @@
     }
 
     function resetSelectionPlaybackState(): void {
-        stopCurrentNarrationPhase({resolvePhase: false});
-        stopBed();
+        narration.abandon();
         resetNarrationPhaseState();
         playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
@@ -1345,7 +1350,7 @@
         setCurrentTrack: track => currentTrack.set(track),
         setCurrentRank: rank => currentRank.set(rank),
         stopNarrationAudio,
-        stopCurrentNarrationPhase,
+        cancelGuidedNarration: narration.abandon,
         stopBed,
         stopPlayback,
         markUserStartedPlayback,
@@ -1553,6 +1558,30 @@
         playbackPhase.set('track');
     }
 
+    function handleGuidedVisibilityChange(): void {
+        spotify.handleReturn();
+
+        if (get(playbackSettingsStore).playbackMethod !== 'guided') return;
+
+        if (document.visibilityState === 'hidden') {
+            narration.suspendForPageHide();
+            return;
+        }
+
+        // A page restored from iOS's back/foreground cache must not retain a
+        // speculative Pause state. Deliberately do not restart audio here;
+        // the next user control tap owns that browser activation.
+        if (!guidedReady) {
+            isPlaying.set(false);
+            playbackPhase.set('idle');
+        }
+    }
+
+    function handleGuidedPageShow(): void {
+        if (get(playbackSettingsStore).playbackMethod !== 'guided') return;
+        handleGuidedVisibilityChange();
+    }
+
 
     // ─────────────────────────────────────────────
     // Lifecycle
@@ -1580,12 +1609,13 @@
 
         document.addEventListener(
             'visibilitychange',
-            spotify.handleReturn
+            handleGuidedVisibilityChange
         );
         window.addEventListener(
             'focus',
-            spotify.handleReturn
+            handleGuidedVisibilityChange
         );
+        window.addEventListener('pageshow', handleGuidedPageShow);
         window.addEventListener('ts-next-track', handleAutoNextTrack);
         window.addEventListener('ts-guided-track-ready', handleGuidedTrackReady);
 
@@ -1744,13 +1774,14 @@
 
         document.removeEventListener(
             'visibilitychange',
-            spotify.handleReturn
+            handleGuidedVisibilityChange
         );
 
         window.removeEventListener(
             'focus',
-            spotify.handleReturn
+            handleGuidedVisibilityChange
         );
+        window.removeEventListener('pageshow', handleGuidedPageShow);
 
         window.removeEventListener(
             'ts-next-track',
