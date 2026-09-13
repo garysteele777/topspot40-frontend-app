@@ -7,6 +7,7 @@ register('./helpers/svelteKitAliasLoader.mjs', import.meta.url);
 
 const audioElements = [];
 const sourceNodes = [];
+let playBehavior = null;
 
 class FakeAudio {
     constructor() {
@@ -18,6 +19,7 @@ class FakeAudio {
         this.preload = '';
         this.crossOrigin = null;
         this.attributes = new Map();
+        this.listeners = new Map();
         audioElements.push(this);
     }
 
@@ -32,7 +34,21 @@ class FakeAudio {
     get networkState() { return 1; }
     get duration() { return 30; }
     setAttribute(key, value) { this.attributes.set(key, value); }
-    async play() { this.paused = false; }
+    addEventListener(event, listener) {
+        const listeners = this.listeners.get(event) ?? [];
+        listeners.push(listener);
+        this.listeners.set(event, listeners);
+    }
+    removeEventListener(event, listener) {
+        this.listeners.set(event, (this.listeners.get(event) ?? []).filter(item => item !== listener));
+    }
+    emit(event) {
+        for (const listener of this.listeners.get(event) ?? []) listener();
+    }
+    play() {
+        this.paused = false;
+        return playBehavior ? playBehavior(this) : Promise.resolve();
+    }
     pause() { this.paused = true; }
 }
 
@@ -103,4 +119,20 @@ test('uses element volume as a fallback, then routes bed fades through one Web A
     assert.equal(gainSource.disconnected, true, 'the replaced element source is detached');
 
     stopBed();
+});
+
+test('a bed media error settles startup promptly even when play remains pending', async () => {
+    playBehavior = audio => {
+        queueMicrotask(() => audio.emit('error'));
+        return new Promise(() => {});
+    };
+
+    const settled = await Promise.race([
+        startBedUrl('https://example.supabase.co/storage/v1/object/public/bed-tracks/error.mp3')
+            .then(() => true),
+        new Promise(resolve => setTimeout(() => resolve(false), 100))
+    ]);
+    playBehavior = null;
+
+    assert.equal(settled, true);
 });

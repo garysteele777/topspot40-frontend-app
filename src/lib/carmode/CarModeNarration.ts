@@ -19,7 +19,8 @@ export type CarModeNarrationDependencies = {
     playNarration: (
         url: string,
         fallbackUrl: string | undefined,
-        onTiming: (timing: NarrationTiming) => void
+        onTiming: (timing: NarrationTiming) => void,
+        onPlaybackStarted: () => void
     ) => Promise<void>;
     stopNarration: () => void;
     updateTiming: (timing: NarrationTiming) => void;
@@ -90,17 +91,12 @@ export function createCarModeNarration(
                     : narrations.slice(narrationStartIndex)
                 : narrations;
 
-        dependencies.setIsPlaying(true);
+        // Do not show Pause until the narration element confirms playback.
+        dependencies.setIsPlaying(false);
 
         if (narrationSequence.length > 0) {
-            await dependencies.unlockBed();
-
             try {
-                await dependencies.startBed(dependencies.getBedUrl(track));
-
-                if (activeRunId !== runId) return false;
-
-                for (const narration of narrationSequence) {
+                for (const [index, narration] of narrationSequence.entries()) {
                     const activeTrack = dependencies.getCurrentTrack();
 
                     if (
@@ -113,14 +109,46 @@ export function createCarModeNarration(
 
                     dependencies.setPlaybackPhase(narration.phase);
                     dependencies.onNarrationStart?.(narration.phase, track);
-                    await dependencies.playNarration(
+                    // Calling playNarration creates the element and invokes play() before
+                    // its returned promise is awaited, preserving the tap's iPhone activation.
+                    const narrationPlayback = dependencies.playNarration(
                         narration.url,
                         narration.fallbackUrl,
-                        dependencies.updateTiming
+                        dependencies.updateTiming,
+                        () => {
+                            const currentTrack = dependencies.getCurrentTrack();
+                            if (
+                                activeRunId === runId &&
+                                currentTrack &&
+                                trackToken(currentTrack) === token
+                            ) {
+                                dependencies.setIsPlaying(true);
+                            }
+                        }
                     );
+
+                    if (index === 0) {
+                        // Bed audio is optional. Start it after narration play() has been
+                        // invoked and never await or allow a bed failure to block narration.
+                        try {
+                            void dependencies.unlockBed()
+                                .then(() => {
+                                    if (activeRunId !== runId) return;
+                                    return dependencies.startBed(dependencies.getBedUrl(track));
+                                })
+                                .catch(() => undefined);
+                        } catch {
+                            // A synchronous bed setup failure is also non-blocking.
+                        }
+                    }
+
+                    await narrationPlayback;
 
                     if (activeRunId !== runId) return false;
                 }
+            } catch (error) {
+                dependencies.setIsPlaying(false);
+                throw error;
             } finally {
                 dependencies.stopBed();
                 dependencies.resetTiming();

@@ -171,6 +171,12 @@ export function isBedPlaying(): boolean {
 async function playWithTimeout(audio: HTMLAudioElement): Promise<void> {
 	instrumentAudioElement(audio, 'bed', 'reused');
 	logAudioPlayCall(audio, 'bed', 'called');
+	let removeErrorListener: (() => void) | undefined;
+	const errorPromise = new Promise<never>((_, reject) => {
+		const onError = () => reject(new Error('bed audio media error'));
+		audio.addEventListener('error', onError, {once: true});
+		removeErrorListener = () => audio.removeEventListener('error', onError);
+	});
     const playPromise = audio.play();
 	let pendingTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(
 		() => {
@@ -198,6 +204,7 @@ async function playWithTimeout(audio: HTMLAudioElement): Promise<void> {
     try {
         await Promise.race([
             playPromise,
+			errorPromise,
             new Promise<never>((_, reject) => {
                 timeoutId = setTimeout(
                     () => reject(new Error(BED_PLAY_TIMEOUT_MESSAGE)),
@@ -206,6 +213,7 @@ async function playWithTimeout(audio: HTMLAudioElement): Promise<void> {
             })
         ]);
     } finally {
+		removeErrorListener?.();
         if (timeoutId !== undefined) {
             clearTimeout(timeoutId);
         }
@@ -376,13 +384,10 @@ export async function startBedUrl(url: string): Promise<void> {
             }
         );
 
-        if (!didTimeout && !wasAborted) {
-            throw err;
-        }
-
         console.warn(
             '[bedPlayer] continuing without bed audio'
         );
+        return;
     } finally {
         bedStartInFlight = false;
     }

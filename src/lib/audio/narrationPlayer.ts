@@ -14,6 +14,7 @@ export type NarrationTiming = {
 };
 
 type NarrationTimingListener = (timing: NarrationTiming) => void;
+type NarrationPlaybackStartedListener = () => void;
 
 export function stopNarration(): void {
 	const audio = narrationAudio;
@@ -79,7 +80,8 @@ export async function playNarrationUrl(url: string, fallbackUrl?: string): Promi
 
 function playNarrationUrlOnceAndWait(
 	url: string,
-	onTiming?: NarrationTimingListener
+	onTiming?: NarrationTimingListener,
+	onPlaybackStarted?: NarrationPlaybackStartedListener
 ): Promise<'ended' | 'error' | 'cancelled'> {
 	stopNarration();
 
@@ -153,6 +155,7 @@ function playNarrationUrlOnceAndWait(
 			.then(() => {
 				if (pendingTimer !== null) window.clearTimeout(pendingTimer);
 				logAudioPlayCall(audio, 'narration', 'resolved');
+				onPlaybackStarted?.();
 				publishTiming();
 				timingTimer = window.setInterval(publishTiming, 100);
 			})
@@ -167,10 +170,11 @@ function playNarrationUrlOnceAndWait(
 export async function playNarrationUrlAndWait(
 	url: string,
 	fallbackUrl?: string,
-	onTiming?: NarrationTimingListener
+	onTiming?: NarrationTimingListener,
+	onPlaybackStarted?: NarrationPlaybackStartedListener
 ): Promise<void> {
-	const result = await playNarrationUrlOnceAndWait(url, onTiming);
+	const result = await playNarrationUrlOnceAndWait(url, onTiming, onPlaybackStarted);
 	if (result === 'error' && fallbackUrl) {
-		await playNarrationUrlOnceAndWait(fallbackUrl, onTiming);
+		await playNarrationUrlOnceAndWait(fallbackUrl, onTiming, onPlaybackStarted);
 	}
 }

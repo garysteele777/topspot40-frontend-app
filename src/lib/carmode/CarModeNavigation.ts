@@ -104,30 +104,31 @@ export function createCarModeNavigation(
         nextTrackLock = true;
         logAudioDebug('navigation lock changed', {locked: true, action: 'Next'});
 
-        dependencies.stopCurrentNarrationPhase({resolvePhase: false});
-        dependencies.stopBed();
-        await dependencies.stopPlayback();
+        try {
+            dependencies.stopCurrentNarrationPhase({resolvePhase: false});
+            dependencies.stopBed();
+            await dependencies.stopPlayback();
 
-        const current = dependencies.getCurrentTrack();
-        const tracks = dependencies.getTracks();
+            const current = dependencies.getCurrentTrack();
+            const tracks = dependencies.getTracks();
 
-        if (!current || tracks.length === 0) return;
+            if (!current || tracks.length === 0) return;
 
-        const rankingId = current.rankingId;
-        const rank = current.rank;
+            const rankingId = current.rankingId;
+            const rank = current.rank;
 
-        if (rankingId == null && rank == null) return;
+            if (rankingId == null && rank == null) return;
 
-        recordCurrentTrackCompletion(current);
+            recordCurrentTrackCompletion(current);
 
-        const selection = dependencies.getSelection();
+            const selection = dependencies.getSelection();
 
-        const isRadio =
-            selection?.programType === 'RADIO_DG' ||
-            selection?.programType === 'RADIO_COL' ||
-            selection?.programType === 'RADIO_ARTIST';
+            const isRadio =
+                selection?.programType === 'RADIO_DG' ||
+                selection?.programType === 'RADIO_COL' ||
+                selection?.programType === 'RADIO_ARTIST';
 
-        if (!isRadio) {
+            if (!isRadio) {
             const settings = dependencies.getPlaybackSettings();
             const orderedTracks = [...tracks];
 
@@ -167,13 +168,19 @@ export function createCarModeNavigation(
             }
             await playback;
             dependencies.setUserStartedPlayback(true);
-        }
-
-        if (!releaseAutoLock) {
-            setTimeout(() => {
+            }
+        } finally {
+            if (releaseAutoLock) {
+                if (nextTrackLock) {
+                    nextTrackLock = false;
+                    logAudioDebug('navigation lock changed', {locked: false, action: 'Next finally release'});
+                }
+            } else {
+                setTimeout(() => {
                 nextTrackLock = false;
                 logAudioDebug('navigation lock changed', {locked: false, action: 'Next delayed release'});
-            }, 500);
+                }, 500);
+            }
         }
     }
 
