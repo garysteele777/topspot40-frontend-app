@@ -135,3 +135,18 @@ test('welcome embeds the approved localized Phil videos with privacy-preserving 
     assert.notEqual(iframeMarkup, '');
     assert.doesNotMatch(iframeMarkup, /\bautoplay\b/i);
 });
+
+test('experience analytics fires only when the selected journey is committed', async () => {
+    const choosePage = await source('../src/routes/journey-prototype/choose/+page.svelte');
+
+    const setProgramBody = choosePage.match(
+        /function setProgram\(choice: ProgramChoice\)\s*\{([\s\S]*?)\r?\n\s*\}/
+    )?.[1] ?? '';
+
+    assert.doesNotMatch(setProgramBody, /captureExperienceSelected/);
+
+    assert.match(
+        choosePage,
+        /function performContinueJourney\(\)\s*\{\s*if \(!selectedProgram\) return;\s*captureExperienceSelected\(posthog, selectedProgram\);\s*goto\(routes\[selectedProgram\]\);\s*\}/s
+    );
+});

@@ -1,9 +1,11 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {onMount} from 'svelte';
+    import posthog from 'posthog-js';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
+    import {captureExperienceSelected} from '$lib/analytics/posthog';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     type ProgramChoice = 'nostalgia' | 'collections' | 'artist' | 'docuseries';
@@ -67,7 +69,9 @@
     }
 
     function performContinueJourney() {
-        if (selectedProgram) goto(routes[selectedProgram]);
+        if (!selectedProgram) return;
+        captureExperienceSelected(posthog, selectedProgram);
+        goto(routes[selectedProgram]);
     }
 
     const selectionContinue = createSingleChoiceContinue({

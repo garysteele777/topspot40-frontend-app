@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 register('./helpers/svelteKitAliasLoader.mjs', import.meta.url);
 
 const {
+    captureExperienceSelected,
     captureLanguageSelected,
     captureProgramStarted,
     captureSpotifyOpen,
@@ -146,5 +147,17 @@ test('language selected capture sends only the chosen language', () => {
         'capture',
         'language_selected',
         { language: 'es' }
+    ]]);
+});
+
+test('experience selected capture sends only the stable experience type', () => {
+    const posthog = client();
+
+    captureExperienceSelected(posthog, 'collections');
+
+    assert.deepEqual(posthog.calls, [[
+        'capture',
+        'experience_selected',
+        { experience_type: 'collections' }
     ]]);
 });

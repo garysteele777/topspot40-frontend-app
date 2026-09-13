@@ -64,3 +64,12 @@ export function captureLanguageSelected(
 ): void {
     client.capture('language_selected', { language });
 }
+
+export function captureExperienceSelected(
+    client: PostHogClient,
+    experienceType: string
+): void {
+    client.capture('experience_selected', {
+        experience_type: experienceType
+    });
+}
