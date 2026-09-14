@@ -96,6 +96,53 @@ export function createCarModeNavigation(
         if (current) recordCurrentTrackCompletion(current);
     }
 
+    function queueNext(): CarModeTrack | null {
+        const current = dependencies.getCurrentTrack();
+        const tracks = dependencies.getTracks();
+
+        if (!current || tracks.length === 0) return null;
+
+        const rankingId = current.rankingId;
+        const rank = current.rank;
+        if (rankingId == null && rank == null) return null;
+
+        const selection = dependencies.getSelection();
+        const isRadio =
+            selection?.programType === 'RADIO_DG' ||
+            selection?.programType === 'RADIO_COL' ||
+            selection?.programType === 'RADIO_ARTIST';
+        if (isRadio) return null;
+
+        recordCurrentTrackCompletion(current);
+
+        const settings = dependencies.getPlaybackSettings();
+        const orderedTracks = [...tracks];
+        if (settings.playbackOrder === 'down') {
+            orderedTracks.sort((a, b) => b.rank - a.rank);
+        } else if (settings.playbackOrder === 'up') {
+            orderedTracks.sort((a, b) => a.rank - b.rank);
+        }
+
+        const currentIndex =
+            rankingId != null
+                ? orderedTracks.findIndex(track => track.rankingId === rankingId)
+                : orderedTracks.findIndex(track => track.rank === rank);
+        if (currentIndex === -1) return null;
+
+        let nextTrack = settings.skipPlayed
+            ? orderedTracks
+                .slice(currentIndex + 1)
+                .find(track => !playedRanks.includes(track.rank))
+            : null;
+        if (!nextTrack) {
+            nextTrack = orderedTracks[(currentIndex + 1) % orderedTracks.length];
+        }
+
+        dependencies.setCurrentRank(nextTrack.rank);
+        dependencies.setCurrentTrack(nextTrack);
+        return nextTrack;
+    }
+
     async function next(releaseAutoLock = false): Promise<void> {
         if (nextTrackLock) {
             logAudioDebug('Next ignored: navigation lock held');
@@ -109,65 +156,19 @@ export function createCarModeNavigation(
             dependencies.stopBed();
             await dependencies.stopPlayback();
 
-            const current = dependencies.getCurrentTrack();
-            const tracks = dependencies.getTracks();
+            const nextTrack = queueNext();
+            if (nextTrack) {
 
-            if (!current || tracks.length === 0) return;
+                await new Promise(resolve => setTimeout(resolve, 50));
 
-            const rankingId = current.rankingId;
-            const rank = current.rank;
-
-            if (rankingId == null && rank == null) return;
-
-            recordCurrentTrackCompletion(current);
-
-            const selection = dependencies.getSelection();
-
-            const isRadio =
-                selection?.programType === 'RADIO_DG' ||
-                selection?.programType === 'RADIO_COL' ||
-                selection?.programType === 'RADIO_ARTIST';
-
-            if (!isRadio) {
-            const settings = dependencies.getPlaybackSettings();
-            const orderedTracks = [...tracks];
-
-            if (settings.playbackOrder === 'down') {
-                orderedTracks.sort((a, b) => b.rank - a.rank);
-            } else if (settings.playbackOrder === 'up') {
-                orderedTracks.sort((a, b) => a.rank - b.rank);
-            }
-
-            const currentIndex =
-                rankingId != null
-                    ? orderedTracks.findIndex(track => track.rankingId === rankingId)
-                    : orderedTracks.findIndex(track => track.rank === rank);
-
-            if (currentIndex === -1) return;
-
-            let nextTrack = settings.skipPlayed
-                ? orderedTracks
-                    .slice(currentIndex + 1)
-                    .find(track => !playedRanks.includes(track.rank))
-                : null;
-
-            if (!nextTrack) {
-                nextTrack = orderedTracks[(currentIndex + 1) % orderedTracks.length];
-            }
-
-            dependencies.setCurrentRank(nextTrack.rank);
-            dependencies.setCurrentTrack(nextTrack);
-
-            await new Promise(resolve => setTimeout(resolve, 50));
-
-            dependencies.markUserStartedPlayback();
-            const playback = dependencies.playTrack(nextTrack);
-            if (releaseAutoLock) {
-                nextTrackLock = false;
-                logAudioDebug('navigation lock changed', {locked: false, action: 'Next auto release'});
-            }
-            await playback;
-            dependencies.setUserStartedPlayback(true);
+                dependencies.markUserStartedPlayback();
+                const playback = dependencies.playTrack(nextTrack);
+                if (releaseAutoLock) {
+                    nextTrackLock = false;
+                    logAudioDebug('navigation lock changed', {locked: false, action: 'Next auto release'});
+                }
+                await playback;
+                dependencies.setUserStartedPlayback(true);
             }
         } finally {
             if (releaseAutoLock) {
@@ -225,6 +226,7 @@ export function createCarModeNavigation(
     return {
         jumpTo,
         next,
+        queueNext,
         previous,
         completeCurrentTrack,
         setPlayedRanks,

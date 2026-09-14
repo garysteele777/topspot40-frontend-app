@@ -66,6 +66,7 @@
         resetSpotifyStartState
     } from '$lib/carmode/CarMode.poller';
 
+    import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
     import {
         startBedUrl,
         stopBed,
@@ -1146,6 +1147,8 @@
             isMobile: spotify.isMobile,
             openSpotify: openGuidedSpotify,
             closeSpotify: spotify.close,
+            queueNextTrack: queueNextAutoTrack,
+            setStatus: message => status.set(message),
             continueAutoPlayback,
             nextTrack,
             previousTrack: prevTrack,
@@ -1430,6 +1433,14 @@
             releaseAutoLock
         });
         await navigation.next(releaseAutoLock);
+    }
+
+    async function queueNextAutoTrack(): Promise<void> {
+        if (!navigation.queueNext()) return;
+
+        guidedReady = false;
+        spotify.reset();
+        resetPlaybackProgress();
     }
 
     async function prevTrack(startAutoPlay = false): Promise<void> {
