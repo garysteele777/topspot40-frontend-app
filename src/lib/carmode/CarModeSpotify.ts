@@ -134,17 +134,20 @@ export function createCarModeSpotify(
         return true;
     }
 
-    function close(): void {
+    function close(): boolean {
+        const windowToClose = spotifyWindow;
+        spotifyWindow = null;
+
+        if (!windowToClose || windowToClose.closed) return true;
+
         try {
-            if (spotifyWindow && !spotifyWindow.closed) {
-                spotifyWindow.close();
-            }
+            windowToClose.close();
+            return windowToClose.closed;
         } catch {
             // The Spotify window may already have been closed manually or
             // may no longer be accessible.
+            return false;
         }
-
-        spotifyWindow = null;
     }
 
     function returnToWaitingPage(): void {

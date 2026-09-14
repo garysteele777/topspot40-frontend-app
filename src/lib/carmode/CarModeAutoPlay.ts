@@ -29,7 +29,9 @@ export type CarModeAutoPlayDependencies = {
     prepareSpotifyWindow: () => void;
     isMobile: () => boolean;
     openSpotify: () => boolean;
-    closeSpotify: () => void;
+    closeSpotify: () => boolean;
+    queueNextTrack: () => Promise<void>;
+    setStatus: (message: string) => void;
     continueAutoPlayback: () => Promise<void>;
     nextTrack: () => Promise<void>;
     previousTrack: () => Promise<void>;
@@ -98,6 +100,8 @@ export function createCarModeAutoPlay(
         }
 
         handoffToken = token;
+        dependencies.setPlaybackPhase('track');
+        dependencies.setIsPlaying(true);
         startTimer(track);
     }
 
@@ -109,6 +113,7 @@ export function createCarModeAutoPlay(
             return;
         }
 
+        dependencies.setIsPlaying(false);
         await dependencies.continueAutoPlayback();
 
         if (
@@ -142,11 +147,32 @@ export function createCarModeAutoPlay(
         abandonCycle();
     }
 
+    async function pauseSpotifyAndQueueNext(): Promise<void> {
+        abandonCycle();
+
+        if (!dependencies.closeSpotify()) {
+            dependencies.setStatus('Please close Spotify manually.');
+        }
+
+        await dependencies.queueNextTrack();
+        dependencies.setIsPlaying(false);
+        dependencies.setPlaybackPhase('paused');
+    }
+
     activeCancels.add(cancel);
 
     async function handlePlay(): Promise<void> {
         const track = dependencies.getCurrentTrack();
         if (!track) return;
+
+        if (
+            dependencies.getActivePlayMode() === 'auto' &&
+            dependencies.getPlaybackPhase() === 'track' &&
+            handoffToken === trackToken(track)
+        ) {
+            await pauseSpotifyAndQueueNext();
+            return;
+        }
 
         if (
             dependencies.getActivePlayMode() === 'auto' &&
