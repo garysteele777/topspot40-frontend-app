@@ -12,6 +12,7 @@ import {
     signalNarrationFinishedApi,
     signalTrackFinishedApi,
     stopPlaybackApi,
+    sendPlaybackDiagnostic,
 } from '$lib/api/playbackApi';
 
 
@@ -59,18 +60,12 @@ const dlog = (...args: unknown[]) => {
     if (DEBUG) console.log(...args);
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
-
 function sendClientDiagnostic(
     event: string,
     phase: PlaybackPhase | null | undefined,
     narrationAudioState?: NarrationAudioDiagnosticState
 ): void {
-    void fetch(`${API_BASE}/playback/client-diagnostic`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
+    void sendPlaybackDiagnostic({
             event,
             phase,
             mode: null,
@@ -80,7 +75,6 @@ function sendClientDiagnostic(
             decade: null,
             genre: null,
             narrationAudioState
-        })
     }).catch(() => {
         // Temporary diagnostic only; never affect playback.
     });
@@ -207,6 +201,19 @@ let activeNarrationPlaybackSessionIdPresent = false;
 let narrationInterrupting = false;
 
 let narrationPausedAtBoundary = false;
+// Interactive Radio may close Spotify before the song completes.  Keep
+// polling so the guest session stays healthy, but do not let the backend's
+// still-active track frame overwrite the frozen Drive-In clock/UI.
+let externalRadioTrackPaused = false;
+let externalRadioSpotifyHandoffReady = false;
+
+export function setExternalRadioTrackPaused(paused: boolean): void {
+    externalRadioTrackPaused = paused;
+}
+
+export function setExternalRadioSpotifyHandoffReady(ready: boolean): void {
+    externalRadioSpotifyHandoffReady = ready;
+}
 
 export function stopCurrentNarrationPhase(
     options: { resolvePhase?: boolean; preserveResolve?: boolean; preserveAudioElement?: boolean } = {}
@@ -554,7 +561,12 @@ async function playNarrationQueue() {
 }
 
 export function startPlaybackPolling(
-    options: { guidedLinkOut?: boolean } = {}
+    options: {
+        guidedLinkOut?: boolean;
+        // Interactive Radio's Auto Play timer is the authority that reports
+        // Spotify completion; polling still owns narration acknowledgements.
+        externalRadioTrackClock?: boolean;
+    } = {}
 ) {
     if (!browser) return;
     if (pollTimer) return;
@@ -566,7 +578,10 @@ export function startPlaybackPolling(
     pollTimer = window.setInterval(async () => {
         try {
             const res = await fetchPlaybackStatus();
-            if (!res.ok) return;
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) stopPlaybackPolling();
+                return;
+            }
 
             const data = await res.json();
 
@@ -579,8 +594,50 @@ export function startPlaybackPolling(
             const spotifyId = data.context?.spotify_track_id ?? null;
             const phase = data.phase as PlaybackPhase;
             const playbackStarted = hasPlaybackStarted(phase);
+            const isBackendRadio = [
+                'RADIO_DG',
+                'RADIO_COL',
+                'RADIO_ARTIST'
+            ].includes(get(currentSelection)?.programType ?? '');
+
+            if (
+                options.externalRadioTrackClock &&
+                externalRadioTrackPaused &&
+                isBackendRadio &&
+                phase === 'track'
+            ) {
+                isPlaying.set(false);
+                playbackPhase.set('paused');
+                // Preserve elapsed/duration/progress exactly as captured by
+                // Pause. The backend is intentionally still waiting for the
+                // explicit track-finished handoff.
+                return;
+            }
 
             const narrationPhase = isNarrationPhase(phase);
+            if (options.externalRadioTrackClock && isBackendRadio && narrationPhase) {
+                // A later backend track frame must not inherit the previous
+                // track's successful Spotify navigation.
+                externalRadioSpotifyHandoffReady = false;
+            }
+            const incomingSetNumber =
+                typeof data.context?.set_number === 'number'
+                    ? data.context.set_number
+                    : null;
+            const currentRadioSetNumber = get(currentTrack)?.setNumber ?? null;
+            // A set boundary is authoritative before Spotify is opened. It
+            // must replace the previous set's Track 3 even if an intermediate
+            // narration frame has no new Spotify ID (or happens to reuse one).
+            const radioSetBoundary =
+                isBackendRadio &&
+                incomingSetNumber !== null &&
+                incomingSetNumber !== currentRadioSetNumber;
+            const contextTrackId =
+                typeof spotifyId === 'string'
+                    ? spotifyId
+                    : radioSetBoundary
+                        ? get(currentTrack)?.spotifyTrackId ?? null
+                        : null;
 
             if (narrationPhase) {
                 const audioQueue = data.context?.audio_queue;
@@ -612,20 +669,30 @@ export function startPlaybackPolling(
 
             if (
                 playbackStarted &&
-                spotifyId &&
-                !data.isPaused &&
+                contextTrackId &&
+                // Radio publishes its first real set through a narration
+                // frame before the Spotify handoff.  That frame is still the
+                // authoritative state even if the backend marks narration as
+                // paused while the browser is catching up.
+                (!data.isPaused || isBackendRadio) &&
                 (
+                    radioSetBoundary ||
                     spotifyId !== syncedUiSpotifyTrackId ||
                     playbackContextHasFreshText(
                         data.context as Record<string, unknown> | null | undefined
                     )
                 )
             ) {
-                syncedUiSpotifyTrackId = spotifyId;
+                if (spotifyId) syncedUiSpotifyTrackId = spotifyId;
                 finishedTrackId = null;
 
                 const list = get(tracks);
-                const next = list.find(t => t.spotifyTrackId === spotifyId);
+                // Never enrich a prior-set row at a set boundary: doing so
+                // preserves its title/artwork while Program Introduction for
+                // the new set is playing. Build Track 1 from its new context.
+                const next = radioSetBoundary
+                    ? undefined
+                    : list.find(t => t.spotifyTrackId === contextTrackId);
 
                 const ctx = data.context ?? {};
                 const normalizedCtx = normalizePlaybackContext(
@@ -645,7 +712,7 @@ export function startPlaybackPolling(
                     currentRank.set(enriched.rank);
                 } else {
                     const fallbackTrack = buildFallbackPlaybackTrack({
-                        spotifyId,
+                        spotifyId: contextTrackId,
                         currentRank: data.current_rank ?? 0,
                         trackName: data.track_name ?? '',
                         artistName: data.artist_name ?? '',
@@ -655,6 +722,17 @@ export function startPlaybackPolling(
                     currentTrack.set(
                         fallbackTrack as Parameters<typeof currentTrack.set>[0]
                     );
+
+                    // A radio launch intentionally begins with a local
+                    // placeholder.  The backend publishes the actual first
+                    // set asynchronously, so replace that placeholder as
+                    // soon as its status frame supplies the real track.
+                    // The backend remains the owner of every later track.
+                    if (isBackendRadio) {
+                        tracks.set([
+                            fallbackTrack as Parameters<typeof tracks.set>[0][number]
+                        ]);
+                    }
 
                     currentRank.set(fallbackTrack.rank);
 
@@ -825,8 +903,30 @@ export function startPlaybackPolling(
                     }
 
                     lastPhase = phase;
-                    return;
+                    const isBackendRadio = [
+                        'RADIO_DG',
+                        'RADIO_COL',
+                        'RADIO_ARTIST'
+                    ].includes(get(currentSelection)?.programType ?? '');
+
+                    // Radio still needs the normal timing/track-finished path:
+                    // its backend loop chooses the next track and next set.
+                    if (!isBackendRadio) return;
                 }
+            }
+
+            if (
+                options.externalRadioTrackClock &&
+                isBackendRadio &&
+                phase === 'track' &&
+                !externalRadioSpotifyHandoffReady
+            ) {
+                // The backend has selected a track, but Spotify has not
+                // accepted the handoff yet. Do not run a visible clock or
+                // imply that a completion timeout is active.
+                isPlaying.set(false);
+                playbackPhase.set('paused');
+                return;
             }
 
             const {
@@ -850,6 +950,7 @@ export function startPlaybackPolling(
             if (
                 phase === 'track' &&
                 spotifyId &&
+                !options.externalRadioTrackClock &&
                 finishedTrackId !== spotifyId &&
                 !trackFinalized &&
                 !justSwitched &&
@@ -923,6 +1024,8 @@ export function resetNarrationPhaseState(): void {
     finishedTrackId = null;
     narrationSignaled = false;
     narrationPausedAtBoundary = false;
+    externalRadioTrackPaused = false;
+    externalRadioSpotifyHandoffReady = false;
 }
 
 export async function skipToNextTrack(): Promise<void> {
@@ -976,6 +1079,8 @@ export function stopPlaybackPolling() {
     lastStartedBedUrl = null;
     resetSpotifyStartState();
     finishedTrackId = null;
+    externalRadioTrackPaused = false;
+    externalRadioSpotifyHandoffReady = false;
 }
 
 export function markUserStartedPlayback() {

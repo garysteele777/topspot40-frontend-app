@@ -8,6 +8,9 @@ register('./helpers/svelteKitAliasLoader.mjs', import.meta.url);
 const {createCarModeAutoPlay} = await import(
     '../src/lib/carmode/CarModeAutoPlay.ts'
 );
+const {createCarModeSpotify} = await import(
+    '../src/lib/carmode/CarModeSpotify.ts'
+);
 
 const firstTrack = {
     rankingId: 1,
@@ -28,9 +31,14 @@ function createHarness({
     phase = 'intro',
     playing = true,
     pausedNarrationPhase = null,
-    closeSpotify = () => true
+    closeSpotify = () => true,
+    track = firstTrack,
+    bufferSeconds = 0,
+    onContinue = null,
+    openSpotify = null,
+    onSpotifyOpenFailed = null
 } = {}) {
-    let currentTrack = firstTrack;
+    let currentTrack = track;
     let activeMode = 'auto';
     let playbackPhase = phase;
     let isPlaying = playing;
@@ -65,7 +73,7 @@ function createHarness({
         isMobile: () => true,
         openSpotify: () => {
             opened += 1;
-            return true;
+            return openSpotify ? openSpotify() : true;
         },
         closeSpotify,
         queueNextTrack: async () => {
@@ -73,14 +81,19 @@ function createHarness({
             currentTrack = nextTrack;
         },
         setStatus: message => { status.push(message); },
-        continueAutoPlayback: async () => { continued += 1; },
+        onSpotifyOpenFailed,
+        continueAutoPlayback: async () => {
+            continued += 1;
+            if (onContinue) onContinue({setPhase: value => { playbackPhase = value; }, setTrack: value => { currentTrack = value; }});
+        },
         nextTrack: async () => {},
         previousTrack: async () => {},
         startPreviousAutoPlayback: async () => {}
-    }, 0);
+    }, bufferSeconds);
 
     return {
         auto,
+        setCurrentTrack: value => { currentTrack = value; },
         state: () => ({
             activeMode,
             playbackPhase,
@@ -175,4 +188,213 @@ test('Intro narration pause behavior remains unchanged', async () => {
     assert.equal(harness.state().playbackPhase, 'paused');
     assert.equal(harness.state().isPlaying, true);
     assert.equal(harness.state().queued, 0);
+});
+
+test('a known track duration arms one Auto Play timer and continues once', async () => {
+    const radioTrack = {
+        ...firstTrack,
+        spotifyTrackId: 'country-known-duration',
+        durationSeconds: undefined,
+        durationMs: 1000
+    };
+    const harness = createHarness({
+        phase: 'paused',
+        playing: false,
+        pausedNarrationPhase: 'detail',
+        track: radioTrack
+    });
+
+    await harness.auto.handlePlay();
+    await new Promise(resolve => setTimeout(resolve, 1100));
+
+    assert.equal(harness.state().continued, 1);
+    assert.equal(harness.state().opened, 1);
+    harness.auto.cancel();
+});
+
+test('radio track handoff schedules one guarded completion after duration plus five seconds', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const radioTrack = {...firstTrack, spotifyTrackId: 'radio-track-1', durationSeconds: 2};
+    const trackTwo = {...nextTrack, spotifyTrackId: 'radio-track-2'};
+    let trackFinishedSignals = 0;
+    const harness = createHarness({
+        phase: 'idle',
+        playing: false,
+        track: radioTrack,
+        bufferSeconds: 5,
+        onContinue: ({setPhase, setTrack}) => {
+            // The completion callback delegates to the backend-owned flow;
+            // its next status frame is Track 2 Intro, not nextTrack().
+            trackFinishedSignals += 1;
+            setTrack(trackTwo);
+            setPhase('intro');
+        }
+    });
+
+    harness.auto.handoffCurrentTrack(radioTrack);
+    t.mock.timers.tick(6999);
+    await Promise.resolve();
+    assert.equal(harness.state().continued, 0);
+
+    t.mock.timers.tick(1);
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(harness.state().continued, 1);
+    assert.equal(trackFinishedSignals, 1);
+    assert.equal(harness.state().currentTrack, trackTwo);
+    assert.equal(harness.state().playbackPhase, 'intro');
+
+    t.mock.timers.tick(60_000);
+    await Promise.resolve();
+    assert.equal(harness.state().continued, 1);
+    assert.equal(trackFinishedSignals, 1);
+    t.mock.timers.reset();
+});
+
+test('interrupting Spotify cancels the completion timer and preserves the paused track', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const radioTrack = {...firstTrack, spotifyTrackId: 'interrupted-track-1', durationSeconds: 2};
+    const harness = createHarness({
+        phase: 'idle',
+        playing: false,
+        track: radioTrack,
+        bufferSeconds: 5
+    });
+
+    harness.auto.handoffCurrentTrack(radioTrack);
+    t.mock.timers.tick(2_000);
+    const interrupted = harness.auto.interruptSpotifyTrack();
+    const frozen = harness.state();
+
+    assert.equal(interrupted, radioTrack);
+    assert.equal(frozen.playbackPhase, 'paused');
+    assert.equal(frozen.isPlaying, false);
+    assert.equal(frozen.continued, 0);
+    assert.equal(harness.auto.interruptSpotifyTrack(), null, 'repeat Pause is inert');
+
+    t.mock.timers.tick(60_000);
+    await Promise.resolve();
+    assert.equal(harness.state().continued, 0, 'the pre-Pause timer cannot fire later');
+    assert.equal(harness.auto.getInterruptedSpotifyTrack(), radioTrack);
+    t.mock.timers.reset();
+});
+
+test('resuming an interrupted radio track can hand off exactly once to backend Track 2 or next Set intro', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const trackOne = {...firstTrack, spotifyTrackId: 'set-1-track-1', durationSeconds: 2};
+    const trackTwo = {...nextTrack, spotifyTrackId: 'set-1-track-2'};
+    const harness = createHarness({phase: 'idle', playing: false, track: trackOne, bufferSeconds: 5});
+    let protectedTrackFinished = 0;
+    let resumePending = false;
+
+    harness.auto.handoffCurrentTrack(trackOne);
+    harness.auto.interruptSpotifyTrack();
+
+    async function resumeFromPause(nextPhase, nextTrack) {
+        if (resumePending || !harness.auto.getInterruptedSpotifyTrack()) return;
+        resumePending = true;
+        protectedTrackFinished += 1;
+        // The real page waits for this backend-owned phase; it never calls nextTrack.
+        harness.auto.clearInterruptedSpotifyTrack();
+        resumePending = false;
+        await Promise.resolve();
+        // Simulate the poller's authoritative response.
+        harness.setCurrentTrack(nextTrack);
+        void nextPhase;
+    }
+
+    await Promise.all([
+        resumeFromPause('intro', trackTwo),
+        resumeFromPause('intro', trackTwo)
+    ]);
+    assert.equal(protectedTrackFinished, 1);
+    assert.equal(harness.auto.getInterruptedSpotifyTrack(), null);
+
+    // A final Track has the same one-shot handoff. The backend, rather than
+    // the client, may answer with the next set's Program Introduction.
+    harness.auto.handoffCurrentTrack(trackTwo);
+    harness.auto.interruptSpotifyTrack();
+    await resumeFromPause('set_intro', {...nextTrack, spotifyTrackId: 'set-2-track-1'});
+    assert.equal(protectedTrackFinished, 2);
+    t.mock.timers.tick(60_000);
+    await Promise.resolve();
+    assert.equal(harness.state().continued, 0);
+    t.mock.timers.reset();
+});
+
+test('a reserved Spotify wait popup is reused once and navigated only for the authoritative next track', async () => {
+    const originalWindow = globalThis.window;
+    const originalNavigator = globalThis.navigator;
+    const originalLocalStorage = globalThis.localStorage;
+    const popup = {
+        closed: false,
+        location: {href: ''},
+        blur: () => {},
+        focus: () => {},
+        close() { this.closed = true; }
+    };
+    let opens = 0;
+
+    Object.defineProperty(globalThis, 'navigator', {
+        configurable: true,
+        value: {userAgent: 'Desktop Test Browser'}
+    });
+    Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: {
+            open: url => {
+                opens += 1;
+                popup.location.href = url;
+                return popup;
+            },
+            focus: () => {},
+            screen: {availWidth: 1920}
+        }
+    });
+    Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: {setItem: () => {}}
+    });
+
+    try {
+        const spotify = createCarModeSpotify({getGuidedReady: () => false, setStatus: () => {}});
+        assert.equal(spotify.prepareAutoWindow(), true);
+        assert.match(popup.location.href, /^\/spotify-wait\?language=en$/);
+        assert.equal(spotify.prepareAutoWindow(), true);
+        assert.equal(opens, 1, 'repeat Auto Play does not create another wait window');
+        assert.equal(spotify.open({...nextTrack, spotifyTrackId: 'backend-track-2'}), true);
+        assert.equal(popup.location.href, 'https://open.spotify.com/track/backend-track-2');
+        assert.equal(opens, 1, 'handoff navigates the reserved handle, not a fresh popup');
+        assert.equal(spotify.close(), true, 'Pause closes the active Spotify popup');
+        // Let prepareAutoWindow's desktop focus-restoration callback finish
+        // while the mocked window is still installed.
+        await new Promise(resolve => setTimeout(resolve, 170));
+    } finally {
+        Object.defineProperty(globalThis, 'navigator', {configurable: true, value: originalNavigator});
+        Object.defineProperty(globalThis, 'window', {configurable: true, value: originalWindow});
+        Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: originalLocalStorage});
+    }
+});
+
+test('a blocked Spotify handoff never starts a completion timer and remains retryable', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const radioTrack = {...firstTrack, spotifyTrackId: 'blocked-track', durationSeconds: 2};
+    let failures = 0;
+    const harness = createHarness({
+        phase: 'idle',
+        playing: false,
+        track: radioTrack,
+        bufferSeconds: 5,
+        openSpotify: () => false,
+        onSpotifyOpenFailed: () => { failures += 1; }
+    });
+
+    assert.equal(harness.auto.handoffCurrentTrack(radioTrack), false);
+    assert.equal(harness.state().playbackPhase, 'paused');
+    assert.equal(harness.state().activeMode, null);
+    assert.equal(failures, 1);
+    t.mock.timers.tick(60_000);
+    await Promise.resolve();
+    assert.equal(harness.state().continued, 0, 'a blocked popup cannot falsely complete a track');
+    t.mock.timers.reset();
 });

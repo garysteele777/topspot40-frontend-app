@@ -6,7 +6,8 @@ const isLocal = typeof window !== 'undefined' &&
 
 /** Backend base URL depending on environment */
 export const getBackendUrl = (): string => {
-  return isLocal ? 'http://127.0.0.1:8000' : 'https://api.topspot40.com';
+  const configured = import.meta.env?.VITE_API_BASE_URL?.trim().replace(/\/+$/, '');
+  return configured || (isLocal ? 'http://127.0.0.1:8000' : 'https://api.topspot40.com');
 };
 
 /** Frontend base URL depending on environment */

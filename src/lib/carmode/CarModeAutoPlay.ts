@@ -33,6 +33,8 @@ export type CarModeAutoPlayDependencies = {
     queueNextTrack: () => Promise<void>;
     setStatus: (message: string) => void;
     continueAutoPlayback: () => Promise<void>;
+    onSpotifyHandoff?: (track: CarModeTrack) => void;
+    onSpotifyOpenFailed?: (track: CarModeTrack) => void;
     nextTrack: () => Promise<void>;
     previousTrack: () => Promise<void>;
     startPreviousAutoPlayback: () => Promise<void>;
@@ -45,6 +47,11 @@ export function createCarModeAutoPlay(
     let timer: ReturnType<typeof setTimeout> | null = null;
     let runId = 0;
     let handoffToken: string | null = null;
+    // This is deliberately different from a completed cycle.  A Spotify
+    // window cannot be reliably paused/resumed, so an interrupted track must
+    // be handed back to the backend only when the listener explicitly starts
+    // Auto Play again.
+    let interruptedTrack: CarModeTrack | null = null;
 
     const trackToken = (track: CarModeTrack): string =>
         `${track.rankingId ?? track.rank}|${track.spotifyTrackId ?? ''}`;
@@ -85,24 +92,32 @@ export function createCarModeAutoPlay(
         }, delayMs);
     }
 
-    function handoff(track: CarModeTrack): void {
+    function handoff(track: CarModeTrack, scheduleAdvance = true): boolean {
         const token = trackToken(track);
 
         if (
             dependencies.getActivePlayMode() !== 'auto' ||
             handoffToken === token
         ) {
-            return;
+            return false;
         }
 
         if (!dependencies.openSpotify()) {
-            return;
+            // Do not arm a duration/completion cycle for a track whose
+            // Spotify handoff was blocked or whose reserved window closed.
+            dependencies.setIsPlaying(false);
+            dependencies.setPlaybackPhase('paused');
+            dependencies.setActivePlayMode(null);
+            dependencies.onSpotifyOpenFailed?.(track);
+            return false;
         }
 
         handoffToken = token;
+        dependencies.onSpotifyHandoff?.(track);
         dependencies.setPlaybackPhase('track');
         dependencies.setIsPlaying(true);
-        startTimer(track);
+        if (scheduleAdvance) startTimer(track);
+        return true;
     }
 
     async function advance(activeRunId: number): Promise<void> {
@@ -145,6 +160,43 @@ export function createCarModeAutoPlay(
 
     function cancel(): void {
         abandonCycle();
+        interruptedTrack = null;
+    }
+
+    function interruptSpotifyTrack(): CarModeTrack | null {
+        const track = dependencies.getCurrentTrack();
+
+        if (
+            !track ||
+            dependencies.getActivePlayMode() !== 'auto' ||
+            dependencies.getPlaybackPhase() !== 'track' ||
+            handoffToken !== trackToken(track)
+        ) {
+            return null;
+        }
+
+        // Invalidate the completion callback without abandoning narration or
+        // resetting the UI clock: the Drive-In display must stay frozen at
+        // the listener's paused position.
+        cancelCycle();
+        handoffToken = null;
+        interruptedTrack = track;
+
+        if (!dependencies.closeSpotify()) {
+            dependencies.setStatus('Please close Spotify manually.');
+        }
+
+        dependencies.setIsPlaying(false);
+        dependencies.setPlaybackPhase('paused');
+        return track;
+    }
+
+    function getInterruptedSpotifyTrack(): CarModeTrack | null {
+        return interruptedTrack;
+    }
+
+    function clearInterruptedSpotifyTrack(): void {
+        interruptedTrack = null;
     }
 
     async function pauseSpotifyAndQueueNext(): Promise<void> {
@@ -261,6 +313,12 @@ export function createCarModeAutoPlay(
         handlePlay,
         handleNext,
         handlePrevious,
-        playSelectedTrack
+        playSelectedTrack,
+        interruptSpotifyTrack,
+        getInterruptedSpotifyTrack,
+        clearInterruptedSpotifyTrack,
+        // Backend Radio still owns the next-track choice, but its Spotify
+        // handoff must arm the normal guarded duration + buffer completion.
+        handoffCurrentTrack: (track: CarModeTrack) => handoff(track)
     };
 }

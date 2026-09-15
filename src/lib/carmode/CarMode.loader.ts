@@ -12,6 +12,7 @@ import {getFavorites} from '$lib/favorites/favorites';
 import {upsertProgram, type ProgramKey} from '$lib/carmode/programHistory';
 import {get} from 'svelte/store';
 import {programHistoryStore} from '$lib/carmode/programHistory';
+import {resetPlaybackApi} from '$lib/api/playbackApi';
 
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
@@ -36,10 +37,7 @@ export async function loadForSelection(
 ): Promise<void> {
 
     try {
-        await fetch(`${import.meta.env.VITE_API_BASE_URL}/playback/reset`, {
-            method: 'POST',
-            credentials: 'include'
-        });
+        await resetPlaybackApi();
     } catch (err) {
         console.warn('Playback reset failed', err);
     }
@@ -48,36 +46,35 @@ export async function loadForSelection(
 
 
     // 🎧 RADIO MODE DETECTION (ALL / ALL)
+    // Radio is backend-owned: /play-sequence chooses one decade/genre set at
+    // a time and publishes each active track through playback status. Do not
+    // flatten ALL/<genre> into a client-side sequence.
     const decade =
         sel.context?.decade ??
         sel.context?.decade_slug ??
         sel.context?.decadeName ??
         sel.context?.decadeSlug;
 
-    if (
-        sel.mode === 'decade_genre' &&
-        decade === 'ALL'
-    ) {
+    if (sel.mode === 'decade_genre' && decade === 'ALL') {
+        sel.programType = PROGRAM_TYPES.RADIO_DG;
 
-        // 🔥 THIS IS THE FIX
-        sel.programType = 'RADIO_DG';
-
+        const genre = sel.context?.genre ?? 'ALL';
         const placeholder: CarModeTrack = {
             id: null,
             rankingId: null,
             rank: 0,
             trackName: 'TopSpot Radio',
-            artistName: 'Press Play to Start',
+            artistName: 'Load the first set to begin',
             spotifyTrackId: '',
             albumArtwork: null,
-            durationSeconds: 0
+            durationSeconds: 0,
+            genreSlug: genre,
+            genreName: genre.replace(/(^|_)([a-z])/g, (_, prefix, letter) => `${prefix} ${letter.toUpperCase()}`).trim()
         };
 
         tracks.set([placeholder]);
         currentTrack.set(placeholder);
-
-        status.set('Radio ready. Press Play.');
-
+        status.set(`${placeholder.genreName} Radio ready. Load the first set.`);
         return;
     }
 
