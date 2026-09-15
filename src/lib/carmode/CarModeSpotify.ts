@@ -31,8 +31,15 @@ export function createCarModeSpotify(
         return `/spotify-wait?language=${normalizedLanguage}`;
     }
 
-    function prepareAutoWindow(): void {
+    function prepareAutoWindow(): boolean {
         try {
+            // A resumed Auto Play click can arrive while the previous wait
+            // window is still open. Reuse it instead of creating another.
+            if (spotifyWindow && !spotifyWindow.closed) {
+                return true;
+            }
+            spotifyWindow = null;
+
             if (isMobile()) {
                 // Mobile browsers behave better with a normal tab/window.
                 // Reserve it now while we're still inside the user's tap.
@@ -41,7 +48,7 @@ export function createCarModeSpotify(
                     'topspot40-guided-spotify'
                 );
 
-                return;
+                return Boolean(spotifyWindow);
             }
 
             // Desktop: keep the compact companion popup.
@@ -68,6 +75,8 @@ export function createCarModeSpotify(
         } catch {
             spotifyWindow = null;
         }
+
+        return Boolean(spotifyWindow);
     }
 
     function open(track: CarModeTrack | null): boolean {
@@ -113,20 +122,33 @@ export function createCarModeSpotify(
             return true;
         }
 
-        if (spotifyWindow && !spotifyWindow.closed) {
-            logAudioDebug('Spotify existing window reused');
-            spotifyWindow.location.href = spotifyUrl;
-        } else {
-            logAudioDebug('Spotify window created');
-            spotifyWindow = window.open(
-                spotifyUrl,
-                'topspot40-guided-spotify'
-            );
+        try {
+            if (spotifyWindow && !spotifyWindow.closed) {
+                logAudioDebug('Spotify existing window reused');
+                spotifyWindow.location.href = spotifyUrl;
+            } else {
+                logAudioDebug('Spotify window created');
+                spotifyWindow = window.open(
+                    spotifyUrl,
+                    'topspot40-guided-spotify'
+                );
 
-            if (!spotifyWindow) {
-                logAudioDebug('Spotify popup blocked');
-                return false;
+                if (!spotifyWindow) {
+                    logAudioDebug('Spotify popup blocked');
+                    return false;
+                }
             }
+        } catch {
+            // A reserved popup can be closed manually between narration and
+            // this navigation. Never claim a Spotify handoff in that case.
+            spotifyWindow = null;
+            logAudioDebug('Spotify window unavailable');
+            dependencies.setStatus('Spotify window is unavailable. Press Auto Play to try again.');
+            return false;
+        }
+
+        if (!spotifyWindow) {
+                return false;
         }
 
         recordSpotifyOpen();

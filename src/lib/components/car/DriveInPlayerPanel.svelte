@@ -88,6 +88,12 @@
     export let onAutoPlay: () => void;
     export let onBackToOptions: () => void;
     export let onUseClassicView: () => void;
+    export let radioAutoOnly = false;
+    export let radioSetNumber: number | null = null;
+    export let radioSetPosition: number | null = null;
+    export let radioSetSize: number | null = null;
+    export let radioSetLabel = '';
+    export let radioLoadPending = false;
     export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
 
     export let showNarrationModal = false;
@@ -233,9 +239,15 @@
             <h1>{currentTrack?.trackName ?? 'Ready to begin'}</h1>
             <h2>{currentTrack?.artistName ?? 'TopSpot40'}</h2>
 
+            {#if radioSetNumber && radioSetLabel}
+                <div class="radio-set-info">Set {radioSetNumber}: {radioSetLabel}</div>
+            {/if}
+
             {#if currentTrack}
                 <div class="rank">
-                    {formatDriveInTrackPosition(currentTrack.rank, tracks.length, language)}
+                    {radioSetPosition && radioSetSize
+                        ? formatDriveInTrackPosition(radioSetPosition, radioSetSize, language)
+                        : formatDriveInTrackPosition(currentTrack.rank, tracks.length, language)}
                     {#if currentTrack.yearReleased}
                         <span>•</span>
                         {currentTrack.yearReleased}
@@ -257,11 +269,12 @@
         </div>
 
         <div class="primary-controls">
-            <button type="button" on:click={onPrev} aria-label={transportCopy.previousAria}>
+            <button type="button" disabled={radioAutoOnly} on:click={onPrev} aria-label={transportCopy.previousAria}>
                 <span class="control-icon">|◀</span>
                 <span>{transportCopy.previous}</span>
             </button>
 
+            {#if !radioAutoOnly}
             <button
                     type="button"
                     class="play-control"
@@ -280,11 +293,13 @@
         {isPlaying && activePlayMode === 'guided' ? transportCopy.pause : transportCopy.guided}
     </span>
             </button>
+            {/if}
 
             <button
                     type="button"
                     class="play-control auto-play-control"
                     class:playing={isPlaying && activePlayMode === 'auto'}
+                    disabled={radioLoadPending}
                     on:click={onAutoPlay}
                     aria-label={
             isPlaying && activePlayMode === 'auto'
@@ -299,12 +314,12 @@
         {isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
     </span>
             </button>
-
-            <button type="button" on:click={onNext} aria-label={transportCopy.nextAria}>
+            <button type="button" disabled={radioAutoOnly} on:click={onNext} aria-label={transportCopy.nextAria}>
                 <span class="control-icon">▶|</span>
                 <span>{transportCopy.next}</span>
             </button>
 
+            {#if !radioAutoOnly}
             <button
                     type="button"
                     class="gold-control"
@@ -322,6 +337,7 @@
                 <span class="control-icon">☷</span>
                 <span>{narrationActionCopy[language].trackList}</span>
             </button>
+            {/if}
         </div>
 
         <div class="secondary-controls">
@@ -330,8 +346,10 @@
             </button>
 
             <div class="view-switch" aria-label={classicViewCopy[language].playbackView}>
-                <button type="button" on:click={onUseClassicView}>{classicViewCopy[language].carView}</button>
-                <span aria-hidden="true"></span>
+                {#if !radioAutoOnly}
+                    <button type="button" on:click={onUseClassicView}>{classicViewCopy[language].carView}</button>
+                    <span aria-hidden="true"></span>
+                {/if}
                 <button type="button" class="active" aria-current="true">
                     {classicViewCopy[language].driveInView}
                 </button>
@@ -575,6 +593,14 @@
         margin-top: 0.25em;
         color: #e0bd68;
         font-size: clamp(11px, 1.15vw, 20px);
+        line-height: 1;
+    }
+
+    .radio-set-info {
+        margin-top: 0.35em;
+        color: #f7dc82;
+        font-size: clamp(10px, 1vw, 17px);
+        font-weight: 800;
         line-height: 1;
     }
 

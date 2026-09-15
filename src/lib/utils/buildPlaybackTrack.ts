@@ -49,6 +49,9 @@ export function buildFallbackPlaybackTrack({
 
         spotifyTrackId: spotifyId,
 
+        durationMs:
+            normalizedCtx.durationMs ?? null,
+
         collection_name:
             normalizedCtx.collection_name ?? null,
 
@@ -88,7 +91,7 @@ export function buildFallbackPlaybackTrack({
         genreName:
             normalizedCtx.genre_name ?? null,
 
-        yearReleased: null,
+        yearReleased: normalizedCtx.yearReleased ?? null,
 
         albumArtwork:
             normalizedCtx.album_artwork ?? null,

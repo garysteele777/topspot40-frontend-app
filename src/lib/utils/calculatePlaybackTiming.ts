@@ -15,6 +15,7 @@ type PlaybackTimingInput = {
 
     elapsed_seconds?: unknown;
     duration_seconds?: unknown;
+    trackStartedAtMs?: unknown;
 
     context?: {
         elapsed_seconds?: unknown;
@@ -40,7 +41,7 @@ export function calculatePlaybackTiming(
     data: PlaybackTimingInput
 ): PlaybackTiming {
 
-    const elapsedMs =
+    const suppliedElapsedMs =
         typeof data.elapsedMs === 'number'
             ? data.elapsedMs
             : typeof data.elapsed_ms === 'number'
@@ -77,6 +78,15 @@ export function calculatePlaybackTiming(
                                         : typeof data.context?.duration_sec === 'number'
                                             ? Math.round(data.context.duration_sec * 1000)
                                             : 0;
+
+    const trackStartedAtMs =
+        typeof data.trackStartedAtMs === 'number' && Number.isFinite(data.trackStartedAtMs) &&
+        data.trackStartedAtMs > 1_000_000_000_000
+            ? data.trackStartedAtMs
+            : null;
+    const elapsedMs = trackStartedAtMs !== null
+        ? Math.max(0, Date.now() - trackStartedAtMs)
+        : Math.max(0, suppliedElapsedMs);
 
     const elapsedSecRaw = elapsedMs / 1000;
     const durationSec = durationMs / 1000;

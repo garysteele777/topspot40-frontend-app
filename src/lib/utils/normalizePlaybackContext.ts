@@ -28,6 +28,7 @@ export type NormalizedPlaybackContext = {
 
     album_artwork?: string | null;
     artist_artwork?: string | null;
+    yearReleased?: number | null;
 
     setNumber?: number | null;
     blockPosition?: number | null;
@@ -94,6 +95,13 @@ export function normalizePlaybackContext(
 
         artist_artwork:
             (ctx.artist_artwork as string | null) ?? null,
+
+        yearReleased:
+            typeof ctx.year === 'number'
+                ? ctx.year
+                : typeof ctx.year_released === 'number'
+                    ? ctx.year_released
+                    : null,
 
         setNumber:
             typeof ctx.set_number === 'number'

@@ -63,7 +63,9 @@
         stopCurrentNarrationPhase,
         continueStoppedNarrationPhase,
         resetNarrationPhaseState,
-        resetSpotifyStartState
+        resetSpotifyStartState,
+        setExternalRadioTrackPaused,
+        setExternalRadioSpotifyHandoffReady
     } from '$lib/carmode/CarMode.poller';
 
     import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
@@ -98,8 +100,13 @@
     } from '$lib/carmode/CarMode.store';
 
     import {loadForSelection} from '$lib/carmode/CarMode.loader';
-    import {signalTrackFinishedApi} from '$lib/api/playbackApi';
+    import {
+        fetchPlaybackStatus, resetPlaybackApi, sendPlaybackDiagnostic,
+        signalTrackFinishedApi, startGuestPlaybackSession, startRadioSequence
+    } from '$lib/api/playbackApi';
     import {stopPlaybackApi} from '$lib/api/playbackApi';
+    import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
+    import {buildFallbackPlaybackTrack} from '$lib/utils/buildPlaybackTrack';
 
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
@@ -221,6 +228,13 @@
     type CarDisplayView = 'classic' | 'drive-in';
     let carDisplayView: CarDisplayView = 'drive-in';
     let isSmallScreen = false;
+    let interactiveRadioTest = false;
+    let interactiveRadioBlocked = false;
+    let radioStartPending = false;
+    let radioCompletionSpotifyTrackId: string | null = null;
+    let interruptedRadioTrack: CarModeTrack | null = null;
+    let radioInterruptedResumePending = false;
+    let radioSpotifyRetryTrack: CarModeTrack | null = null;
     let openGuidedTrackList = false;
     let guidedReturnActionInProgress = false;
     let carScreen: MediaQueryList | null = null;
@@ -236,6 +250,7 @@
     }
 
     function setCarDisplayView(view: CarDisplayView): void {
+        if (interactiveRadioTest && view !== 'drive-in') return;
         carDisplayView = view;
 
         if (typeof window !== 'undefined') {
@@ -243,7 +258,8 @@
         }
     }
 
-    const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+    import {BACKEND_API_BASE} from '$lib/api/backendBase';
+    const API_BASE = BACKEND_API_BASE;
 
     type ClientDiagnosticPayload = {
         event: string;
@@ -257,12 +273,7 @@
     };
 
     function sendClientDiagnostic(payload: ClientDiagnosticPayload): void {
-        void fetch(`${API_BASE}/playback/client-diagnostic`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        }).catch(() => {
+        void sendPlaybackDiagnostic(payload).catch(() => {
             // Diagnostic failures should not affect playback.
         });
     }
@@ -802,6 +813,13 @@
         guidedReady = false;
         spotify.reset();
 
+        if (isPrivateNostalgiaRadioSelection()) {
+            await advancePrivateRadioTrack();
+            // The poller consumes Track 2's earliest narration frame,
+            // acknowledges it, and hands off when the backend publishes track.
+            return;
+        }
+
         await nextTrack(true);
     }
 
@@ -1084,10 +1102,21 @@
                 play_track: 'true'
             });
 
-            await fetch(
+            const response = await fetch(
                 `${API_BASE}/supabase/decade-genre/play-sequence?${radioParams.toString()}`,
                 {method: 'GET', credentials: 'include'}
             );
+
+            if (!response.ok) {
+                throw new Error(`Interactive Radio start failed (${response.status})`);
+            }
+
+            const startResult = await response.json() as {status?: string; mode?: string};
+            console.info('[car-page] Interactive Radio start acknowledged', startResult);
+
+            if (startResult.status !== 'started') {
+                throw new Error('Interactive Radio did not acknowledge startup.');
+            }
 
             return;
         }
@@ -1154,6 +1183,18 @@
             queueNextTrack: queueNextAutoTrack,
             setStatus: message => status.set(message),
             continueAutoPlayback,
+            onSpotifyHandoff: () => {
+                if (isPrivateNostalgiaRadioSelection()) {
+                    setExternalRadioSpotifyHandoffReady(true);
+                }
+            },
+            onSpotifyOpenFailed: track => {
+                if (isPrivateNostalgiaRadioSelection()) {
+                    radioSpotifyRetryTrack = track;
+                    setExternalRadioSpotifyHandoffReady(false);
+                    status.set('Spotify did not open. Press Auto Play to try again.');
+                }
+            },
             nextTrack,
             previousTrack: prevTrack,
             startPreviousAutoPlayback: () => prevTrack(true)
@@ -1164,7 +1205,302 @@
     async function handleAutoPlay() {
         if (!$currentTrack) return;
         captureProgramStartedOnce();
+
+        if (isPrivateNostalgiaRadioSelection()) {
+            if (radioStartPending) return;
+
+            // This retry is for the backend-selected track whose reserved
+            // window was manually closed or blocked. It never re-signals the
+            // prior interrupted track-finished event.
+            if (radioSpotifyRetryTrack) {
+                if (radioInterruptedResumePending) return;
+                radioInterruptedResumePending = true;
+
+                // Must run synchronously in this click handler so Chrome
+                // treats the wait popup as user initiated.
+                const reserved = spotify.prepareAutoWindow();
+                if (!reserved) {
+                    status.set('Spotify popup was blocked. Press Auto Play to try again.');
+                    radioInterruptedResumePending = false;
+                    return;
+                }
+
+                activePlayMode = 'auto';
+                const retryTrack = radioSpotifyRetryTrack;
+                radioSpotifyRetryTrack = null;
+                autoPlay.handoffCurrentTrack(retryTrack);
+                radioInterruptedResumePending = false;
+                return;
+            }
+
+            // Pause leaves an explicit interrupted track, not a naturally
+            // completed one.  Auto Play skips that exact backend-owned track
+            // once, then the poller consumes the next authoritative frame.
+            if (interruptedRadioTrack) {
+                if (radioInterruptedResumePending) return;
+
+                radioInterruptedResumePending = true;
+
+                // Reserve the same wait popup used by initial Auto Play
+                // before asynchronous track-finished/poll/narration work.
+                // It remains available until the authoritative next track
+                // can navigate it to Spotify.
+                const reserved = spotify.prepareAutoWindow();
+                if (!reserved) {
+                    status.set('Spotify popup was blocked. Press Auto Play to try again.');
+                    radioInterruptedResumePending = false;
+                    return;
+                }
+
+                activePlayMode = 'auto';
+                setExternalRadioTrackPaused(false);
+                setExternalRadioSpotifyHandoffReady(false);
+
+                try {
+                    const advanced = await advancePrivateRadioTrack(interruptedRadioTrack);
+                    if (advanced) {
+                        autoPlay.clearInterruptedSpotifyTrack();
+                        interruptedRadioTrack = null;
+                    } else {
+                        activePlayMode = null;
+                        setExternalRadioTrackPaused(true);
+                        isPlaying.set(false);
+                        playbackPhase.set('paused');
+                    }
+                } finally {
+                    radioInterruptedResumePending = false;
+                }
+                return;
+            }
+
+            if (activePlayMode === 'auto' && get(isPlaying)) {
+                const interrupted = autoPlay.interruptSpotifyTrack();
+                if (!interrupted) return;
+
+                interruptedRadioTrack = interrupted;
+                setExternalRadioTrackPaused(true);
+                setExternalRadioSpotifyHandoffReady(false);
+                activePlayMode = null;
+                isPlaying.set(false);
+                playbackPhase.set('paused');
+                status.set('Auto Play paused. Press Auto Play to resume.');
+                return;
+            }
+
+            if (!hasInstalledPrivateRadioTrack()) {
+                activePlayMode = 'auto';
+                setExternalRadioSpotifyHandoffReady(false);
+                if (!spotify.isMobile()) {
+                    if (!spotify.prepareAutoWindow()) {
+                        activePlayMode = null;
+                        status.set('Spotify popup was blocked. Press Auto Play to try again.');
+                        return;
+                    }
+                }
+                // Radio narration is backend-owned. Start polling before the
+                // sequence so every blocking narration phase is acknowledged.
+                startPlaybackPolling({
+                    guidedLinkOut: true,
+                    externalRadioTrackClock: true
+                });
+                markUserStartedPlayback();
+                const loaded = await loadFirstRadioSet();
+                if (!loaded) return;
+            }
+
+            // The status poller plays backend Intro/Detail and opens Spotify
+            // only after the backend advances to its track frame.
+            return;
+        }
+
         await autoPlay.handlePlay();
+    }
+
+    function failFirstSetLoad(message: string): void {
+        radioStartPending = false;
+        status.set(message);
+    }
+
+    function isPrivateNostalgiaRadioSelection(): boolean {
+        return interactiveRadioTest &&
+            get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_DG;
+    }
+
+    function hasInstalledPrivateRadioTrack(): boolean {
+        const track = get(currentTrack);
+        return Boolean(track?.spotifyTrackId && typeof track.setNumber === 'number');
+    }
+
+    function installRadioTrackStatus(
+        data: Record<string, any>,
+        previousSpotifyTrackId?: string | null
+    ): boolean {
+        const context = data.context as Record<string, unknown> | undefined;
+        const spotifyTrackId = context?.spotify_track_id;
+        const setNumber = context?.set_number;
+        const blockPosition = context?.block_position;
+        const blockSize = context?.block_size;
+        const requestedGenre = get(currentSelection)?.context?.genre;
+        const generatedGenre = context?.genre_slug ?? context?.genre;
+
+        if (
+            typeof spotifyTrackId !== 'string' ||
+            typeof setNumber !== 'number' ||
+            typeof blockPosition !== 'number' ||
+            typeof blockSize !== 'number' ||
+            !data.track_name ||
+            !data.artist_name ||
+            (requestedGenre && requestedGenre !== 'ALL' && generatedGenre !== requestedGenre) ||
+            (previousSpotifyTrackId && spotifyTrackId === previousSpotifyTrackId)
+        ) {
+            return false;
+        }
+
+        const track = buildFallbackPlaybackTrack({
+            spotifyId: spotifyTrackId,
+            currentRank: Number(data.current_rank ?? 0),
+            trackName: String(data.track_name),
+            artistName: String(data.artist_name),
+            normalizedCtx: normalizePlaybackContext(context)
+        }) as CarModeTrack;
+
+        tracks.set([track]);
+        currentTrack.set(track);
+        radioCompletionSpotifyTrackId = null;
+        interruptedRadioTrack = null;
+        radioInterruptedResumePending = false;
+        radioSpotifyRetryTrack = null;
+        setExternalRadioTrackPaused(false);
+        setExternalRadioSpotifyHandoffReady(false);
+        currentRank.set(track.rank);
+        isPlaying.set(false);
+        playbackPhase.set('idle');
+        elapsed.set(0);
+        duration.set(0);
+        progress.set(0);
+        status.set(`Set ${setNumber}: ${track.decadeName ?? ''} ${track.genreName ?? ''}`.trim());
+        return true;
+    }
+
+    async function waitForRadioTrack(previousSpotifyTrackId?: string | null): Promise<boolean> {
+        for (let attempt = 0; attempt < 40; attempt += 1) {
+            try {
+                const response = await fetchPlaybackStatus();
+                if (response.status === 401) {
+                    failFirstSetLoad('Your private playback session could not be authorized. Please try again.');
+                    return false;
+                }
+                if (!response.ok) {
+                    failFirstSetLoad('Unable to read the radio set from the playback service.');
+                    return false;
+                }
+
+                const data = await response.json() as Record<string, any>;
+                if (installRadioTrackStatus(data, previousSpotifyTrackId)) {
+                    radioStartPending = false;
+                    return true;
+                }
+            } catch (error) {
+                console.error('[car-page] radio set status failed', error);
+                failFirstSetLoad('Unable to load the radio set. Please try again.');
+                return false;
+            }
+            await new Promise(resolve => setTimeout(resolve, 350));
+        }
+
+        failFirstSetLoad('The radio set took too long to load. Please try again.');
+        return false;
+    }
+
+    async function loadFirstRadioSet(): Promise<boolean> {
+        if (!interactiveRadioTest || radioStartPending) return false;
+
+        const selection = get(currentSelection);
+        if (selection?.programType !== PROGRAM_TYPES.RADIO_DG) return false;
+
+        radioStartPending = true;
+        status.set('Generating the first radio set…');
+
+        const params = new URLSearchParams({
+            decade: selection.context?.decade ?? 'ALL',
+            genre: selection.context?.genre ?? 'ALL',
+            tts_language: selection.language ?? 'en',
+            languages: (selection.languages ?? [selection.language]).join(','),
+            // The backend owns the narration pipeline. The poller accepts its
+            // earliest context and sends each required acknowledgement before
+            // the backend can publish Spotify.
+            play_intro: 'true',
+            play_detail: 'true',
+            play_artist_description: 'false',
+            play_track: 'true'
+        });
+
+        try {
+            // This establishes a signed, HttpOnly guest playback session when
+            // the visitor is not signed in. The guest identity never reaches
+            // JavaScript; subsequent credentialed requests carry the cookie.
+            const guestSession = await startGuestPlaybackSession();
+            if (!guestSession.ok) {
+                failFirstSetLoad('Unable to establish a private playback session. Please try again.');
+                return false;
+            }
+
+            const response = await startRadioSequence(params);
+            if (response.status === 401) {
+                failFirstSetLoad('Your private playback session could not be authorized. Please try again.');
+                return false;
+            }
+            if (!response.ok) {
+                failFirstSetLoad('Unable to start the radio set generator.');
+                return false;
+            }
+
+            const result = await response.json() as {status?: string};
+            if (result.status !== 'started') {
+                failFirstSetLoad('The radio set generator did not start.');
+                return false;
+            }
+
+            return waitForRadioTrack();
+        } catch (error) {
+            console.error('[car-page] first radio set launch failed', error);
+            failFirstSetLoad('Unable to start the radio set generator. Please try again.');
+            return false;
+        }
+    }
+
+    async function advancePrivateRadioTrack(trackOverride?: CarModeTrack): Promise<boolean> {
+        const track = trackOverride ?? get(currentTrack);
+        if (!track?.spotifyTrackId) {
+            failFirstSetLoad('The current radio track is unavailable.');
+            return false;
+        }
+        if (radioCompletionSpotifyTrackId === track.spotifyTrackId) {
+            return false;
+        }
+
+        // The Auto Play timer is normally single-shot; keep this explicit
+        // guard so a duplicate browser callback cannot signal this backend
+        // track more than once while its next status frame is pending.
+        radioCompletionSpotifyTrackId = track.spotifyTrackId;
+
+        status.set('Loading the next radio track…');
+        const response = await signalTrackFinishedApi({
+            rankingId: track.rankingId,
+            spotifyTrackId: track.spotifyTrackId
+        });
+        if (response.status === 401) {
+            failFirstSetLoad('Your private playback session could not be authorized. Please try again.');
+            return false;
+        }
+        if (!response.ok) {
+            failFirstSetLoad('Unable to advance the radio set. Please try again.');
+            return false;
+        }
+
+        // Do not wait for the final track frame: Track 2's Intro/Detail frame
+        // is authoritative and the backend is waiting for its acknowledgement.
+        return true;
     }
 
     function openPlaybackPreferences(): void {
@@ -1179,6 +1515,11 @@
     async function invalidateLanguageChangedPlayback(): Promise<void> {
         cancelAllCarModeAutoPlay();
         autoPlay.cancel();
+        interruptedRadioTrack = null;
+        radioInterruptedResumePending = false;
+        radioSpotifyRetryTrack = null;
+        setExternalRadioTrackPaused(false);
+        setExternalRadioSpotifyHandoffReady(false);
         activePlayMode = null;
         narration.abandon();
         stopNarrationAudio();
@@ -1542,11 +1883,28 @@
                 : uiGenre;
 
     $: driveInProgramTitle =
-        headerMode === 'collection'
+        interactiveRadioTest
+            ? radioMarqueeTitle
+            : headerMode === 'collection'
             ? uiDecade
             : headerMode === 'artist_spotlight'
                 ? `${bannerTitle} Spotlight`
                 : `${uiDecade} ${uiGenre}`.trim();
+
+    // `ALL` is a request scope, never an on-air decade. Until the backend has
+    // selected a real set, identify the requested station. Thereafter the
+    // installed backend track is authoritative and updates this on each set.
+    $: radioMarqueeTitle =
+        interactiveRadioTest &&
+        typeof $currentTrack?.setNumber === 'number' &&
+        $currentTrack.decadeName &&
+        $currentTrack.genreName
+            ? `${$currentTrack.decadeName} ${$currentTrack.genreName.toUpperCase()}`
+            : `${toTitleCase($currentSelection?.context?.genre ?? 'Country').toUpperCase()} RADIO`;
+
+    $: radioSetLabel = interactiveRadioTest && $currentTrack?.decadeName && $currentTrack?.genreName
+        ? `${$currentTrack.decadeName} ${$currentTrack.genreName}`
+        : '';
 
 
     $: headerMode =
@@ -1558,6 +1916,10 @@
 
 
     function backToOptions() {
+        if (interactiveRadioTest) {
+            window.location.href = '/interactive-radio-test';
+            return;
+        }
         if ($currentSelection && $currentTrack) {
 
             const settings = get(playbackSettingsStore);
@@ -1608,6 +1970,15 @@
 
     async function handleAutoNextTrack() {
 
+        if (
+            interactiveRadioTest &&
+            get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_DG
+        ) {
+            // The backend radio loop receives the track-finished signal from
+            // the poller and selects the next track/set itself.
+            return;
+        }
+
         await new Promise(r => setTimeout(r, 300)); // 🔥 try 300–500ms
 
         await nextTrack();
@@ -1623,6 +1994,18 @@
             !track?.spotifyTrackId ||
             track.spotifyTrackId !== spotifyTrackId
         ) {
+            return;
+        }
+
+        if (
+            interactiveRadioTest &&
+            get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_DG
+        ) {
+            // Backend narration is complete only when it publishes `track`.
+            // Reuse Auto Play solely for the Spotify handoff and its timer.
+            if (activePlayMode === 'auto') {
+                autoPlay.handoffCurrentTrack(track);
+            }
             return;
         }
 
@@ -1671,9 +2054,28 @@
         updateCarLayout();
         carScreen.addEventListener('change', updateCarLayout);
 
+        const url = new URL(window.location.href);
+        interactiveRadioTest = url.searchParams.get('interactiveRadioTest') === 'true';
+        if (interactiveRadioTest && isSmallScreen) {
+            interactiveRadioBlocked = true;
+            status.set('Interactive Radio testing requires a desktop computer.');
+            return;
+        }
+
         const savedCarDisplay = localStorage.getItem('topspot_car_display');
 
-        if (isSmallScreen) {
+        if (interactiveRadioTest) {
+            carDisplayView = 'drive-in';
+            playbackSettingsStore.update(current => ({
+                ...current,
+                playbackMethod: 'automatic',
+                playbackOrder: 'shuffle',
+                pauseMode: 'continuous',
+                skipPlayed: true,
+                voices: ['intro', 'detail'],
+                detailLength: 'short'
+            }));
+        } else if (isSmallScreen) {
             carDisplayView = 'classic';
         } else if (
             savedCarDisplay === 'classic' ||
@@ -1699,7 +2101,6 @@
         window.addEventListener('ts-next-track', handleAutoNextTrack);
         window.addEventListener('ts-guided-track-ready', handleGuidedTrackReady);
 
-        const url = new URL(window.location.href);
         const languageChangedReturn = isChangedCarModePreferencesReturn(url);
         const languageUnchangedReturn = isUnchangedCarModePreferencesReturn(url);
 
@@ -1722,18 +2123,17 @@
 
         const mountedSettings = get(playbackSettingsStore);
 
-        if (mountedSettings.playbackMethod === 'automatic') {
+        if (mountedSettings.playbackMethod === 'automatic' && !interactiveRadioTest) {
             // Automatic Playback keeps the existing backend transport.
             try {
-                await fetch(`${API_BASE}/playback/reset`, {
-                    method: 'POST',
-                    credentials: 'include'
-                });
+                await resetPlaybackApi();
             } catch (err) {
                 console.warn('⚠️ Backend reset failed (continuing anyway):', err);
             }
 
-            startPlaybackPolling();
+            startPlaybackPolling(
+                interactiveRadioTest ? {guidedLinkOut: true} : undefined
+            );
         } else {
             // Guided Playback owns narration and Spotify handoff in the browser.
             resetNarrationPhaseState();
@@ -1744,7 +2144,7 @@
         const hasParams = url.searchParams.toString().length > 0;
 
         setPlaybackView(
-            url.searchParams.get('view') === 'studio'
+            !interactiveRadioTest && url.searchParams.get('view') === 'studio'
                 ? 'studio'
                 : 'car'
         );
@@ -1883,6 +2283,11 @@
 
 </script>
 
+{#if interactiveRadioBlocked}
+    <main class="interactive-radio-desktop-required">
+        <p>Interactive Radio testing requires a desktop computer.</p>
+    </main>
+{:else}
 <PublicJourneyHeader
         language={$currentSelection?.language ?? 'en'}
         onPreferences={openPlaybackPreferences}
@@ -1974,6 +2379,12 @@
                         onAutoPlay={handleAutoPlay}
                         onBackToOptions={backToOptions}
                         onUseClassicView={() => setCarDisplayView('classic')}
+                        radioAutoOnly={interactiveRadioTest}
+                        radioSetNumber={interactiveRadioTest ? $currentTrack.setNumber ?? null : null}
+                        radioSetPosition={interactiveRadioTest ? $currentTrack.blockPosition ?? null : null}
+                        radioSetSize={interactiveRadioTest ? $currentTrack.blockSize ?? null : null}
+                        {radioSetLabel}
+                        radioLoadPending={radioStartPending}
                         onReportProblem={() => openReportProblem()}
                         onReportNarration={openNarrationReport}
                         openTrackList={openGuidedTrackList}
@@ -2058,6 +2469,7 @@
 
 
 </div>
+{/if}
 
 {#if $audioDebugEnabled}
     <AudioDiagnosticPanel />
