@@ -66,7 +66,8 @@
         resetNarrationPhaseState,
         resetSpotifyStartState,
         setExternalRadioTrackPaused,
-        setExternalRadioSpotifyHandoffReady
+        setExternalRadioSpotifyHandoffReady,
+        setExternalRadioAdvancePending
     } from '$lib/carmode/CarMode.poller';
 
     import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
@@ -1259,6 +1260,7 @@
                 activePlayMode = 'auto';
                 setExternalRadioTrackPaused(false);
                 setExternalRadioSpotifyHandoffReady(false);
+                setExternalRadioAdvancePending(true);
 
                 try {
                     const advanced = await skipPrivateRadioTrack(interruptedRadioTrack);
@@ -1266,6 +1268,7 @@
                         autoPlay.clearInterruptedSpotifyTrack();
                         interruptedRadioTrack = null;
                     } else {
+                        setExternalRadioAdvancePending(false);
                         activePlayMode = null;
                         setExternalRadioTrackPaused(true);
                         isPlaying.set(false);
@@ -1376,6 +1379,7 @@
         radioSpotifyRetryTrack = null;
         setExternalRadioTrackPaused(false);
         setExternalRadioSpotifyHandoffReady(false);
+        setExternalRadioAdvancePending(false);
         currentRank.set(track.rank);
         isPlaying.set(false);
         playbackPhase.set('idle');
@@ -1649,10 +1653,15 @@
         radioSpotifyRetryTrack = null;
         setExternalRadioTrackPaused(false);
         setExternalRadioSpotifyHandoffReady(false);
+        setExternalRadioAdvancePending(true);
         spotify.returnToWaitingPage();
         isPlaying.set(false);
+        playbackPhase.set('loading');
 
-        await skipPrivateRadioTrack(track);
+        if (!await skipPrivateRadioTrack(track)) {
+            setExternalRadioAdvancePending(false);
+            playbackPhase.set('track');
+        }
     }
 
     function handleDriveInPrev(): void {
@@ -2042,6 +2051,7 @@
         radioNarrationPolicyActive = false;
         setExternalRadioTrackPaused(false);
         setExternalRadioSpotifyHandoffReady(false);
+        setExternalRadioAdvancePending(false);
         activePlayMode = null;
         stopCurrentNarrationPhase({resolvePhase: false});
         narration.abandon();
@@ -2758,5 +2768,4 @@
     }
 
 </style>
-
 

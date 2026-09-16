@@ -212,6 +212,7 @@ let narrationPausedAtBoundary = false;
 // still-active track frame overwrite the frozen Drive-In clock/UI.
 let externalRadioTrackPaused = false;
 let externalRadioSpotifyHandoffReady = false;
+let externalRadioAdvancePending = false;
 
 export function setExternalRadioTrackPaused(paused: boolean): void {
     externalRadioTrackPaused = paused;
@@ -219,6 +220,10 @@ export function setExternalRadioTrackPaused(paused: boolean): void {
 
 export function setExternalRadioSpotifyHandoffReady(ready: boolean): void {
     externalRadioSpotifyHandoffReady = ready;
+}
+
+export function setExternalRadioAdvancePending(pending: boolean): void {
+    externalRadioAdvancePending = pending;
 }
 
 export function stopCurrentNarrationPhase(
@@ -629,6 +634,15 @@ export function startPlaybackPolling(
             }
 
             const narrationPhase = isNarrationPhase(phase);
+            if (options.externalRadioTrackClock && isBackendRadio && externalRadioAdvancePending) {
+                if (narrationPhase || (phase === 'track' && spotifyId !== activeSpotifyTrackId)) {
+                    externalRadioAdvancePending = false;
+                } else if (phase === 'track') {
+                    isPlaying.set(false);
+                    playbackPhase.set('loading');
+                    return;
+                }
+            }
             if (options.externalRadioTrackClock && isBackendRadio && narrationPhase) {
                 // A later backend track frame must not inherit the previous
                 // track's successful Spotify navigation.

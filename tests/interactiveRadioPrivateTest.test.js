@@ -150,11 +150,23 @@ test('private radio Next and paused-track restart use the explicit skip endpoint
     assert.match(nextHandler, /isPrivateNostalgiaRadioSelection\(\)/);
     assert.match(nextHandler, /get\(playbackPhase\) !== 'track'/);
     assert.match(nextHandler, /skipPrivateRadioTrack\(track\)/);
+    assert.match(nextHandler, /setExternalRadioAdvancePending\(true\)/);
+    assert.match(nextHandler, /playbackPhase\.set\('loading'\)/);
     assert.match(carPage, /skipPrivateRadioTrack\(interruptedRadioTrack\)/);
     assert.match(skip, /skipRadioTrackApi\(\)/);
     assert.match(skip, /result\?\.ignored/);
     assert.match(driveIn, /disabled=\{radioAutoOnly && \(radioLoadPending \|\| phase !== 'track'\)\}/);
     assert.doesNotMatch(driveIn, /disabled=\{radioAutoOnly\} on:click=\{onNext\}/);
+});
+
+test('private radio keeps a requested advance loading until the backend leaves the old track frame', async () => {
+    const poller = await readFile(pollerPath, 'utf8');
+
+    assert.match(poller, /let externalRadioAdvancePending = false/);
+    assert.match(poller, /export function setExternalRadioAdvancePending\(pending: boolean\)/);
+    assert.match(poller, /spotifyId !== activeSpotifyTrackId/);
+    assert.match(poller, /externalRadioAdvancePending = false/);
+    assert.match(poller, /playbackPhase\.set\('loading'\)/);
 });
 
 test('Auto Play bootstraps, installs a real first track, then begins normal narration', async () => {
