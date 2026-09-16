@@ -103,7 +103,8 @@
     import {loadForSelection} from '$lib/carmode/CarMode.loader';
     import {
         fetchPlaybackStatus, resetPlaybackApi, sendPlaybackDiagnostic,
-        signalTrackFinishedApi, startGuestPlaybackSession, startRadioSequence
+        signalTrackFinishedApi, startGuestPlaybackSession, startRadioSequence,
+        updateRadioNarrationPolicy
     } from '$lib/api/playbackApi';
     import {stopPlaybackApi} from '$lib/api/playbackApi';
     import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
@@ -232,10 +233,10 @@
     let interactiveRadioTest = false;
     let interactiveRadioBlocked = false;
     let radioStartPending = false;
-    // The radio backend snapshots narration choices at session start. Keep the
-    // controls read-only while that session is authoritative rather than
-    // implying an in-flight sequence has changed.
+    // While radio is active, preference changes are queued to the backend and
+    // applied only when its next set begins.
     let radioNarrationPolicyActive = false;
+    let radioNarrationPolicyUpdate: Promise<void> = Promise.resolve();
     let radioCompletionSpotifyTrackId: string | null = null;
     let interruptedRadioTrack: CarModeTrack | null = null;
     let radioInterruptedResumePending = false;
@@ -1482,6 +1483,41 @@
         }
     }
 
+    function queueRadioNarrationPolicyUpdate(
+        detailLength: 'off' | 'short' | 'long',
+        nextArtistStoriesEnabled: boolean
+    ): void {
+        if (!interactiveRadioTest || !radioNarrationPolicyActive) return;
+
+        radioNarrationPolicyUpdate = radioNarrationPolicyUpdate
+            .catch(() => undefined)
+            .then(async () => {
+                const response = await updateRadioNarrationPolicy({
+                    detailLength,
+                    artistStoriesEnabled: nextArtistStoriesEnabled
+                });
+                if (!response.ok) {
+                    throw new Error(`Radio narration policy update failed: ${response.status}`);
+                }
+            })
+            .catch(error => {
+                console.warn('[car-page] Unable to queue narration options for next set', error);
+            });
+    }
+
+    function handleDetailLengthChange(detailLength: 'off' | 'short' | 'long'): void {
+        playbackSettingsStore.update(current => ({...current, detailLength}));
+        queueRadioNarrationPolicyUpdate(detailLength, artistStoriesEnabled);
+    }
+
+    function handleArtistStoriesChange(enabled: boolean): void {
+        artistStoriesEnabled = enabled;
+        queueRadioNarrationPolicyUpdate(
+            get(playbackSettingsStore).detailLength,
+            enabled
+        );
+    }
+
     async function advancePrivateRadioTrack(trackOverride?: CarModeTrack): Promise<boolean> {
         const track = trackOverride ?? get(currentTrack);
         if (!track?.spotifyTrackId) {
@@ -2410,9 +2446,8 @@
                         compact={carDisplayView === 'drive-in'}
                         detailLength={settings.detailLength}
                         {artistStoriesEnabled}
-                        narrationOptionsLocked={interactiveRadioTest && radioNarrationPolicyActive}
-                        onDetailLengthChange={(detailLength) => playbackSettingsStore.update(current => ({...current, detailLength}))}
-                        onArtistStoriesChange={(enabled) => (artistStoriesEnabled = enabled)}
+                        onDetailLengthChange={handleDetailLengthChange}
+                        onArtistStoriesChange={handleArtistStoriesChange}
             />
         {/if}
 
