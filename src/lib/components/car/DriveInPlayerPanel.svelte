@@ -314,7 +314,12 @@
         {isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
     </span>
             </button>
-            <button type="button" disabled={radioAutoOnly} on:click={onNext} aria-label={transportCopy.nextAria}>
+            <button
+                    type="button"
+                    disabled={radioAutoOnly && (radioLoadPending || phase !== 'track')}
+                    on:click={onNext}
+                    aria-label={transportCopy.nextAria}
+            >
                 <span class="control-icon">▶|</span>
                 <span>{transportCopy.next}</span>
             </button>

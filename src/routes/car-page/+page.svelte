@@ -103,7 +103,7 @@
     import {loadForSelection} from '$lib/carmode/CarMode.loader';
     import {
         fetchPlaybackStatus, resetPlaybackApi, sendPlaybackDiagnostic,
-        signalTrackFinishedApi, startGuestPlaybackSession, startRadioSequence,
+        signalTrackFinishedApi, skipRadioTrackApi, startGuestPlaybackSession, startRadioSequence,
         updateRadioNarrationPolicy
     } from '$lib/api/playbackApi';
     import {stopPlaybackApi} from '$lib/api/playbackApi';
@@ -1261,7 +1261,7 @@
                 setExternalRadioSpotifyHandoffReady(false);
 
                 try {
-                    const advanced = await advancePrivateRadioTrack(interruptedRadioTrack);
+                    const advanced = await skipPrivateRadioTrack(interruptedRadioTrack);
                     if (advanced) {
                         autoPlay.clearInterruptedSpotifyTrack();
                         interruptedRadioTrack = null;
@@ -1543,12 +1543,57 @@
             return false;
         }
         if (!response.ok) {
+            radioCompletionSpotifyTrackId = null;
             failFirstSetLoad('Unable to advance the radio set. Please try again.');
+            return false;
+        }
+
+        const result = await response.json().catch(() => null) as {
+            ignored?: boolean;
+        } | null;
+        if (result?.ignored) {
+            radioCompletionSpotifyTrackId = null;
             return false;
         }
 
         // Do not wait for the final track frame: Track 2's Intro/Detail frame
         // is authoritative and the backend is waiting for its acknowledgement.
+        return true;
+    }
+
+    async function skipPrivateRadioTrack(trackOverride?: CarModeTrack): Promise<boolean> {
+        const track = trackOverride ?? get(currentTrack);
+        if (!track?.spotifyTrackId) {
+            failFirstSetLoad('The current radio track is unavailable.');
+            return false;
+        }
+        if (radioCompletionSpotifyTrackId === track.spotifyTrackId) {
+            return false;
+        }
+
+        radioCompletionSpotifyTrackId = track.spotifyTrackId;
+        status.set('Loading the next radio track…');
+
+        const response = await skipRadioTrackApi();
+        if (response.status === 401) {
+            radioCompletionSpotifyTrackId = null;
+            failFirstSetLoad('Your private playback session could not be authorized. Please try again.');
+            return false;
+        }
+        if (!response.ok) {
+            radioCompletionSpotifyTrackId = null;
+            failFirstSetLoad('Unable to advance the radio set. Please try again.');
+            return false;
+        }
+
+        const result = await response.json().catch(() => null) as {
+            ignored?: boolean;
+        } | null;
+        if (result?.ignored) {
+            radioCompletionSpotifyTrackId = null;
+            return false;
+        }
+
         return true;
     }
 
@@ -1590,8 +1635,24 @@
         }
     }
 
-    function handleDriveInNext(): void {
-        autoPlay.handleNext();
+    async function handleDriveInNext(): Promise<void> {
+        if (!isPrivateNostalgiaRadioSelection()) {
+            autoPlay.handleNext();
+            return;
+        }
+
+        const track = get(currentTrack);
+        if (!track || get(playbackPhase) !== 'track' || radioStartPending) return;
+
+        autoPlay.cancel();
+        interruptedRadioTrack = null;
+        radioSpotifyRetryTrack = null;
+        setExternalRadioTrackPaused(false);
+        setExternalRadioSpotifyHandoffReady(false);
+        spotify.returnToWaitingPage();
+        isPlaying.set(false);
+
+        await skipPrivateRadioTrack(track);
     }
 
     function handleDriveInPrev(): void {
@@ -2697,7 +2758,5 @@
     }
 
 </style>
-
-
 
 

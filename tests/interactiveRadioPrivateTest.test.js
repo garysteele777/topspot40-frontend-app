@@ -136,6 +136,27 @@ test('a private radio track-finished signal remains with the backend until its s
     assert.ok(handler.indexOf('return;') < handler.indexOf('await nextTrack()'));
 });
 
+test('private radio Next and paused-track restart use the explicit skip endpoint', async () => {
+    const [carPage, driveIn, playbackApi] = await Promise.all([
+        readFile(carPagePath, 'utf8'),
+        readFile(driveInPath, 'utf8'),
+        readFile(playbackApiPath, 'utf8')
+    ]);
+    const nextHandler = carPage.match(/async function handleDriveInNext\(\): Promise<void> \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+    const skip = carPage.match(/async function skipPrivateRadioTrack\([\s\S]*?\n    \}/)?.[0] ?? '';
+
+    assert.match(playbackApi, /skipRadioTrackApi/);
+    assert.match(playbackApi, /playback\/skip-track/);
+    assert.match(nextHandler, /isPrivateNostalgiaRadioSelection\(\)/);
+    assert.match(nextHandler, /get\(playbackPhase\) !== 'track'/);
+    assert.match(nextHandler, /skipPrivateRadioTrack\(track\)/);
+    assert.match(carPage, /skipPrivateRadioTrack\(interruptedRadioTrack\)/);
+    assert.match(skip, /skipRadioTrackApi\(\)/);
+    assert.match(skip, /result\?\.ignored/);
+    assert.match(driveIn, /disabled=\{radioAutoOnly && \(radioLoadPending \|\| phase !== 'track'\)\}/);
+    assert.doesNotMatch(driveIn, /disabled=\{radioAutoOnly\} on:click=\{onNext\}/);
+});
+
 test('Auto Play bootstraps, installs a real first track, then begins normal narration', async () => {
     const [carPage, poller, playbackTrack, playbackContext, driveIn, playbackApi] = await Promise.all([
         readFile(carPagePath, 'utf8'),
@@ -412,7 +433,7 @@ test('an interrupted radio Spotify track freezes the backend clock and performs 
     assert.match(carPage, /let interruptedRadioTrack: CarModeTrack \| null = null/);
     assert.match(carPage, /autoPlay\.interruptSpotifyTrack\(\)/);
     assert.match(carPage, /setExternalRadioTrackPaused\(true\)/);
-    assert.match(carPage, /await advancePrivateRadioTrack\(interruptedRadioTrack\)/);
+    assert.match(carPage, /await skipPrivateRadioTrack\(interruptedRadioTrack\)/);
     assert.match(carPage, /autoPlay\.clearInterruptedSpotifyTrack\(\)/);
     assert.match(carPage, /radioInterruptedResumePending/);
 });
@@ -427,7 +448,7 @@ test('Auto Play after radio Pause reserves one wait popup before the async backe
 
     const handler = carPage.match(/async function handleAutoPlay\(\) \{([\s\S]*?)\n    \}/)?.[1] ?? '';
     assert.match(handler, /const reserved = spotify\.prepareAutoWindow\(\)/);
-    assert.ok(handler.indexOf('const reserved = spotify.prepareAutoWindow()') < handler.indexOf('await advancePrivateRadioTrack(interruptedRadioTrack)'));
+    assert.ok(handler.indexOf('const reserved = spotify.prepareAutoWindow()') < handler.indexOf('await skipPrivateRadioTrack(interruptedRadioTrack)'));
     assert.match(handler, /radioSpotifyRetryTrack/);
     assert.match(handler, /autoPlay\.handoffCurrentTrack\(retryTrack\)/);
     assert.match(spotify, /function prepareAutoWindow\(\): boolean/);

@@ -46,6 +46,12 @@ export async function signalTrackFinishedApi(payload: {
     });
 }
 
+export async function skipRadioTrackApi(): Promise<Response> {
+    return fetchPlaybackApi('/playback/skip-track', {
+        method: 'POST'
+    });
+}
+
 export async function stopPlaybackApi(signal?: AbortSignal): Promise<void> {
     await fetchPlaybackApi('/playback/stop', {
         method: 'POST',
