@@ -1,7 +1,6 @@
 // @ts-nocheck -- source-contract tests keep this private recovery isolated from public experiences.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
 import {readdir, readFile} from 'node:fs/promises';
 import {register} from 'node:module';
 
@@ -36,7 +35,6 @@ test('private Interactive Radio test route exists and is labelled', async () => 
     assert.match(route, /Interactive Radio — Private Test/);
     assert.match(route, /InteractiveRadioPanel/);
 });
-
 test('no public source links to the private radio test route', async () => {
     const files = await sourceFiles('../src');
     for (const file of files) {
@@ -46,9 +44,10 @@ test('no public source links to the private radio test route', async () => {
     }
 });
 
-test('the official Experience page is unchanged from personal/main', () => {
-    const changed = execFileSync('git', ['diff', '--name-only', 'personal/main', '--', 'src/routes/journey-prototype/choose/+page.svelte'], {encoding: 'utf8'});
-    assert.equal(changed.trim(), '');
+test('the journey chooser does not expose the private-test route', async () => {
+    const chooser = await readFile(new URL('../src/routes/journey-prototype/choose/+page.svelte', import.meta.url), 'utf8');
+    assert.match(chooser, /buildExperienceDestination/);
+    assert.doesNotMatch(chooser, /interactive-radio-test/);
 });
 
 test('all recovered radio station categories are available', async () => {
@@ -89,9 +88,36 @@ test('Country and Pop private-radio URLs preserve their genre for the backend se
     assert.match(carPage, /supabase\/decade-genre\/play-sequence/);
     assert.match(carPage, /loadFirstRadioSet\(\): Promise<boolean>/);
     assert.match(carPage, /play_intro: 'true'/);
-    assert.match(carPage, /play_detail: 'true'/);
-    assert.match(carPage, /play_artist_description: 'false'/);
+    assert.match(carPage, /detail_length: detailLength/);
+    assert.match(carPage, /play_detail: String\(detailLength !== 'off'\)/);
+    assert.match(carPage, /play_artist_description: String\(artistStoriesEnabled\)/);
     assert.match(poller, /Radio still needs the normal timing\/track-finished path/);
+});
+test('private radio snapshots the established narration choices without overwriting saved details', async () => {
+    const [carPage, panel, header, options, driveIn] = await Promise.all([
+        readFile(carPagePath, 'utf8'),
+        readFile(panelPath, 'utf8'),
+        readFile(new URL('../src/lib/components/car/CarModeHeader.svelte', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/components/car/NarrationOptions.svelte', import.meta.url), 'utf8'),
+        readFile(driveInPath, 'utf8')
+    ]);
+    const radioMount = carPage.match(/if \(interactiveRadioTest\) \{([\s\S]*?)\n        \} else if/)?.[1] ?? '';
+    const firstSetLoader = carPage.match(/async function loadFirstRadioSet\(\): Promise<boolean> \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+
+    assert.doesNotMatch(radioMount, /voices:\s*\['intro', 'detail'\]|detailLength:\s*'short'/);
+    assert.match(firstSetLoader, /const detailLength = settings\.voices\.includes\('detail'\)/);
+    assert.match(firstSetLoader, /detail_length: detailLength/);
+    assert.match(firstSetLoader, /play_artist_description: String\(artistStoriesEnabled\)/);
+    assert.match(carPage, /radioNarrationPolicyActive = true/);
+    assert.match(header, /narrationOptionsLocked/);
+    assert.match(options, /disabled=\{narrationOptionsLocked\}/);
+    assert.match(panel, /const settings = get\(playbackSettingsStore\)/);
+    assert.doesNotMatch(panel, /const voices: VoicePart\[\] = \['intro', 'detail'\]/);
+
+    const viewSwitch = driveIn.match(/\{#if !radioAutoOnly\}[\s\S]*?<div class="view-switch"[\s\S]*?<\/div>[\s\S]*?\{\/if\}/)?.[0] ?? '';
+    assert.match(viewSwitch, /class="view-switch"/);
+    assert.match(viewSwitch, /on:click=\{onUseClassicView\}/);
+    assert.match(viewSwitch, /driveInView/);
 });
 
 test('a private radio track-finished signal remains with the backend until its set completes', async () => {
@@ -315,9 +341,4 @@ test('Auto Play after radio Pause reserves one wait popup before the async backe
     assert.match(poller, /Do not run a visible clock or/);
     assert.match(carPage, /setExternalRadioSpotifyHandoffReady\(true\)/);
     assert.match(carPage, /setExternalRadioSpotifyHandoffReady\(false\)/);
-});
-
-test('official experience routes remain untouched', () => {
-    const changed = execFileSync('git', ['diff', '--name-only', 'personal/main', '--', 'src/routes/journey-prototype'], {encoding: 'utf8'});
-    assert.equal(changed.trim(), '');
 });

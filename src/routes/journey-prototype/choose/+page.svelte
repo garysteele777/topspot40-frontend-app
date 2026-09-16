@@ -3,15 +3,13 @@
     import {onMount} from 'svelte';
     import posthog from 'posthog-js';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
-    import {createSingleChoiceContinue} from '$lib/interactions/singleChoiceContinue.js';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
     import {captureExperienceSelected} from '$lib/analytics/posthog';
+    import {buildExperienceDestination, EXPERIENCE_FAMILIES, type ExperienceFamily, type ExperienceMode} from '$lib/journey/experienceMode';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
-    type ProgramChoice = 'nostalgia' | 'collections' | 'artist' | 'docuseries';
-
     let language: LandingLanguage = 'en';
-    let selectedProgram: ProgramChoice | null = null;
+    let selectedProgram: ExperienceFamily | null = null;
     let showJourneyLayout = false;
 
     const text = {
@@ -48,50 +46,30 @@
         }
     };
 
-    const routes: Record<ProgramChoice, string> = {
-        nostalgia: '/journey-prototype/decade',
-        collections: '/journey-prototype/collections',
-        artist: '/journey-prototype/artist-spotlights',
-        docuseries: '/journey-prototype/music-docuseries'
-    };
-    const choices: ProgramChoice[] = ['nostalgia', 'collections', 'artist', 'docuseries'];
+    const choices = EXPERIENCE_FAMILIES;
+    const desktopInstruction = "Choose an experience, then choose how you'd like to listen.";
 
-    function setProgram(choice: ProgramChoice) {
+    function setProgram(choice: ExperienceFamily) {
         selectedProgram = choice;
         localStorage.setItem('topspot_journey_program', choice);
     }
 
-    function description(choice: ProgramChoice) {
+    function description(choice: ExperienceFamily) {
         if (choice === 'nostalgia') return text[language].nostalgiaDesc;
         if (choice === 'collections') return text[language].collectionsDesc;
         if (choice === 'artist') return text[language].artistDesc;
         return text[language].docuseriesDesc;
     }
 
-    function performContinueJourney() {
+    function startExperience(mode: ExperienceMode) {
         if (!selectedProgram) return;
         captureExperienceSelected(posthog, selectedProgram);
-        goto(routes[selectedProgram]);
-    }
-
-    const selectionContinue = createSingleChoiceContinue({
-        getSelected: () => selectedProgram,
-        select: setProgram,
-        onContinue: performContinueJourney,
-        isContinueDisabled: () => !selectedProgram
-    });
-
-    function chooseProgram(choice: ProgramChoice, event?: MouseEvent) {
-        selectionContinue.select(choice, event);
-    }
-
-    function continueJourney() {
-        return selectionContinue.continue();
+        goto(buildExperienceDestination(selectedProgram, mode));
     }
 
     onMount(() => {
         const journeyScreen = window.matchMedia(
-            '(min-width: 1024px) and (min-height: 650px)'
+            '(min-width: 1200px) and (min-height: 650px)'
         );
 
         function updateLayout() {
@@ -129,18 +107,19 @@
             />
             <div class="shade" aria-hidden="true"></div>
             <section class="journey-title"><h1>{text[language].title}</h1>
-                <p>{text[language].instruction}</p></section>
+                <p>{desktopInstruction}</p></section>
             <div class="choice-layer">
                 {#each choices as choice}
                     <button class="program-choice program-{choice}" class:active={selectedProgram === choice}
-                            aria-pressed={selectedProgram === choice} on:click={(event) => chooseProgram(choice, event)}>
+                            aria-pressed={selectedProgram === choice} on:click={() => setProgram(choice)}>
                         <span class="choice-label"><strong>{text[language][choice]}</strong><small>{description(choice)}</small></span>
                     </button>
                 {/each}
             </div>
             {#if selectedProgram}
-                <button class="continue" on:click={continueJourney}>{text[language].continue}<span
+                <button type="button" class="mode-button program-mode" on:click={() => startExperience('program')}>Program Mode <span
                         aria-hidden="true">→</span></button>
+                <button type="button" class="mode-button radio-mode" on:click={() => startExperience('radio')}>Radio Mode <span aria-hidden="true">→</span></button>
             {/if}
         </main>
     {:else}
@@ -153,9 +132,7 @@
                 <div class="mobile-program-list">
                     {#each choices as choice}
                         <button
-                                class:active={selectedProgram === choice}
-                                aria-pressed={selectedProgram === choice}
-                                on:click={(event) => chooseProgram(choice, event)}
+                                on:click={() => goto(buildExperienceDestination(choice, 'program'))}
                         >
                         <span class="mobile-choice-text">
                             <strong>{text[language][choice]}</strong>
@@ -168,15 +145,6 @@
                     {/each}
                 </div>
 
-                {#if selectedProgram}
-                    <button
-                            class="mobile-continue"
-                            on:click={continueJourney}
-                    >
-                        {text[language].continue}
-                        <span aria-hidden="true">→</span>
-                    </button>
-                {/if}
             </section>
         </main>
     {/if}
@@ -335,24 +303,24 @@ button {
         font-size: clamp(11px, .82vw, 14px);
     }
 
-    .continue {
+    .mode-button {
         position: absolute;
         z-index: 12;
-        left: 50%;
         bottom: 2.5%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 14px 30px;
-        color: #081008;
-        background: #75ef4f;
-        border: 2px solid #b7ff9c;
+        width: min(220px, 20vw);
+        min-height: 54px;
         border-radius: 999px;
         font-size: 20px;
         font-weight: 900;
-        box-shadow: 0 0 28px rgba(78, 255, 73, .62);
     }
+    .program-mode {
+        left: calc(50% - min(122px, 11vw));
+        bottom: 2.5%;
+        transform: translateX(-50%);
+        color: #211706; background: #f7dc82; border: 2px solid #fff0b0; box-shadow: 0 0 28px rgba(247,220,130,.5);
+    }
+    .radio-mode { left: calc(50% + min(122px, 11vw)); transform: translateX(-50%); color:#081008; background:#75ef4f; border:2px solid #b7ff9c; box-shadow:0 0 28px rgba(78,255,73,.62); }
+    .mode-button:hover, .mode-button:focus-visible { outline:3px solid #fff; outline-offset:3px; }
 
     @media (max-width: 820px) {
         .journey {
@@ -380,7 +348,7 @@ button {
             padding: 8px 5px;
         }
 
-        .continue {
+        .mode-button {
             bottom: 2%;
             padding: 11px 24px;
             font-size: 17px;
@@ -454,11 +422,6 @@ button {
     outline: none;
 }
 
-.mobile-program-list button.active {
-    color: #081008;
-    background: #75ef4f;
-    border-color: #b7ff9c;
-}
 
 .mobile-choice-text strong,
 .mobile-choice-text small {
@@ -473,22 +436,6 @@ button {
     margin-top: 5px;
     font-size: 14px;
     line-height: 1.3;
-}
-
-.mobile-continue {
-    width: 100%;
-    min-height: 58px;
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    color: #081008;
-    background: #75ef4f;
-    border: 2px solid #b7ff9c;
-    border-radius: 15px;
-    font-size: 19px;
-    font-weight: 900;
 }
 
 @media (max-width: 480px) {

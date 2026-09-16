@@ -26,6 +26,7 @@
     export let compact: boolean = false;
     export let detailLength: 'off' | 'short' | 'long' = 'short';
     export let artistStoriesEnabled = false;
+    export let narrationOptionsLocked = false;
     export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
     export let onArtistStoriesChange: (value: boolean) => void;
 
@@ -96,7 +97,7 @@
 
         </div>
 
-        <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {onDetailLengthChange} {onArtistStoriesChange}/>
+        <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {narrationOptionsLocked} {onDetailLengthChange} {onArtistStoriesChange}/>
 
     </div>
 </div>
