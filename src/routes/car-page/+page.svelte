@@ -56,6 +56,7 @@
         type ProgramKey
     } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
+    import {isRadioExperienceDestination} from '$lib/journey/experienceMode';
     import {
         startPlaybackPolling,
         stopPlaybackPolling,
@@ -231,6 +232,10 @@
     let interactiveRadioTest = false;
     let interactiveRadioBlocked = false;
     let radioStartPending = false;
+    // The radio backend snapshots narration choices at session start. Keep the
+    // controls read-only while that session is authoritative rather than
+    // implying an in-flight sequence has changed.
+    let radioNarrationPolicyActive = false;
     let radioCompletionSpotifyTrackId: string | null = null;
     let interruptedRadioTrack: CarModeTrack | null = null;
     let radioInterruptedResumePending = false;
@@ -1421,6 +1426,11 @@
         radioStartPending = true;
         status.set('Generating the first radio set…');
 
+        const settings = get(playbackSettingsStore);
+        const detailLength = settings.voices.includes('detail')
+            ? settings.detailLength
+            : 'off';
+
         const params = new URLSearchParams({
             decade: selection.context?.decade ?? 'ALL',
             genre: selection.context?.genre ?? 'ALL',
@@ -1430,8 +1440,11 @@
             // earliest context and sends each required acknowledgement before
             // the backend can publish Spotify.
             play_intro: 'true',
-            play_detail: 'true',
-            play_artist_description: 'false',
+            // detail_length is the radio contract; retain the boolean for
+            // callers which still understand only the legacy flag.
+            detail_length: detailLength,
+            play_detail: String(detailLength !== 'off'),
+            play_artist_description: String(artistStoriesEnabled),
             play_track: 'true'
         });
 
@@ -1460,6 +1473,8 @@
                 failFirstSetLoad('The radio set generator did not start.');
                 return false;
             }
+
+            radioNarrationPolicyActive = true;
 
             return waitForRadioTrack();
         } catch (error) {
@@ -1917,7 +1932,10 @@
 
     function backToOptions() {
         if (interactiveRadioTest) {
-            window.location.href = '/interactive-radio-test';
+            const radioReturnTo = new URLSearchParams(window.location.search).get('radioReturnTo');
+            window.location.href = isRadioExperienceDestination(radioReturnTo)
+                ? radioReturnTo ?? '/interactive-radio-test'
+                : '/interactive-radio-test';
             return;
         }
         if ($currentSelection && $currentTrack) {
@@ -2071,9 +2089,7 @@
                 playbackMethod: 'automatic',
                 playbackOrder: 'shuffle',
                 pauseMode: 'continuous',
-                skipPlayed: true,
-                voices: ['intro', 'detail'],
-                detailLength: 'short'
+                skipPlayed: true
             }));
         } else if (isSmallScreen) {
             carDisplayView = 'classic';
@@ -2350,6 +2366,7 @@
                         compact={carDisplayView === 'drive-in'}
                         detailLength={settings.detailLength}
                         {artistStoriesEnabled}
+                        narrationOptionsLocked={interactiveRadioTest && radioNarrationPolicyActive}
                         onDetailLengthChange={(detailLength) => playbackSettingsStore.update(current => ({...current, detailLength}))}
                         onArtistStoriesChange={(enabled) => (artistStoriesEnabled = enabled)}
             />

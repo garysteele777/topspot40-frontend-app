@@ -5,6 +5,7 @@
     export let language: Language = 'en';
     export let detailLength: 'off' | 'short' | 'long' = 'short';
     export let artistStoriesEnabled = false;
+    export let narrationOptionsLocked = false;
     export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
     export let onArtistStoriesChange: (value: boolean) => void;
 
@@ -44,16 +45,16 @@
         <section aria-labelledby="detail-options-title">
             <h3 id="detail-options-title">{text.details}</h3><p>{text.detailsHelp}</p>
             <div class="choices" role="group" aria-label={text.details}>
-                <button type="button" class:selected={detailLength === 'off'} aria-pressed={detailLength === 'off'} on:click={() => onDetailLengthChange('off')}>{text.offDetails}</button>
-                <button type="button" class:selected={detailLength === 'short'} aria-pressed={detailLength === 'short'} on:click={() => onDetailLengthChange('short')}>{text.short}</button>
-                <button type="button" class:selected={detailLength === 'long'} aria-pressed={detailLength === 'long'} on:click={() => onDetailLengthChange('long')}>{text.long}</button>
+                <button type="button" disabled={narrationOptionsLocked} class:selected={detailLength === 'off'} aria-pressed={detailLength === 'off'} on:click={() => onDetailLengthChange('off')}>{text.offDetails}</button>
+                <button type="button" disabled={narrationOptionsLocked} class:selected={detailLength === 'short'} aria-pressed={detailLength === 'short'} on:click={() => onDetailLengthChange('short')}>{text.short}</button>
+                <button type="button" disabled={narrationOptionsLocked} class:selected={detailLength === 'long'} aria-pressed={detailLength === 'long'} on:click={() => onDetailLengthChange('long')}>{text.long}</button>
             </div>
         </section>
         <section aria-labelledby="stories-options-title">
             <h3 id="stories-options-title">{text.stories}</h3><p>{text.storiesHelp}</p>
             <div class="choices" role="group" aria-label={text.stories}>
-                <button type="button" class:selected={!artistStoriesEnabled} aria-pressed={!artistStoriesEnabled} on:click={() => onArtistStoriesChange(false)}>{text.off}</button>
-                <button type="button" class:selected={artistStoriesEnabled} aria-pressed={artistStoriesEnabled} on:click={() => onArtistStoriesChange(true)}>{text.on}</button>
+                <button type="button" disabled={narrationOptionsLocked} class:selected={!artistStoriesEnabled} aria-pressed={!artistStoriesEnabled} on:click={() => onArtistStoriesChange(false)}>{text.off}</button>
+                <button type="button" disabled={narrationOptionsLocked} class:selected={artistStoriesEnabled} aria-pressed={artistStoriesEnabled} on:click={() => onArtistStoriesChange(true)}>{text.on}</button>
             </div>
         </section>
         <button type="button" class="close" on:click={close}>{text.close}</button>
@@ -73,6 +74,6 @@
     .backdrop { position:fixed; inset:0; z-index:1100; background:rgba(0,0,0,.5); }
     .panel { position:fixed; z-index:1101; top:50%; left:50%; width:min(390px,calc(100vw - 32px)); max-height:min(560px,calc(100dvh - 32px)); overflow:auto; transform:translate(-50%,-50%); padding:20px; border:1px solid #676767; border-radius:14px; background:#181818; color:#fff; box-shadow:0 18px 48px rgba(0,0,0,.6); }
     h2 { margin:0 0 16px; font-size:1.3rem; } h3 { margin:0; font-size:1rem; } p { margin:5px 0 10px; color:#c7c7c7; font-size:.9rem; line-height:1.35; } section + section { margin-top:20px; }
-    .choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .choices button, .close { min-height:44px; border:1px solid #666; border-radius:9px; background:#303030; color:#fff; cursor:pointer; font:inherit; font-weight:800; overflow-wrap:anywhere; } .choices button.selected { border-color:#1db954; background:#1db954; color:#111; } .close { width:100%; margin-top:20px; }
+    .choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .choices button, .close { min-height:44px; border:1px solid #666; border-radius:9px; background:#303030; color:#fff; cursor:pointer; font:inherit; font-weight:800; overflow-wrap:anywhere; } .choices button.selected { border-color:#1db954; background:#1db954; color:#111; } .choices button:disabled { cursor:not-allowed; opacity:.62; } .close { width:100%; margin-top:20px; }
     @media (max-width:480px) { .panel { top:auto; bottom:0; width:100%; max-height:min(78dvh,620px); transform:translateX(-50%); border-radius:16px 16px 0 0; } .summary { max-width:calc(100vw - 24px); white-space:normal; } }
 </style>

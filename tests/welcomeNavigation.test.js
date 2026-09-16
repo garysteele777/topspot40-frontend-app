@@ -140,14 +140,14 @@ test('experience analytics fires only when the selected journey is committed', a
     const choosePage = await source('../src/routes/journey-prototype/choose/+page.svelte');
 
     const setProgramBody = choosePage.match(
-        /function setProgram\(choice: ProgramChoice\)\s*\{([\s\S]*?)\r?\n\s*\}/
+        /function setProgram\(choice: ExperienceFamily\)\s*\{([\s\S]*?)\r?\n\s*\}/
     )?.[1] ?? '';
 
     assert.doesNotMatch(setProgramBody, /captureExperienceSelected/);
 
     assert.match(
         choosePage,
-        /function performContinueJourney\(\)\s*\{\s*if \(!selectedProgram\) return;\s*captureExperienceSelected\(posthog, selectedProgram\);\s*goto\(routes\[selectedProgram\]\);\s*\}/s
+        /function startExperience\(mode: ExperienceMode\)\s*\{\s*if \(!selectedProgram\) return;\s*captureExperienceSelected\(posthog, selectedProgram\);\s*goto\(buildExperienceDestination\(selectedProgram, mode\)\);\s*\}/s
     );
 });
 

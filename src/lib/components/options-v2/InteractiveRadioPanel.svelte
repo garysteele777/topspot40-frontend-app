@@ -1,11 +1,15 @@
 <script lang="ts">
     import {onDestroy, onMount} from 'svelte';
+    import {get} from 'svelte/store';
     import {goto} from '$app/navigation';
     import {dev} from '$app/environment';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
     import type {Language, ModeType, VoicePart} from '$lib/types/playback';
+
+    export let journeyLauncher = false;
+    export let returnTo = '';
 
     type OptionItem = {id: string; label: string};
     type CollectionGroup = {name: string; slug: string};
@@ -20,8 +24,6 @@
 
     const language: Language = 'en';
     const languages: Language[] = ['en'];
-    const voices: VoicePart[] = ['intro', 'detail'];
-
     function updateDesktopCapability(): void {
         isDesktop = desktopQuery?.matches ?? false;
         if (isDesktop && !loading && genreOptions.length === 0) void loadStations();
@@ -50,9 +52,11 @@
     }
 
     function launch(mode: RadioMode, station = 'ALL'): void {
-        if (!isDesktop || !dev) return;
+        if (!isDesktop || (!dev && !journeyLauncher)) return;
+        const settings = get(playbackSettingsStore);
+        const voices: VoicePart[] = settings.voices;
         const common = new URLSearchParams({language, languages: languages.join(','), voices: voices.join(','), playbackOrder: 'shuffle', voicePlayMode: 'before', pauseMode: 'continuous', skipPlayed: 'true', interactiveRadioTest: 'true'});
-        playbackSettingsStore.update(current => ({...current, playbackMethod: 'automatic', playbackOrder: 'shuffle', pauseMode: 'continuous', skipPlayed: true, voices}));
+        playbackSettingsStore.update(current => ({...current, playbackMethod: 'automatic', playbackOrder: 'shuffle', pauseMode: 'continuous', skipPlayed: true}));
 
         if (mode === 'nostalgia') {
             saveResumeFromLocal({activeGroup: 'decade_genre' as ModeType, context: {decade: 'ALL', genre: station}, language, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
@@ -63,6 +67,7 @@
         } else {
             common.set('mode', 'artist_radio'); common.set('genre', station);
         }
+        if (returnTo) common.set('radioReturnTo', returnTo);
         void goto(`/car-page?${common.toString()}`);
     }
 
@@ -75,21 +80,23 @@
 </script>
 
 <section class="radio-panel" aria-labelledby="interactive-radio-heading">
-    <h1 id="interactive-radio-heading">Interactive Radio — Private Test</h1>
-    {#if !dev}
+    <h1 id="interactive-radio-heading">{journeyLauncher ? 'Nostalgia Radio' : 'Interactive Radio — Private Test'}</h1>
+    {#if !dev && !journeyLauncher}
         <p>This private test is available only from a local development server.</p>
     {:else if !isDesktop}
         <p>Interactive Radio testing requires a desktop computer.</p>
     {:else}
         <p class="description">Cross-decade stations play in Drive-In View with Auto Play.</p>
+        {#if !journeyLauncher}
         <div class="modes" aria-label="Radio categories">
             <button class:active={radioMode === 'nostalgia'} on:click={() => radioMode = 'nostalgia'}>Nostalgia</button>
             <button class:active={radioMode === 'collections'} on:click={() => radioMode = 'collections'}>Collections</button>
             <button class:active={radioMode === 'artist_spotlight'} on:click={() => radioMode = 'artist_spotlight'}>Artist Spotlight</button>
         </div>
+        {/if}
         {#if loading}
             <p>Loading stations…</p>
-        {:else if radioMode === 'nostalgia'}
+        {:else if journeyLauncher || radioMode === 'nostalgia'}
             <button class="start" on:click={() => launch('nostalgia')}>Start All Decades & Genres</button>
             <div class="stations">{#each genreOptions as genre}<button on:click={() => launch('nostalgia', genre.id)}>{genre.label}</button>{/each}</div>
         {:else if radioMode === 'collections'}

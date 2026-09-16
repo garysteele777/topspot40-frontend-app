@@ -340,28 +340,37 @@
             {/if}
         </div>
 
-        <div class="secondary-controls">
+        <div class:radio-actions={radioAutoOnly} class="secondary-controls">
             <button type="button" class="back-button" on:click={onBackToOptions}>
                 ← {narrationActionCopy[language].changeMusic}
             </button>
 
+            {#if radioAutoOnly}
+                <div class="radio-report-action">
+                    <ReportProblemButton
+                            language={$currentSelection?.language ?? 'en'}
+                            onReport={() => onReportProblem?.()}
+                    />
+                </div>
+            {:else}
             <div class="view-switch" aria-label={classicViewCopy[language].playbackView}>
-                {#if !radioAutoOnly}
                     <button type="button" on:click={onUseClassicView}>{classicViewCopy[language].carView}</button>
                     <span aria-hidden="true"></span>
-                {/if}
                 <button type="button" class="active" aria-current="true">
                     {classicViewCopy[language].driveInView}
                 </button>
             </div>
+            {/if}
         </div>
     </div>
+    {#if !radioAutoOnly}
     <div class="drive-in-report-slot">
         <ReportProblemButton
                 language={$currentSelection?.language ?? 'en'}
                 onReport={() => onReportProblem?.()}
         />
     </div>
+    {/if}
 </section>
 
 <CarModeNarrationModal
@@ -725,6 +734,24 @@
         display: grid;
         grid-template-columns: 1fr 1.2fr;
         gap: 6%;
+    }
+
+    .secondary-controls.radio-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: clamp(8px, 1vw, 18px);
+    }
+
+    .secondary-controls.radio-actions > * {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
+    .radio-report-action :global(.report-problem-button) {
+        width: 100%;
+        min-height: clamp(28px, 2.9vw, 46px);
+        box-sizing: border-box;
     }
 
     .drive-in-report-slot {

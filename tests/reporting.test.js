@@ -174,8 +174,29 @@ test('all car playback surfaces expose the report action', async () => {
     }
     assert.match(classic, /onReport=\{\(mode\) => onReportNarration\?\.\(mode\)\}/);
     assert.match(driveIn, /onReport=\{\(mode\) => onReportNarration\?\.\(mode\)\}/);
-    assert.match(driveIn, /class="drive-in-report-slot"[\s\S]*?<ReportProblemButton/);
+    assert.match(driveIn, /\{#if radioAutoOnly\}[\s\S]*?class="radio-report-action"[\s\S]*?<ReportProblemButton[\s\S]*?onReport=\{\(\) => onReportProblem\?\.\(\)\}/);
+    assert.match(driveIn, /\{#if !radioAutoOnly\}[\s\S]*?class="drive-in-report-slot"[\s\S]*?<ReportProblemButton/);
     assert.doesNotMatch(driveIn, /drive-in-report-slot\s*\{[\s\S]*position:\s*absolute/);
+});
+
+test('private radio keeps Change Music and Report a Problem together without changing playback', async () => {
+    const [driveIn, page, button] = await Promise.all([
+        read('../src/lib/components/car/DriveInPlayerPanel.svelte'),
+        read('../src/routes/car-page/+page.svelte'),
+        read('../src/lib/components/car/ReportProblemButton.svelte')
+    ]);
+    const radioActions = driveIn.match(/<div class:radio-actions=\{radioAutoOnly\} class="secondary-controls">([\s\S]*?)<\/div>\n    <\/div>/)?.[1] ?? '';
+    const openReport = page.match(/function openReportProblem\(initialIssueType\?: ContentIssueType\): void \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+
+    assert.match(radioActions, /type="button" class="back-button" on:click=\{onBackToOptions\}/);
+    assert.match(radioActions, /\{#if radioAutoOnly\}[\s\S]*?<ReportProblemButton[\s\S]*?onReport=\{\(\) => onReportProblem\?\.\(\)\}/);
+    assert.match(driveIn, /\.secondary-controls\.radio-actions\s*\{[\s\S]*flex-wrap: wrap;[\s\S]*justify-content: center;/);
+    assert.match(driveIn, /\.radio-report-action :global\(\.report-problem-button\)\s*\{[\s\S]*width: 100%;/);
+    assert.match(button, /type="button"/);
+    assert.match(button, /on:click\|stopPropagation=\{onReport\}/);
+    assert.match(openReport, /reportContext = buildContentIssueContext/);
+    assert.match(openReport, /showNarrationModal\.set\(false\)/);
+    assert.doesNotMatch(openReport, /stopPlaybackPolling|cancelAllCarModeAutoPlay|spotify\.close|track-finished|nextTrack/);
 });
 
 test('the guided report button isolates broad activation pointer and click events', async () => {
