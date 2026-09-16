@@ -63,6 +63,22 @@ export async function startRadioSequence(params: URLSearchParams): Promise<Respo
     return fetchPlaybackApi(`/supabase/decade-genre/play-sequence?${params.toString()}`);
 }
 
+export type RadioNarrationDetailLength = 'off' | 'short' | 'long';
+
+export async function updateRadioNarrationPolicy(payload: {
+    detailLength: RadioNarrationDetailLength;
+    artistStoriesEnabled: boolean;
+}): Promise<Response> {
+    return fetchPlaybackApi('/supabase/decade-genre/radio-narration-policy', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            detail_length: payload.detailLength,
+            artist_stories_enabled: payload.artistStoriesEnabled
+        })
+    });
+}
+
 export async function resetPlaybackApi(): Promise<Response> {
     return fetchPlaybackApi('/playback/reset', {
         method: 'POST'
