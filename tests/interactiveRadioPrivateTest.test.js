@@ -95,7 +95,7 @@ test('Country and Pop private-radio URLs preserve their genre for the backend se
     assert.match(carPage, /play_artist_description: String\(artistStoriesEnabled\)/);
     assert.match(poller, /Radio still needs the normal timing\/track-finished path/);
 });
-test('private radio snapshots the established narration choices without overwriting saved details', async () => {
+test('private radio keeps narration controls active and queues changes for the next set', async () => {
     const [carPage, panel, header, options, driveIn] = await Promise.all([
         readFile(carPagePath, 'utf8'),
         readFile(panelPath, 'utf8'),
@@ -113,6 +113,11 @@ test('private radio snapshots the established narration choices without overwrit
     assert.match(carPage, /radioNarrationPolicyActive = true/);
     assert.match(header, /narrationOptionsLocked/);
     assert.match(options, /disabled=\{narrationOptionsLocked\}/);
+    assert.doesNotMatch(carPage, /narrationOptionsLocked=\{interactiveRadioTest && radioNarrationPolicyActive\}/);
+    assert.match(carPage, /onDetailLengthChange=\{handleDetailLengthChange\}/);
+    assert.match(carPage, /onArtistStoriesChange=\{handleArtistStoriesChange\}/);
+    assert.match(carPage, /updateRadioNarrationPolicy\(\{/);
+    assert.match(carPage, /radioNarrationPolicyUpdate = radioNarrationPolicyUpdate/);
     assert.match(panel, /const settings = get\(playbackSettingsStore\)/);
     assert.doesNotMatch(panel, /const voices: VoicePart\[\] = \['intro', 'detail'\]/);
 
@@ -235,6 +240,10 @@ test('guest-protected radio requests always include the cross-origin guest cooki
     try {
         await playbackApi.startGuestPlaybackSession();
         await playbackApi.startRadioSequence(new URLSearchParams({decade: '1980s', genre: 'pop'}));
+        await playbackApi.updateRadioNarrationPolicy({
+            detailLength: 'long',
+            artistStoriesEnabled: true
+        });
         await playbackApi.fetchPlaybackStatus();
         await playbackApi.sendPlaybackDiagnostic({event: 'radio-test'});
         await playbackApi.stopPlaybackApi();
@@ -247,6 +256,7 @@ test('guest-protected radio requests always include the cross-origin guest cooki
         [
             '/playback/guest-session',
             '/supabase/decade-genre/play-sequence',
+            '/supabase/decade-genre/radio-narration-policy',
             '/playback/status',
             '/playback/client-diagnostic',
             '/playback/stop'

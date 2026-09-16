@@ -185,7 +185,7 @@ test('private radio keeps Change Music and Report a Problem together without cha
         read('../src/routes/car-page/+page.svelte'),
         read('../src/lib/components/car/ReportProblemButton.svelte')
     ]);
-    const radioActions = driveIn.match(/<div class:radio-actions=\{radioAutoOnly\} class="secondary-controls">([\s\S]*?)<\/div>\n    <\/div>/)?.[1] ?? '';
+    const radioActions = driveIn.match(/<div class:radio-actions=\{radioAutoOnly\} class="secondary-controls">([\s\S]*?)<\/div>\r?\n    <\/div>/)?.[1] ?? '';
     const openReport = page.match(/function openReportProblem\(initialIssueType\?: ContentIssueType\): void \{([\s\S]*?)\n    \}/)?.[1] ?? '';
 
     assert.match(radioActions, /type="button" class="back-button" on:click=\{onBackToOptions\}/);
