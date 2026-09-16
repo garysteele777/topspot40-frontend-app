@@ -99,7 +99,8 @@ test('Narration summary trigger uses the compact charcoal, gold, hover, pressed,
 test('Narration options changes the shared detail preference and leaves current narration uninterrupted', () => {
     const route = readFileSync(new URL('../src/routes/car-page/+page.svelte', import.meta.url), 'utf8');
     const control = readFileSync(new URL('../src/lib/components/car/NarrationOptions.svelte', import.meta.url), 'utf8');
-    assert.match(route, /onDetailLengthChange=\{\(detailLength\) => playbackSettingsStore\.update/);
+    assert.match(route, /function handleDetailLengthChange\(detailLength: 'off' \| 'short' \| 'long'\)/);
+    assert.match(route, /onDetailLengthChange=\{handleDetailLengthChange\}/);
     assert.match(route, /resolveSequenceNarrationUrls\([\s\S]*settings\.detailLength/);
     assert.match(control, /onDetailLengthChange\('short'\)/);
     assert.match(control, /onDetailLengthChange\('long'\)/);
