@@ -3,6 +3,7 @@ import {
     instrumentAudioElement,
     logAudioPlayCall
 } from '$lib/audio/audioDebug';
+import {sendPlaybackDiagnostic} from '$lib/api/playbackApi';
 
 let bedAudio: HTMLAudioElement | null = null;
 let currentBedUrl: string | null = null;
@@ -12,7 +13,6 @@ let bedAudioContext: AudioContext | null = null;
 let bedGainNode: GainNode | null = null;
 let bedMediaSource: MediaElementAudioSourceNode | null = null;
 let bedMediaSourceAudio: HTMLAudioElement | null = null;
-const API_BASE = import.meta.env?.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 const BED_PLAY_TIMEOUT_MS = 3000;
 const BED_PLAY_TIMEOUT_MESSAGE = 'bed audio play() timeout';
 const SILENT_AUDIO_DATA_URI =
@@ -90,11 +90,7 @@ function audioState(audio: HTMLAudioElement | null): BedDiagnosticState {
 }
 
 function sendBedDiagnostic(event: string, state?: BedDiagnosticState): void {
-    void fetch(`${API_BASE}/playback/client-diagnostic`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
+    void sendPlaybackDiagnostic({
             event,
             phase: null,
             mode: null,
@@ -104,7 +100,6 @@ function sendBedDiagnostic(event: string, state?: BedDiagnosticState): void {
             decade: null,
             genre: null,
             bedAudioState: state
-        })
     }).catch(() => {
         // Temporary diagnostic only; never affect playback.
     });
