@@ -21,6 +21,8 @@ const {buildSelectionFromUrl} = await import('../src/lib/helpers/car/selectionFr
 const {normalizePlaybackContext} = await import('../src/lib/utils/normalizePlaybackContext.ts');
 const {buildFallbackPlaybackTrack} = await import('../src/lib/utils/buildPlaybackTrack.ts');
 const {calculatePlaybackTiming} = await import('../src/lib/utils/calculatePlaybackTiming.ts');
+const playbackApi = await import('../src/lib/api/playbackApi.ts');
+const {resolveBackendApiBase} = await import('../src/lib/api/backendBase.ts');
 
 async function sourceFiles(directory) {
     const entries = await readdir(new URL(directory, import.meta.url), {withFileTypes: true});
@@ -85,7 +87,7 @@ test('Country and Pop private-radio URLs preserve their genre for the backend se
     assert.match(loader, /Radio is backend-owned/);
     assert.match(loader, /sel\.programType = PROGRAM_TYPES\.RADIO_DG/);
     assert.doesNotMatch(loader, /loadTrackSequence\(sel\)[\s\S]{0,200}decade === 'ALL'/);
-    assert.match(carPage, /supabase\/decade-genre\/play-sequence/);
+    assert.match(carPage, /startRadioSequence\(radioParams\)/);
     assert.match(carPage, /loadFirstRadioSet\(\): Promise<boolean>/);
     assert.match(carPage, /play_intro: 'true'/);
     assert.match(carPage, /detail_length: detailLength/);
@@ -220,6 +222,94 @@ test('guest radio lifecycle calls share the configured backend origin and halt s
     assert.match(poller, /sendPlaybackDiagnostic\(/);
     assert.match(poller, /res\.status === 401 \|\| res\.status === 403/);
     assert.match(poller, /stopPlaybackPolling\(\)/);
+});
+
+test('guest-protected radio requests always include the cross-origin guest cookie', async () => {
+    const requests = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+        requests.push([String(url), init]);
+        return new Response(null, {status: 200});
+    };
+
+    try {
+        await playbackApi.startGuestPlaybackSession();
+        await playbackApi.startRadioSequence(new URLSearchParams({decade: '1980s', genre: 'pop'}));
+        await playbackApi.fetchPlaybackStatus();
+        await playbackApi.sendPlaybackDiagnostic({event: 'radio-test'});
+        await playbackApi.stopPlaybackApi();
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+
+    assert.deepEqual(
+        requests.map(([url]) => new URL(url).pathname),
+        [
+            '/playback/guest-session',
+            '/supabase/decade-genre/play-sequence',
+            '/playback/status',
+            '/playback/client-diagnostic',
+            '/playback/stop'
+        ]
+    );
+    for (const [, init] of requests) assert.equal(init.credentials, 'include');
+});
+
+test('local backend URLs use the browser loopback hostname without changing API protocol or port', () => {
+    assert.equal(
+        resolveBackendApiBase('http://localhost:8000', '127.0.0.1'),
+        'http://127.0.0.1:8000'
+    );
+    assert.equal(
+        resolveBackendApiBase('https://127.0.0.1:9443', 'localhost'),
+        'https://localhost:9443'
+    );
+});
+
+test('non-loopback API URLs remain unchanged outside local loopback development', () => {
+    const productionUrl = 'https://api.topspot40.com';
+    assert.equal(resolveBackendApiBase(productionUrl, '127.0.0.1'), productionUrl);
+    assert.equal(resolveBackendApiBase('http://127.0.0.1:8000', 'preview.topspot40.com'), 'http://127.0.0.1:8000');
+});
+
+test('Change Music abandons an active radio runtime before returning to its launcher', async () => {
+    const [carPage, poller, playbackApi] = await Promise.all([
+        readFile(carPagePath, 'utf8'),
+        readFile(pollerPath, 'utf8'),
+        readFile(playbackApiPath, 'utf8')
+    ]);
+    const cleanup = carPage.match(/async function abandonInteractiveRadioAndReturn\(\): Promise<void> \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+    const back = carPage.match(/function backToOptions\(\) \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+
+    for (const required of [
+        'cancelAllCarModeAutoPlay()', 'autoPlay.cancel()',
+        'stopCurrentNarrationPhase({resolvePhase: false})', 'narration.abandon()',
+        'stopNarrationAudio()', 'stopBed()', 'spotify.close()', 'spotify.reset()',
+        'stopPlaybackPolling()', 'resetNarrationPhaseState()', 'resetPlaybackProgress()',
+        'await stopPlaybackApi(abortController.signal)'
+    ]) assert.match(cleanup, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.doesNotMatch(cleanup, /signalTrackFinishedApi|advancePrivateRadioTrack|nextTrack/);
+    assert.ok(cleanup.indexOf('cancelAllCarModeAutoPlay()') < cleanup.indexOf('await stopPlaybackApi'));
+    assert.ok(cleanup.indexOf('await stopPlaybackApi') < cleanup.indexOf('window.location.href'));
+    assert.match(back, /void abandonInteractiveRadioAndReturn\(\)/);
+    assert.match(carPage, /if \(radioChangeMusicInProgress\) return;/);
+    assert.match(carPage, /isRadioExperienceDestination\(radioReturnTo\)/);
+    assert.match(playbackApi, /fetchPlaybackApi\('\/playback\/stop'/);
+    assert.match(playbackApi, /credentials: 'include'/);
+    assert.match(playbackApi, /signal/);
+    assert.match(poller, /let pollGeneration = 0/);
+    assert.match(poller, /activePollGeneration !== pollGeneration/);
+    assert.match(poller, /let narrationGeneration = 0/);
+    assert.match(poller, /activeNarrationGeneration !== narrationGeneration/);
+});
+
+test('Change Music keeps private and journey radio return destinations separate', async () => {
+    const carPage = await readFile(carPagePath, 'utf8');
+    const destination = carPage.match(/function radioChangeMusicDestination\(\): string \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+
+    assert.match(destination, /radioReturnTo/);
+    assert.match(destination, /isRadioExperienceDestination/);
+    assert.match(destination, /'\/interactive-radio-test'/);
 });
 
 test('Track 1 completion is guarded once and backend clock data cannot render epoch time', async () => {

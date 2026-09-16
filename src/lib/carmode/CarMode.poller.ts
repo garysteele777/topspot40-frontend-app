@@ -171,6 +171,9 @@ type QueuedNarrationItem = NarrationQueueItem & {
 };
 
 let pollTimer: number | null = null;
+// Incrementing this invalidates callbacks already awaiting a status response
+// when a listener abandons a playback session.
+let pollGeneration = 0;
 let lastPhase: PlaybackPhase | null = null;
 
 let lastSpotifyId: string | null = null;
@@ -178,6 +181,9 @@ let finishedTrackId: string | null = null;
 let syncedUiSpotifyTrackId: string | null = null;
 
 let narrationLock = false;
+// A stopped narration must never acknowledge its old backend phase after the
+// listener has left the player.
+let narrationGeneration = 0;
 
 let narrationQueue: QueuedNarrationItem[] = [];
 
@@ -512,6 +518,7 @@ async function playNarrationQueue() {
     if (narrationLock) return;
 
     narrationLock = true;
+    const activeNarrationGeneration = narrationGeneration;
 
     try {
         while (narrationQueue.length > 0) {
@@ -526,7 +533,10 @@ async function playNarrationQueue() {
                 const item = narrationQueue.shift()!;
                 dlog('🎤 Playing:', item.phase);
                 await playOneAudio(item.url, item.phase, Boolean(item.playbackSessionId));
+                if (activeNarrationGeneration !== narrationGeneration) return;
             }
+
+            if (activeNarrationGeneration !== narrationGeneration) return;
 
             dlog('🔔 Narration finished');
 
@@ -539,6 +549,7 @@ async function playNarrationQueue() {
             console.log('🔔 SIGNAL FINISHED', get(currentTrack)?.trackName, get(playbackPhase));
 
             await signalNarrationFinished(playbackSessionId, completedPhase);
+            if (activeNarrationGeneration !== narrationGeneration) return;
             completedNarrationKeys.add(narrationKey);
 
             if (activeNarrationKey === narrationKey) {
@@ -572,18 +583,21 @@ export function startPlaybackPolling(
     if (pollTimer) return;
 
     const guidedLinkOut = options.guidedLinkOut === true;
+    const activePollGeneration = ++pollGeneration;
 
     dlog('▶️ Playback polling started');
 
     pollTimer = window.setInterval(async () => {
         try {
             const res = await fetchPlaybackStatus();
+            if (activePollGeneration !== pollGeneration) return;
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) stopPlaybackPolling();
                 return;
             }
 
             const data = await res.json();
+            if (activePollGeneration !== pollGeneration) return;
 
             if (narrationPausedAtBoundary) {
                 isPlaying.set(false);
@@ -1011,6 +1025,7 @@ export function resetSpotifyStartState(): void {
 }
 
 export function resetNarrationPhaseState(): void {
+    narrationGeneration += 1;
     narrationQueue = [];
     narrationLock = false;
     lastNarrationPhase = null;
@@ -1060,6 +1075,8 @@ export async function skipToNextTrack(): Promise<void> {
 }
 
 export function stopPlaybackPolling() {
+    pollGeneration += 1;
+    narrationGeneration += 1;
     if (!pollTimer) return;
 
     clearInterval(pollTimer);

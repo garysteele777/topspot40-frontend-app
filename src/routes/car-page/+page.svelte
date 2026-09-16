@@ -240,6 +240,7 @@
     let interruptedRadioTrack: CarModeTrack | null = null;
     let radioInterruptedResumePending = false;
     let radioSpotifyRetryTrack: CarModeTrack | null = null;
+    let radioChangeMusicInProgress = false;
     let openGuidedTrackList = false;
     let guidedReturnActionInProgress = false;
     let carScreen: MediaQueryList | null = null;
@@ -1107,10 +1108,7 @@
                 play_track: 'true'
             });
 
-            const response = await fetch(
-                `${API_BASE}/supabase/decade-genre/play-sequence?${radioParams.toString()}`,
-                {method: 'GET', credentials: 'include'}
-            );
+            const response = await startRadioSequence(radioParams);
 
             if (!response.ok) {
                 throw new Error(`Interactive Radio start failed (${response.status})`);
@@ -1711,10 +1709,7 @@
         }
 
         try {
-            await fetch(`${API_BASE}/playback/stop`, {
-                method: 'POST',
-                credentials: 'include'
-            });
+            await stopPlaybackApi();
         } catch {
             console.warn("Backend stop failed (probably already stopped)");
         }
@@ -1728,10 +1723,7 @@
             return;
         }
 
-        await fetch(`${API_BASE}/playback/stop`, {
-            method: 'POST',
-            credentials: 'include'
-        });
+        await stopPlaybackApi();
     }
 
     function resetSelectionPlaybackState(): void {
@@ -1930,12 +1922,64 @@
             : 'decade_genre';
 
 
+    function radioChangeMusicDestination(): string {
+        const radioReturnTo = new URLSearchParams(window.location.search).get('radioReturnTo');
+        return isRadioExperienceDestination(radioReturnTo)
+            ? radioReturnTo ?? '/interactive-radio-test'
+            : '/interactive-radio-test';
+    }
+
+    async function abandonInteractiveRadioAndReturn(): Promise<void> {
+        if (radioChangeMusicInProgress) return;
+        radioChangeMusicInProgress = true;
+
+        // Do this synchronously before backend cleanup so no timer, narration,
+        // poll, or Spotify callback can affect the abandoned session.
+        cancelAllCarModeAutoPlay();
+        autoPlay.cancel();
+        interruptedRadioTrack = null;
+        radioInterruptedResumePending = false;
+        radioSpotifyRetryTrack = null;
+        radioCompletionSpotifyTrackId = null;
+        radioStartPending = false;
+        radioNarrationPolicyActive = false;
+        setExternalRadioTrackPaused(false);
+        setExternalRadioSpotifyHandoffReady(false);
+        activePlayMode = null;
+        stopCurrentNarrationPhase({resolvePhase: false});
+        narration.abandon();
+        stopNarrationAudio();
+        stopBed();
+        guidedReady = false;
+        spotify.close();
+        spotify.reset();
+        stopPlaybackPolling();
+        resetNarrationPhaseState();
+        resetSpotifyStartState();
+        resetPlaybackProgress();
+        showNarrationModal.set(false);
+        playbackStartInFlight = false;
+        userStartedPlaybackThisSession = false;
+
+        // Bound the request so an unavailable backend cannot trap the listener
+        // on the player. Aborting also prevents a stale stop from reaching a
+        // newly started station after navigation.
+        const abortController = new AbortController();
+        const stopTimeout = window.setTimeout(() => abortController.abort(), 1500);
+        try {
+            await stopPlaybackApi(abortController.signal);
+        } catch {
+            // Local cleanup is complete; a stopped or expired runtime is safe.
+        } finally {
+            window.clearTimeout(stopTimeout);
+        }
+
+        window.location.href = radioChangeMusicDestination();
+    }
+
     function backToOptions() {
         if (interactiveRadioTest) {
-            const radioReturnTo = new URLSearchParams(window.location.search).get('radioReturnTo');
-            window.location.href = isRadioExperienceDestination(radioReturnTo)
-                ? radioReturnTo ?? '/interactive-radio-test'
-                : '/interactive-radio-test';
+            void abandonInteractiveRadioAndReturn();
             return;
         }
         if ($currentSelection && $currentTrack) {

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type {Language} from '$lib/stores/selection';
+    import {sendPlaybackDiagnostic} from '$lib/api/playbackApi';
 
     type ControlCopy = {
         previous: string;
@@ -57,19 +58,13 @@
 
     export let activePlayMode: 'guided' | 'auto' | null = null;
 
-    const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
-
     function handleImgError(e: Event) {
         const img = e.currentTarget as HTMLImageElement;
         img.src = "/default_album.png";
     }
 
     function handlePlayClick(): void {
-        void fetch(`${API_BASE}/playback/client-diagnostic`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
+        void sendPlaybackDiagnostic({
                 event: 'MiniPlayer play button tapped',
                 phase: null,
                 mode: null,
@@ -78,7 +73,6 @@
                 trackRank: null,
                 decade: null,
                 genre: null
-            })
         }).catch(() => {
             // Temporary diagnostic only; never block playback.
         });
