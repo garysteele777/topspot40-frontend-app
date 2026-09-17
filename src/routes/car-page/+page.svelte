@@ -110,6 +110,10 @@
     import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
     import {buildFallbackPlaybackTrack} from '$lib/utils/buildPlaybackTrack';
     import {
+        buildPlaybackSelection,
+        playbackTrackRequestInit
+    } from '$lib/carmode/playbackLaunch';
+    import {
         appendNostalgiaRadioGenres,
         isGeneratedNostalgiaRadioGenreAllowed,
         nostalgiaRadioStationLabel,
@@ -821,14 +825,36 @@
     }
 
     async function continueAutoPlayback() {
-        spotify.returnToWaitingPage();
+        const helperReset = spotify.returnToWaitingPage();
+        const backendRadio = isBackendRadioAutoHandoffSelection();
+        const nostalgiaRadio = isPrivateNostalgiaRadioSelection();
+        console.info('[car-mode] backend radio next-track cycle', {
+            programType: get(currentSelection)?.programType ?? null,
+            nostalgiaRadio,
+            firstTimerCompleted: true,
+            nextTrackCycleStarted: backendRadio,
+            helperResetAttempted: true,
+            helperResetSucceeded: helperReset,
+            helperWindowPresent: helperReset,
+            phase: get(playbackPhase),
+            spotifyId: get(currentTrack)?.spotifyTrackId ?? null,
+            rejectionReason: helperReset || spotify.isMobile()
+                ? null
+                : 'helper-window-unavailable'
+        });
 
         guidedReady = false;
         spotify.reset();
 
-        if (isPrivateNostalgiaRadioSelection()) {
+        if (backendRadio) {
+            if (!spotify.isMobile() && !helperReset) {
+                radioSpotifyRetryTrack = get(currentTrack);
+                activePlayMode = null;
+                status.set('Spotify window is unavailable. Press Auto Play to try again.');
+                return;
+            }
             await advancePrivateRadioTrack();
-            // The poller consumes Track 2's earliest narration frame,
+            // The poller consumes the next track's earliest narration frame,
             // acknowledges it, and hands off when the backend publishes track.
             return;
         }
@@ -1043,15 +1069,7 @@
                     intro: trackObj.intro,
                     detail: trackObj.detail
                 },
-                selection: {
-                    ...sel,
-                    languages: sel.languages ?? [sel.language],
-                    playbackOrder: settings.playbackOrder,
-                    voices: settings.voices,
-                    voicePlayMode: settings.voicePlayMode,
-                    pauseMode: settings.pauseMode,
-                    continuous: settings.pauseMode === 'continuous'
-                },
+                selection: buildPlaybackSelection(sel, settings),
                 context:
                     sel.mode === 'artist_spotlight'
                         ? {
@@ -1069,7 +1087,10 @@
                                 sel.programType === 'RADIO_COL'
                                     ? {
                                         type: 'collection_radio',
-                                        collection_group_slug: sel.context?.collection_group_slug
+                                        collection_group_slug: sel.context?.collection_group_slug,
+                                        ...(sel.context?.radioCollectionGroups
+                                            ? {collection_group_slugs: sel.context.radioCollectionGroups.split(',')}
+                                            : {})
                                     }
                                     : {
                                         type: 'collection',
@@ -1153,12 +1174,7 @@
             genre: sel.context?.genre
         });
 
-        const res = await fetch(`${API_BASE}/playback/play-track`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
+        const res = await fetch(`${API_BASE}/playback/play-track`, playbackTrackRequestInit(payload));
 
         if (res.ok && sel.mode === 'artist_spotlight') {
             artistBioPlayedThisSet = true;
@@ -1198,12 +1214,12 @@
             setStatus: message => status.set(message),
             continueAutoPlayback,
             onSpotifyHandoff: () => {
-                if (isPrivateNostalgiaRadioSelection()) {
+                if (isBackendRadioAutoHandoffSelection()) {
                     setExternalRadioSpotifyHandoffReady(true);
                 }
             },
             onSpotifyOpenFailed: track => {
-                if (isPrivateNostalgiaRadioSelection()) {
+                if (isBackendRadioAutoHandoffSelection()) {
                     radioSpotifyRetryTrack = track;
                     setExternalRadioSpotifyHandoffReady(false);
                     status.set('Spotify did not open. Press Auto Play to try again.');
@@ -1217,8 +1233,22 @@
     );
 
     async function handleAutoPlay() {
+        if (needsInitialCollectionsRadioStart()) {
+            // This must remain in the click stack. The backend-owned
+            // collection_intro/intro/detail pipeline reaches Spotify later,
+            // when browsers no longer permit a new popup.
+            if (!reserveBackendRadioSpotifyWindow()) return;
+            await startInitialCollectionsRadioSet();
+            return;
+        }
+
         if (!$currentTrack) return;
         captureProgramStartedOnce();
+
+        if (isCollectionsRadioAutoHandoffSelection() && radioSpotifyRetryTrack) {
+            retryBackendRadioSpotifyHandoff();
+            return;
+        }
 
         if (isPrivateNostalgiaRadioSelection()) {
             if (radioStartPending) return;
@@ -1338,6 +1368,126 @@
     function isPrivateNostalgiaRadioSelection(): boolean {
         return interactiveRadioTest &&
             get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_DG;
+    }
+
+    function isBackendRadioAutoHandoffSelection(): boolean {
+        if (!interactiveRadioTest) return false;
+        const programType = get(currentSelection)?.programType;
+        return programType === PROGRAM_TYPES.RADIO_DG ||
+            programType === PROGRAM_TYPES.RADIO_COL;
+    }
+
+    function isCollectionsRadioAutoHandoffSelection(): boolean {
+        return interactiveRadioTest &&
+            get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_COL;
+    }
+
+    function reserveBackendRadioSpotifyWindow(): boolean {
+        if (spotify.isMobile()) return true;
+
+        const reserved = spotify.prepareAutoWindow();
+        console.info('[car-mode] backend radio helper window', {
+            programType: get(currentSelection)?.programType ?? null,
+            helperWindowPresent: reserved,
+            phase: get(playbackPhase),
+            spotifyId: get(currentTrack)?.spotifyTrackId ?? null,
+            navigationAttempted: false,
+            timerStarted: false,
+            rejectionReason: reserved ? null : 'popup-blocked'
+        });
+        if (!reserved) {
+            status.set('Spotify popup was blocked. Press Auto Play to try again.');
+        }
+        return reserved;
+    }
+
+    function retryBackendRadioSpotifyHandoff(): void {
+        if (radioInterruptedResumePending) return;
+        radioInterruptedResumePending = true;
+
+        // Must run synchronously in this click handler so Chrome treats the
+        // replacement wait popup as user initiated after a close/block.
+        if (!reserveBackendRadioSpotifyWindow()) {
+            radioInterruptedResumePending = false;
+            return;
+        }
+
+        activePlayMode = 'auto';
+        const retryTrack = radioSpotifyRetryTrack;
+        radioSpotifyRetryTrack = null;
+        const handedOff = retryTrack
+            ? autoPlay.handoffCurrentTrack(retryTrack)
+            : false;
+        console.info('[car-mode] backend radio retry handoff', {
+            programType: get(currentSelection)?.programType ?? null,
+            helperWindowPresent: true,
+            phase: get(playbackPhase),
+            spotifyId: retryTrack?.spotifyTrackId ?? null,
+            navigationAttempted: true,
+            navigationSucceeded: handedOff,
+            timerStarted: handedOff,
+            rejectionReason: handedOff ? null : 'spotify-handoff-failed'
+        });
+        radioInterruptedResumePending = false;
+    }
+
+    function needsInitialCollectionsRadioStart(): boolean {
+        const selection = get(currentSelection);
+        const track = get(currentTrack);
+        return selection?.programType === PROGRAM_TYPES.RADIO_COL &&
+            (!track || track.rank <= 0 || !track.spotifyTrackId);
+    }
+
+    function collectionsRadioStartupTrack(): CarModeTrack {
+        return get(currentTrack) ?? {
+            id: null,
+            rankingId: null,
+            rank: 0,
+            trackName: 'TopSpot Collections Radio',
+            artistName: 'Press Play to Start',
+            spotifyTrackId: '',
+            albumArtwork: null,
+            durationSeconds: 0
+        };
+    }
+
+    async function startInitialCollectionsRadioSet(): Promise<void> {
+        if (playbackStartInFlight) return;
+
+        playbackStartInFlight = true;
+        activePlayMode = 'auto';
+        isPlaying.set(false);
+        playbackPhase.set('idle');
+
+        try {
+            // Like the initial Nostalgia Radio branch, backend radio owns the
+            // first real track. Poll before the request so its first context
+            // can replace the rank-0 placeholder as soon as it is available.
+            startPlaybackPolling({
+                guidedLinkOut: true,
+                externalRadioTrackClock: true,
+                acceptRadioContext: selectedCollectionGroupAllowed
+            });
+            markUserStartedPlayback();
+            await playTrack(collectionsRadioStartupTrack());
+            userStartedPlaybackThisSession = true;
+        } finally {
+            playbackStartInFlight = false;
+        }
+    }
+
+    function selectedCollectionGroupAllowed(context: Record<string, unknown>): boolean {
+        const selection = get(currentSelection);
+        if (selection?.programType !== PROGRAM_TYPES.RADIO_COL) return true;
+        const generated = typeof context.collection_group_slug === 'string'
+            ? context.collection_group_slug.trim().toLowerCase()
+            : '';
+        if (!generated) return false;
+        const explicit = (selection.context?.radioCollectionGroups ?? '')
+            .split(',').map(value => value.trim().toLowerCase()).filter(Boolean);
+        if (explicit.length > 0) return explicit.includes(generated);
+        const legacy = selection.context?.collection_group_slug;
+        return !legacy || legacy === 'ALL' || legacy.toLowerCase() === generated;
     }
 
     function hasInstalledPrivateRadioTrack(): boolean {
@@ -1661,7 +1811,10 @@
                     guidedReady = false;
                     spotify.reset();
 
-                    startPlaybackPolling({guidedLinkOut: true});
+                    startPlaybackPolling({
+                        guidedLinkOut: true,
+                        acceptRadioContext: selectedCollectionGroupAllowed
+                    });
                     markUserStartedPlayback();
 
                     await playTrack($currentTrack);
@@ -1919,7 +2072,9 @@
         $currentSelection?.context?.decade === 'ALL';
 
     $: uiDecade =
-        $currentSelection?.mode === 'decade_genre'
+        $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+            ? 'Collections Radio'
+            : $currentSelection?.mode === 'decade_genre'
             ? (
                 isRadioMode
                     ? ($currentTrack?.decadeName ?? '')
@@ -1945,12 +2100,22 @@
             ? ($currentSelection?.context?.artist_name ?? $currentTrack?.artistName ?? '')
             : uiDecade;
 
+    $: collectionRadioLabel = (() => {
+        const selected = ($currentSelection?.context?.radioCollectionGroups ?? '')
+            .split(',').filter(Boolean);
+        if (selected.length > 1) return 'CUSTOM';
+        const legacy = $currentSelection?.context?.collection_group_slug ?? 'ALL';
+        return legacy === 'ALL' ? 'ALL' : (collectionGroupNameMap[legacy] ?? toTitleCase(legacy));
+    })();
+
     $: bannerSubtitle =
         headerMode === 'collection'
             ? (
-                collectionGroupNameMap[
-                $currentSelection?.context?.collection_group_slug ?? ''
-                    ] ?? ''
+                $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+                    ? collectionRadioLabel
+                    : (collectionGroupNameMap[
+                    $currentSelection?.context?.collection_group_slug ?? ''
+                        ] ?? '')
             )
             : headerMode === 'artist_spotlight'
                 ? 'Artist Spotlight'
@@ -1968,14 +2133,18 @@
     // Radio identity is the requested listener scope, while radioSetLabel
     // remains the authoritative decade/genre description for each set.
     $: radioMarqueeTitle =
-        `${nostalgiaRadioStationLabel(
-            $currentSelection?.context?.radioGenres,
-            $currentSelection?.context?.genre
-        ).toUpperCase()} RADIO`;
+        $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+            ? `${collectionRadioLabel.toUpperCase()} COLLECTIONS RADIO`
+            : `${nostalgiaRadioStationLabel(
+                $currentSelection?.context?.radioGenres,
+                $currentSelection?.context?.genre
+            ).toUpperCase()} RADIO`;
 
-    $: radioSetLabel = interactiveRadioTest && $currentTrack?.decadeName && $currentTrack?.genreName
-        ? `${$currentTrack.decadeName} ${$currentTrack.genreName}`
-        : '';
+    $: radioSetLabel = interactiveRadioTest && $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+        ? `${$currentTrack?.collection_name ?? ''}${$currentTrack?.collection_group_name ? ` • ${$currentTrack.collection_group_name}` : ''}`.trim()
+        : interactiveRadioTest && $currentTrack?.decadeName && $currentTrack?.genreName
+            ? `${$currentTrack.decadeName} ${$currentTrack.genreName}`
+            : '';
 
 
     $: headerMode =
@@ -2098,7 +2267,10 @@
 
         if (
             interactiveRadioTest &&
-            get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_DG
+            (
+                get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_DG ||
+                get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_COL
+            )
         ) {
             // The backend radio loop receives the track-finished signal from
             // the poller and selects the next track/set itself.
@@ -2123,10 +2295,7 @@
             return;
         }
 
-        if (
-            interactiveRadioTest &&
-            get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_DG
-        ) {
+        if (isBackendRadioAutoHandoffSelection()) {
             // Backend narration is complete only when it publishes `track`.
             // Reuse Auto Play solely for the Spotify handoff and its timer.
             if (activePlayMode === 'auto') {
@@ -2245,26 +2414,6 @@
             await invalidateLanguageChangedPlayback();
         }
 
-        const mountedSettings = get(playbackSettingsStore);
-
-        if (mountedSettings.playbackMethod === 'automatic' && !interactiveRadioTest) {
-            // Automatic Playback keeps the existing backend transport.
-            try {
-                await resetPlaybackApi();
-            } catch (err) {
-                console.warn('⚠️ Backend reset failed (continuing anyway):', err);
-            }
-
-            startPlaybackPolling(
-                interactiveRadioTest ? {guidedLinkOut: true} : undefined
-            );
-        } else {
-            // Guided Playback owns narration and Spotify handoff in the browser.
-            resetNarrationPhaseState();
-            playbackPhase.set('idle');
-            isPlaying.set(false);
-        }
-
         const hasParams = url.searchParams.toString().length > 0;
 
         setPlaybackView(
@@ -2319,6 +2468,44 @@
             console.warn('⚠️ Car page opened without params — redirecting to Options');
             await goto('/options-v4');
             return;
+        }
+
+        // Collections Radio's protected playback endpoints require the guest
+        // cookie even for the initial reset. This mirrors the private
+        // Nostalgia Radio startup: establish the guest session before making
+        // any backend playback request, regardless of playback method.
+        if (sel.programType === PROGRAM_TYPES.RADIO_COL) {
+            try {
+                const guestSession = await startGuestPlaybackSession();
+                if (!guestSession.ok) {
+                    status.set('Unable to establish a private playback session. Please try again.');
+                    return;
+                }
+            } catch (err) {
+                console.warn('Unable to establish Collections Radio guest session:', err);
+                status.set('Unable to establish a private playback session. Please try again.');
+                return;
+            }
+        }
+
+        const mountedSettings = get(playbackSettingsStore);
+
+        if (mountedSettings.playbackMethod === 'automatic' && !interactiveRadioTest) {
+            // Automatic Playback keeps the existing backend transport.
+            try {
+                await resetPlaybackApi();
+            } catch (err) {
+                console.warn('⚠️ Backend reset failed (continuing anyway):', err);
+            }
+
+            startPlaybackPolling(
+                interactiveRadioTest ? {guidedLinkOut: true} : undefined
+            );
+        } else {
+            // Guided Playback owns narration and Spotify handoff in the browser.
+            resetNarrationPhaseState();
+            playbackPhase.set('idle');
+            isPlaying.set(false);
         }
 
 
@@ -2467,7 +2654,11 @@
                 <CarModeHeader
                     decade={uiDecade}
                     genre={uiGenre}
-                    collection={headerMode === 'collection' ? uiDecade : undefined}
+                    collection={headerMode === 'collection'
+                        ? ($currentSelection?.programType === PROGRAM_TYPES.RADIO_COL && collectionRadioLabel === 'CUSTOM'
+                            ? `${uiDecade} • ${collectionRadioLabel}`
+                            : uiDecade)
+                        : undefined}
                     mode={headerMode}
                     programType={$currentSelection.programType}
                     language={$currentSelection.language}

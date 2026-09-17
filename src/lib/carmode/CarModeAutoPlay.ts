@@ -84,11 +84,40 @@ export function createCarModeAutoPlay(
             }s`
         );
 
+        console.info('[car-mode] Auto Play timer armed', {
+            runId: activeRunId,
+            trackToken: trackToken(track),
+            durationSeconds,
+            bufferSeconds,
+            activeMode: dependencies.getActivePlayMode()
+        });
+
         timer = setTimeout(() => {
-            if (activeRunId !== runId) return;
+            console.info('[car-mode] Auto Play timer fired', {
+                runId: activeRunId,
+                currentRunId: runId,
+                activeMode: dependencies.getActivePlayMode(),
+                trackToken: trackToken(track)
+            });
+            if (activeRunId !== runId) {
+                console.warn('[car-mode] Auto Play timer rejected', {
+                    reason: 'stale-run-id',
+                    runId: activeRunId,
+                    currentRunId: runId,
+                    trackToken: trackToken(track)
+                });
+                return;
+            }
 
             timer = null;
-            void advance(activeRunId);
+            void advance(activeRunId).catch(error => {
+                console.error('[car-mode] Auto Play timer continuation failed', {
+                    runId: activeRunId,
+                    activeMode: dependencies.getActivePlayMode(),
+                    trackToken: trackToken(track),
+                    error
+                });
+            });
         }, delayMs);
     }
 
@@ -121,13 +150,18 @@ export function createCarModeAutoPlay(
     }
 
     async function advance(activeRunId: number): Promise<void> {
-        if (
-            activeRunId !== runId ||
-            dependencies.getActivePlayMode() !== 'auto'
-        ) {
+        const activeMode = dependencies.getActivePlayMode();
+        if (activeRunId !== runId || activeMode !== 'auto') {
+            console.warn('[car-mode] Auto Play advance rejected', {
+                reason: activeRunId !== runId ? 'stale-run-id' : 'inactive-auto-mode',
+                runId: activeRunId,
+                currentRunId: runId,
+                activeMode
+            });
             return;
         }
 
+        console.info('[car-mode] Auto Play advance accepted', {runId: activeRunId});
         dependencies.setIsPlaying(false);
         await dependencies.continueAutoPlayback();
 

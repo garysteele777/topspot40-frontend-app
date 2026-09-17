@@ -8,6 +8,7 @@
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
     import type {Language, ModeType, VoicePart} from '$lib/types/playback';
     import NostalgiaRadioGenreSelection from './NostalgiaRadioGenreSelection.svelte';
+    import CollectionsRadioGroupSelection from './CollectionsRadioGroupSelection.svelte';
     import {
         NOSTALGIA_RADIO_GENRES,
         normalizeNostalgiaRadioGenres,
@@ -16,6 +17,7 @@
 
     export let journeyLauncher = false;
     export let returnTo = '';
+    export let journeyFamily: RadioMode = 'nostalgia';
 
     type OptionItem = {id: string; label: string};
     type CollectionGroup = {name: string; slug: string};
@@ -61,7 +63,9 @@
     function launch(
         mode: RadioMode,
         station = 'ALL',
-        requestedGenres: readonly NostalgiaRadioGenreSlug[] | null = null
+        requestedGenres: readonly NostalgiaRadioGenreSlug[] | null = null,
+        requestedCollectionGroups: readonly string[] | null = null,
+        allCollectionGroups: readonly string[] | null = null
     ): void {
         if (!isDesktop || (!dev && !journeyLauncher)) return;
         const settings = get(playbackSettingsStore);
@@ -78,12 +82,20 @@
             common.set('mode', 'nostalgia'); common.set('decade', 'ALL'); common.set('genre', genre);
             if (selectedGenres) common.set('genres', selectedGenres.join(','));
         } else if (mode === 'collections') {
-            saveResumeFromLocal({activeGroup: 'collection' as ModeType, context: {collection_group_slug: station}, language, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
-            common.set('mode', 'radio_collections'); common.set('collection_group', station);
+            const selected = requestedCollectionGroups ?? [];
+            const allSelected = allCollectionGroups !== null && selected.length === allCollectionGroups.length;
+            const group = allSelected || selected.length !== 1 ? 'ALL' : selected[0];
+            const radioCollectionGroups = !allSelected && selected.length > 1 ? selected.join(',') : '';
+            saveResumeFromLocal({activeGroup: 'collection' as ModeType, context: {collection_group_slug: group, radioCollectionGroups}, language, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
+            common.set('mode', 'radio_collections'); common.set('collection_group', group);
+            if (!allSelected && selected.length > 1) for (const slug of selected) common.append('collection_groups', slug);
         } else {
             common.set('mode', 'artist_radio'); common.set('genre', station);
         }
-        if (returnTo) common.set('radioReturnTo', returnTo);
+        const collectionsReturnTo = journeyLauncher && mode === 'collections' && typeof window !== 'undefined'
+            ? `${window.location.pathname}${window.location.search}`
+            : returnTo;
+        if (collectionsReturnTo) common.set('radioReturnTo', collectionsReturnTo);
         void goto(`/car-page?${common.toString()}`);
     }
 
@@ -98,7 +110,11 @@
 <section class="radio-panel" class:journey-launcher={journeyLauncher} aria-labelledby="interactive-radio-heading">
     {#if journeyLauncher}
         {#if isDesktop}
-            <NostalgiaRadioGenreSelection bind:selectedGenres={selectedNostalgiaGenres} onContinue={(genres) => launch('nostalgia', 'ALL', genres)}/>
+            {#if journeyFamily === 'collections'}
+                <CollectionsRadioGroupSelection onContinue={(selected, all) => launch('collections', 'ALL', null, selected, all)}/>
+            {:else}
+                <NostalgiaRadioGenreSelection bind:selectedGenres={selectedNostalgiaGenres} onContinue={(genres) => launch('nostalgia', 'ALL', genres)}/>
+            {/if}
         {/if}
     {:else}
     <h1 id="interactive-radio-heading">Interactive Radio — Private Test</h1>

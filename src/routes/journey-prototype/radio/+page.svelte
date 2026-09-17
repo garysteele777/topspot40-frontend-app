@@ -37,10 +37,15 @@
     <button class="back" type="button" on:click={backToChoose}>Back</button>
     <InteractiveRadioPanel journeyLauncher={true} returnTo={buildExperienceDestination('nostalgia', 'radio')}/>
 {:else if desktopReady && family}
-    <main class="handoff-shell">
+    {#if family === 'collections'}
         <button class="back" type="button" on:click={backToChoose}>Back</button>
-        <h1>{family === 'artist' ? 'Artist Spotlights' : family === 'docuseries' ? 'Music Docuseries' : 'Collections'} Radio</h1>
-    </main>
+        <InteractiveRadioPanel journeyLauncher={true} journeyFamily="collections"/>
+    {:else}
+        <main class="handoff-shell">
+            <button class="back" type="button" on:click={backToChoose}>Back</button>
+            <h1>{family === 'artist' ? 'Artist Spotlights' : 'Music Docuseries'} Radio</h1>
+        </main>
+    {/if}
 {/if}
 
 <style>

@@ -94,7 +94,7 @@ export async function loadForSelection(
     ) {
         sel.programType = 'RADIO_COL';
 
-        if (collectionGroup === 'ALL') {
+        if (collectionGroup) {
 
             const placeholder: CarModeTrack = {
                 id: null,

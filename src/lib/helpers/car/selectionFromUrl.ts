@@ -29,6 +29,12 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
     );
     const collection = sp.get('collection') ?? '';
     const collectionGroup = sp.get('collection_group') ?? '';
+    const radioCollectionGroups = Array.from(new Set(
+        sp.getAll('collection_groups')
+            .flatMap(value => value.split(','))
+            .map(value => value.trim().toLowerCase())
+            .filter(Boolean)
+    )).join(',');
     const favoritesGroup = sp.get('favoritesGroup') ?? '';
 
     const language = normalizeLanguage(sp.get('language'));
@@ -74,7 +80,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             language,
             languages,
             context: {
-                collection_group_slug: group
+                collection_group_slug: group,
+                radioCollectionGroups
             },
             startRank: finalStartRank,
             endRank: 9999,

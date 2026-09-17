@@ -21,8 +21,8 @@ export async function fetchPlaybackStatus(): Promise<Response> {
 export async function signalNarrationFinishedApi(
     playbackSessionId: string,
     phase: string
-): Promise<void> {
-    await fetchPlaybackApi('/playback/narration-finished', {
+): Promise<Response> {
+    return fetchPlaybackApi('/playback/narration-finished', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
