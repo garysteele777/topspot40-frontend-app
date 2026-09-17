@@ -36,7 +36,8 @@ function createHarness({
     bufferSeconds = 0,
     onContinue = null,
     openSpotify = null,
-    onSpotifyOpenFailed = null
+    onSpotifyOpenFailed = null,
+    onLocalNextTrack = null
 } = {}) {
     let currentTrack = track;
     let activeMode = 'auto';
@@ -86,7 +87,7 @@ function createHarness({
             continued += 1;
             if (onContinue) onContinue({setPhase: value => { playbackPhase = value; }, setTrack: value => { currentTrack = value; }});
         },
-        nextTrack: async () => {},
+        nextTrack: async () => { onLocalNextTrack?.(); },
         previousTrack: async () => {},
         startPreviousAutoPlayback: async () => {}
     }, bufferSeconds);
@@ -94,6 +95,7 @@ function createHarness({
     return {
         auto,
         setCurrentTrack: value => { currentTrack = value; },
+        setPhase: value => { playbackPhase = value; },
         state: () => ({
             activeMode,
             playbackPhase,
@@ -248,6 +250,68 @@ test('radio track handoff schedules one guarded completion after duration plus f
     await Promise.resolve();
     assert.equal(harness.state().continued, 1);
     assert.equal(trackFinishedSignals, 1);
+    t.mock.timers.reset();
+});
+
+test('Collections keeps its shared timer through duplicate status frames and advances the same helper to Track 2', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const trackOne = {...firstTrack, spotifyTrackId: 'collection-track-1', durationSeconds: 2};
+    const trackTwo = {...nextTrack, spotifyTrackId: 'collection-track-2', durationSeconds: 2};
+    const helperWindow = {location: {href: 'https://open.spotify.com/track/collection-track-1'}};
+    let trackFinishedSignals = 0;
+    let localNextTrackCalls = 0;
+    let helperResets = 0;
+    const narrationPhases = [];
+    const harness = createHarness({
+        phase: 'idle',
+        playing: false,
+        track: trackOne,
+        bufferSeconds: 5,
+        onLocalNextTrack: () => { localNextTrackCalls += 1; },
+        onContinue: ({setPhase, setTrack}) => {
+            // This is the page's backend-radio continuation: restore the
+            // existing helper, acknowledge exactly once, then let polling
+            // publish Track 2 narration. It never calls local next/stop.
+            helperWindow.location.href = '/spotify-wait?language=en';
+            helperResets += 1;
+            trackFinishedSignals += 1;
+            setTrack(trackTwo);
+            setPhase('intro');
+            narrationPhases.push('intro');
+        }
+    });
+
+    assert.equal(harness.auto.handoffCurrentTrack(trackOne), true);
+    // Real polling repeatedly publishes the same phase=track response while
+    // Spotify owns the first track. Duplicate guards must be inert: they may
+    // not cancel or replace the timer that was already armed.
+    assert.equal(harness.auto.handoffCurrentTrack(trackOne), false);
+    assert.equal(harness.auto.handoffCurrentTrack(trackOne), false);
+
+    t.mock.timers.tick(7_000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    assert.equal(trackFinishedSignals, 1);
+    assert.equal(helperResets, 1);
+    assert.equal(helperWindow.location.href, '/spotify-wait?language=en');
+    assert.equal(localNextTrackCalls, 0);
+    assert.equal(harness.state().playbackPhase, 'intro');
+    assert.deepEqual(narrationPhases, ['intro'], 'Track 2 starts at intro; collection_intro is not replayed');
+
+    // The next backend frames are handled as normal narration and then the
+    // same Auto Play handoff moves the reserved window to Spotify Track 2.
+    assert.equal(harness.state().currentTrack.spotifyTrackId, 'collection-track-2');
+    harness.setPhase('detail');
+    harness.setPhase('track');
+    assert.equal(harness.auto.handoffCurrentTrack(trackTwo), true);
+    assert.equal(harness.state().opened, 2);
+    t.mock.timers.tick(7_000);
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(trackFinishedSignals, 2, 'the second real track gets one completion');
+    assert.equal(helperResets, 2, 'the same helper is returned to Old Dog again');
+    assert.equal(localNextTrackCalls, 0);
     t.mock.timers.reset();
 });
 

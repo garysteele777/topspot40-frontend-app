@@ -147,8 +147,12 @@ test('Car Mode routes both user playback handlers through the one-time program-s
 
     assert.match(guidedHandler[1], /if \(!\$currentTrack\) return;/);
     assert.match(guidedHandler[1], /captureProgramStartedOnce\(\)/);
-    assert.match(autoHandler[1], /if \(!\$currentTrack\) return;/);
-    assert.match(autoHandler[1], /captureProgramStartedOnce\(\)/);
+    assert.match(autoHandler[1], /needsInitialCollectionsRadioStart\(\)/);
+    const autoStartup = page.match(
+        /async function handleAutoPlay\(\)\s*\{([\s\S]*?)if \(isPrivateNostalgiaRadioSelection\(\)\)/
+    );
+    assert.ok(autoStartup);
+    assert.match(autoStartup[1], /captureProgramStartedOnce\(\)/);
 });
 
 test('program started tracker exposes whether the event has already been captured', () => {

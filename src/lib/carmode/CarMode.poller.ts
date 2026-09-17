@@ -39,6 +39,10 @@ import {
     isNarrationPhase,
     isPhasePlaying
 } from '$lib/utils/playbackPhaseHelpers';
+import {
+    playbackStatusTrackIdentity,
+    shouldDispatchSpotifyTrack
+} from '$lib/carmode/CarMode.statusTrack';
 
 import {
     timingSource,
@@ -212,6 +216,7 @@ let narrationPausedAtBoundary = false;
 // still-active track frame overwrite the frozen Drive-In clock/UI.
 let externalRadioTrackPaused = false;
 let externalRadioSpotifyHandoffReady = false;
+let lastSpotifyHandoffDecisionKey: string | null = null;
 
 export function setExternalRadioTrackPaused(paused: boolean): void {
     externalRadioTrackPaused = paused;
@@ -511,7 +516,13 @@ export async function signalNarrationFinished(
 
     dlog('📡 narration-finished');
 
-    await signalNarrationFinishedApi(playbackSessionId, phase);
+    const response = await signalNarrationFinishedApi(playbackSessionId, phase);
+    console.info('[car-mode] narration completion acknowledged', {
+        phase,
+        result: response.ok ? 'ok' : `http-${response.status}`,
+        pollGeneration,
+        narrationGeneration
+    });
 }
 
 async function playNarrationQueue() {
@@ -577,6 +588,8 @@ export function startPlaybackPolling(
         // Interactive Radio's Auto Play timer is the authority that reports
         // Spotify completion; polling still owns narration acknowledgements.
         externalRadioTrackClock?: boolean;
+        /** Reject an unexpected backend radio block before it reaches the UI. */
+        acceptRadioContext?: (context: Record<string, unknown>) => boolean;
     } = {}
 ) {
     if (!browser) return;
@@ -605,14 +618,21 @@ export function startPlaybackPolling(
                 return;
             }
 
-            const spotifyId = data.context?.spotify_track_id ?? null;
-            const phase = data.phase as PlaybackPhase;
+            const statusTrack = playbackStatusTrackIdentity(data);
+            const spotifyId = statusTrack.spotifyId;
+            const phase = statusTrack.phase;
             const playbackStarted = hasPlaybackStarted(phase);
             const isBackendRadio = [
                 'RADIO_DG',
                 'RADIO_COL',
                 'RADIO_ARTIST'
             ].includes(get(currentSelection)?.programType ?? '');
+
+            if (isBackendRadio && options.acceptRadioContext && data.context && !options.acceptRadioContext(data.context as Record<string, unknown>)) {
+                console.error('[car-mode] Rejected out-of-scope radio context', data.context);
+                stopPlaybackPolling();
+                return;
+            }
 
             if (
                 options.externalRadioTrackClock &&
@@ -676,7 +696,8 @@ export function startPlaybackPolling(
                         audioQueueLength: Array.isArray(audioQueue) ? audioQueue.length : 0,
                         firstQueueItemKeys,
                         hasBedAudioUrl: typeof data.context?.bed_audio_url === 'string',
-                        hasCurrentTrack: Boolean(get(currentTrack))
+                        hasCurrentTrack: Boolean(get(currentTrack)),
+                        pollGeneration: activePollGeneration
                     });
                 }
             }
@@ -712,11 +733,16 @@ export function startPlaybackPolling(
                 const normalizedCtx = normalizePlaybackContext(
                     ctx as Record<string, unknown>
                 );
+                // The public status serializer puts playback timing at the
+                // response root. Collections fallback tracks must carry that
+                // same duration into Auto Play's shared completion timer.
+                const statusDurationMs = calculatePlaybackTiming(data).durationMs;
 
                 if (next) {
                     const enriched = buildEnrichedPlaybackTrack({
                         baseTrack: next,
-                        normalizedCtx
+                        normalizedCtx,
+                        statusDurationMs
                     });
 
                     currentTrack.set(
@@ -727,10 +753,12 @@ export function startPlaybackPolling(
                 } else {
                     const fallbackTrack = buildFallbackPlaybackTrack({
                         spotifyId: contextTrackId,
-                        currentRank: data.current_rank ?? 0,
+                        rankingId: statusTrack.rankingId,
+                        currentRank: statusTrack.currentRank,
                         trackName: data.track_name ?? '',
                         artistName: data.artist_name ?? '',
-                        normalizedCtx
+                        normalizedCtx,
+                        statusDurationMs
                     });
 
                     currentTrack.set(
@@ -762,14 +790,7 @@ export function startPlaybackPolling(
 
             // dlog('⏱ Poll data:', data);
 
-            const rankingId =
-                data.context?.ranking_id != null
-                    ? Number(data.context.ranking_id)
-                    : data.context?.track_ranking_id != null
-                        ? Number(data.context.track_ranking_id)
-                        : data.context?.collection_ranking_id != null
-                            ? Number(data.context.collection_ranking_id)
-                            : null;
+            const rankingId = statusTrack.rankingId;
 
 
             playbackPhase.set(phase);
@@ -897,9 +918,38 @@ export function startPlaybackPolling(
                 data.context?.spotify_track_id
             ) {
                 const spotifyTrackId = data.context.spotify_track_id as string;
+                const shouldDispatch = shouldDispatchSpotifyTrack(
+                    phase,
+                    spotifyTrackId,
+                    guidedLinkOut,
+                    lastSpotifyId
+                );
+
+                const handoffReason = !guidedLinkOut
+                    ? 'guided-link-out-disabled'
+                    : lastSpotifyId === spotifyTrackId
+                        ? 'duplicate-spotify-track'
+                        : 'dispatching-track-ready';
+                const handoffDecisionKey = `${phase}:${spotifyTrackId}:${handoffReason}:${externalRadioSpotifyHandoffReady}`;
+                // Status polling intentionally repeats the active Spotify
+                // frame. Log a decision once per meaningful state change.
+                if (handoffDecisionKey !== lastSpotifyHandoffDecisionKey) {
+                    lastSpotifyHandoffDecisionKey = handoffDecisionKey;
+                    console.info('[car-mode] Spotify handoff decision', {
+                        phase,
+                        rank: statusTrack.currentRank,
+                        rankingId,
+                        spotifyId: spotifyTrackId,
+                        programType: get(currentSelection)?.programType ?? null,
+                        hasCurrentTrack: Boolean(get(currentTrack)),
+                        handoffReady: externalRadioSpotifyHandoffReady,
+                        willOpenSpotify: shouldDispatch,
+                        reason: handoffReason
+                    });
+                }
 
                 if (guidedLinkOut) {
-                    if (lastSpotifyId !== spotifyTrackId) {
+                    if (shouldDispatch) {
                         if (isBedPlaying()) {
                             stopBed();
                         }
@@ -1022,6 +1072,7 @@ export function resetSpotifyStartState(): void {
     lastSpotifyId = null;
     activeSpotifyTrackId = null;
     syncedUiSpotifyTrackId = null;
+    lastSpotifyHandoffDecisionKey = null;
 }
 
 export function resetNarrationPhaseState(): void {
@@ -1041,6 +1092,7 @@ export function resetNarrationPhaseState(): void {
     narrationPausedAtBoundary = false;
     externalRadioTrackPaused = false;
     externalRadioSpotifyHandoffReady = false;
+    lastSpotifyHandoffDecisionKey = null;
 }
 
 export async function skipToNextTrack(): Promise<void> {

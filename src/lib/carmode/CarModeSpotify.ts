@@ -172,14 +172,16 @@ export function createCarModeSpotify(
         }
     }
 
-    function returnToWaitingPage(): void {
+    function returnToWaitingPage(): boolean {
         try {
             if (spotifyWindow && !spotifyWindow.closed) {
                 spotifyWindow.location.href = `${window.location.origin}${waitingPageUrl()}`;
+                return true;
             }
         } catch {
             console.warn('Auto Play: could not return Spotify window to waiting page');
         }
+        return false;
     }
 
     function handleReturn(): void {
