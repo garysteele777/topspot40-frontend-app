@@ -109,6 +109,12 @@
     import {stopPlaybackApi} from '$lib/api/playbackApi';
     import {normalizePlaybackContext} from '$lib/utils/normalizePlaybackContext';
     import {buildFallbackPlaybackTrack} from '$lib/utils/buildPlaybackTrack';
+    import {
+        appendNostalgiaRadioGenres,
+        isGeneratedNostalgiaRadioGenreAllowed,
+        nostalgiaRadioStationLabel,
+        selectedNostalgiaRadioGenres
+    } from '$lib/journey/nostalgiaRadioGenres';
 
 
     import {buildSelectionFromUrl} from '$lib/carmode/CarMode.url';
@@ -1108,6 +1114,10 @@
                 play_artist_description: String(settings.voices.includes('artist')),
                 play_track: 'true'
             });
+            appendNostalgiaRadioGenres(
+                radioParams,
+                selectedNostalgiaRadioGenres(sel.context?.radioGenres, sel.context?.genre)
+            );
 
             const response = await startRadioSequence(radioParams);
 
@@ -1335,16 +1345,25 @@
         return Boolean(track?.spotifyTrackId && typeof track.setNumber === 'number');
     }
 
+    interface RadioTrackStatusData {
+        context?: Record<string, unknown>;
+        track_name?: string;
+        artist_name?: string;
+        current_rank?: number | string;
+    }
+
     function installRadioTrackStatus(
-        data: Record<string, any>,
+        data: RadioTrackStatusData,
         previousSpotifyTrackId?: string | null
     ): boolean {
-        const context = data.context as Record<string, unknown> | undefined;
+        const context = data.context;
         const spotifyTrackId = context?.spotify_track_id;
         const setNumber = context?.set_number;
         const blockPosition = context?.block_position;
         const blockSize = context?.block_size;
-        const requestedGenre = get(currentSelection)?.context?.genre;
+        const radioSelection = get(currentSelection);
+        // Retain the legacy single-genre guard for URLs without `genres`.
+        const requestedGenre = radioSelection?.context?.genre;
         const generatedGenre = context?.genre_slug ?? context?.genre;
 
         if (
@@ -1355,6 +1374,11 @@
             !data.track_name ||
             !data.artist_name ||
             (requestedGenre && requestedGenre !== 'ALL' && generatedGenre !== requestedGenre) ||
+            !isGeneratedNostalgiaRadioGenreAllowed(
+                radioSelection?.context?.radioGenres,
+                radioSelection?.context?.genre,
+                typeof generatedGenre === 'string' ? generatedGenre : undefined
+            ) ||
             (previousSpotifyTrackId && spotifyTrackId === previousSpotifyTrackId)
         ) {
             return false;
@@ -1446,6 +1470,10 @@
             play_artist_description: String(artistStoriesEnabled),
             play_track: 'true'
         });
+        appendNostalgiaRadioGenres(
+            params,
+            selectedNostalgiaRadioGenres(selection.context?.radioGenres, selection.context?.genre)
+        );
 
         try {
             // This establishes a signed, HttpOnly guest playback session when
@@ -1904,7 +1932,10 @@
         $currentSelection?.mode === 'decade_genre'
             ? (
                 isRadioMode
-                    ? ($currentTrack?.genreName ?? '')
+                    ? nostalgiaRadioStationLabel(
+                        $currentSelection.context?.radioGenres,
+                        $currentSelection.context?.genre
+                    )
                     : ($currentTrack?.genreName ?? toTitleCase($currentSelection.context?.genre ?? ''))
             )
             : '';
@@ -1934,16 +1965,13 @@
                 ? `${bannerTitle} Spotlight`
                 : `${uiDecade} ${uiGenre}`.trim();
 
-    // `ALL` is a request scope, never an on-air decade. Until the backend has
-    // selected a real set, identify the requested station. Thereafter the
-    // installed backend track is authoritative and updates this on each set.
+    // Radio identity is the requested listener scope, while radioSetLabel
+    // remains the authoritative decade/genre description for each set.
     $: radioMarqueeTitle =
-        interactiveRadioTest &&
-        typeof $currentTrack?.setNumber === 'number' &&
-        $currentTrack.decadeName &&
-        $currentTrack.genreName
-            ? `${$currentTrack.decadeName} ${$currentTrack.genreName.toUpperCase()}`
-            : `${toTitleCase($currentSelection?.context?.genre ?? 'Country').toUpperCase()} RADIO`;
+        `${nostalgiaRadioStationLabel(
+            $currentSelection?.context?.radioGenres,
+            $currentSelection?.context?.genre
+        ).toUpperCase()} RADIO`;
 
     $: radioSetLabel = interactiveRadioTest && $currentTrack?.decadeName && $currentTrack?.genreName
         ? `${$currentTrack.decadeName} ${$currentTrack.genreName}`
