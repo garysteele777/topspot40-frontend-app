@@ -11,6 +11,7 @@ import {
     normalizeVoicePlayMode
 } from '$lib/playbackPreferences';
 import {PROGRAM_TYPES} from '$lib/types/program';
+import {serializeNostalgiaRadioGenres} from '$lib/journey/nostalgiaRadioGenres';
 
 export function buildSelectionFromUrl(url: URL): SelectionState {
     const sp = url.searchParams;
@@ -23,6 +24,9 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
     const decade = sp.get('decade') ?? '';
     const genre = sp.get('genre') ?? '';
+    const radioGenres = serializeNostalgiaRadioGenres(
+        sp.getAll('genres').flatMap(value => value.split(','))
+    );
     const collection = sp.get('collection') ?? '';
     const collectionGroup = sp.get('collection_group') ?? '';
     const favoritesGroup = sp.get('favoritesGroup') ?? '';
@@ -241,6 +245,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         context: {
             decade,
             genre,
+            radioGenres,
             favoritesType:
                 programType === PROGRAM_TYPES.FAVORITES_DG
                     ? 'DG'

@@ -175,7 +175,8 @@ test('Auto Play bootstraps, installs a real first track, then begins normal narr
     assert.match(driveIn, /class="radio-set-info"/);
     assert.match(carPage, /radioMarqueeTitle/);
     assert.match(carPage, /toUpperCase\(\)\} RADIO/);
-    assert.match(carPage, /\$currentTrack\.decadeName.*\$currentTrack\.genreName\.toUpperCase\(\)/s);
+    assert.match(carPage, /nostalgiaRadioStationLabel\(/);
+    assert.match(carPage, /\$currentTrack\.decadeName.*\$currentTrack\.genreName/s);
 });
 
 test('private radio defers its status poller until Auto Play starts the backend sequence', async () => {
