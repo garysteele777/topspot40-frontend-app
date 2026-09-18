@@ -1,13 +1,22 @@
 <script lang="ts">
     import {onMount} from 'svelte';
     import {NOSTALGIA_RADIO_GENRES, NOSTALGIA_RADIO_GENRE_LABELS, normalizeNostalgiaRadioGenres, type NostalgiaRadioGenreSlug} from '$lib/journey/nostalgiaRadioGenres';
+    import type {Language} from '$lib/types/playback';
 
     const STORAGE_KEY = 'topspot_nostalgia_radio_genres';
     export let selectedGenres: NostalgiaRadioGenreSlug[] = [...NOSTALGIA_RADIO_GENRES];
     export let onContinue: (genres: NostalgiaRadioGenreSlug[]) => void;
+    export let language: Language | 'pt-BR' = 'en';
+
+    const copy = {
+        en: {artAlt: 'Eight musical roads leading to TopSpot40 genres', toggle: 'Toggle', title: 'Nostalgia Radio', instruction: 'Select all the genres you want to include in Nostalgia Radio.', selectAll: 'Select All Genres', clearAll: 'Clear All Genres', selected: 'genres selected', genre: 'Genre', genres: 'Genres', continue: 'Continue with'},
+        es: {artAlt: 'Ocho caminos musicales que conducen a los géneros de TopSpot40', toggle: 'Alternar', title: 'Radio Nostalgia', instruction: 'Selecciona todos los géneros que deseas incluir en Radio Nostalgia.', selectAll: 'Seleccionar todos los géneros', clearAll: 'Borrar todos los géneros', selected: 'géneros seleccionados', genre: 'género', genres: 'géneros', continue: 'Continuar con'},
+        ptbr: {artAlt: 'Oito caminhos musicais que levam aos gêneros do TopSpot40', toggle: 'Alternar', title: 'Rádio Nostalgia', instruction: 'Selecione todos os gêneros que deseja incluir no Rádio Nostalgia.', selectAll: 'Selecionar todos os gêneros', clearAll: 'Limpar todos os gêneros', selected: 'gêneros selecionados', genre: 'gênero', genres: 'gêneros', continue: 'Continuar com'}
+    };
+    $: text = copy[language === 'pt-BR' ? 'ptbr' : language];
 
     $: selectedCount = selectedGenres.length;
-    $: continueLabel = `Continue with ${selectedCount} ${selectedCount === 1 ? 'Genre' : 'Genres'}`;
+    $: continueLabel = `${text.continue} ${selectedCount} ${selectedCount === 1 ? text.genre : text.genres}`;
 
     function setSelectedGenres(genres: readonly string[]): void {
         selectedGenres = normalizeNostalgiaRadioGenres(genres);
@@ -25,19 +34,19 @@
 </script>
 
 <main class="genre-page">
-    <div class="art-layer"><img class="journey-art" src="/images/journey/08-ai-genre-road.png" alt="Eight musical roads leading to TopSpot40 genres" /><div class="shade" aria-hidden="true"></div></div>
+    <div class="art-layer"><img class="journey-art" src="/images/journey/08-ai-genre-road.png" alt={text.artAlt} /><div class="shade" aria-hidden="true"></div></div>
     <div class="hotspot-layer">
         {#each NOSTALGIA_RADIO_GENRES as genre}
-            <button type="button" class="genre-button genre-{genre}" class:selected={selectedGenres.includes(genre)} aria-label={`Toggle ${NOSTALGIA_RADIO_GENRE_LABELS[genre]}`} aria-pressed={selectedGenres.includes(genre)} on:click={() => toggleGenre(genre)}>
+            <button type="button" class="genre-button genre-{genre}" class:selected={selectedGenres.includes(genre)} aria-label={`${text.toggle} ${NOSTALGIA_RADIO_GENRE_LABELS[genre]}`} aria-pressed={selectedGenres.includes(genre)} on:click={() => toggleGenre(genre)}>
                 <span class="checkmark" aria-hidden="true">✓</span><span class="screen-reader-only">{NOSTALGIA_RADIO_GENRE_LABELS[genre]}</span>
             </button>
         {/each}
     </div>
     <section class="radio-card" aria-labelledby="nostalgia-radio-heading">
-        <h1 id="nostalgia-radio-heading">Nostalgia Radio</h1>
-        <p>Select all the genres you want to include in Nostalgia Radio.</p>
-        <div class="actions"><button type="button" on:click={selectAllGenres}>Select All Genres</button><button type="button" on:click={clearAllGenres}>Clear All Genres</button></div>
-        <p class="count" aria-live="polite">{selectedCount} of {NOSTALGIA_RADIO_GENRES.length} genres selected</p>
+        <h1 id="nostalgia-radio-heading">{text.title}</h1>
+        <p>{text.instruction}</p>
+        <div class="actions"><button type="button" on:click={selectAllGenres}>{text.selectAll}</button><button type="button" on:click={clearAllGenres}>{text.clearAll}</button></div>
+        <p class="count" aria-live="polite">{selectedCount} / {NOSTALGIA_RADIO_GENRES.length} {text.selected}</p>
         <button class="continue" type="button" disabled={selectedCount === 0} on:click={continueToRadio}>{continueLabel} <span aria-hidden="true">→</span></button>
     </section>
 </main>

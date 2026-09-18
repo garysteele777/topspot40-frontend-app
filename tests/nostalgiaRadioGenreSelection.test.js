@@ -31,7 +31,10 @@ test('genre selection supports Clear All, Select All, and one-genre labels', asy
     assert.match(selector, /Select All Genres/);
     assert.match(selector, /Clear All Genres/);
     assert.match(selector, /disabled=\{selectedCount === 0\}/);
-    assert.match(selector, /Continue with \$\{selectedCount\} \$\{selectedCount === 1 \? 'Genre' : 'Genres'\}/);
+    assert.match(selector, /export let language: Language \| 'pt-BR' = 'en'/);
+    assert.match(selector, /es: \{artAlt:[\s\S]*Selecciona todos los géneros/);
+    assert.match(selector, /ptbr: \{artAlt:[\s\S]*Selecione todos os gêneros/);
+    assert.match(selector, /\$\{text\.continue\} \$\{selectedCount\}/);
     assert.match(selector, /checkmark/);
     assert.deepEqual(genres.normalizeNostalgiaRadioGenres([]), []);
     assert.deepEqual(genres.normalizeNostalgiaRadioGenres(['pop']), ['pop']);

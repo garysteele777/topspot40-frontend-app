@@ -3,6 +3,7 @@
     import {goto} from '$app/navigation';
     import {loadCollectionsJourneyCatalog} from '$lib/collections/catalogAdapter';
     import {localizedCollectionCopy} from '$lib/config/collectionsJourney';
+    import type {Language} from '$lib/types/playback';
     import type {JourneyCollectionGroup} from '$lib/collections/types';
     import {
         COLLECTIONS_RADIO_STORAGE_KEY,
@@ -11,6 +12,13 @@
     } from '$lib/journey/collectionsRadioGroups';
 
     export let onContinue: (selected: string[], all: string[]) => void;
+    export let language: Language | 'pt-BR' = 'en';
+    const copy = {
+        en: {title: 'Collections Radio', instruction: 'Select the Collection Groups you want to include. Selecting a group also previews its collections.', loading: 'Loading Collection Groups…', error: 'We could not load Collection Groups.', selectAll: 'Select All Collection Groups', clearAll: 'Clear All Collection Groups', selected: 'Collection Groups selected', continueSelected: (count: number) => count === 1 ? 'selected collection group' : 'Collection Groups selected', continue: 'Continue with', groupsLabel: 'Collection Groups', selectedState: 'Selected', unselectedState: 'Not selected', preview: 'Previewed Collection Group', collection: 'collection', collections: 'collections', tracks: 'tracks', collectionsLabel: (name: string) => `${name} collections`},
+        es: {title: 'Radio de Colecciones', instruction: 'Selecciona los grupos de colecciones que deseas incluir. Al seleccionar un grupo, también puedes ver sus colecciones.', loading: 'Cargando grupos de colecciones…', error: 'No pudimos cargar los grupos de colecciones.', selectAll: 'Seleccionar todos los grupos de colecciones', clearAll: 'Borrar todos los grupos de colecciones', selected: 'grupos de colecciones seleccionados', continueSelected: (count: number) => count === 1 ? 'grupo de colecciones seleccionado' : 'grupos de colecciones seleccionados', continue: 'Continuar con', groupsLabel: 'Grupos de colecciones', selectedState: 'Seleccionado', unselectedState: 'No seleccionado', preview: 'Grupo de colecciones en vista previa', collection: 'colección', collections: 'colecciones', tracks: 'canciones', collectionsLabel: (name: string) => `Colecciones de ${name}`},
+        ptbr: {title: 'Rádio de Coleções', instruction: 'Selecione os grupos de coleções que deseja incluir. Selecionar um grupo também mostra uma prévia de suas coleções.', loading: 'Carregando grupos de coleções…', error: 'Não foi possível carregar os grupos de coleções.', selectAll: 'Selecionar todos os grupos de coleções', clearAll: 'Limpar todos os grupos de coleções', selected: 'grupos de coleções selecionados', continueSelected: (count: number) => count === 1 ? 'grupo de coleções selecionado' : 'grupos de coleções selecionados', continue: 'Continuar com', groupsLabel: 'Grupos de coleções', selectedState: 'Selecionado', unselectedState: 'Não selecionado', preview: 'Grupo de coleções em prévia', collection: 'coleção', collections: 'coleções', tracks: 'faixas', collectionsLabel: (name: string) => `Coleções de ${name}`}
+    };
+    $: text = copy[language === 'pt-BR' ? 'ptbr' : language];
 
     let groups: JourneyCollectionGroup[] = [];
     let selectedGroups: string[] = [];
@@ -20,7 +28,7 @@
 
     $: selectedCount = selectedGroups.length;
     $: previewGroup = groups.find(group => group.slug === previewSlug) ?? groups[0];
-    $: continueLabel = `Continue with ${selectedCount} Collection Groups`;
+    $: continueLabel = `${text.continue} ${selectedCount} ${text.continueSelected(selectedCount)}`;
 
     function saveSelection(next: readonly string[], updateUrl = true): void {
         selectedGroups = normalizeCollectionsRadioGroups(next, groups);
@@ -64,7 +72,7 @@
                 : groups[0]?.slug ?? '';
         } catch (reason) {
             console.error('Failed to load Collections Radio groups', reason);
-            error = 'We could not load Collection Groups.';
+            error = text.error;
         } finally {
             loading = false;
         }
@@ -73,29 +81,29 @@
 
 <main class="selection-page">
     <section class="selector" aria-labelledby="collections-radio-heading">
-        <h1 id="collections-radio-heading">Collections Radio</h1>
-        <p>Select the Collection Groups you want to include. Selecting a group also previews its collections.</p>
+        <h1 id="collections-radio-heading">{text.title}</h1>
+        <p>{text.instruction}</p>
         {#if loading}
-            <p>Loading Collection Groups…</p>
+            <p>{text.loading}</p>
         {:else if error}
             <p role="alert">{error}</p>
         {:else}
-            <div class="actions"><button type="button" on:click={selectAll}>Select All Collection Groups</button><button type="button" on:click={clearAll}>Clear All Collection Groups</button></div>
-            <p class="count" aria-live="polite">{selectedCount} of {groups.length} Collection Groups selected</p>
+            <div class="actions"><button type="button" on:click={selectAll}>{text.selectAll}</button><button type="button" on:click={clearAll}>{text.clearAll}</button></div>
+            <p class="count" aria-live="polite">{selectedCount} / {groups.length} {text.selected}</p>
             <div class="layout">
-                <div class="group-list" aria-label="Collection Groups">
+                <div class="group-list" aria-label={text.groupsLabel}>
                     {#each groups as group (group.slug)}
                         <button type="button" class:selected={selectedGroups.includes(group.slug)} class:preview={previewGroup?.slug === group.slug} aria-pressed={selectedGroups.includes(group.slug)} on:click={() => focusAndToggle(group)}>
-                            <span>{group.presentation.icon}</span><span>{group.name}</span><small>{selectedGroups.includes(group.slug) ? 'Selected' : 'Not selected'}</small>
+                            <span>{group.presentation.icon}</span><span>{group.name}</span><small>{selectedGroups.includes(group.slug) ? text.selectedState : text.unselectedState}</small>
                         </button>
                     {/each}
                 </div>
                 {#if previewGroup}
                     <article class="preview" style={`--accent: ${previewGroup.presentation.accent}`}>
-                        <p class="eyebrow">Previewed Collection Group</p><h2>{previewGroup.name}</h2>
-                        <p>{localizedCollectionCopy(previewGroup.presentation.description, 'en')}</p>
-                        <strong>{previewGroup.items.length} {previewGroup.items.length === 1 ? 'collection' : 'collections'} • {previewGroup.totalTracks} tracks</strong>
-                        <ul aria-label={`${previewGroup.name} collections`}>
+                        <p class="eyebrow">{text.preview}</p><h2>{previewGroup.name}</h2>
+                        <p>{localizedCollectionCopy(previewGroup.presentation.description, language === 'pt-BR' ? 'ptbr' : language)}</p>
+                        <strong>{previewGroup.items.length} {previewGroup.items.length === 1 ? text.collection : text.collections} • {previewGroup.totalTracks} {text.tracks}</strong>
+                        <ul aria-label={text.collectionsLabel(previewGroup.name)}>
                             {#each previewGroup.items as collection (collection.slug)}<li>{collection.name}</li>{/each}
                         </ul>
                     </article>

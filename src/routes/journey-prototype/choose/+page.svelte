@@ -47,7 +47,16 @@
     };
 
     const choices = EXPERIENCE_FAMILIES;
-    const desktopInstruction = "Choose an experience, then choose how you'd like to listen.";
+    const desktopInstruction: Record<LandingLanguage, string> = {
+        en: "Choose an experience, then choose how you'd like to listen.",
+        es: 'Elige una experiencia y luego elige cómo quieres escuchar.',
+        ptbr: 'Escolha uma experiência e depois escolha como deseja ouvir.'
+    };
+    const modeCopy: Record<LandingLanguage, {program: string; radio: string}> = {
+        en: {program: 'Program Mode', radio: 'Radio Mode'},
+        es: {program: 'Modo Programa', radio: 'Modo Radio'},
+        ptbr: {program: 'Modo Programa', radio: 'Modo Rádio'}
+    };
 
     function setProgram(choice: ExperienceFamily) {
         selectedProgram = choice;
@@ -107,7 +116,7 @@
             />
             <div class="shade" aria-hidden="true"></div>
             <section class="journey-title"><h1>{text[language].title}</h1>
-                <p>{desktopInstruction}</p></section>
+                <p>{desktopInstruction[language]}</p></section>
             <div class="choice-layer">
                 {#each choices as choice}
                     <button class="program-choice program-{choice}" class:active={selectedProgram === choice}
@@ -117,9 +126,11 @@
                 {/each}
             </div>
             {#if selectedProgram}
-                <button type="button" class="mode-button program-mode" on:click={() => startExperience('program')}>Program Mode <span
+                <button type="button" class="mode-button program-mode" on:click={() => startExperience('program')}>{modeCopy[language].program} <span
                         aria-hidden="true">→</span></button>
-                <button type="button" class="mode-button radio-mode" on:click={() => startExperience('radio')}>Radio Mode <span aria-hidden="true">→</span></button>
+                {#if selectedProgram !== 'docuseries'}
+                    <button type="button" class="mode-button radio-mode" on:click={() => startExperience('radio')}>{modeCopy[language].radio} <span aria-hidden="true">→</span></button>
+                {/if}
             {/if}
         </main>
     {:else}

@@ -12,7 +12,8 @@ const families = ['nostalgia', 'collections', 'artist', 'docuseries'];
 test('chooser uses one desktop family/mode model', () => {
     assert.match(page, /min-width: 1200px/);
     assert.match(page, /on:click=\{\(\) => setProgram\(choice\)\}/);
-    assert.match(page, /\{#if selectedProgram\}[\s\S]*Program Mode[\s\S]*Radio Mode/);
+    assert.match(page, /\{#if selectedProgram\}[\s\S]*modeCopy\[language\]\.program/);
+    assert.match(page, /\{#if selectedProgram !== 'docuseries'\}[\s\S]*modeCopy\[language\]\.radio/);
     assert.doesNotMatch(page, /chooseProgram|selectionContinue|createSingleChoiceContinue|continueJourney/);
     assert.doesNotMatch(page, /on:dblclick/);
     assert.match(page, /class:active=\{selectedProgram === choice\}/);
@@ -20,6 +21,14 @@ test('chooser uses one desktop family/mode model', () => {
     assert.equal((page.match(/class="mode-button program-mode"/g) ?? []).length, 1);
     assert.equal((page.match(/class="mode-button radio-mode"/g) ?? []).length, 1);
     assert.match(page, /\.mode-button:hover, \.mode-button:focus-visible/);
+});
+
+test('desktop mode controls localize and hide Radio Mode for Music Docuseries', () => {
+    assert.match(page, /Elige una experiencia y luego elige cómo quieres escuchar\./);
+    assert.match(page, /Escolha uma experiência e depois escolha como deseja ouvir\./);
+    assert.match(page, /es: \{program: 'Modo Programa', radio: 'Modo Radio'\}/);
+    assert.match(page, /ptbr: \{program: 'Modo Programa', radio: 'Modo Rádio'\}/);
+    assert.match(page, /selectedProgram !== 'docuseries'/);
 });
 
 test('all family destinations preserve program and radio contracts', () => {

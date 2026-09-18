@@ -34,7 +34,10 @@ test('Artist Radio selector exposes the seven-card multi-select without narratio
     assert.match(source, /checkmark/);
     assert.match(source, /Select All Genres/);
     assert.match(source, /Clear All Genres/);
-    assert.match(source, /\{count\} of 7 genres selected/);
+    assert.match(source, /\{count\} \/ \{ARTIST_RADIO_GENRES\.length\} \{text\.selected\}/);
+    assert.match(source, /export let language: Language \| 'pt-BR' = 'en'/);
+    assert.match(source, /Selecciona todos los géneros/);
+    assert.match(source, /Selecione todos os gêneros/);
     assert.match(source, /disabled=\{count === 0\}/);
     assert.doesNotMatch(source, /Track Details/);
     assert.doesNotMatch(source, /Artist Bios/);

@@ -1,9 +1,17 @@
 <script lang="ts">
     import {onMount} from 'svelte';
     import {ARTIST_RADIO_GENRES, ARTIST_RADIO_GENRE_LABELS, normalizeArtistRadioGenres, type ArtistRadioGenreSlug} from '$lib/journey/artistRadioGenres';
+    import type {Language} from '$lib/types/playback';
 
     const STORAGE_KEY = 'topspot_artist_radio_genres';
     export let onContinue: (genres: ArtistRadioGenreSlug[]) => void;
+    export let language: Language | 'pt-BR' = 'en';
+    const copy = {
+        en: {artAlt: 'Seven musical roads leading to Artist Radio genres', toggle: 'Toggle', title: 'Artist Radio', instruction: 'Select all the genres you want included in Artist Radio. TopSpot40 will choose the Featured Artists.', selectAll: 'Select All Genres', clearAll: 'Clear All Genres', selected: 'genres selected', explanation: 'TopSpot40 will choose Featured Artists from your selected genres and keep the music playing.', spotlight: 'Want to hear all available songs by one artist? Choose that artist in Artist Spotlight.', continue: 'Continue with', genre: 'Genre', genres: 'Genres'},
+        es: {artAlt: 'Siete caminos musicales que conducen a los géneros de Radio de Artistas', toggle: 'Alternar', title: 'Radio de Artistas', instruction: 'Selecciona todos los géneros que deseas incluir en Radio de Artistas. TopSpot40 elegirá a los artistas destacados.', selectAll: 'Seleccionar todos los géneros', clearAll: 'Borrar todos los géneros', selected: 'géneros seleccionados', explanation: 'TopSpot40 elegirá artistas destacados de los géneros seleccionados y mantendrá la música sonando.', spotlight: '¿Quieres escuchar todas las canciones disponibles de un artista? Elige a ese artista en Artistas Destacados.', continue: 'Continuar con', genre: 'género', genres: 'géneros'},
+        ptbr: {artAlt: 'Sete caminhos musicais que levam aos gêneros do Rádio de Artistas', toggle: 'Alternar', title: 'Rádio de Artistas', instruction: 'Selecione todos os gêneros que deseja incluir no Rádio de Artistas. O TopSpot40 escolherá os artistas em destaque.', selectAll: 'Selecionar todos os gêneros', clearAll: 'Limpar todos os gêneros', selected: 'gêneros selecionados', explanation: 'O TopSpot40 escolherá artistas em destaque dos gêneros selecionados e manterá a música tocando.', spotlight: 'Quer ouvir todas as músicas disponíveis de um artista? Escolha esse artista em Destaques de Artistas.', continue: 'Continuar com', genre: 'gênero', genres: 'gêneros'}
+    };
+    $: text = copy[language === 'pt-BR' ? 'ptbr' : language];
     let selectedGenres: ArtistRadioGenreSlug[] = [...ARTIST_RADIO_GENRES];
     $: count = selectedGenres.length;
     function setGenres(values: readonly string[]) { selectedGenres = normalizeArtistRadioGenres(values); try { localStorage.setItem(STORAGE_KEY, selectedGenres.join(',')); } catch {} }
@@ -12,21 +20,21 @@
 </script>
 
 <main class="genre-page" aria-labelledby="artist-radio-heading">
-    <div class="art-layer"><img class="journey-art" src="/images/journey/08-ai-genre-road.png" alt="Seven musical roads leading to Artist Radio genres" /><div class="shade" aria-hidden="true"></div></div>
+    <div class="art-layer"><img class="journey-art" src="/images/journey/08-ai-genre-road.png" alt={text.artAlt} /><div class="shade" aria-hidden="true"></div></div>
     <div class="hotspot-layer">
         {#each ARTIST_RADIO_GENRES as genre}
-            <button type="button" class="genre-button genre-{genre}" class:selected={selectedGenres.includes(genre)} aria-label={`Toggle ${ARTIST_RADIO_GENRE_LABELS[genre]}`} aria-pressed={selectedGenres.includes(genre)} on:click={() => toggle(genre)}>
+            <button type="button" class="genre-button genre-{genre}" class:selected={selectedGenres.includes(genre)} aria-label={`${text.toggle} ${ARTIST_RADIO_GENRE_LABELS[genre]}`} aria-pressed={selectedGenres.includes(genre)} on:click={() => toggle(genre)}>
                 <span class="checkmark" aria-hidden="true">✓</span><span class="screen-reader-only">{ARTIST_RADIO_GENRE_LABELS[genre]}</span>
             </button>
         {/each}
     </div>
     <section class="radio-card">
-        <h1 id="artist-radio-heading">Artist Radio</h1>
-        <p>Select all the genres you want included in Artist Radio. TopSpot40 will choose the Featured Artists.</p>
-        <div class="actions"><button type="button" on:click={() => setGenres(ARTIST_RADIO_GENRES)}>Select All Genres</button><button type="button" on:click={() => setGenres([])}>Clear All Genres</button></div>
-        <p class="count" aria-live="polite">{count} of 7 genres selected</p>
-        <p>TopSpot40 will choose Featured Artists from your selected genres and keep the music playing.</p><p>Want to hear all available songs by one artist? Choose that artist in Artist Spotlight.</p>
-        <button class="continue" type="button" disabled={count === 0} on:click={() => onContinue(selectedGenres)}>Continue with {count} {count === 1 ? 'Genre' : 'Genres'} →</button>
+        <h1 id="artist-radio-heading">{text.title}</h1>
+        <p>{text.instruction}</p>
+        <div class="actions"><button type="button" on:click={() => setGenres(ARTIST_RADIO_GENRES)}>{text.selectAll}</button><button type="button" on:click={() => setGenres([])}>{text.clearAll}</button></div>
+        <p class="count" aria-live="polite">{count} / {ARTIST_RADIO_GENRES.length} {text.selected}</p>
+        <p>{text.explanation}</p><p>{text.spotlight}</p>
+        <button class="continue" type="button" disabled={count === 0} on:click={() => onContinue(selectedGenres)}>{text.continue} {count} {count === 1 ? text.genre : text.genres} →</button>
     </section>
 </main>
 

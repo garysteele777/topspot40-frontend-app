@@ -20,6 +20,7 @@
     export let journeyLauncher = false;
     export let returnTo = '';
     export let journeyFamily: RadioMode = 'nostalgia';
+    export let language: Language | 'pt-BR' = 'en';
 
     type OptionItem = {id: string; label: string};
     type CollectionGroup = {name: string; slug: string};
@@ -33,8 +34,11 @@
     let desktopQuery: MediaQueryList | null = null;
     let selectedNostalgiaGenres: NostalgiaRadioGenreSlug[] = [...NOSTALGIA_RADIO_GENRES];
 
-    const language: Language = 'en';
-    const languages: Language[] = ['en'];
+    // Playback and saved-resume state use the application's `ptbr` code.
+    let activeLanguage: Language = language === 'pt-BR' ? 'ptbr' : language;
+    let languages: Language[] = [];
+    $: activeLanguage = language === 'pt-BR' ? 'ptbr' : language;
+    $: languages = [activeLanguage];
     function updateDesktopCapability(): void {
         isDesktop = desktopQuery?.matches ?? false;
         if (isDesktop && !loading && genreOptions.length === 0) void loadStations();
@@ -72,7 +76,7 @@
         if (!isDesktop || (!dev && !journeyLauncher)) return;
         const settings = get(playbackSettingsStore);
         const voices: VoicePart[] = settings.voices;
-        const common = new URLSearchParams({language, languages: languages.join(','), voices: voices.join(','), playbackOrder: 'shuffle', voicePlayMode: 'before', pauseMode: 'continuous', skipPlayed: 'true', interactiveRadioTest: 'true'});
+        const common = new URLSearchParams({language: activeLanguage, languages: languages.join(','), voices: voices.join(','), playbackOrder: 'shuffle', voicePlayMode: 'before', pauseMode: 'continuous', skipPlayed: 'true', interactiveRadioTest: 'true'});
         playbackSettingsStore.update(current => ({...current, playbackMethod: 'automatic', playbackOrder: 'shuffle', pauseMode: 'continuous', skipPlayed: true}));
 
         if (mode === 'nostalgia') {
@@ -80,7 +84,7 @@
                 ? normalizeNostalgiaRadioGenres(requestedGenres)
                 : null;
             const genre = selectedGenres?.length === 1 ? selectedGenres[0] : station;
-            saveResumeFromLocal({activeGroup: 'decade_genre' as ModeType, context: {decade: 'ALL', genre, radioGenres: selectedGenres?.join(',') ?? ''}, language, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
+            saveResumeFromLocal({activeGroup: 'decade_genre' as ModeType, context: {decade: 'ALL', genre, radioGenres: selectedGenres?.join(',') ?? ''}, language: activeLanguage, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
             common.set('mode', 'nostalgia'); common.set('decade', 'ALL'); common.set('genre', genre);
             if (selectedGenres) common.set('genres', selectedGenres.join(','));
         } else if (mode === 'collections') {
@@ -88,7 +92,7 @@
             const allSelected = allCollectionGroups !== null && selected.length === allCollectionGroups.length;
             const group = allSelected || selected.length !== 1 ? 'ALL' : selected[0];
             const radioCollectionGroups = !allSelected && selected.length > 1 ? selected.join(',') : '';
-            saveResumeFromLocal({activeGroup: 'collection' as ModeType, context: {collection_group_slug: group, radioCollectionGroups}, language, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
+            saveResumeFromLocal({activeGroup: 'collection' as ModeType, context: {collection_group_slug: group, radioCollectionGroups}, language: activeLanguage, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
             common.set('mode', 'radio_collections'); common.set('collection_group', group);
             if (!allSelected && selected.length > 1) for (const slug of selected) common.append('collection_groups', slug);
         } else {
@@ -106,7 +110,7 @@
     ): void {
         if (!isDesktop || genres.length === 0) return;
         const common = new URLSearchParams({
-            mode: 'artist_radio', language, languages: languages.join(','),
+            mode: 'artist_radio', language: activeLanguage, languages: languages.join(','),
             genres: genres.join(','), genre: genres.length === 1 ? genres[0] : 'ALL',
             artistDetailLength: 'short', artistBioLength: 'short',
             voices: 'intro,detail,artist',
@@ -128,11 +132,11 @@
     {#if journeyLauncher}
         {#if isDesktop}
             {#if journeyFamily === 'collections'}
-                <CollectionsRadioGroupSelection onContinue={(selected, all) => launch('collections', 'ALL', null, selected, all)}/>
+                <CollectionsRadioGroupSelection {language} onContinue={(selected, all) => launch('collections', 'ALL', null, selected, all)}/>
             {:else if journeyFamily === 'artist_spotlight'}
-                <ArtistRadioSelection onContinue={launchArtistRadio}/>
+                <ArtistRadioSelection {language} onContinue={launchArtistRadio}/>
             {:else}
-                <NostalgiaRadioGenreSelection bind:selectedGenres={selectedNostalgiaGenres} onContinue={(genres) => launch('nostalgia', 'ALL', genres)}/>
+                <NostalgiaRadioGenreSelection {language} bind:selectedGenres={selectedNostalgiaGenres} onContinue={(genres) => launch('nostalgia', 'ALL', genres)}/>
             {/if}
         {/if}
     {:else}

@@ -35,11 +35,23 @@ test('selector separates selected state from preview and includes required persi
     assert.match(source, /urlValues.length > 0/);
     assert.match(source, /Select All Collection Groups/);
     assert.match(source, /Clear All Collection Groups/);
-    assert.match(source, /\{selectedCount\} of \{groups\.length\} Collection Groups selected/);
-    assert.match(source, /Continue with \$\{selectedCount\} Collection Groups/);
+    assert.match(source, /\{selectedCount\} \/ \{groups\.length\} \{text\.selected\}/);
+    assert.match(source, /\$\{text\.continue\} \$\{selectedCount\} \$\{text\.continueSelected\(selectedCount\)\}/);
+    assert.match(source, /export let language: Language \| 'pt-BR' = 'en'/);
+    assert.match(source, /localizedCollectionCopy\(previewGroup\.presentation\.description, language === 'pt-BR' \? 'ptbr' : language\)/);
+    assert.match(source, /Cargando grupos de colecciones/);
+    assert.match(source, /Carregando grupos de coleções/);
     assert.match(source, /class:selected=/);
     assert.match(source, /class:preview=/);
     assert.match(source, /previewGroup\.items/);
+});
+
+test('Collections Radio Continue label uses singular group wording only for one selection', async () => {
+    const source = await readFile(new URL('../src/lib/components/options-v2/CollectionsRadioGroupSelection.svelte', import.meta.url), 'utf8');
+
+    assert.match(source, /count === 1 \? 'selected collection group' : 'Collection Groups selected'/);
+    assert.match(source, /count === 1 \? 'grupo de colecciones seleccionado' : 'grupos de colecciones seleccionados'/);
+    assert.match(source, /count === 1 \? 'grupo de coleções selecionado' : 'grupos de coleções selecionados'/);
 });
 
 test('Collections Radio uses compatibility URLs, payload arrays, route rendering, and a Change Music return URL', async () => {

@@ -35,6 +35,8 @@ test('radio route uses the desktop guard and returns invalid requests safely', (
     assert.match(route, /goto\('\/journey-prototype\/choose', \{replaceState: true\}\)/);
     assert.match(route, /function backToChoose[\s\S]*goto\('\/journey-prototype\/choose'\)/);
     assert.match(route, /min-width: 1200px/);
+    assert.match(route, /readStoredLanguagePreference/);
+    assert.match(route, /family === 'docuseries'[\s\S]*buildExperienceDestination\('docuseries', 'program'\)/);
     for (const family of families) {
         assert.match(route, new RegExp(`buildExperienceDestination\\(family, 'program'\\)`));
         assert.equal(buildExperienceDestination(family, 'program'), PROGRAM_DESTINATIONS[family]);
@@ -43,6 +45,7 @@ test('radio route uses the desktop guard and returns invalid requests safely', (
 
 test('Nostalgia reuses the established Interactive Radio launcher and return contract', () => {
     assert.match(route, /InteractiveRadioPanel journeyLauncher=\{true\}/);
+    assert.match(route, /InteractiveRadioPanel[^>]*\{language\}/);
     assert.match(route, /returnTo=\{buildExperienceDestination\('nostalgia', 'radio'\)\}/);
     assert.doesNotMatch(route, /interactive-radio-test/);
     assert.match(launcher, /export let journeyLauncher = false/);
@@ -52,10 +55,20 @@ test('Nostalgia reuses the established Interactive Radio launcher and return con
 
 test('chooser copy and mobile program navigation remain intact', () => {
     assert.match(chooser, /Choose an experience, then choose how you'd like to listen\./);
-    assert.match(chooser, /Program Mode <span\s+aria-hidden="true">/);
-    assert.match(chooser, /Radio Mode <span aria-hidden="true">/);
+    assert.match(chooser, /modeCopy\[language\]\.program/);
+    assert.match(chooser, /modeCopy\[language\]\.radio/);
     const mobileStart = chooser.indexOf('{:else}');
     const mobile = chooser.slice(mobileStart, chooser.indexOf('</main>', mobileStart));
     assert.match(mobile, /goto\(buildExperienceDestination\(choice, 'program'\)\)/);
     assert.doesNotMatch(mobile, /Radio Mode|mode-button/);
+});
+
+test('radio launch and selector state use the active saved language', () => {
+    assert.match(launcher, /export let language: Language \| 'pt-BR' = 'en'/);
+    assert.match(launcher, /language: activeLanguage/);
+    assert.match(launcher, /languages: languages\.join\(','\)/);
+    assert.doesNotMatch(launcher, /const language: Language = 'en'/);
+    assert.match(launcher, /<NostalgiaRadioGenreSelection \{language\}/);
+    assert.match(launcher, /<CollectionsRadioGroupSelection \{language\}/);
+    assert.match(launcher, /<ArtistRadioSelection \{language\}/);
 });
