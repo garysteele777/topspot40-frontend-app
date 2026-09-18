@@ -100,7 +100,8 @@ test('Narration options changes the shared detail preference and leaves current 
     const route = readFileSync(new URL('../src/routes/car-page/+page.svelte', import.meta.url), 'utf8');
     const control = readFileSync(new URL('../src/lib/components/car/NarrationOptions.svelte', import.meta.url), 'utf8');
     assert.match(route, /function handleDetailLengthChange\(detailLength: 'off' \| 'short' \| 'long'\)/);
-    assert.match(route, /onDetailLengthChange=\{handleDetailLengthChange\}/);
+    assert.match(route, /onDetailLengthChange=\{\(value\) => \{ handleDetailLengthChange\(value\);/);
+    assert.match(route, /\$currentSelection\.programType === 'RADIO_ARTIST'\) currentSelection\.update\(selection => selection \? \{\.\.\.selection, context: \{\.\.\.selection\.context, artistDetailLength: value\}\}/);
     assert.match(route, /resolveSequenceNarrationUrls\([\s\S]*settings\.detailLength/);
     assert.match(control, /onDetailLengthChange\('short'\)/);
     assert.match(control, /onDetailLengthChange\('long'\)/);
