@@ -25,10 +25,12 @@
 
     export let compact: boolean = false;
     export let detailLength: 'off' | 'short' | 'long' = 'short';
+    export let artistBioLength: 'short' | 'long' = 'short';
     export let artistStoriesEnabled = false;
     export let narrationOptionsLocked = false;
     export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
     export let onArtistStoriesChange: (value: boolean) => void;
+    export let onArtistBioLengthChange: (value: 'short' | 'long') => void = () => {};
 
     const modeLabel = (
         m: import('./CarModeHeader.svelte').BrowseMode,
@@ -87,7 +89,7 @@
                 </span>
             {:else if mode === 'artist_spotlight'}
     <span class="cm-main-text">
-        Artist Spotlight
+        {programType === 'RADIO_ARTIST' ? 'Artist Radio' : 'Artist Spotlight'}
     </span>
             {:else}
     <span class="cm-main-text">
@@ -97,7 +99,11 @@
 
         </div>
 
-        <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {narrationOptionsLocked} {onDetailLengthChange} {onArtistStoriesChange}/>
+        {#if programType === 'RADIO_ARTIST'}
+            <div class="cm-radio-options"><span>Details:</span>{#each ['off', 'short', 'long'] as value}<button class:selected={detailLength === value} on:click={() => onDetailLengthChange(value as 'off' | 'short' | 'long')}>{value === 'off' ? 'Off' : value === 'short' ? 'Short' : 'Long'}</button>{/each}<span>Artist bios:</span>{#each ['short', 'long'] as value}<button class:selected={artistBioLength === value} on:click={() => onArtistBioLengthChange(value as 'short' | 'long')}>{value === 'short' ? 'Short' : 'Long'}</button>{/each}</div>
+        {:else}
+            <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {narrationOptionsLocked} {onDetailLengthChange} {onArtistStoriesChange}/>
+        {/if}
 
     </div>
 </div>
@@ -152,5 +158,6 @@
     .cm-main-text {
         opacity: 0.9;
     }
+    .cm-radio-options{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}.cm-radio-options button{border:1px solid #f7dc82;border-radius:999px;color:#f7dc82;background:#282115;padding:.2rem .5rem}.cm-radio-options button.selected{color:#211706;background:#f7dc82}
 
 </style>

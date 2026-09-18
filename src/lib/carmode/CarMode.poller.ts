@@ -194,6 +194,7 @@ let narrationQueue: QueuedNarrationItem[] = [];
 let lastNarrationPhase: PlaybackPhase | null = null;
 let lastNarrationKey: string | null = null;
 let lastNarrationIntakeKey: string | null = null;
+let lastArtistRadioIntakeKey: string | null = null;
 let activeNarrationKey: string | null = null;
 let queuedNarrationKeys = new Set<string>();
 let completedNarrationKeys = new Set<string>();
@@ -699,6 +700,24 @@ export function startPlaybackPolling(
                         hasCurrentTrack: Boolean(get(currentTrack)),
                         pollGeneration: activePollGeneration
                     });
+                    if (get(currentSelection)?.programType === 'RADIO_ARTIST') {
+                        const artistIntakeKey = `${narrationIntakeKey}:${data.context?.artist_id ?? ''}:${data.context?.set_number ?? ''}`;
+                        if (artistIntakeKey !== lastArtistRadioIntakeKey) {
+                            lastArtistRadioIntakeKey = artistIntakeKey;
+                            console.info('[car-mode] Artist Radio narration decision', {
+                                phase,
+                                artistName: data.artist_name ?? data.context?.artist_name ?? null,
+                                genre: data.context?.genre_name ?? data.context?.genre ?? null,
+                                setNumber: data.context?.set_number ?? null,
+                                setPosition: data.context?.block_position ?? null,
+                                setSize: data.context?.block_size ?? null,
+                                spotifyTrackId: data.context?.spotify_track_id ?? null,
+                                accepted: true,
+                                duplicateFrame: false,
+                                pollGeneration: activePollGeneration
+                            });
+                        }
+                    }
                 }
             }
 
@@ -1082,6 +1101,7 @@ export function resetNarrationPhaseState(): void {
     lastNarrationPhase = null;
     lastNarrationKey = null;
     lastNarrationIntakeKey = null;
+    lastArtistRadioIntakeKey = null;
     activeNarrationKey = null;
     queuedNarrationKeys.clear();
     completedNarrationKeys.clear();

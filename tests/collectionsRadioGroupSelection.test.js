@@ -57,7 +57,12 @@ test('Collections Radio uses compatibility URLs, payload arrays, route rendering
 
 test('Collections Radio establishes its guest session before startup playback resets', async () => {
     const carPage = await readFile(new URL('../src/routes/car-page/+page.svelte', import.meta.url), 'utf8');
-    const startup = carPage.match(/currentSelection\.set\(sel\);([\s\S]*?)try \{\n            const normalized = await loadCatalogOnce\(\);/)?.[1] ?? '';
+    // The production startup first establishes the protected guest session in
+    // its own try/catch, then loads the catalog.  Slice by stable boundaries
+    // instead of treating the catalog try as the first try after selection.
+    const start = carPage.indexOf('currentSelection.set(sel);');
+    const end = carPage.indexOf('const normalized = await loadCatalogOnce();', start);
+    const startup = start >= 0 && end >= 0 ? carPage.slice(start, end) : '';
 
     assert.match(startup, /sel\.programType === PROGRAM_TYPES\.RADIO_COL/);
     assert.match(startup, /await startGuestPlaybackSession\(\)/);

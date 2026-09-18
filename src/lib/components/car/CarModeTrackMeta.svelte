@@ -6,6 +6,7 @@
     import { PROGRAM_TYPES } from '$lib/types/program';
     import {buildProgramHistoryKey, findProgramHistoryEntry} from '$lib/program/history';
     import {getCarModePlaybackPhaseCopy} from '$lib/carmode/playbackPhaseCopy';
+    import {ARTIST_RADIO_GENRE_LABELS} from '$lib/journey/artistRadioGenres';
 
     export let currentTrack: LoadedTrack | null = null;
     export let tracks: LoadedTrack[] = [];
@@ -72,14 +73,32 @@
         }
     }
 
-    $: isRadioStation =
+    $: isArtistRadio = $currentSelection?.programType === 'RADIO_ARTIST';
+    $: isRadioStation = isArtistRadio || (
         $currentSelection?.mode === 'decade_genre' &&
         $currentSelection?.context?.decade === 'ALL'
+    )
 
     $: isRadioPlaceholder =
-        isRadioStation &&
-        currentTrack?.trackName === 'TopSpot Radio' &&
-        currentTrack?.artistName === 'Press Play to Start';
+        (isRadioStation &&
+            currentTrack?.trackName === 'TopSpot Radio' &&
+            currentTrack?.artistName === 'Press Play to Start') ||
+        (isArtistRadio &&
+            currentTrack?.trackName === 'Artist Radio' &&
+            currentTrack?.artistName === 'Press Auto Play to Start');
+
+    // Catalog title and artist values must remain exact for Artist Radio.
+    $: artistRadioGenre = currentTrack?.genreName ??
+        (currentTrack?.genreSlug
+            ? ARTIST_RADIO_GENRE_LABELS[currentTrack.genreSlug as keyof typeof ARTIST_RADIO_GENRE_LABELS] ?? currentTrack.genreSlug
+            : '');
+    $: displayTrackTitle = isArtistRadio ? currentTrack?.trackName ?? '' : titleCased;
+    $: displayArtistName = isArtistRadio ? currentTrack?.artistName ?? '' : artistCased;
+    $: artistRadioSetLineReady =
+        isArtistRadio &&
+        typeof currentTrack?.setNumber === 'number' &&
+        Boolean(artistRadioGenre.trim()) &&
+        Boolean(displayArtistName.trim());
 
 
 </script>
@@ -88,10 +107,10 @@
 <div class="meta-under-cover">
 <span class="text-gray-400 text-sm">
 
-{#if isRadioStation}
+{#if !isArtistRadio && isRadioStation}
     {#if isRadioPlaceholder}
-        <div class="radio-set">TopSpot Radio</div>
-        <div class="radio-track">Shuffle across all decades and genres</div>
+        <div class="radio-set">{isArtistRadio ? 'Artist Radio' : 'TopSpot Radio'}</div>
+        <div class="radio-track">{isArtistRadio ? 'Press Auto Play to Start' : 'Shuffle across all decades and genres'}</div>
     {:else}
         <div class="radio-set">
             Set {currentTrack?.setNumber ?? '?'} • {toTitleCase(currentTrack?.decadeSlug)}
@@ -114,11 +133,31 @@
 </span>
 
     {#if isRadioPlaceholder}
+        {#if isArtistRadio}
+            <div class="track-title">Artist Radio</div>
+            <div class="text-gray-300">Press Auto Play to Start</div>
+        {:else}
         <div class="track-title">— TopSpot Radio</div>
         <div class="text-gray-300">Press Play to Start</div>
+        {/if}
     {:else}
+        {#if isArtistRadio}
+            <div class="track-title">{displayTrackTitle}</div>
+            {#if artistRadioSetLineReady}
+                <div class="radio-set">
+                    Set {currentTrack?.setNumber}: Genre {artistRadioGenre} &bull; Artist {displayArtistName}
+                </div>
+            {/if}
+            <div class="radio-track">
+                Track {currentTrack?.blockPosition ?? '?'} of {currentTrack?.blockSize ?? '?'}
+            </div>
+            {#if !artistRadioSetLineReady}
+                <div class="text-gray-200">{displayArtistName}</div>
+            {/if}
+        {:else}
         <div class="track-title">— {titleCased}</div>
         <div class="text-gray-200">{artistCased}</div>
+        {/if}
     {/if}
 </div>
 

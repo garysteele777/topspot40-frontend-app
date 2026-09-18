@@ -9,6 +9,8 @@
     import type {Language, ModeType, VoicePart} from '$lib/types/playback';
     import NostalgiaRadioGenreSelection from './NostalgiaRadioGenreSelection.svelte';
     import CollectionsRadioGroupSelection from './CollectionsRadioGroupSelection.svelte';
+    import ArtistRadioSelection from './ArtistRadioSelection.svelte';
+    import type {ArtistRadioGenreSlug} from '$lib/journey/artistRadioGenres';
     import {
         NOSTALGIA_RADIO_GENRES,
         normalizeNostalgiaRadioGenres,
@@ -99,6 +101,21 @@
         void goto(`/car-page?${common.toString()}`);
     }
 
+    function launchArtistRadio(
+        genres: ArtistRadioGenreSlug[]
+    ): void {
+        if (!isDesktop || genres.length === 0) return;
+        const common = new URLSearchParams({
+            mode: 'artist_radio', language, languages: languages.join(','),
+            genres: genres.join(','), genre: genres.length === 1 ? genres[0] : 'ALL',
+            artistDetailLength: 'short', artistBioLength: 'short',
+            voices: 'intro,detail,artist',
+            playbackOrder: 'shuffle', voicePlayMode: 'before', pauseMode: 'continuous',
+            skipPlayed: 'true', interactiveRadioTest: 'true'
+        });
+        void goto(`/car-page?${common.toString()}`);
+    }
+
     onMount(() => {
         desktopQuery = window.matchMedia('(min-width: 1200px)');
         updateDesktopCapability();
@@ -112,6 +129,8 @@
         {#if isDesktop}
             {#if journeyFamily === 'collections'}
                 <CollectionsRadioGroupSelection onContinue={(selected, all) => launch('collections', 'ALL', null, selected, all)}/>
+            {:else if journeyFamily === 'artist_spotlight'}
+                <ArtistRadioSelection onContinue={launchArtistRadio}/>
             {:else}
                 <NostalgiaRadioGenreSelection bind:selectedGenres={selectedNostalgiaGenres} onContinue={(genres) => launch('nostalgia', 'ALL', genres)}/>
             {/if}

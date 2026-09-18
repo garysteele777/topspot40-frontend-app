@@ -130,6 +130,24 @@ export async function loadForSelection(
         if (!artistId) {
 
             if (sel.programType === 'RADIO_ARTIST') {
+                // The backend chooses the artist only after the initiating
+                // Auto Play click. Do not preload the legacy radio-set API:
+                // it bypasses the Artist Radio biography phase.
+                const placeholder: CarModeTrack = {
+                    id: null,
+                    rankingId: null,
+                    rank: 0,
+                    trackName: 'Artist Radio',
+                    artistName: 'Press Auto Play to Start',
+                    spotifyTrackId: '',
+                    albumArtwork: null,
+                    durationSeconds: 0
+                };
+                tracks.set([placeholder]);
+                currentTrack.set(placeholder);
+                status.set('Artist Radio ready. Press Auto Play to Start.');
+                return;
+
                 const genre = sel.context?.genre ?? 'ALL';
 
                 status.set('Loading Artist Spotlight Radio set…');

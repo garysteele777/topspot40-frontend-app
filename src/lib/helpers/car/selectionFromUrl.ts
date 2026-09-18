@@ -12,6 +12,7 @@ import {
 } from '$lib/playbackPreferences';
 import {PROGRAM_TYPES} from '$lib/types/program';
 import {serializeNostalgiaRadioGenres} from '$lib/journey/nostalgiaRadioGenres';
+import {normalizeArtistRadioGenres} from '$lib/journey/artistRadioGenres';
 
 export function buildSelectionFromUrl(url: URL): SelectionState {
     const sp = url.searchParams;
@@ -183,6 +184,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
     if (modeParam === 'artist_radio') {
         const genre = sp.get('genre') ?? 'ALL';
+        const artistRadioGenres = normalizeArtistRadioGenres(sp.getAll('genres').flatMap(value => value.split(',')));
 
         return {
             programType: 'RADIO_ARTIST',
@@ -190,7 +192,10 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             language,
             languages,
             context: {
-                genre
+                genre,
+                artistRadioGenres: artistRadioGenres.join(','),
+                artistDetailLength: sp.get('artistDetailLength') === 'off' || sp.get('artistDetailLength') === 'long' ? sp.get('artistDetailLength')! : 'short',
+                artistBioLength: sp.get('artistBioLength') === 'long' ? 'long' : 'short'
             },
             startRank: finalStartRank,
             endRank: 9999,

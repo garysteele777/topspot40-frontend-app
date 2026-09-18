@@ -1022,8 +1022,14 @@
                 play_detail: String(settings.voices.includes('detail')),
                 play_artist_description: 'true',
                 play_track: 'true',
-                voice_style: settings.voicePlayMode
+                voice_style: settings.voicePlayMode,
+                detail_length: sel.context?.artistDetailLength ?? 'short',
+                bio_length: sel.context?.artistBioLength ?? 'short'
             });
+
+            for (const selectedGenre of (sel.context?.artistRadioGenres ?? '').split(',').filter(Boolean)) {
+                artistParams.append('genres', selectedGenre);
+            }
 
             const spotifyArtistId =
                 firstTrack.spotifyArtistId ?? firstTrack.spotify_artist_id;
@@ -1242,6 +1248,25 @@
             return;
         }
 
+        if (isArtistRadioSelection()) {
+            if (radioStartPending) return;
+            if (!hasInstalledPrivateRadioTrack()) {
+                if (!reserveBackendRadioSpotifyWindow()) return;
+                activePlayMode = 'auto';
+                setExternalRadioSpotifyHandoffReady(false);
+                // Start the poller before launch so the first blocking artist
+                // biography is received and acknowledged, just like the
+                // working Nostalgia/Collections backend-radio paths.
+                startPlaybackPolling({
+                    guidedLinkOut: true,
+                    externalRadioTrackClock: true
+                });
+                markUserStartedPlayback();
+                await startInitialArtistRadioSet();
+            }
+            return;
+        }
+
         if (!$currentTrack) return;
         captureProgramStartedOnce();
 
@@ -1370,11 +1395,17 @@
             get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_DG;
     }
 
+    function isArtistRadioSelection(): boolean {
+        return interactiveRadioTest &&
+            get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_ARTIST;
+    }
+
     function isBackendRadioAutoHandoffSelection(): boolean {
         if (!interactiveRadioTest) return false;
         const programType = get(currentSelection)?.programType;
         return programType === PROGRAM_TYPES.RADIO_DG ||
-            programType === PROGRAM_TYPES.RADIO_COL;
+            programType === PROGRAM_TYPES.RADIO_COL ||
+            programType === PROGRAM_TYPES.RADIO_ARTIST;
     }
 
     function isCollectionsRadioAutoHandoffSelection(): boolean {
@@ -1588,6 +1619,56 @@
 
         failFirstSetLoad('The radio set took too long to load. Please try again.');
         return false;
+    }
+
+    async function startInitialArtistRadioSet(): Promise<boolean> {
+        if (!isArtistRadioSelection() || radioStartPending) return false;
+
+        const selection = get(currentSelection);
+        if (!selection) return false;
+        radioStartPending = true;
+        const genres = (selection.context?.artistRadioGenres ?? '')
+            .split(',')
+            .filter(Boolean);
+        const detailLength = selection.context?.artistDetailLength ?? 'short';
+        const bioLength = selection.context?.artistBioLength ?? 'short';
+        const params = new URLSearchParams({
+            genre: 'ALL',
+            tts_language: selection.language ?? 'en',
+            detail_length: detailLength,
+            bio_length: bioLength
+        });
+        for (const genre of genres) params.append('genres', genre);
+
+        console.info('[car-mode] Artist Radio launch request', {
+            genres,
+            detailLength,
+            bioLength,
+            pollingAlreadyStarted: true
+        });
+        try {
+            const guestSession = await startGuestPlaybackSession();
+            if (!guestSession.ok) {
+                failFirstSetLoad('Unable to establish a private playback session. Please try again.');
+                return false;
+            }
+            const response = await fetch(
+                `${API_BASE}/artist-spotlight/play-radio?${params.toString()}`,
+                {method: 'POST', credentials: 'include'}
+            );
+            const result = await response.json() as {ok?: boolean};
+            if (!response.ok || !result.ok) {
+                failFirstSetLoad('Unable to start Artist Radio. Please try again.');
+                return false;
+            }
+            radioStartPending = false;
+            status.set('Artist Radio is choosing the first artist…');
+            return true;
+        } catch (error) {
+            console.error('[car-mode] Artist Radio launch failed', error);
+            failFirstSetLoad('Unable to start Artist Radio. Please try again.');
+            return false;
+        }
     }
 
     async function loadFirstRadioSet(): Promise<boolean> {
@@ -2133,7 +2214,9 @@
     // Radio identity is the requested listener scope, while radioSetLabel
     // remains the authoritative decade/genre description for each set.
     $: radioMarqueeTitle =
-        $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+        $currentSelection?.programType === 'RADIO_ARTIST'
+            ? 'ARTIST RADIO'
+            : $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
             ? `${collectionRadioLabel.toUpperCase()} COLLECTIONS RADIO`
             : `${nostalgiaRadioStationLabel(
                 $currentSelection?.context?.radioGenres,
@@ -2663,10 +2746,16 @@
                     programType={$currentSelection.programType}
                     language={$currentSelection.language}
                         compact={carDisplayView === 'drive-in'}
-                        detailLength={settings.detailLength}
+                        detailLength={$currentSelection.programType === 'RADIO_ARTIST'
+                            ? (($currentSelection.context?.artistDetailLength as 'off' | 'short' | 'long' | undefined) ?? 'short')
+                            : settings.detailLength}
+                        artistBioLength={$currentSelection.programType === 'RADIO_ARTIST'
+                            ? (($currentSelection.context?.artistBioLength as 'short' | 'long' | undefined) ?? 'short')
+                            : 'short'}
                         {artistStoriesEnabled}
-                        onDetailLengthChange={handleDetailLengthChange}
+                        onDetailLengthChange={(value) => { handleDetailLengthChange(value); if ($currentSelection.programType === 'RADIO_ARTIST') currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistDetailLength: value}} : selection); }}
                         onArtistStoriesChange={handleArtistStoriesChange}
+                        onArtistBioLengthChange={(value) => currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistBioLength: value}} : selection)}
             />
         {/if}
 

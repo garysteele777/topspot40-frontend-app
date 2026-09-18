@@ -114,7 +114,7 @@ test('private radio keeps narration controls active and queues changes for the n
     assert.match(header, /narrationOptionsLocked/);
     assert.match(options, /disabled=\{narrationOptionsLocked\}/);
     assert.doesNotMatch(carPage, /narrationOptionsLocked=\{interactiveRadioTest && radioNarrationPolicyActive\}/);
-    assert.match(carPage, /onDetailLengthChange=\{handleDetailLengthChange\}/);
+    assert.match(carPage, /onDetailLengthChange=\{(?:handleDetailLengthChange|\(value\) => \{ handleDetailLengthChange\(value\);)/);
     assert.match(carPage, /onArtistStoriesChange=\{handleArtistStoriesChange\}/);
     assert.match(carPage, /updateRadioNarrationPolicy\(\{/);
     assert.match(carPage, /radioNarrationPolicyUpdate = radioNarrationPolicyUpdate/);
