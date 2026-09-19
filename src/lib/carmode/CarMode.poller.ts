@@ -589,6 +589,8 @@ export function startPlaybackPolling(
         // Interactive Radio's Auto Play timer is the authority that reports
         // Spotify completion; polling still owns narration acknowledgements.
         externalRadioTrackClock?: boolean;
+        /** Notifies the page after a new backend-owned radio track reaches the UI. */
+        onBackendRadioTrackInstalled?: (spotifyTrackId: string | null) => void;
         /** Reject an unexpected backend radio block before it reaches the UI. */
         acceptRadioContext?: (context: Record<string, unknown>) => boolean;
     } = {}
@@ -802,6 +804,10 @@ export function startPlaybackPolling(
 
                 if (!narrationPhase) {
                     resetPlaybackProgress();
+                }
+
+                if (isBackendRadio) {
+                    options.onBackendRadioTrackInstalled?.(contextTrackId);
                 }
 
                 dlog('🎯 UI track switch:', next?.trackName ?? data.track_name);

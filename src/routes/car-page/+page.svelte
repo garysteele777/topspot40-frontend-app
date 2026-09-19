@@ -243,6 +243,7 @@
     let interactiveRadioTest = false;
     let interactiveRadioBlocked = false;
     let radioStartPending = false;
+    let radioAdvancePending = false;
     // While radio is active, preference changes are queued to the backend and
     // applied only when its next set begins.
     let radioNarrationPolicyActive = false;
@@ -1259,12 +1260,13 @@
                 // working Nostalgia/Collections backend-radio paths.
                 startPlaybackPolling({
                     guidedLinkOut: true,
-                    externalRadioTrackClock: true
+                    externalRadioTrackClock: true,
+                    onBackendRadioTrackInstalled: completeBackendRadioAdvance
                 });
                 markUserStartedPlayback();
                 await startInitialArtistRadioSet();
+                return;
             }
-            return;
         }
 
         if (!$currentTrack) return;
@@ -1275,7 +1277,7 @@
             return;
         }
 
-        if (isPrivateNostalgiaRadioSelection()) {
+        if (isInterruptibleBackendRadioSelection()) {
             if (radioStartPending) return;
 
             // This retry is for the backend-selected track whose reserved
@@ -1325,6 +1327,21 @@
                 setExternalRadioTrackPaused(false);
                 setExternalRadioSpotifyHandoffReady(false);
 
+                if (isArtistRadioSelection()) {
+                    const resumed = autoPlay.handoffCurrentTrack(interruptedRadioTrack);
+                    if (resumed) {
+                        autoPlay.clearInterruptedSpotifyTrack();
+                        interruptedRadioTrack = null;
+                    } else {
+                        activePlayMode = null;
+                        setExternalRadioTrackPaused(true);
+                        isPlaying.set(false);
+                        playbackPhase.set('paused');
+                    }
+                    radioInterruptedResumePending = false;
+                    return;
+                }
+
                 try {
                     const advanced = await advancePrivateRadioTrack(interruptedRadioTrack);
                     if (advanced) {
@@ -1370,7 +1387,8 @@
                 // sequence so every blocking narration phase is acknowledged.
                 startPlaybackPolling({
                     guidedLinkOut: true,
-                    externalRadioTrackClock: true
+                    externalRadioTrackClock: true,
+                    onBackendRadioTrackInstalled: completeBackendRadioAdvance
                 });
                 markUserStartedPlayback();
                 const loaded = await loadFirstRadioSet();
@@ -1398,6 +1416,10 @@
     function isArtistRadioSelection(): boolean {
         return interactiveRadioTest &&
             get(currentSelection)?.programType === PROGRAM_TYPES.RADIO_ARTIST;
+    }
+
+    function isInterruptibleBackendRadioSelection(): boolean {
+        return isPrivateNostalgiaRadioSelection() || isArtistRadioSelection();
     }
 
     function isBackendRadioAutoHandoffSelection(): boolean {
@@ -1497,7 +1519,8 @@
             startPlaybackPolling({
                 guidedLinkOut: true,
                 externalRadioTrackClock: true,
-                acceptRadioContext: selectedCollectionGroupAllowed
+                acceptRadioContext: selectedCollectionGroupAllowed,
+                onBackendRadioTrackInstalled: completeBackendRadioAdvance
             });
             markUserStartedPlayback();
             await playTrack(collectionsRadioStartupTrack());
@@ -1524,6 +1547,18 @@
     function hasInstalledPrivateRadioTrack(): boolean {
         const track = get(currentTrack);
         return Boolean(track?.spotifyTrackId && typeof track.setNumber === 'number');
+    }
+
+    function completeBackendRadioAdvance(installedSpotifyTrackId: string | null): void {
+        if (
+            !radioCompletionSpotifyTrackId ||
+            installedSpotifyTrackId === radioCompletionSpotifyTrackId
+        ) {
+            return;
+        }
+
+        radioCompletionSpotifyTrackId = null;
+        radioAdvancePending = false;
     }
 
     interface RadioTrackStatusData {
@@ -1575,7 +1610,7 @@
 
         tracks.set([track]);
         currentTrack.set(track);
-        radioCompletionSpotifyTrackId = null;
+        completeBackendRadioAdvance(track.spotifyTrackId ?? null);
         interruptedRadioTrack = null;
         radioInterruptedResumePending = false;
         radioSpotifyRetryTrack = null;
@@ -1783,7 +1818,11 @@
             failFirstSetLoad('The current radio track is unavailable.');
             return false;
         }
-        if (radioCompletionSpotifyTrackId === track.spotifyTrackId) {
+        if (
+            radioStartPending ||
+            radioAdvancePending ||
+            radioCompletionSpotifyTrackId === track.spotifyTrackId
+        ) {
             return false;
         }
 
@@ -1791,6 +1830,7 @@
         // guard so a duplicate browser callback cannot signal this backend
         // track more than once while its next status frame is pending.
         radioCompletionSpotifyTrackId = track.spotifyTrackId;
+        radioAdvancePending = true;
 
         status.set('Loading the next radio track…');
         const response = await signalTrackFinishedApi({
@@ -1798,11 +1838,22 @@
             spotifyTrackId: track.spotifyTrackId
         });
         if (response.status === 401) {
+            radioCompletionSpotifyTrackId = null;
+            radioAdvancePending = false;
             failFirstSetLoad('Your private playback session could not be authorized. Please try again.');
             return false;
         }
         if (!response.ok) {
+            radioCompletionSpotifyTrackId = null;
+            radioAdvancePending = false;
             failFirstSetLoad('Unable to advance the radio set. Please try again.');
+            return false;
+        }
+
+        const result = await response.json().catch(() => null) as {ignored?: boolean} | null;
+        if (result?.ignored) {
+            radioCompletionSpotifyTrackId = null;
+            radioAdvancePending = false;
             return false;
         }
 
@@ -1849,7 +1900,39 @@
         }
     }
 
-    function handleDriveInNext(): void {
+    async function handleDriveInNext(): Promise<void> {
+        if (isBackendRadioAutoHandoffSelection()) {
+            if (
+                radioStartPending ||
+                radioAdvancePending ||
+                get(playbackPhase) !== 'track'
+            ) {
+                return;
+            }
+
+            const track = get(currentTrack);
+            if (!track?.spotifyTrackId) return;
+
+            autoPlay.cancel();
+            const advanced = await advancePrivateRadioTrack(track);
+            if (!advanced) {
+                // `track-finished` may be acknowledged but intentionally
+                // ignored by the backend before its track clock is eligible.
+                // Restore the active handoff instead of letting the stale
+                // backend track frame become a false paused state.
+                autoPlay.handoffCurrentTrack(track);
+                return;
+            }
+
+            interruptedRadioTrack = null;
+            radioSpotifyRetryTrack = null;
+            setExternalRadioTrackPaused(false);
+            spotify.returnToWaitingPage();
+            spotify.reset();
+            isPlaying.set(false);
+            return;
+        }
+
         autoPlay.handleNext();
     }
 
@@ -2258,6 +2341,7 @@
         radioSpotifyRetryTrack = null;
         radioCompletionSpotifyTrackId = null;
         radioStartPending = false;
+        radioAdvancePending = false;
         radioNarrationPolicyActive = false;
         setExternalRadioTrackPaused(false);
         setExternalRadioSpotifyHandoffReady(false);
@@ -2788,7 +2872,7 @@
                         radioSetPosition={interactiveRadioTest ? $currentTrack.blockPosition ?? null : null}
                         radioSetSize={interactiveRadioTest ? $currentTrack.blockSize ?? null : null}
                         {radioSetLabel}
-                        radioLoadPending={radioStartPending}
+                        radioLoadPending={radioStartPending || radioAdvancePending}
                         onReportProblem={() => openReportProblem()}
                         onReportNarration={openNarrationReport}
                         openTrackList={openGuidedTrackList}

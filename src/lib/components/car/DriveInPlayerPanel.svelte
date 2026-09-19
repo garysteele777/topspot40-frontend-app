@@ -28,6 +28,7 @@
         pause: string;
         next: string;
         nextAria: string;
+        previousUnavailable: string;
     };
 
     const driveInTransportCopy: Record<Language, DriveInTransportCopy> = {
@@ -42,7 +43,8 @@
             autoPauseAria: 'Pause Auto Play',
             pause: 'Pause',
             next: 'Next',
-            nextAria: 'Next track'
+            nextAria: 'Next track',
+            previousUnavailable: 'Previous track is unavailable for Radio'
         },
         es: {
             previous: 'Anterior',
@@ -55,7 +57,8 @@
             autoPauseAria: 'Pausar reproducción automática',
             pause: 'Pausa',
             next: 'Siguiente',
-            nextAria: 'Pista siguiente'
+            nextAria: 'Pista siguiente',
+            previousUnavailable: 'La pista anterior no está disponible para Radio'
         },
         ptbr: {
             previous: 'Anterior',
@@ -68,7 +71,8 @@
             autoPauseAria: 'Pausar reprodução automática',
             pause: 'Pausar',
             next: 'Próxima',
-            nextAria: 'Próxima faixa'
+            nextAria: 'Próxima faixa',
+            previousUnavailable: 'A faixa anterior não está disponível no Rádio'
         }
     };
 
@@ -269,7 +273,16 @@
         </div>
 
         <div class="primary-controls">
-            <button type="button" disabled={radioAutoOnly} on:click={onPrev} aria-label={transportCopy.previousAria}>
+            <button
+                    type="button"
+                    class:transport-unavailable={radioAutoOnly}
+                    disabled={radioAutoOnly}
+                    on:click={onPrev}
+                    aria-label={radioAutoOnly
+                        ? `${transportCopy.previousAria}. ${transportCopy.previousUnavailable}`
+                        : transportCopy.previousAria}
+                    title={radioAutoOnly ? transportCopy.previousUnavailable : undefined}
+            >
                 <span class="control-icon">|◀</span>
                 <span>{transportCopy.previous}</span>
             </button>
@@ -314,7 +327,12 @@
         {isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
     </span>
             </button>
-            <button type="button" disabled={radioAutoOnly} on:click={onNext} aria-label={transportCopy.nextAria}>
+            <button
+                    type="button"
+                    disabled={radioAutoOnly && (radioLoadPending || phase !== 'track')}
+                    on:click={onNext}
+                    aria-label={transportCopy.nextAria}
+            >
                 <span class="control-icon">▶|</span>
                 <span>{transportCopy.next}</span>
             </button>
@@ -713,6 +731,12 @@
     .primary-controls button:focus-visible .control-icon {
         transform: scale(1.06);
         box-shadow: 0 0 18px rgba(41, 210, 100, 0.65);
+    }
+
+    .primary-controls button.transport-unavailable:disabled {
+        cursor: not-allowed;
+        opacity: 0.42;
+        filter: grayscale(0.7);
     }
 
     .play-control .control-icon {
