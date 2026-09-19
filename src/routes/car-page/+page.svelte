@@ -753,8 +753,12 @@
             const selection = get(currentSelection);
             const context = selection?.context;
             captureSpotifyOpen(posthog, {
+                program_type: selection?.programType ?? null,
                 mode: selection?.mode ?? null,
                 language: selection?.language ?? null,
+                radio_genres: context?.radioGenres ?? null,
+                radio_collection_groups: context?.radioCollectionGroups ?? null,
+                artist_radio_genres: context?.artistRadioGenres ?? null,
                 decade: context?.decade ?? track.decadeSlug ?? null,
                 genre: context?.genre ?? track.genreSlug ?? null,
                 collection: context?.collection ?? context?.collection_slug ?? track.collection_name ?? null,

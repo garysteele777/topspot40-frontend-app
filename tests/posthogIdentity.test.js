@@ -115,6 +115,17 @@ test('Spotify captures use an immediate beacon before Android navigation', () =>
     }
 });
 
+test('Spotify open analytics preserves stable program and Radio selection context', async () => {
+    const source = await readFile(
+        new URL('../src/routes/car-page/+page.svelte', import.meta.url),
+        'utf8'
+    );
+
+    assert.match(source, /program_type:\s*selection\?\.programType\s*\?\?\s*null/);
+    assert.match(source, /radio_genres:\s*context\?\.radioGenres\s*\?\?\s*null/);
+    assert.match(source, /radio_collection_groups:\s*context\?\.radioCollectionGroups\s*\?\?\s*null/);
+    assert.match(source, /artist_radio_genres:\s*context\?\.artistRadioGenres\s*\?\?\s*null/);
+});
 test('program started capture sends only the provided non-sensitive program properties', () => {
     const posthog = client();
 
