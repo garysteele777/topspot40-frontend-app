@@ -2,6 +2,8 @@
     import {onDestroy, onMount} from 'svelte';
     import {get} from 'svelte/store';
     import {goto} from '$app/navigation';
+    import posthog from 'posthog-js';
+    import {captureProgramSelected} from '$lib/analytics/posthog';
     import {dev} from '$app/environment';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
@@ -87,6 +89,11 @@
             saveResumeFromLocal({activeGroup: 'decade_genre' as ModeType, context: {decade: 'ALL', genre, radioGenres: selectedGenres?.join(',') ?? ''}, language: activeLanguage, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
             common.set('mode', 'nostalgia'); common.set('decade', 'ALL'); common.set('genre', genre);
             if (selectedGenres) common.set('genres', selectedGenres.join(','));
+            captureProgramSelected(posthog, {
+                program_type: 'radio_nostalgia',
+                genre: genre,
+                genre_count: selectedGenres?.length ?? (genre === 'ALL' ? NOSTALGIA_RADIO_GENRES.length : 1)
+            });
         } else if (mode === 'collections') {
             const selected = requestedCollectionGroups ?? [];
             const allSelected = allCollectionGroups !== null && selected.length === allCollectionGroups.length;
@@ -95,6 +102,13 @@
             saveResumeFromLocal({activeGroup: 'collection' as ModeType, context: {collection_group_slug: group, radioCollectionGroups}, language: activeLanguage, languages, startRank: 1, endRank: 9999, playbackOrder: 'shuffle', pauseMode: 'continuous', voices, skipPlayed: true});
             common.set('mode', 'radio_collections'); common.set('collection_group', group);
             if (!allSelected && selected.length > 1) for (const slug of selected) common.append('collection_groups', slug);
+            captureProgramSelected(posthog, {
+                program_type: 'radio_collections',
+                collection_group_slug: group,
+                collection_group_count: allSelected
+                    ? (allCollectionGroups?.length ?? 0)
+                    : selected.length
+            });
         } else {
             common.set('mode', 'artist_radio'); common.set('genre', station);
         }
@@ -109,6 +123,10 @@
         genres: ArtistRadioGenreSlug[]
     ): void {
         if (!isDesktop || genres.length === 0) return;
+        captureProgramSelected(posthog, {
+            program_type: 'radio_artist',
+            genre_count: genres.length
+        });
         const common = new URLSearchParams({
             mode: 'artist_radio', language: activeLanguage, languages: languages.join(','),
             genres: genres.join(','), genre: genres.length === 1 ? genres[0] : 'ALL',

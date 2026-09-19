@@ -163,6 +163,16 @@ test('experience selected capture sends only the stable experience type', () => 
     ]]);
 });
 
+test('Interactive Radio launch paths record stable program_selected analytics', async () => {
+    const source = await readFile(
+        new URL('../src/lib/components/options-v2/InteractiveRadioPanel.svelte', import.meta.url),
+        'utf8'
+    );
+
+    assert.match(source, /captureProgramSelected\(posthog,\s*\{[\s\S]*?program_type:\s*'radio_nostalgia'/);
+    assert.match(source, /captureProgramSelected\(posthog,\s*\{[\s\S]*?program_type:\s*'radio_collections'/);
+    assert.match(source, /captureProgramSelected\(posthog,\s*\{[\s\S]*?program_type:\s*'radio_artist'/);
+});
 test('program selected capture sends only the provided stable program properties', () => {
     const posthog = client();
 
