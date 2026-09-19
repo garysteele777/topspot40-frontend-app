@@ -1999,7 +1999,7 @@
             if (get(playbackPhase) === 'paused') {
                 const pausedPhase = narration.takePausedPhase();
 
-                if (pausedPhase === 'detail') {
+                if (pausedPhase === 'detail' || pausedPhase === 'artist') {
                     resetGuidedNarrationTiming();
                     playbackPhase.set('track');
                     guidedReady = true;

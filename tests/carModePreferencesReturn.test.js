@@ -124,6 +124,32 @@ test('Guided narration cancellation invalidates an in-flight narration and never
     assert.equal(bedUrl, 'english-bed.mp3');
 });
 
+test('pausing during Artist Bio preserves the artist narration phase', () => {
+    const track = {...tracks[0]};
+    let playbackPhase = 'artist';
+
+    const narration = createCarModeNarration({
+        getCurrentTrack: () => track,
+        getNarrations: () => [],
+        getBedUrl: () => 'english-bed.mp3',
+        unlockBed: async () => {},
+        startBed: async () => {},
+        stopBed: () => {},
+        playNarration: async () => {},
+        stopNarration: () => {},
+        updateTiming: () => {},
+        resetTiming: () => {},
+        getPlaybackPhase: () => playbackPhase,
+        setPlaybackPhase: phase => { playbackPhase = phase; },
+        setIsPlaying: () => {},
+        resetGuidedReadyState: () => {},
+        setGuidedReady: () => {}
+    });
+
+    narration.pause();
+
+    assert.equal(narration.takePausedPhase(), 'artist');
+});
 test('desktop Spotify open reports failure when the popup is blocked', () => {
     const originalNavigator = globalThis.navigator;
     const originalWindow = globalThis.window;

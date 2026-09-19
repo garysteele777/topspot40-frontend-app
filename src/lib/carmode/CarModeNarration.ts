@@ -37,7 +37,7 @@ export function createCarModeNarration(
     dependencies: CarModeNarrationDependencies
 ) {
     let runId = 0;
-    let pausedPhase: 'intro' | 'detail' | null = null;
+    let pausedPhase: 'intro' | 'detail' | 'artist' | null = null;
 
     const trackToken = (track: CarModeTrack): string =>
         `${track.rankingId ?? track.rank}|${track.spotifyTrackId ?? ''}`;
@@ -53,10 +53,10 @@ export function createCarModeNarration(
         dependencies.stopNarration();
         dependencies.stopBed();
         dependencies.setIsPlaying(false);
-        pausedPhase = phase === 'detail' ? 'detail' : 'intro';
+        pausedPhase = phase === 'detail' || phase === 'artist' ? phase : 'intro';
     }
 
-    function takePausedPhase(): 'intro' | 'detail' | null {
+    function takePausedPhase(): 'intro' | 'detail' | 'artist' | null {
         const phase = pausedPhase;
         pausedPhase = null;
         return phase;

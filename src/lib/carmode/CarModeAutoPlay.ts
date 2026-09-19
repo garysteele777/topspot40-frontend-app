@@ -20,7 +20,7 @@ export type CarModeAutoPlayDependencies = {
     getPlaybackPhase: () => PlaybackPhase;
     setPlaybackPhase: (phase: PlaybackPhase) => void;
     pauseNarration: () => void;
-    takePausedNarrationPhase: () => 'intro' | 'detail' | null;
+    takePausedNarrationPhase: () => 'intro' | 'detail' | 'artist' | null;
     abandonNarration: () => void;
     startNarration: (
         track: CarModeTrack,
@@ -274,7 +274,7 @@ export function createCarModeAutoPlay(
         if (dependencies.getPlaybackPhase() === 'paused') {
             const paused = dependencies.takePausedNarrationPhase();
 
-            if (paused === 'detail') {
+            if (paused === 'detail' || paused === 'artist') {
                 handoff(track);
                 return;
             }
