@@ -76,5 +76,17 @@ export function buildProgramStartedProperties(
         properties.artist_id = context.artist_id;
     }
 
+    if (context?.radioGenres) {
+        properties.radio_genres = context.radioGenres;
+    }
+
+    if (context?.radioCollectionGroups) {
+        properties.radio_collection_groups = context.radioCollectionGroups;
+    }
+
+    if (context?.artistRadioGenres) {
+        properties.artist_radio_genres = context.artistRadioGenres;
+    }
+
     return properties;
 }

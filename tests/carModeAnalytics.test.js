@@ -113,6 +113,78 @@ test('program started properties include stable collection and artist identifier
     );
 });
 
+test('program started properties preserve stable Radio multi-selection fields', () => {
+    assert.deepEqual(
+        buildProgramStartedProperties(
+            {
+                programType: 'RADIO_DG',
+                mode: 'decade_genre',
+                language: 'en',
+                context: {
+                    decade: 'ALL',
+                    genre: 'ALL',
+                    radioGenres: 'country,rock,pop'
+                }
+            },
+            'automatic'
+        ),
+        {
+            program_type: 'RADIO_DG',
+            mode: 'decade_genre',
+            language: 'en',
+            playback_method: 'automatic',
+            decade: 'ALL',
+            genre: 'ALL',
+            radio_genres: 'country,rock,pop'
+        }
+    );
+
+    assert.deepEqual(
+        buildProgramStartedProperties(
+            {
+                programType: 'RADIO_COL',
+                mode: 'collection',
+                language: 'es',
+                context: {
+                    collection_group_slug: 'ALL',
+                    radioCollectionGroups: 'decades,themes'
+                }
+            },
+            'automatic'
+        ),
+        {
+            program_type: 'RADIO_COL',
+            mode: 'collection',
+            language: 'es',
+            playback_method: 'automatic',
+            collection_group_slug: 'ALL',
+            radio_collection_groups: 'decades,themes'
+        }
+    );
+
+    assert.deepEqual(
+        buildProgramStartedProperties(
+            {
+                programType: 'RADIO_ARTIST',
+                mode: 'artist_spotlight',
+                language: 'ptbr',
+                context: {
+                    genre: 'ALL',
+                    artistRadioGenres: 'country,rock'
+                }
+            },
+            'automatic'
+        ),
+        {
+            program_type: 'RADIO_ARTIST',
+            mode: 'artist_spotlight',
+            language: 'ptbr',
+            playback_method: 'automatic',
+            genre: 'ALL',
+            artist_radio_genres: 'country,rock'
+        }
+    );
+});
 test('an existing tracker can be marked already started for a preferences return', () => {
     const events = [];
     const tracker = createProgramStartedTracker({
