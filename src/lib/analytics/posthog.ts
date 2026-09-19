@@ -8,7 +8,7 @@ type PostHogClient = {
     reset: () => void;
 };
 
-type AuthenticatedUser = { id?: unknown; email?: unknown };
+type AuthenticatedUser = { id?: unknown };
 
 let initialized = false;
 
