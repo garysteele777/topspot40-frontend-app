@@ -18,7 +18,7 @@ export function identifyPostHogUser(client: PostHogClient, user: AuthenticatedUs
     const previousUserId = client.get_property?.('$user_id');
     if (typeof previousUserId === 'string' && previousUserId !== user.id) client.reset();
 
-    client.identify(user.id, typeof user.email === 'string' && user.email ? { email: user.email } : undefined);
+    client.identify(user.id);
     return true;
 }
 

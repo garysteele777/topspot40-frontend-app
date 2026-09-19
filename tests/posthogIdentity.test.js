@@ -34,7 +34,7 @@ test('newly authenticated users and normal sign-ins identify with the backend UU
     for (const userId of ['new-user-uuid', 'returning-user-uuid']) {
         const posthog = client();
         assert.equal(identifyPostHogUser(posthog, { id: userId }), true);
-        assert.deepEqual(posthog.calls, [['identify', userId, undefined]]);
+        assert.deepEqual(posthog.calls, [['identify', userId]]);
     }
 });
 
@@ -50,7 +50,7 @@ test('the normal sign-in path identifies from its successful backend session res
     assert.ok(identify < completionNavigation);
 });
 
-test('restored authenticated sessions identify from /api/auth/me and may set its returned email', async () => {
+test('restored authenticated sessions identify from /api/auth/me using only the backend UUID', async () => {
     const posthog = client();
     const calls = [];
     const identified = await syncPostHogIdentity(posthog, async (url, options) => {
@@ -60,7 +60,7 @@ test('restored authenticated sessions identify from /api/auth/me and may set its
 
     assert.equal(identified, true);
     assert.deepEqual(calls, [['https://api.example.test/api/auth/me', { credentials: 'include' }]]);
-    assert.deepEqual(posthog.calls, [['identify', 'restored-user-uuid', { email: 'member@example.com' }]]);
+    assert.deepEqual(posthog.calls, [['identify', 'restored-user-uuid']]);
 });
 
 test('anonymous sessions stay anonymous when /api/auth/me is unauthenticated', async () => {
@@ -75,7 +75,7 @@ test('switching accounts resets the prior identified user and logout resets iden
     resetPostHog(posthog);
     assert.deepEqual(posthog.calls, [
         ['reset'],
-        ['identify', 'second-user-uuid', undefined],
+        ['identify', 'second-user-uuid'],
         ['reset']
     ]);
 });
