@@ -61,7 +61,7 @@ test('Car Mode carries Artist Radio configuration and uses backend radio complet
 });
 
 test('Artist Radio does not publish track introductions before its optional details', async () => {
-    const sequence = await readFile(new URL('../../topspot-backend-interactive-radio/backend/services/artist_radio_sequence.py', import.meta.url), 'utf8');
+    const sequence = await readFile(new URL('../../topspot-backend-api/backend/services/artist_radio_sequence.py', import.meta.url), 'utf8');
     assert.doesNotMatch(sequence, /_narrate\(user,'intro'/);
     assert.match(sequence, /if detail_length!='off':\s*[\s\S]*?_narrate\(user,'detail'/);
     assert.match(sequence, /_narrate\(user,'detail'[\s\S]*?update_phase\(user,'track'/);

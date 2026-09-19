@@ -11,8 +11,8 @@ const selectorPath = new URL('../src/lib/components/options-v2/NostalgiaRadioGen
 const launcherPath = new URL('../src/lib/components/options-v2/InteractiveRadioPanel.svelte', import.meta.url);
 const carPagePath = new URL('../src/routes/car-page/+page.svelte', import.meta.url);
 const selectionPath = new URL('../src/lib/helpers/car/selectionFromUrl.ts', import.meta.url);
-const backendRouterPath = new URL('../../topspot-backend-interactive-radio/backend/routers/decade_genre_player.py', import.meta.url);
-const backendSequencePath = new URL('../../topspot-backend-interactive-radio/backend/services/all_radio_sequence.py', import.meta.url);
+const backendRouterPath = new URL('../../topspot-backend-api/backend/routers/decade_genre_player.py', import.meta.url);
+const backendSequencePath = new URL('../../topspot-backend-api/backend/services/all_radio_sequence.py', import.meta.url);
 const {buildSelectionFromUrl} = await import('../src/lib/helpers/car/selectionFromUrl.ts');
 
 test('Nostalgia Radio defaults to all eight genres and individual toggles retain canonical order', () => {

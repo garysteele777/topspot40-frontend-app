@@ -326,8 +326,8 @@ test('Change Music keeps private and journey radio return destinations separate'
 test('Track 1 completion is guarded once and backend clock data cannot render epoch time', async () => {
     const [carPage, backendStatus, backendSequence] = await Promise.all([
         readFile(carPagePath, 'utf8'),
-        readFile(new URL('../../topspot-backend-interactive-radio/backend/routers/playback_status.py', import.meta.url), 'utf8'),
-        readFile(new URL('../../topspot-backend-interactive-radio/backend/services/all_radio_sequence.py', import.meta.url), 'utf8')
+        readFile(new URL('../../topspot-backend-api/backend/routers/playback_status.py', import.meta.url), 'utf8'),
+        readFile(new URL('../../topspot-backend-api/backend/services/all_radio_sequence.py', import.meta.url), 'utf8')
     ]);
     const advance = carPage.match(/async function advancePrivateRadioTrack\(trackOverride\?: CarModeTrack\): Promise<boolean> \{([\s\S]*?)\n    \}/)?.[1] ?? '';
     assert.match(advance, /radioCompletionSpotifyTrackId === track\.spotifyTrackId/);
@@ -351,7 +351,7 @@ test('a Set 2 Program Introduction replaces Set 1 Track 3 before its narration a
     const [poller, driveIn, backendSequence, playbackTrack] = await Promise.all([
         readFile(pollerPath, 'utf8'),
         readFile(driveInPath, 'utf8'),
-        readFile(new URL('../../topspot-backend-interactive-radio/backend/services/all_radio_sequence.py', import.meta.url), 'utf8'),
+        readFile(new URL('../../topspot-backend-api/backend/services/all_radio_sequence.py', import.meta.url), 'utf8'),
         readFile(playbackTrackPath, 'utf8')
     ]);
 
