@@ -38,6 +38,7 @@ test('PostHog initialization disables automatic interaction and session recordin
 
     assert.match(source, /disable_session_recording:\s*true/);
     assert.match(source, /autocapture:\s*false/);
+    assert.match(source, /capture_pageview:\s*false/);
 });
 test('newly authenticated users and normal sign-ins identify with the backend UUID', () => {
     for (const userId of ['new-user-uuid', 'returning-user-uuid']) {
