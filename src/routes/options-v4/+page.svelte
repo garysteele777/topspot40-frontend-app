@@ -462,6 +462,11 @@
                 page.url.searchParams.get('docuseries_collection');
         }
 
+        if (history.state?.topspotProgramCodeReturnFocus === true) {
+            openSection = 'library';
+            radioMode = null;
+        }
+
         try {
 
 
