@@ -325,6 +325,10 @@
     // ─────────────────────────────────────────────
     onMount(async () => {
         pendingSelection = null;
+        if (history.state?.topspotProgramCodeReturnFocus === true) {
+            openSection = 'library';
+            radioMode = null;
+        }
         // pendingSelection = buildSelectionFromResume(loadResumeState());
 
         try {
