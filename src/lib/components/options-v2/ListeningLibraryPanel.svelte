@@ -1,6 +1,7 @@
 <script lang="ts">
 
     import {goto} from '$app/navigation';
+    import ProgramCodeEntry from './ProgramCodeEntry.svelte';
 
     type LibraryMode = 'nostalgia' | 'collections' | 'artists';
 
@@ -141,6 +142,16 @@
     </div>
 
     {#if !collapsed}
+
+        <ProgramCodeEntry
+                {language}
+                {languages}
+                {voices}
+                {playbackOrder}
+                {voicePlayMode}
+                {pauseMode}
+                {skipPlayed}
+        />
 
 
         <div class="library-description">
