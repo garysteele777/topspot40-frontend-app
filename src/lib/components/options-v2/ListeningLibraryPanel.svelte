@@ -1,6 +1,7 @@
 <script lang="ts">
 
     import {goto} from '$app/navigation';
+    import ProgramCodeEntry from './ProgramCodeEntry.svelte';
     import {
         fetchArtistSpotlights,
         fetchArtistStory,
@@ -248,6 +249,15 @@
 
     {#if !collapsed}
 
+        <ProgramCodeEntry
+                {language}
+                {languages}
+                {voices}
+                {playbackOrder}
+                {voicePlayMode}
+                {pauseMode}
+                {skipPlayed}
+        />
 
         <div class="library-description">
             {description}

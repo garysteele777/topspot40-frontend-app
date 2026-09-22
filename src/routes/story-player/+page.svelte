@@ -56,6 +56,18 @@
     let error: string | null = null;
     let loading = true;
 
+    // Program Number D-codes land here without starting narration. Playback
+    // remains an explicit user action, as it does for every story entry point.
+    function togglePlayback() {
+        if (!audio) {
+            playStory();
+        } else if (isPlaying) {
+            pauseStory();
+        } else {
+            resumeStory();
+        }
+    }
+
     function playStory() {
         if (!story?.tts_bucket || !story?.tts_key) return;
 
@@ -250,6 +262,7 @@
             loading = false;
         }
     });
+
 </script>
 
 <div class="story-page">
@@ -301,7 +314,7 @@
 
             <div class="story-controls">
                 {#if !audio}
-                    <button class="play-btn" on:click={playStory}>
+                    <button class="play-btn" on:click={togglePlayback}>
                         ▶ Play Story
                     </button>
                 {:else if isPlaying}
