@@ -6,11 +6,19 @@
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
     import {captureExperienceSelected} from '$lib/analytics/posthog';
     import {buildExperienceDestination, EXPERIENCE_FAMILIES, type ExperienceFamily, type ExperienceMode} from '$lib/journey/experienceMode';
+    import {lookupProgramCode, ProgramCodeLookupError, programCodeUrl} from '$lib/api/programCode.js';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     let language: LandingLanguage = 'en';
     let selectedProgram: ExperienceFamily | null = null;
     let showJourneyLayout = false;
+    let catalogDigits = '';
+    let catalogStatus: string | null = null;
+    let catalogStatusKind: 'error' | 'status' | null = null;
+    let lookingUpCatalog = false;
+    let catalogDestination: string | null = null;
+    let catalogLookupVersion = 0;
+    let catalogLookupTimer: ReturnType<typeof setTimeout> | null = null;
 
     const text = {
         en: {
@@ -47,6 +55,15 @@
     };
 
     const choices = EXPERIENCE_FAMILIES;
+    const catalogPrefixes: Record<ExperienceFamily, string> = {
+        nostalgia: 'N-', collections: 'C-', artist: 'A-', docuseries: 'D-'
+    };
+    const catalogKinds: Record<ExperienceFamily, string> = {
+        nostalgia: 'nostalgia', collections: 'collection', artist: 'artist_spotlight', docuseries: 'docuseries_story'
+    };
+    const catalogSettings = {
+        languages: ['en'], voices: ['intro'], playbackOrder: 'up', voicePlayMode: 'before', pauseMode: 'pause', skipPlayed: false
+    };
     const desktopInstruction: Record<LandingLanguage, string> = {
         en: "Choose an experience, then choose how you'd like to listen.",
         es: 'Elige una experiencia y luego elige cómo quieres escuchar.',
@@ -58,9 +75,102 @@
         ptbr: {program: 'Modo Programa', radio: 'Modo Rádio'}
     };
 
+    const catalogCopy: Record<LandingLanguage, {
+        label: string; go: string; checking: string; reveal: string;
+        notFound: string; wrongExperience: string; unavailable: string;
+    }> = {
+        en: {
+            label: 'Catalog Number', go: 'Go', checking: 'Checking number…', reveal: 'Enter catalog number',
+            notFound: 'We couldn’t find that catalog number. Please check the catalog and try again.',
+            wrongExperience: 'That number belongs to a different TopSpot40 experience.',
+            unavailable: 'That program cannot be opened because its catalog details are incomplete.'
+        },
+        es: {
+            label: 'Número de catálogo', go: 'Ir', checking: 'Comprobando número…', reveal: 'Ingresar número de catálogo',
+            notFound: 'No pudimos encontrar ese número de catálogo. Revise el catálogo e inténtelo de nuevo.',
+            wrongExperience: 'Ese número pertenece a una experiencia TopSpot40 diferente.',
+            unavailable: 'Ese programa no se puede abrir porque sus detalles de catálogo están incompletos.'
+        },
+        ptbr: {
+            label: 'Número do catálogo', go: 'Ir', checking: 'Verificando número…', reveal: 'Digitar número do catálogo',
+            notFound: 'Não encontramos esse número de catálogo. Confira o catálogo e tente novamente.',
+            wrongExperience: 'Esse número pertence a uma experiência TopSpot40 diferente.',
+            unavailable: 'Esse programa não pode ser aberto porque os detalhes do catálogo estão incompletos.'
+        }
+    };
+
+    function catalogText() {
+        return catalogCopy[language];
+    }
+
     function setProgram(choice: ExperienceFamily) {
         selectedProgram = choice;
         localStorage.setItem('topspot_journey_program', choice);
+        clearCatalogEntry();
+    }
+
+    function clearCatalogEntry() {
+        catalogLookupVersion += 1;
+        if (catalogLookupTimer) clearTimeout(catalogLookupTimer);
+        catalogLookupTimer = null;
+        catalogDigits = '';
+        catalogStatus = null;
+        catalogStatusKind = null;
+        catalogDestination = null;
+        lookingUpCatalog = false;
+    }
+
+    function fullCatalogNumber() {
+        return selectedProgram ? `${catalogPrefixes[selectedProgram]}${catalogDigits}` : '';
+    }
+
+    function updateCatalogDigits(event: Event) {
+        catalogDigits = (event.currentTarget as HTMLInputElement).value.replace(/\D/g, '');
+        catalogLookupVersion += 1;
+        if (catalogLookupTimer) clearTimeout(catalogLookupTimer);
+        catalogLookupTimer = null;
+        catalogDestination = null;
+        catalogStatus = null;
+        catalogStatusKind = null;
+        lookingUpCatalog = false;
+        if (!catalogDigits || !selectedProgram) return;
+
+        const lookupVersion = catalogLookupVersion;
+        lookingUpCatalog = true;
+        catalogLookupTimer = setTimeout(() => void validateCatalogNumber(lookupVersion), 250);
+    }
+
+    async function validateCatalogNumber(lookupVersion: number) {
+        if (!selectedProgram || lookupVersion !== catalogLookupVersion) return;
+        const selectedFamily = selectedProgram;
+        try {
+            const program = await lookupProgramCode(fullCatalogNumber());
+            if (lookupVersion !== catalogLookupVersion || selectedProgram !== selectedFamily) return;
+            if (program?.kind !== catalogKinds[selectedFamily]) {
+                catalogStatus = catalogText().wrongExperience;
+                catalogStatusKind = 'error';
+                return;
+            }
+            catalogDestination = programCodeUrl(program, {...catalogSettings, language});
+            if (!catalogDestination) {
+                catalogStatus = catalogText().unavailable;
+                catalogStatusKind = 'error';
+            }
+        } catch (error) {
+            if (lookupVersion !== catalogLookupVersion) return;
+            catalogStatus = error instanceof ProgramCodeLookupError && error.kind === 'not-found'
+                ? catalogText().notFound
+                : catalogText().unavailable;
+            catalogStatusKind = 'error';
+        } finally {
+            if (lookupVersion === catalogLookupVersion) lookingUpCatalog = false;
+        }
+    }
+
+    function goToCatalogProgram() {
+        if (!catalogDestination || !selectedProgram) return;
+        captureExperienceSelected(posthog, selectedProgram);
+        void goto(catalogDestination);
     }
 
     function description(choice: ExperienceFamily) {
@@ -96,6 +206,7 @@
 
         return () => {
             journeyScreen.removeEventListener('change', updateLayout);
+            if (catalogLookupTimer) clearTimeout(catalogLookupTimer);
         };
     });
 </script>
@@ -119,14 +230,29 @@
                 <p>{desktopInstruction[language]}</p></section>
             <div class="choice-layer">
                 {#each choices as choice}
-                    <button class="program-choice program-{choice}" class:active={selectedProgram === choice}
-                            aria-pressed={selectedProgram === choice} on:click={() => setProgram(choice)}>
-                        <span class="choice-label"><strong>{text[language][choice]}</strong><small>{description(choice)}</small></span>
-                    </button>
+                    <div class="arch-slot arch-{choice}">
+                        <button class="program-choice" class:active={selectedProgram === choice}
+                                aria-label={`${text[language][choice]}: ${description(choice)}`}
+                                aria-pressed={selectedProgram === choice} on:click={() => setProgram(choice)}></button>
+                        <div class="arch-content">
+                            {#if selectedProgram === choice}
+                                <form class="catalog-entry catalog-entry-desktop" on:submit|preventDefault={goToCatalogProgram}>
+                                    <label for="desktop-catalog-digits">{catalogText().label}</label>
+                                    <div class="catalog-row">
+                                        <span class="catalog-prefix" aria-hidden="true">{catalogPrefixes[choice]}</span>
+                                        <input id="desktop-catalog-digits" value={catalogDigits} on:input={updateCatalogDigits} inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="desktop-catalog-status" />
+                                        <button type="submit" disabled={!catalogDestination || lookingUpCatalog}>{catalogText().go}</button>
+                                    </div>
+                                    <div id="desktop-catalog-status" class:catalog-error={catalogStatusKind === 'error'} role={catalogStatusKind === 'error' ? 'alert' : 'status'} aria-live="polite">{lookingUpCatalog ? catalogText().checking : catalogStatus ?? ''}</div>
+                                </form>
+                            {/if}
+                            <span class="choice-label"><strong>{text[language][choice]}</strong><small>{description(choice)}</small></span>
+                        </div>
+                    </div>
                 {/each}
             </div>
             {#if selectedProgram}
-                <button type="button" class="mode-button program-mode" on:click={() => startExperience('program')}>{modeCopy[language].program} <span
+                <button type="button" class="mode-button program-mode" disabled={catalogDigits.length > 0} on:click={() => startExperience('program')}>{modeCopy[language].program} <span
                         aria-hidden="true">→</span></button>
                 {#if selectedProgram !== 'docuseries'}
                     <button type="button" class="mode-button radio-mode" on:click={() => startExperience('radio')}>{modeCopy[language].radio} <span aria-hidden="true">→</span></button>
@@ -142,9 +268,8 @@
 
                 <div class="mobile-program-list">
                     {#each choices as choice}
-                        <button
-                                on:click={() => goto(buildExperienceDestination(choice, 'program'))}
-                        >
+                        <div class="mobile-choice">
+                        <button class="mobile-browse" on:click={() => goto(buildExperienceDestination(choice, 'program'))}>
                         <span class="mobile-choice-text">
                             <strong>{text[language][choice]}</strong>
                             <small>{description(choice)}</small>
@@ -153,9 +278,21 @@
                             {selectedProgram === choice ? '✓' : '→'}
                         </span>
                         </button>
+                        <button class="reveal-catalog" type="button" on:click={() => setProgram(choice)}>{catalogText().reveal}</button>
+                        </div>
                     {/each}
                 </div>
-
+                {#if selectedProgram}
+                    <form class="catalog-entry catalog-entry-mobile" on:submit|preventDefault={goToCatalogProgram}>
+                        <label for="mobile-catalog-digits">{catalogText().label}</label>
+                        <div class="catalog-row">
+                            <span class="catalog-prefix" aria-hidden="true">{catalogPrefixes[selectedProgram]}</span>
+                            <input id="mobile-catalog-digits" value={catalogDigits} on:input={updateCatalogDigits} inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="mobile-catalog-status" />
+                            <button type="submit" disabled={!catalogDestination || lookingUpCatalog}>{catalogText().go}</button>
+                        </div>
+                        <div id="mobile-catalog-status" class:catalog-error={catalogStatusKind === 'error'} role={catalogStatusKind === 'error' ? 'alert' : 'status'} aria-live="polite">{lookingUpCatalog ? catalogText().checking : catalogStatus ?? ''}</div>
+                    </form>
+                {/if}
             </section>
         </main>
     {/if}
@@ -248,33 +385,28 @@ button {
         pointer-events: none;
     }
 
-    .program-choice {
+    .arch-slot {
         position: absolute;
         top: 18%;
         width: 21.5%;
         height: 62%;
+        pointer-events: none;
+    }
+
+    .arch-nostalgia { left: 1.75%; }
+    .arch-collections { left: 26.75%; }
+    .arch-artist { left: 51.75%; }
+    .arch-docuseries { left: 76.75%; }
+
+    .program-choice {
+        position: absolute;
+        inset: 0;
         padding: 0;
         border: 3px solid transparent;
         border-radius: 46% 46% 18px 18px;
         background: transparent;
         pointer-events: auto;
         transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
-    }
-
-    .program-nostalgia {
-        left: 1.75%;
-    }
-
-    .program-collections {
-        left: 26.75%;
-    }
-
-    .program-artist {
-        left: 51.75%;
-    }
-
-    .program-docuseries {
-        left: 76.75%;
     }
 
     .program-choice:hover, .program-choice:focus-visible, .program-choice.active {
@@ -285,11 +417,8 @@ button {
     }
 
     .choice-label {
-        position: absolute;
-        left: 50%;
-        bottom: 4%;
-        width: min(94%, 300px);
-        transform: translateX(-50%);
+        display: block;
+        width: 100%;
         padding: 12px 10px;
         color: #f6dc8a;
         background: rgba(8, 5, 2, .92);
@@ -332,6 +461,47 @@ button {
     }
     .radio-mode { left: calc(50% + min(122px, 11vw)); transform: translateX(-50%); color:#081008; background:#75ef4f; border:2px solid #b7ff9c; box-shadow:0 0 28px rgba(78,255,73,.62); }
     .mode-button:hover, .mode-button:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+    .mode-button:disabled { cursor: not-allowed; opacity: .62; }
+
+    .catalog-entry {
+        z-index: 12;
+        color: #fff4d1;
+        background: rgba(8, 5, 2, .94);
+        border: 1px solid rgba(247, 220, 130, .8);
+        border-radius: 12px;
+        box-shadow: 0 5px 18px rgba(0, 0, 0, .72);
+    }
+
+    .arch-content {
+        position: absolute;
+        z-index: 1;
+        bottom: 4%;
+        left: 50%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: min(94%, 300px);
+        transform: translateX(-50%);
+        pointer-events: none;
+    }
+
+    .catalog-entry-desktop {
+        width: 100%;
+        padding: 10px 14px;
+        text-align: center;
+        pointer-events: auto;
+    }
+
+    .catalog-entry label { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 700; }
+    .catalog-row { display: flex; gap: 7px; }
+    .catalog-prefix, .catalog-row input, .catalog-row button { min-height: 38px; border-radius: 7px; font: inherit; }
+    .catalog-prefix { display: grid; place-items: center; padding: 0 10px; color: #211706; background: #f7dc82; font-weight: 900; }
+    .catalog-row input { min-width: 0; flex: 1; padding: 0 9px; color: #fff; background: #17120c; border: 1px solid #c9b76d; }
+    .catalog-row button { padding: 0 13px; color: #211706; background: #f7dc82; border: 1px solid #fff0b0; font-weight: 900; }
+    .catalog-row input:focus-visible, .catalog-row button:focus-visible, .reveal-catalog:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+    .catalog-row button:disabled { cursor: wait; opacity: .6; }
+    .catalog-entry [role] { min-height: 1.2em; margin-top: 5px; font-size: 12px; }
+    .catalog-entry .catalog-error { color: #ffb4a9; }
 
     @media (max-width: 820px) {
         .journey {
@@ -423,6 +593,28 @@ button {
     background: #24211d;
     border: 2px solid #625735;
     border-radius: 15px;
+    text-align: left;
+}
+
+.mobile-choice { display: grid; gap: 6px; }
+
+.mobile-program-list .reveal-catalog {
+    min-height: 38px;
+    padding: 8px 12px;
+    color: #f7dc82;
+    background: transparent;
+    border: 1px solid #625735;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.mobile-program-list .reveal-catalog:hover { border-color: #f7dc82; background: #332d23; }
+
+.catalog-entry-mobile {
+    position: relative;
+    margin-top: 20px;
+    padding: 14px;
     text-align: left;
 }
 
