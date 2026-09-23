@@ -60,7 +60,8 @@ test('jukebox prints the complete formatted program list without its controls or
     assert.match(jukebox, /await tick\(\);/);
     assert.match(jukebox, /aria-describedby="print-list-hint"/);
     assert.match(jukebox, /Print the complete program track list with catalog number, titles, and artists\./);
-    assert.match(jukebox, /\{#each sortedTracks as track\}/);
+    assert.match(jukebox, /\{#each printedTrackPages as printedTracks\}/);
+    assert.match(jukebox, /\{#each printedTracks as track\}/);
     assert.match(jukebox, /displayTrackListTitle\(track\.trackName, track\.rank\)/);
     assert.match(jukebox, /displayTrackListArtist\(track\.artistName\)/);
     assert.match(jukebox, /@media print/);

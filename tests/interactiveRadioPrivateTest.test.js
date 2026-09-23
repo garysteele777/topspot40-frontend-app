@@ -195,7 +195,7 @@ test('Track 1 timer hands off through backend Track 2 Intro, Detail acknowledgem
 
     assert.match(continuation, /isPrivateNostalgiaRadioSelection\(\)/);
     assert.match(continuation, /await advancePrivateRadioTrack\(\)/);
-    assert.ok(continuation.indexOf('await advancePrivateRadioTrack()') < continuation.indexOf('await nextTrack(true)'));
+    assert.match(continuation, /if \(backendRadio\) \{[\s\S]*?await advancePrivateRadioTrack\(\);[\s\S]*?return;/);
     assert.match(advance, /signalTrackFinishedApi/);
     assert.match(advance, /Do not wait for the final track frame/);
     assert.doesNotMatch(advance, /waitForRadioTrack\(track\.spotifyTrackId\)/);

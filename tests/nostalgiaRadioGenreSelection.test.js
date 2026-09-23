@@ -68,7 +68,7 @@ test('radio track installation only accepts sets in the requested genre list', a
     assert.match(carPage, /isGeneratedNostalgiaRadioGenreAllowed/);
     assert.match(backendRouter, /genres: list\[str\] \| None = Query\(None\)/);
     assert.match(backendRouter, /genre_filters=genre_filter/);
-    assert.match(backendSequence, /if g in genre_filters/);
+    assert.match(backendSequence, /filter_radio_buckets\(VALID_BUCKETS_CACHE, genre_filters\)/);
 });
 
 test('radio labels distinguish ALL, CUSTOM, and a single selected genre', () => {
