@@ -41,6 +41,17 @@
         ptbr: 'Imprima a lista completa de faixas do programa com número de catálogo, títulos e artistas.'
     };
 
+    const requestCopy: Record<Language, {
+        requests: (count: number) => string; add: (rank: number) => string;
+        queued: string; moveUp: string; moveDown: string; remove: string;
+        clear: string; confirmClear: (count: number) => string; empty: string;
+        confirmation: (rank: number) => string;
+    }> = {
+        en: {requests: count => `Requests (${count})`, add: rank => `Add #${rank} to Requests`, queued: 'Queued', moveUp: 'Move Up', moveDown: 'Move Down', remove: 'Remove', clear: 'Clear Requests', confirmClear: count => `Remove ${count} requests`, empty: 'No requests yet.', confirmation: rank => `#${rank} queued`},
+        es: {requests: count => `Solicitudes (${count})`, add: rank => `Agregar #${rank} a solicitudes`, queued: 'En cola', moveUp: 'Subir', moveDown: 'Bajar', remove: 'Quitar', clear: 'Borrar solicitudes', confirmClear: count => `Quitar ${count} solicitudes`, empty: 'No hay solicitudes.', confirmation: rank => `#${rank} en cola`},
+        ptbr: {requests: count => `Pedidos (${count})`, add: rank => `Adicionar #${rank} aos pedidos`, queued: 'Na fila', moveUp: 'Mover para cima', moveDown: 'Mover para baixo', remove: 'Remover', clear: 'Limpar pedidos', confirmClear: count => `Remover ${count} pedidos`, empty: 'Nenhum pedido ainda.', confirmation: rank => `#${rank} na fila`}
+    };
+
     export let tracks: CarModeTrack[] = [];
     export let currentTrack: CarModeTrack | null = null;
     export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined = undefined;
@@ -58,6 +69,13 @@
     export let catalogLookupName = '';
     export let printCategory = '';
     export let printTitle = '';
+    export let requests: CarModeTrack[] = [];
+    export let onAddRequest: ((track: CarModeTrack) => void) | undefined = undefined;
+    export let onMoveRequest: ((index: number, direction: -1 | 1) => void) | undefined = undefined;
+    export let onRemoveRequest: ((index: number) => void) | undefined = undefined;
+    export let onClearRequests: (() => void) | undefined = undefined;
+    export let openRequests = false;
+    export let onRequestsViewOpened: (() => void) | undefined = undefined;
 
     const PAGE_SIZE = 5;
     const PRINT_TRACKS_PER_PAGE = 23;
@@ -66,11 +84,20 @@
     let selectedTrack: CarModeTrack | null = currentTrack;
     let lastCurrentIdentity = '';
     let printCatalogNumber = '';
+    let showRequests = false;
+    let clearRequestsConfirmation = false;
+    let requestConfirmation = '';
+    let requestConfirmationTimer: ReturnType<typeof setTimeout> | undefined;
 
     $: embedded = variant === 'embedded';
     $: copy = jukeboxCopy[language];
     $: printLabel = printLabels[language];
     $: printHint = printHints[language];
+    $: requestsText = requestCopy[language];
+    $: if (openRequests) {
+        showRequests = true;
+        onRequestsViewOpened?.();
+    }
 
     $: favoriteRefresh = $favoritesStore;
     $: sortedTracks = [...tracks].sort((a, b) => a.rank - b.rank);
@@ -148,6 +175,20 @@
         downloadCsv(createTrackListCsv(sortedTracks), exportFileName);
     }
 
+    function isRequested(track: CarModeTrack): boolean {
+        return requests.some(request => trackIdentity(request) === trackIdentity(track));
+    }
+
+    function addRequest(track: CarModeTrack): void {
+        if (isRequested(track)) return;
+        onAddRequest?.(track);
+        requestConfirmation = requestsText.confirmation(track.rank);
+        if (requestConfirmationTimer) clearTimeout(requestConfirmationTimer);
+        requestConfirmationTimer = setTimeout(() => {
+            requestConfirmation = '';
+        }, 2500);
+    }
+
     async function printTrackList(): Promise<void> {
         if (catalogLookupName && !printCatalogNumber) {
             try {
@@ -185,7 +226,10 @@
     onMount(() => {
         if (!embedded) window.addEventListener('keydown', handleKeyDown);
     });
-    onDestroy(() => window.removeEventListener('keydown', handleKeyDown));
+    onDestroy(() => {
+        window.removeEventListener('keydown', handleKeyDown);
+        if (requestConfirmationTimer) clearTimeout(requestConfirmationTimer);
+    });
 </script>
 
 <div
@@ -256,9 +300,38 @@
                     <div class="page-label">
                         {copy.page(pageIndex + 1, pageCount)}
                     </div>
+                    <button type="button" class="requests-button" on:click={() => (showRequests = !showRequests)}>
+                        {requestsText.requests(requests.length)}
+                    </button>
                 </div>
             </header>
 
+            {#if requestConfirmation}
+                <p class="request-confirmation" role="status">{requestConfirmation}</p>
+            {/if}
+
+            {#if showRequests}
+                <div class="requests-list">
+                    <h3>{requestsText.requests(requests.length)}</h3>
+                    {#each requests as request, index}
+                        <div class="request-row">
+                            <span>#{request.rank} <strong>{displayTrackListTitle(request.trackName, request.rank)}</strong> — {displayTrackListArtist(request.artistName)}</span>
+                            <div class="request-controls">
+                                <button type="button" disabled={index === 0} on:click={() => onMoveRequest?.(index, -1)}>{requestsText.moveUp}</button>
+                                <button type="button" disabled={index === requests.length - 1} on:click={() => onMoveRequest?.(index, 1)}>{requestsText.moveDown}</button>
+                                <button type="button" on:click={() => onRemoveRequest?.(index)}>{requestsText.remove}</button>
+                            </div>
+                        </div>
+                    {:else}<p class="empty-tracks">{requestsText.empty}</p>{/each}
+                    {#if requests.length}
+                        {#if clearRequestsConfirmation}
+                            <button type="button" class="clear-requests" on:click={() => { onClearRequests?.(); clearRequestsConfirmation = false; }}>{requestsText.confirmClear(requests.length)}</button>
+                        {:else}
+                            <button type="button" class="clear-requests" on:click={() => (clearRequestsConfirmation = true)}>{requestsText.clear}</button>
+                        {/if}
+                    {/if}
+                </div>
+            {:else}
             <div class="selection-list">
                 {#each visibleTracks as track}
                     <div
@@ -291,6 +364,12 @@
                             <strong>{displayTrackListTitle(track.trackName, track.rank)}</strong>
                             <span>{displayTrackListArtist(track.artistName)}</span>
                         </span>
+
+                        {#if !embedded}
+                            <button type="button" class="add-request" disabled={isRequested(track)} on:click|stopPropagation={() => addRequest(track)}>
+                                {isRequested(track) ? requestsText.queued : requestsText.add(track.rank)}
+                            </button>
+                        {/if}
 
                         <span class="status-icons">
                             {#if isCurrent(track)}
@@ -337,6 +416,7 @@
                     <p class="empty-tracks">{copy.empty}</p>
                 {/if}
             </div>
+            {/if}
 
             <footer>
                 <button
@@ -631,6 +711,7 @@
             clamp(32px, 3.2vw, 54px)
             clamp(42px, 4.8vw, 76px)
             minmax(0, 1fr)
+            auto
             auto;
         align-items: center;
         gap: clamp(6px, 0.75vw, 13px);
@@ -841,6 +922,16 @@
         display: none;
     }
 
+    .requests-button, .add-request, .request-controls button, .clear-requests { border: 1px solid #c58d35; border-radius: 8px; padding: 6px 9px; color: #fff4d1; background: #3d1c0e; font-weight: 800; cursor: pointer; }
+    .requests-list { min-height: 0; overflow: auto; padding: 8px; border: 1px solid rgba(202,153,66,.45); border-radius: 8px; background: rgba(24,12,8,.92); }
+    .requests-list h3 { margin: 0 0 8px; }
+    .request-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(202,153,66,.25); }
+    .request-controls { display: flex; flex-wrap: wrap; gap: 5px; }
+    .request-confirmation { color:#70e49b; font-weight:800; }
+    .clear-requests { margin-top: 10px; background:#7f1d1d; }
+    .add-request { white-space: nowrap; font-size: clamp(8px,.75vw,12px); }
+    .add-request:disabled { opacity:.65; cursor:default; }
+
     @media print {
         @page {
             size: letter portrait;
@@ -973,6 +1064,19 @@
         .close-button {
             top: 2%;
             right: 2%;
+        }
+
+        .selection-card {
+            grid-template-columns: 36px 44px minmax(0, 1fr) auto;
+        }
+
+        .selection-card .add-request {
+            grid-column: 3 / -1;
+            justify-self: start;
+        }
+
+        .request-row {
+            flex-direction: column;
         }
     }
 </style>

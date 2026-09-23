@@ -35,6 +35,8 @@ export type CarModeAutoPlayDependencies = {
     continueAutoPlayback: () => Promise<void>;
     onSpotifyHandoff?: (track: CarModeTrack) => void;
     onSpotifyOpenFailed?: (track: CarModeTrack) => void;
+    stopEstimatedTrackClock?: () => void;
+    stopNarrationBedAtSpotifyHandoff?: () => void;
     nextTrack: () => Promise<void>;
     previousTrack: () => Promise<void>;
     startPreviousAutoPlayback: () => Promise<void>;
@@ -142,6 +144,7 @@ export function createCarModeAutoPlay(
         }
 
         handoffToken = token;
+        dependencies.stopNarrationBedAtSpotifyHandoff?.();
         dependencies.onSpotifyHandoff?.(track);
         dependencies.setPlaybackPhase('track');
         dependencies.setIsPlaying(true);
@@ -163,6 +166,7 @@ export function createCarModeAutoPlay(
 
         console.info('[car-mode] Auto Play advance accepted', {runId: activeRunId});
         dependencies.setIsPlaying(false);
+        dependencies.stopEstimatedTrackClock?.();
         await dependencies.continueAutoPlayback();
 
         if (
@@ -187,6 +191,7 @@ export function createCarModeAutoPlay(
 
     function abandonCycle(): number {
         dependencies.abandonNarration();
+        dependencies.stopEstimatedTrackClock?.();
         handoffToken = null;
 
         return cancelCycle();
@@ -213,6 +218,7 @@ export function createCarModeAutoPlay(
         // resetting the UI clock: the Drive-In display must stay frozen at
         // the listener's paused position.
         cancelCycle();
+        dependencies.stopEstimatedTrackClock?.();
         handoffToken = null;
         interruptedTrack = track;
 
@@ -298,12 +304,23 @@ export function createCarModeAutoPlay(
         if (completed) handoff(track);
     }
 
-    async function playSelectedTrack(track: CarModeTrack): Promise<void> {
+    async function playSelectedTrack(
+        track: CarModeTrack,
+        options: {preserveSpotifyWindow?: boolean} = {}
+    ): Promise<void> {
         abandonCycle();
-        dependencies.closeSpotify();
         dependencies.setActivePlayMode('auto');
 
-        if (!dependencies.isMobile()) {
+        // A timer-driven transition has already returned Auto Play's
+        // user-gesture-reserved companion window to its waiting page.  Keep
+        // that window for the next narration/Spotify handoff; closing and
+        // reopening it here would turn the handoff into a popup-blocked,
+        // manual Guided Play flow.
+        if (!options.preserveSpotifyWindow) {
+            dependencies.closeSpotify();
+        }
+
+        if (!options.preserveSpotifyWindow && !dependencies.isMobile()) {
             dependencies.prepareSpotifyWindow();
         }
 

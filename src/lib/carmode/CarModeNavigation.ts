@@ -24,6 +24,7 @@ export type CarModeNavigationDependencies = {
     setUserStartedPlayback: (started: boolean) => void;
     playTrack: (track: CarModeTrack) => Promise<void>;
     startAutoPlay: () => Promise<void>;
+    isTrackExcludedFromRegularProgression?: (track: CarModeTrack) => boolean;
 };
 
 export function createCarModeNavigation(
@@ -96,6 +97,10 @@ export function createCarModeNavigation(
         if (current) recordCurrentTrackCompletion(current);
     }
 
+    function completeTrack(track: CarModeTrack): void {
+        recordCurrentTrackCompletion(track);
+    }
+
     function queueNext(): CarModeTrack | null {
         const current = dependencies.getCurrentTrack();
         const tracks = dependencies.getTracks();
@@ -129,13 +134,16 @@ export function createCarModeNavigation(
                 : orderedTracks.findIndex(track => track.rank === rank);
         if (currentIndex === -1) return null;
 
-        let nextTrack = settings.skipPlayed
-            ? orderedTracks
-                .slice(currentIndex + 1)
-                .find(track => !playedRanks.includes(track.rank))
-            : null;
+        const canUseRegularTrack = (track: CarModeTrack): boolean =>
+            !dependencies.isTrackExcludedFromRegularProgression?.(track) &&
+            (!settings.skipPlayed || !playedRanks.includes(track.rank));
+
+        let nextTrack = orderedTracks
+            .slice(currentIndex + 1)
+            .find(canUseRegularTrack);
         if (!nextTrack) {
-            nextTrack = orderedTracks[(currentIndex + 1) % orderedTracks.length];
+            nextTrack = orderedTracks.find(canUseRegularTrack) ??
+                orderedTracks[(currentIndex + 1) % orderedTracks.length];
         }
 
         dependencies.setCurrentRank(nextTrack.rank);
@@ -229,6 +237,7 @@ export function createCarModeNavigation(
         queueNext,
         previous,
         completeCurrentTrack,
+        completeTrack,
         setPlayedRanks,
         resetPlayedRanks
     };

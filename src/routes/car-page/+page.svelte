@@ -42,6 +42,8 @@
         createCarModeAutoPlay
     } from '$lib/carmode/CarModeAutoPlay';
     import {createCarModeNavigation} from '$lib/carmode/CarModeNavigation';
+    import {createEstimatedTrackClock} from '$lib/carmode/EstimatedTrackClock';
+    import {addRequest, clearRequests, moveRequest, removeRequest} from '$lib/carmode/requestsQueue.js';
     import {
         buildProgramStartedProperties,
         createProgramStartedTracker
@@ -73,6 +75,7 @@
     import {
         startBedUrl,
         stopBed,
+        resetBed,
         unlockBedAudio
     } from '$lib/audio/bedPlayer';
     import {
@@ -164,6 +167,69 @@
     let userStartedPlaybackThisSession = false;
     let playbackStartInFlight = false;
     let activePlayMode: 'guided' | 'auto' | null = null;
+    let requests: CarModeTrack[] = [];
+    let activeRequestIdentity: string | null = null;
+    let regularResumeTrack: CarModeTrack | null = null;
+    let requestedTrackIdentities = new Set<string>();
+
+    const requestTrackIdentity = (track: CarModeTrack): string =>
+        track.rankingId != null ? `ranking-${track.rankingId}` : `rank-${track.rank}`;
+
+    function addTrackRequest(track: CarModeTrack): void {
+        const nextRequests = addRequest(requests, track);
+        if (nextRequests !== requests) requests = nextRequests;
+    }
+    function moveTrackRequest(index: number, direction: -1 | 1): void { requests = moveRequest(requests, index, direction); }
+    function removeTrackRequest(index: number): void { requests = removeRequest(requests, index); }
+    function clearTrackRequests(): void { requests = clearRequests(requests, true); }
+
+    async function advanceRequestOrRegular(
+        auto = false,
+        autoWindowReady: boolean | null = null
+    ): Promise<void> {
+        const current = get(currentTrack);
+
+        // Keep the active request in the queue until the transition after it.
+        // Spotify exposes no dependable per-song completion event.
+        if (activeRequestIdentity) {
+            if (current) navigation.completeTrack(current);
+            requests = requests.filter(track => requestTrackIdentity(track) !== activeRequestIdentity);
+            activeRequestIdentity = null;
+        } else if (current && userStartedPlaybackThisSession) {
+            navigation.completeCurrentTrack();
+        }
+
+        const nextRequest = requests[0];
+        if (!nextRequest) {
+            if (regularResumeTrack) {
+                currentTrack.set(regularResumeTrack);
+                currentRank.set(regularResumeTrack.rank);
+                regularResumeTrack = null;
+            }
+            await nextTrack(auto);
+            return;
+        }
+
+        if (!regularResumeTrack && current) regularResumeTrack = current;
+        activeRequestIdentity = requestTrackIdentity(nextRequest);
+        requestedTrackIdentities = new Set([...requestedTrackIdentities, activeRequestIdentity]);
+        currentTrack.set(nextRequest);
+        currentRank.set(nextRequest.rank);
+        if (auto) {
+            if (autoWindowReady === false && !spotify.isMobile()) {
+                activePlayMode = null;
+                isPlaying.set(false);
+                playbackPhase.set('paused');
+                status.set('Spotify window is unavailable. Press Auto Play to continue the next request.');
+                return;
+            }
+            await autoPlay.playSelectedTrack(nextRequest, {
+                preserveSpotifyWindow: autoWindowReady === true
+            });
+        } else {
+            await navigation.jumpTo(nextRequest);
+        }
+    }
     let preservePlaybackForPreferences = false;
     let lastAudioDebugState = '';
 
@@ -236,6 +302,14 @@
         duration.set(0);
         progress.set(0);
     }
+
+    const nostalgiaTrackClock = createEstimatedTrackClock({
+        setTiming: timing => {
+            elapsed.set(timing.elapsed);
+            duration.set(timing.duration);
+            progress.set(timing.progress);
+        }
+    });
 
     type CarDisplayView = 'classic' | 'drive-in';
     let carDisplayView: CarDisplayView = 'drive-in';
@@ -779,6 +853,7 @@
         unlockBed: unlockBedAudio,
         startBed: startBedUrl,
         stopBed,
+        resetBed,
         playNarration: playNarrationUrlAndWait,
         stopNarration,
         updateTiming: updateGuidedNarrationTiming,
@@ -864,7 +939,7 @@
             return;
         }
 
-        await nextTrack(true);
+        await advanceRequestOrRegular(true, helperReset || spotify.isMobile());
     }
 
     async function continueGuidedPlayback() {
@@ -889,7 +964,7 @@
             return;
         }
 
-        await nextTrack();
+        await advanceRequestOrRegular();
     }
 
     async function skipGuidedTrack() {
@@ -1196,6 +1271,10 @@
         activePlayMode = 'guided';
         if (!$currentTrack) return;
         captureProgramStartedOnce();
+        if (!userStartedPlaybackThisSession && requests.length) {
+            await advanceRequestOrRegular();
+            return;
+        }
         logAudioDebug('Guided action', {
             trackRank: $currentTrack?.rank ?? null,
             trackName: $currentTrack?.trackName ?? null,
@@ -1224,9 +1303,19 @@
             queueNextTrack: queueNextAutoTrack,
             setStatus: message => status.set(message),
             continueAutoPlayback,
-            onSpotifyHandoff: () => {
+            onSpotifyHandoff: track => {
                 if (isBackendRadioAutoHandoffSelection()) {
                     setExternalRadioSpotifyHandoffReady(true);
+                    return;
+                }
+                const trackDuration = track.durationSeconds ??
+                    (track.durationMs ? Math.floor(track.durationMs / 1000) : 0);
+                nostalgiaTrackClock.start(trackDuration);
+            },
+            stopEstimatedTrackClock: () => nostalgiaTrackClock.stop(),
+            stopNarrationBedAtSpotifyHandoff: () => {
+                if (!isBackendRadioAutoHandoffSelection()) {
+                    narration.finishForSpotifyHandoff();
                 }
             },
             onSpotifyOpenFailed: track => {
@@ -1275,6 +1364,11 @@
 
         if (!$currentTrack) return;
         captureProgramStartedOnce();
+
+        if (!userStartedPlaybackThisSession && requests.length) {
+            await advanceRequestOrRegular(true);
+            return;
+        }
 
         if (isCollectionsRadioAutoHandoffSelection() && radioSpotifyRetryTrack) {
             retryBackendRadioSpotifyHandoff();
@@ -2140,7 +2234,9 @@
         markUserStartedPlayback,
         setUserStartedPlayback: started => (userStartedPlaybackThisSession = started),
         playTrack,
-        startAutoPlay: handleAutoPlay
+        startAutoPlay: handleAutoPlay,
+        isTrackExcludedFromRegularProgression: track =>
+            requestedTrackIdentities.has(requestTrackIdentity(track))
     });
 
     async function handleJumpToTrack(track: CarModeTrack): Promise<void> {
@@ -2225,6 +2321,10 @@
 
             if (key !== lastProgramKey) {
                 lastProgramKey = key;
+                requests = [];
+                activeRequestIdentity = null;
+                regularResumeTrack = null;
+                requestedTrackIdentities = new Set<string>();
                 artistStoriesEnabled = false;
                 artistStoriesPlayed = new Set<string>();
                 guidedSpotifyOpenedThisProgram = false;
@@ -2881,6 +2981,11 @@
                         onReportNarration={openNarrationReport}
                         openTrackList={openGuidedTrackList}
                         onTrackListClosed={() => (openGuidedTrackList = false)}
+                        {requests}
+                        onAddRequest={addTrackRequest}
+                        onMoveRequest={moveTrackRequest}
+                        onRemoveRequest={removeTrackRequest}
+                        onClearRequests={clearTrackRequests}
                 />
             {:else}
                 {#if !isSmallScreen}

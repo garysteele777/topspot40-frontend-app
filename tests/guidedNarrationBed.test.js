@@ -20,7 +20,7 @@ function deferred() {
     return {promise, resolve, reject};
 }
 
-function createNarrationHarness({unlockBed, startBed, playNarration}) {
+function createNarrationHarness({unlockBed, startBed, playNarration, resetBed = () => {}}) {
     const playing = [];
     const narration = createCarModeNarration({
         getCurrentTrack: () => track,
@@ -29,6 +29,7 @@ function createNarrationHarness({unlockBed, startBed, playNarration}) {
         unlockBed,
         startBed,
         stopBed: () => {},
+        resetBed,
         playNarration,
         stopNarration: () => {},
         updateTiming: () => {},
@@ -80,6 +81,26 @@ test('a failed bed never stops Guided narration', async () => {
 
     narrationDone.resolve();
     assert.equal(await running, true);
+});
+
+test('Spotify handoff resets the bed and invalidates a delayed bed start', async () => {
+    const unlock = deferred();
+    let startedBeds = 0;
+    let resetBeds = 0;
+    const {narration} = createNarrationHarness({
+        unlockBed: () => unlock.promise,
+        startBed: async () => { startedBeds += 1; },
+        resetBed: () => { resetBeds += 1; },
+        playNarration: async () => {}
+    });
+
+    await narration.start(track);
+    narration.finishForSpotifyHandoff();
+    unlock.resolve();
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.equal(resetBeds, 1);
+    assert.equal(startedBeds, 0);
 });
 
 test('Guided shows Pause only after narration confirms playback', async () => {

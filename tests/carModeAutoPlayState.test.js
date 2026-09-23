@@ -37,7 +37,9 @@ function createHarness({
     onContinue = null,
     openSpotify = null,
     onSpotifyOpenFailed = null,
-    onLocalNextTrack = null
+    onLocalNextTrack = null,
+    onSpotifyHandoff = null,
+    stopNarrationBedAtSpotifyHandoff = null
 } = {}) {
     let currentTrack = track;
     let activeMode = 'auto';
@@ -50,6 +52,8 @@ function createHarness({
     let status = [];
     let continued = 0;
     let pausedPhase = pausedNarrationPhase;
+    let preparedWindows = 0;
+    let closedWindows = 0;
 
     const auto = createCarModeAutoPlay({
         getActivePlayMode: () => activeMode,
@@ -70,22 +74,31 @@ function createHarness({
             starts.push(track);
             return true;
         },
-        prepareSpotifyWindow: () => {},
+        prepareSpotifyWindow: () => { preparedWindows += 1; },
         isMobile: () => true,
         openSpotify: () => {
             opened += 1;
             return openSpotify ? openSpotify() : true;
         },
-        closeSpotify,
+        closeSpotify: () => {
+            closedWindows += 1;
+            return closeSpotify();
+        },
         queueNextTrack: async () => {
             queued += 1;
             currentTrack = nextTrack;
         },
         setStatus: message => { status.push(message); },
         onSpotifyOpenFailed,
+        onSpotifyHandoff,
+        stopNarrationBedAtSpotifyHandoff,
         continueAutoPlayback: async () => {
             continued += 1;
-            if (onContinue) onContinue({setPhase: value => { playbackPhase = value; }, setTrack: value => { currentTrack = value; }});
+            if (onContinue) await onContinue({
+                auto,
+                setPhase: value => { playbackPhase = value; },
+                setTrack: value => { currentTrack = value; }
+            });
         },
         nextTrack: async () => { onLocalNextTrack?.(); },
         previousTrack: async () => {},
@@ -96,6 +109,7 @@ function createHarness({
         auto,
         setCurrentTrack: value => { currentTrack = value; },
         setPhase: value => { playbackPhase = value; },
+        spotifyWindowActions: () => ({preparedWindows, closedWindows}),
         state: () => ({
             activeMode,
             playbackPhase,
@@ -211,6 +225,63 @@ test('a known track duration arms one Auto Play timer and continues once', async
 
     assert.equal(harness.state().continued, 1);
     assert.equal(harness.state().opened, 1);
+    harness.auto.cancel();
+});
+
+test('Auto Play starts the next queued request after the current request timer ends', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const requestFourteen = {...firstTrack, rank: 14, rankingId: 14, spotifyTrackId: 'request-14', durationSeconds: 2};
+    const requestFifteen = {...nextTrack, rank: 15, rankingId: 15, spotifyTrackId: 'request-15', durationSeconds: 2};
+    const queued = [requestFourteen, requestFifteen];
+
+    const harness = createHarness({
+        phase: 'idle',
+        playing: false,
+        track: requestFourteen,
+        bufferSeconds: 0,
+        onContinue: async ({auto, setTrack}) => {
+            queued.shift();
+            const nextRequest = queued[0];
+            setTrack(nextRequest);
+            await auto.playSelectedTrack(nextRequest, {preserveSpotifyWindow: true});
+        }
+    });
+
+    harness.auto.handoffCurrentTrack(requestFourteen);
+    t.mock.timers.tick(2000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    assert.equal(harness.state().continued, 1);
+    assert.equal(harness.state().activeMode, 'auto');
+    assert.equal(harness.state().currentTrack, requestFifteen);
+    assert.equal(harness.state().playbackPhase, 'track');
+    assert.equal(harness.state().isPlaying, true);
+    assert.deepEqual(harness.state().starts, [requestFifteen]);
+    assert.equal(harness.state().opened, 2);
+    assert.deepEqual(harness.spotifyWindowActions(), {
+        preparedWindows: 0,
+        closedWindows: 0
+    });
+    harness.auto.cancel();
+    t.mock.timers.reset();
+});
+
+test('Auto Play resets the bed at ordinary and queued-request Spotify handoffs', async () => {
+    let bedResets = 0;
+    const requestTrack = {...nextTrack, rank: 15, rankingId: 15, spotifyTrackId: 'queued-request'};
+    const harness = createHarness({
+        phase: 'idle',
+        playing: false,
+        stopNarrationBedAtSpotifyHandoff: () => { bedResets += 1; }
+    });
+
+    harness.auto.handoffCurrentTrack(firstTrack);
+    await harness.auto.playSelectedTrack(requestTrack, {preserveSpotifyWindow: true});
+
+    assert.equal(bedResets, 2);
+    assert.deepEqual(harness.state().starts, [requestTrack]);
+    assert.equal(harness.state().playbackPhase, 'track');
     harness.auto.cancel();
 });
 

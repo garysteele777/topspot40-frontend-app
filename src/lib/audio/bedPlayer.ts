@@ -451,3 +451,19 @@ export function stopBed(): void {
         }
     }, 100);
 }
+
+/** Stop immediately when external Spotify audio takes over; no fade may leak under it. */
+export function resetBed(): void {
+    const audioRef = bedAudio;
+    if (!audioRef) return;
+
+    audioRef.pause();
+    audioRef.currentTime = 0;
+    audioRef.src = '';
+    disconnectBedAudioSource(audioRef);
+    if (bedAudio === audioRef) {
+        bedAudio = null;
+        currentBedUrl = null;
+    }
+    bedFadeTargetReached = false;
+}

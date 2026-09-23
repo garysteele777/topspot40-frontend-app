@@ -16,6 +16,7 @@ export type CarModeNarrationDependencies = {
     unlockBed: () => Promise<void>;
     startBed: (url: string) => Promise<void>;
     stopBed: () => void;
+    resetBed: () => void;
     playNarration: (
         url: string,
         fallbackUrl: string | undefined,
@@ -68,6 +69,16 @@ export function createCarModeNarration(
         dependencies.stopBed();
         dependencies.resetTiming();
         dependencies.setIsPlaying(false);
+        pausedPhase = null;
+    }
+
+    function finishForSpotifyHandoff(): void {
+        // Invalidate deferred bed startup before resetting it. Otherwise a
+        // delayed unlock/start promise can begin the bed beneath Spotify.
+        invalidate();
+        dependencies.stopNarration();
+        dependencies.resetBed();
+        dependencies.resetTiming();
         pausedPhase = null;
     }
 
@@ -171,5 +182,5 @@ export function createCarModeNarration(
         return true;
     }
 
-    return {start, pause, takePausedPhase, abandon};
+    return {start, pause, takePausedPhase, abandon, finishForSpotifyHandoff};
 }

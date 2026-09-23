@@ -76,6 +76,12 @@
         }
     };
 
+    const upNextCopy: Record<Language, (rank: number, count: number) => string> = {
+        en: (rank, count) => `Up next: #${rank} (${count})`,
+        es: (rank, count) => `Sigue: #${rank} (${count})`,
+        ptbr: (rank, count) => `A seguir: #${rank} (${count})`
+    };
+
     export let currentTrack: CarModeTrack | null = null;
     export let tracks: CarModeTrack[] = [];
     export let phase: PlaybackPhase | null = null;
@@ -108,14 +114,30 @@
     export let onReportNarration: ((mode: 'intro' | 'detail' | 'artist') => void) | undefined;
     export let openTrackList = false;
     export let onTrackListClosed: (() => void) | undefined;
+    export let requests: CarModeTrack[] = [];
+    export let onAddRequest: ((track: CarModeTrack) => void) | undefined = undefined;
+    export let onMoveRequest: ((index: number, direction: -1 | 1) => void) | undefined = undefined;
+    export let onRemoveRequest: ((index: number) => void) | undefined = undefined;
+    export let onClearRequests: (() => void) | undefined = undefined;
 
     let showTrackList = false;
+    let openRequestsView = false;
 
     $: if (openTrackList) showTrackList = true;
+    $: pendingRequests = requests.filter(request =>
+        request.rankingId != null && currentTrack?.rankingId != null
+            ? request.rankingId !== currentTrack.rankingId
+            : request.rank !== currentTrack?.rank
+    );
 
     function closeTrackList(): void {
         showTrackList = false;
         onTrackListClosed?.();
+    }
+
+    function openRequests(): void {
+        openRequestsView = true;
+        showTrackList = true;
     }
 
     $: transportCopy = driveInTransportCopy[language];
@@ -366,6 +388,12 @@
                 <span class="control-icon">☷</span>
                 <span>{narrationActionCopy[language].trackList}</span>
             </button>
+
+            {#if pendingRequests.length}
+                <button type="button" class="gold-control up-next-control" on:click={openRequests}>
+                    <span>{upNextCopy[language](pendingRequests[0].rank, pendingRequests.length)}</span>
+                </button>
+            {/if}
             {/if}
         </div>
 
@@ -428,6 +456,13 @@
             {printTitle}
             exportFileName={trackListExportName}
             {language}
+            {requests}
+            {onAddRequest}
+            {onMoveRequest}
+            {onRemoveRequest}
+            {onClearRequests}
+            openRequests={openRequestsView}
+            onRequestsViewOpened={() => (openRequestsView = false)}
     />
 {/if}
 
@@ -707,7 +742,7 @@
         top: 81%;
         width: 76%;
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(7, 1fr);
         gap: 2.7%;
     }
 
@@ -725,6 +760,16 @@
         margin-top: 0.25em;
         font-size: clamp(8px, 0.8vw, 14px);
         font-weight: 700;
+    }
+
+    .up-next-control {
+        min-width: 0;
+        border: 1px solid rgba(244, 197, 95, 0.72) !important;
+        border-radius: 999px !important;
+        background: rgba(62, 31, 10, 0.78) !important;
+        color: #ffe5a5 !important;
+        padding: 0.25em 0.45em !important;
+        align-self: center;
     }
 
     .control-icon {
