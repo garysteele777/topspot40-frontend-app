@@ -1,0 +1,1127 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>QA - 2020s-pop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f7f7f7;
+        }
+        h1 {
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            margin-bottom: 24px;
+            color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            vertical-align: top;
+        }
+        th {
+            background: #222;
+            color: white;
+            text-align: left;
+        }
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+        .qa-line {
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            white-space: nowrap;
+            line-height: 1.5;
+        }
+        
+        .qa-label {
+            display: inline-block;
+            width: 58px;
+        }
+        
+        .legend {
+            margin: 12px 0 16px;
+            font-size: 14px;
+            color: #444;
+        }
+        .summary {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .summary-card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 12px 16px;
+            min-width: 220px;
+        }
+        .summary-card h3 {
+            margin: 0 0 8px;
+        }
+        .summary-line {
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nostalgia QA</h1>
+    <div class="subtitle">2020s-pop — 2020s-pop</div>
+
+    <div class="legend">
+        T = Text &nbsp;&nbsp; A = Audio
+    </div>
+
+    
+    <div class="summary">
+        
+            <div class="summary-card">
+                <h3>English</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+            </div>
+        
+            <div class="summary-card">
+                <h3>Spanish</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+            </div>
+        
+            <div class="summary-card">
+                <h3>Portuguese</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 35/35
+                    A 35/35
+                </div>
+            
+            </div>
+        
+    </div>
+    
+
+    <div style="margin-bottom:12px;">
+        <label>
+            <input type="checkbox" id="showFailuresOnly">
+            Show Failures Only
+        </label>
+    </div>
+    
+<div style="margin-bottom:12px;">
+    <label>
+        Failure Language:
+        <select id="failureLanguage">
+            <option value="all">All</option>
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="Portuguese">Portuguese</option>
+        </select>
+    </label>
+</div>    
+    
+
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Track</th>
+                <th>Artist</th>
+                <th>Spotify ID</th>
+                <th>English</th>
+                <th>Spanish</th>
+                <th>Portuguese</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>1</td>
+            <td>blinding lights</td>
+            <td>the weeknd</td>
+            <td class="small">0VjIjW4GlUZAMYd2vXMi3b</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>2</td>
+            <td>levitating</td>
+            <td>dua lipa</td>
+            <td class="small">39LLxExYz6ewLAcYrzQQyP</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>3</td>
+            <td>drivers license</td>
+            <td>olivia rodrigo</td>
+            <td class="small">5wANPM4fQCJwkGd4rN57mH</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>4</td>
+            <td>good 4 u</td>
+            <td>olivia rodrigo</td>
+            <td class="small">4ZtFanR9U6ndgddUvNcjcG</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>5</td>
+            <td>save your tears</td>
+            <td>the weeknd</td>
+            <td class="small">5QO79kh1waicV47BqGRL3g</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>13</td>
+            <td>dont start now</td>
+            <td>dua lipa</td>
+            <td class="small">3PfIrDoz19wz7qK7tYeu62</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>14</td>
+            <td>someone you loved</td>
+            <td>lewis capaldi</td>
+            <td class="small">7qEHsqek33rTcFNT9PFqLf</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>15</td>
+            <td>circles</td>
+            <td>post malone</td>
+            <td class="small">21jGcNKet2qwijlDFuPiPb</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>16</td>
+            <td>dynamite</td>
+            <td>bts</td>
+            <td class="small">5QDLhrAOJJdNAmCTJ8xMyW</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>17</td>
+            <td>positions</td>
+            <td>ariana grande</td>
+            <td class="small">35mvY5S1H3J2QZyna3TFe0</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>18</td>
+            <td>3435</td>
+            <td>ariana grande</td>
+            <td class="small">5jcdyQe1BRO65G8ZvbsDMI</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>19</td>
+            <td>Mood</td>
+            <td>24kgoldn</td>
+            <td class="small">4jPy3l0RUwlUI9T5XHBW2m</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>20</td>
+            <td>goosebumps</td>
+            <td>travis scott</td>
+            <td class="small">6gBFPUFcJLzWGx4lenP6h2</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>21</td>
+            <td>watermelon sugar</td>
+            <td>harry styles</td>
+            <td class="small">6UelLqGlWMcVH1E5c4H7lY</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>22</td>
+            <td>adore you</td>
+            <td>harry styles</td>
+            <td class="small">3jjujdWJ72nww5eGnfs2E7</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>23</td>
+            <td>rockstar</td>
+            <td>dababy</td>
+            <td class="small">7ytR5pFWmSjzHJIeQkgog4</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>24</td>
+            <td>intentions</td>
+            <td>justin bieber</td>
+            <td class="small">4umIPjkehX1r7uhmGvXiSV</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>25</td>
+            <td>laugh now cry later</td>
+            <td>drake</td>
+            <td class="small">2SAqBLGA283SUiwJ3xOUVI</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>26</td>
+            <td>whats next</td>
+            <td>drake</td>
+            <td class="small">3aQem4jVGdhtg116TmJnHz</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>27</td>
+            <td>holy</td>
+            <td>justin bieber</td>
+            <td class="small">5u1n1kITHCxxp8twBcZxWy</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>29</td>
+            <td>butter</td>
+            <td>bts</td>
+            <td class="small">1mWdTewIgB3gtBM3TOSFhB</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>30</td>
+            <td>permission to dance</td>
+            <td>bts</td>
+            <td class="small">4UAnQaQTSMjKjHkqjKwEYx</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>31</td>
+            <td>shivers</td>
+            <td>ed sheeran</td>
+            <td class="small">50nfwKoDiSYg8zOCREWAm5</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>32</td>
+            <td>easy on me</td>
+            <td>adele</td>
+            <td class="small">0gplL1WMoJ6iYaPgMCL0gX</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>33</td>
+            <td>happier than ever</td>
+            <td>billie eilish</td>
+            <td class="small">4RVwu0g32PAqgUiJoXsdF8</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>34</td>
+            <td>my universe</td>
+            <td>coldplay</td>
+            <td class="small">46HNZY1i7O6jwTA7Slo2PI</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>35</td>
+            <td>cold heart pnau remix</td>
+            <td>elton john</td>
+            <td class="small">7rglLriMNBPAyuJOMGwi39</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>36</td>
+            <td>essence</td>
+            <td>wizkid</td>
+            <td class="small">5FG7Tl93LdH117jEKYl3Cm</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>37</td>
+            <td>montero call me by your name</td>
+            <td>lil nas x</td>
+            <td class="small">1SC5rEoYDGUK4NfG82494W</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>38</td>
+            <td>peaches</td>
+            <td>justin bieber</td>
+            <td class="small">4iJyoBOLtHqaGxP12qzhQI</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>39</td>
+            <td>kiss me more</td>
+            <td>doja cat</td>
+            <td class="small">3DarAbFujv6eYNliUTyqtz</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>40</td>
+            <td>industry baby</td>
+            <td>lil nas x</td>
+            <td class="small">5Z9KJZvQzH6PFmb8SNkxuk</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>41</td>
+            <td>stay</td>
+            <td>the kid laroi</td>
+            <td class="small">567e29TDzLwZwfDuEpGTwo</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>42</td>
+            <td>bad habits</td>
+            <td>ed sheeran</td>
+            <td class="small">3rmo8F54jFF8OgYsqTxm5d</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>43</td>
+            <td>heat waves</td>
+            <td>glass animals</td>
+            <td class="small">3USxtqRwSYz57Ewm6wWRMp</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        </tbody>
+    </table>
+
+<script>
+function applyFilters() {
+    const failuresOnly =
+        document.getElementById('showFailuresOnly').checked;
+
+    const failureLanguage =
+        document.getElementById('failureLanguage').value;
+
+    document.querySelectorAll('tr.qa-row').forEach(row => {
+        const isFailure =
+            row.getAttribute('data-failure') === 'true';
+
+        const failureLanguages =
+            row.getAttribute('data-failure-languages') || '';
+
+        const matchesFailure =
+            !failuresOnly || isFailure;
+
+        const matchesLanguage =
+            failureLanguage === 'all'
+            || failureLanguages.includes(failureLanguage);
+
+        row.style.display =
+            matchesFailure && matchesLanguage ? '' : 'none';
+    });
+}
+
+document.getElementById('showFailuresOnly')
+    .addEventListener('change', applyFilters);
+
+document.getElementById('failureLanguage')
+    .addEventListener('change', applyFilters);
+</script>
+
+</body>
+</html>

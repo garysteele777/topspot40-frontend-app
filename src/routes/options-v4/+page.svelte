@@ -2,25 +2,29 @@
     /* eslint-disable svelte/no-navigation-without-resolve */
 
     import {onMount} from 'svelte';
-    import {browser} from '$app/environment';
+    import {page} from '$app/state';
+    import {browser, dev} from '$app/environment';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
     import {buildSelectionFromResume} from '$lib/options/applyResume';
     import {saveResumeFromLocal} from '$lib/options/saveResumeFromLocal';
+    import {loadResumeState} from '$lib/utils/smartResume';
     import {get} from 'svelte/store';
     import {
         programHistoryStore
     } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
 
+
     // ─────────────────────────────────────────────
     // UI Components
     // ─────────────────────────────────────────────
-    import HeroHeader from '$lib/components/options/HeroHeader.svelte';
+    import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import ListeningLibraryPanel from '$lib/components/options-v2/ListeningLibraryPanel.svelte';
-    import MusicJourneyPanel from '$lib/components/options-v2/MusicJourneyPanel.svelte';
-    import PlaybackPreferencesPanel from '$lib/components/options-v2/PlaybackPreferencesPanel.svelte';
-
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
+    import {
+        readStoredLanguagePreference,
+        writeLanguagePreference
+    } from '$lib/languagePreferences';
     // ─────────────────────────────────────────────
     // Types
     // ─────────────────────────────────────────────
@@ -41,17 +45,39 @@
     let activeGroup: ModeType = 'decade_genre';
     let language: Language = 'en';
     let languages: Language[] = ['en'];
+    const requestedLibraryTab = page.url.searchParams.get('tab');
+    const requestedDocuseriesCollection = page.url.searchParams.get('docuseries_collection');
+    let initialLibraryTab: 'nostalgia' | 'collections' | 'artists' | 'docuseries' =
+        requestedLibraryTab === 'artist'
+            ? 'artists'
+            : requestedLibraryTab === 'docuseries' ||
+                (requestedLibraryTab === 'collections' && requestedDocuseriesCollection)
+                    ? 'docuseries'
+                    : requestedLibraryTab === 'collections'
+                        ? 'collections'
+                        : 'nostalgia';
+
+    let initialDocuseriesCollection = requestedDocuseriesCollection;
 
     let startRank = 1;
     let endRank = 9999;
 
-    let playbackOrder: PlaybackOrder = 'shuffle';
+    const initialPlaybackSettings = get(playbackSettingsStore);
 
-    let pauseMode: 'pause' | 'continuous' = 'continuous';
+    let playbackMethod: 'automatic' | 'guided' =
+        dev ? initialPlaybackSettings.playbackMethod : 'guided';
+    let playbackOrder: PlaybackOrder =
+        initialPlaybackSettings.playbackOrder;
 
-    let skipPlayed = true;
+    let pauseMode: 'pause' | 'continuous' =
+        initialPlaybackSettings.pauseMode;
 
-    let selectedVoices: VoicePart[] = ['intro', 'detail'];
+    let skipPlayed = initialPlaybackSettings.skipPlayed;
+
+    let selectedVoices: VoicePart[] = [
+        ...initialPlaybackSettings.voices
+    ];
+    let detailLength = initialPlaybackSettings.detailLength;
 
 
     let decades: string[] = [];
@@ -94,6 +120,72 @@
         latin: '💃',
         latin_global: '💃',
         tv_themes: '📺',
+    };
+
+    const uiText = {
+        en: {
+            home: 'Home',
+            title: 'TopSpot40 Control Center',
+            tagline: 'Your music. 🕰️ Your memories. 📻 Your station.',
+            playback: 'TopSpot40 Playback Preferences',
+            radio: 'TopSpot40 Interactive Radio',
+            radioDesc: 'Build custom nostalgia radio stations.',
+            radioHelp: 'Nostalgia mixes sets by decades and genres. Collections plays themed playlists. Artist Spotlight mixes sets by artists.',
+            nostalgiaRadio: 'Nostalgia Radio',
+            collectionsRadio: 'Collections Radio',
+            artistRadio: 'Artist Spotlight Radio',
+            artistRadioDesc: 'Artist Spotlight Radio will rotate featured artists and play short artist-focused sets.',
+            stations: 'Stations',
+            startAllGenres: 'Start All Genres: 1950s to the Present',
+            startAllCollections: 'Start All Collections',
+            startAllArtists: 'Start All Artist Genres',
+            library: 'TopSpot40 Listening Library',
+            libraryDesc: 'Browse saved programs and curated collections.',
+            journey: 'My TopSpot40 Music Journey',
+            journeyDesc: 'Track your music journey and favorite discoveries.'
+        },
+        es: {
+            home: 'Inicio',
+            title: 'Panel de Control TopSpot40',
+            tagline: 'Tu música. 🕰️ Tus recuerdos. 📻 Tu estación.',
+            playback: 'Preferencias de Reproducción TopSpot40',
+            radio: 'Radio Interactiva TopSpot40',
+            radioDesc: 'Cree estaciones de radio nostálgicas personalizadas.',
+            radioHelp: 'Nostalgia mezcla décadas y géneros. Colecciones reproduce listas temáticas. Destacados de Artistas mezcla selecciones por artista.',
+            nostalgiaRadio: 'Radio Nostalgia',
+            collectionsRadio: 'Radio de Colecciones',
+            artistRadio: 'Radio Destacados de Artistas',
+            artistRadioDesc: 'Radio Destacados de Artistas rotará artistas destacados y reproducirá conjuntos cortos centrados en cada artista.',
+            stations: 'Estaciones',
+            startAllGenres: 'Iniciar todos los géneros: 1950s hasta hoy',
+            startAllCollections: 'Iniciar todas las colecciones',
+            startAllArtists: 'Iniciar todos los géneros de artistas',
+            library: 'Biblioteca Musical TopSpot40',
+            libraryDesc: 'Explora programas guardados y colecciones seleccionadas.',
+            journey: 'Mi Viaje Musical TopSpot40',
+            journeyDesc: 'Sigue tu recorrido musical y tus descubrimientos favoritos.'
+        },
+        ptbr: {
+            home: 'Início',
+            title: 'Painel de Controle TopSpot40',
+            tagline: 'Sua música. 🕰️ Suas memórias. 📻 Sua estação.',
+            playback: 'Preferências de Reprodução TopSpot40',
+            radio: 'Rádio Interativa TopSpot40',
+            radioDesc: 'Crie estações de rádio nostálgicas personalizadas.',
+            radioHelp: 'Nostalgia mistura décadas e gêneros. Coleções reproduz playlists temáticas. Destaque de Artistas mistura seleções por artista.',
+            nostalgiaRadio: 'Rádio Nostalgia',
+            collectionsRadio: 'Rádio de Coleções',
+            artistRadio: 'Rádio Destaque de Artistas',
+            artistRadioDesc: 'A Rádio Destaque de Artistas alternará artistas em destaque e reproduzirá conjuntos curtos focados em cada artista.',
+            stations: 'Estações',
+            startAllGenres: 'Iniciar todos os gêneros: dos anos 1950 até hoje',
+            startAllCollections: 'Iniciar todas as coleções',
+            startAllArtists: 'Iniciar todos os gêneros de artistas',
+            library: 'Biblioteca Musical TopSpot40',
+            libraryDesc: 'Explore programas salvos e coleções selecionadas.',
+            journey: 'Minha Jornada Musical TopSpot40',
+            journeyDesc: 'Acompanhe sua jornada musical e descobertas favoritas.'
+        }
     };
 
 
@@ -324,12 +416,56 @@
     // Mount: load resume → catalog → apply
     // ─────────────────────────────────────────────
     onMount(async () => {
-        pendingSelection = null;
+        pendingSelection = buildSelectionFromResume(
+            loadResumeState()
+        );
+
+        const savedLanguage = readStoredLanguagePreference();
+
+        const panel = page.url.searchParams.get('panel');
+        const tab = page.url.searchParams.get('tab');
+
+        console.log('panel=', panel);
+        console.log('tab=', tab);
+
+        const optionsVisitedKey =
+            'ts-options-v4-visited-v1';
+        const isFirstControlPanelVisit =
+            sessionStorage.getItem(optionsVisitedKey) !== 'true';
+
+        sessionStorage.setItem(optionsVisitedKey, 'true');
+
+        if (!panel && isFirstControlPanelVisit) {
+            openSection = 'library';
+        }
+
+        if (panel === 'library') {
+            openSection = 'library';
+        } else if (panel === 'journey') {
+            openSection = 'journey';
+        } else if (panel === 'preferences') {
+            openSection = 'preferences';
+        }
+
+        if (tab === 'artist') {
+            initialLibraryTab = 'artists';
+        } else if (tab === 'collections') {
+            if (page.url.searchParams.get('docuseries_collection')) {
+                initialLibraryTab = 'docuseries';
+                initialDocuseriesCollection = page.url.searchParams.get('docuseries_collection');
+            } else {
+                initialLibraryTab = 'collections';
+            }
+        } else if (tab === 'docuseries') {
+            initialLibraryTab = 'docuseries';
+            initialDocuseriesCollection =
+                page.url.searchParams.get('docuseries_collection');
+        }
+
         if (history.state?.topspotProgramCodeReturnFocus === true) {
             openSection = 'library';
             radioMode = null;
         }
-        // pendingSelection = buildSelectionFromResume(loadResumeState());
 
         try {
 
@@ -347,6 +483,11 @@
                 pendingSelection = null;
             }
 
+            if (savedLanguage) {
+                language = savedLanguage;
+                languages = [savedLanguage];
+            }
+
             hydrated = true;
         } catch {
             console.error('❌ Error loading catalog.');
@@ -357,6 +498,9 @@
     // Auto-save (guarded)
     // ─────────────────────────────────────────────
     $: if (browser && hydrated) {
+        // Keep landing-page and playback language synchronized.
+        writeLanguagePreference(language);
+
         // console.log('OPTIONS AUTOSAVE languages:', languages);
         saveResumeFromLocal({
             activeGroup,
@@ -388,10 +532,12 @@
     $: if (browser && hydrated) {
         playbackSettingsStore.set({
             voices: selectedVoices,
+            playbackMethod: dev ? playbackMethod : 'guided',
             playbackOrder,
             pauseMode,
             voicePlayMode: 'before',
-            skipPlayed
+            skipPlayed,
+            detailLength
         });
     }
 
@@ -399,182 +545,36 @@
 </script>
 
 
-{#if import.meta.env.DEV}
-    <div style="position:fixed;top:4px;right:6px;font-size:11px;opacity:.5">
-        ROUTE: /options-v4
-    </div>
-{/if}
+
 
 <div class="page-shell">
-    <HeroHeader/>
+    <PublicJourneyHeader {language}/>
 
     <div class="page">
 
         <div class="page-hero">
-            <h1 class="page-title">
-                🎙️ TopSpot40 Control Center
-            </h1>
-
-            <div class="page-subtitle">
-                🎵 Your music. 🕰️ Your memories. 📻 Your station.
-            </div>
-        </div>
-
-        <div class:active-section-wrapper={openSection === 'preferences'}>
-
-            <PlaybackPreferencesPanel
-                    bind:language
-                    bind:languages
-                    bind:selectedVoices
-                    bind:playbackOrder
-                    bind:pauseMode
-                    bind:skipPlayed
-                    collapsed={openSection !== 'preferences'}
-                    onActivate={() => {
-        openSection = openSection === 'preferences' ? null : 'preferences';
-        radioMode = null;
-    }}
-            />
-        </div>
-
-        <!-- 🔥 RADIO (NEW) -->
-        <div
-                class="opt-cell opt-cell--radio"
-                class:active-section-wrapper={openSection === 'radio'}
-        >
-            <div
-                    class="section-header-row section-header-clickable"
-                    role="button"
-                    tabindex="0"
-                    on:click={() => {
-                openSection = openSection === 'radio' ? null : 'radio';
-            }}
-                    on:keydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openSection = openSection === 'radio' ? null : 'radio';
-                }
-            }}
-            >
-                <h3 class="section-title">📻🐕 TopSpot40 Interactive Radio 📻🐕</h3>
-                <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
-            </div>
-
-            <div class="radio-description">
-                Build custom nostalgia radio stations.
-            </div>
-
-            {#if openSection === 'radio'}
-                <div class="radio-description">
-                    Nostalgia mixes sets by decades and genres. Collections plays themed playlists. Artists Spotlight
-                    mixes sets by artists.
-                </div>
-
-                <div class="radio-buttons">
-                    <button
-                            class:active={radioMode === 'nostalgia'}
-                            on:click|stopPropagation={() => startRadio('nostalgia')}
-                    >
-                        Nostalgia Radio
-                    </button>
-
-                    <button
-                            class:active={radioMode === 'collections'}
-                            on:click|stopPropagation={() => startRadio('collections')}
-                    >
-                        Collections Radio
-                    </button>
-
-                    <button
-                            class:active={radioMode === 'artist_spotlight'}
-                            on:click|stopPropagation={() => startRadio('artist_spotlight')}
-                    >
-                        Artist Spotlight Radio
-                    </button>
-                </div>
-
-                <div class="radio-separator">
-                    <span>Stations</span>
-                </div>
-
-                {#if radioMode === 'nostalgia'}
-                    <div style="margin-top: 10px;">
-                        <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
-                            <span class="icon">📻</span>
-                            <span>Start All Genres: 1950s to the Present</span>
-                        </button>
-                    </div>
-
-                    <div class="radio-genres">
-                        {#each genreOptions as g}
-                            <button
-                                    class="genre-btn"
-                                    class:selected={selectedGenre === g.id}
-                                    on:click|stopPropagation={() => {
-                                launchNostalgiaGenre(g.id);
-                            }}
-                            >
-                                <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
-                                <span>{g.label}</span>
-                            </button>
-                        {/each}
-                    </div>
-                {/if}
-
-                {#if radioMode === 'collections'}
-                    <div style="margin-top: 10px;">
-                        <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
-                            <span class="icon">📻</span>
-                            <span>Start All Collections</span>
-                        </button>
-                    </div>
-
-                    <div class="radio-genres">
-                        {#each collectionGroups as group}
-                            <button
-                                    class="genre-btn"
-                                    on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
-                            >
-                                <span class="icon">📀</span>
-                                <span>{group.name}</span>
-                            </button>
-                        {/each}
-                    </div>
-                {/if}
-            {/if}
-        </div>
-
-        {#if radioMode === 'artist_spotlight'}
-            <div class="radio-description" style="margin-top: 10px;">
-                Artist Spotlight Radio will rotate featured artists and play short artist-focused sets.
-            </div>
-
-            <div class="radio-genres">
-
+            <div class="page-header">
                 <button
-                        class="start-all-btn artist-start-all-btn"
-                        on:click|stopPropagation={() => launchArtistSpotlightRadioGenre('ALL')}
+                        class="home-button"
+                        on:click={() => goto('/')}
                 >
-                    <span class="icon">🎤</span>
-                    <span>Start All Artist Genres</span>
+                    🏠 {uiText[language].home}
                 </button>
 
-                {#each genreOptions.filter(g => g.id !== 'tv_themes') as g}
-                    <button
-                            class="genre-btn"
-                            on:click|stopPropagation={() => {
-                        launchArtistSpotlightRadioGenre(g.id);
-                    }}
-                    >
-                        <span class="icon">{genreIcons[g.id] ?? '🎤'}</span>
-                        <span>{g.label}</span>
-                    </button>
-                {/each}
+                <h1 class="page-title">
+                    🎙️ {uiText[language].title}
+                </h1>
             </div>
-        {/if}
 
+            <div class="page-subtitle">
+                🎵 {uiText[language].tagline}
+            </div>
+        </div>
 
-        <div class:active-section-wrapper={openSection === 'library'}>
+        <div
+                id="listening-library"
+                class:active-section-wrapper={openSection === 'library'}
+        >
             <ListeningLibraryPanel
                     {decadeOptions}
                     {genreOptions}
@@ -586,31 +586,158 @@
                     voicePlayMode="before"
                     {pauseMode}
                     {skipPlayed}
+                    initialTab={initialLibraryTab}
+                    {initialDocuseriesCollection}
+                    title={uiText[language].library}
+                    description={uiText[language].libraryDesc}
                     collapsed={openSection !== 'library'}
                     onActivate={() => {
-                        openSection = openSection === 'library'
-                            ? null
-                            : 'library';
+        openSection = openSection === 'library'
+            ? null
+            : 'library';
 
-                        radioMode = null;
-                    }}
+        radioMode = null;
+    }}
             />
         </div>
 
-        <div class:active-section-wrapper={openSection === 'journey'}>
-            <MusicJourneyPanel
-                    {collectionGroups}
-                    collapsed={openSection !== 'journey'}
-                    onActivate={() => {
-                        openSection = openSection === 'journey' ? null : 'journey';
-                        radioMode = null;
+        {#if dev}
+            <!-- 🔥 RADIO (NEW) -->
+            <div
+                    class="opt-cell opt-cell--radio"
+                    class:active-section-wrapper={openSection === 'radio'}
+            >
+                <div
+                        class="section-header-row section-header-clickable"
+                        role="button"
+                        tabindex="0"
+                        on:click={() => {
+                openSection = openSection === 'radio' ? null : 'radio';
+            }}
+                        on:keydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openSection = openSection === 'radio' ? null : 'radio';
+                }
+            }}
+                >
+                    <h3 class="section-title">
+                        📻🐕 {uiText[language].radio} 📻🐕
+                    </h3>
+                    <span class="section-toggle">{openSection === 'radio' ? '▲' : '▼'}</span>
+                </div>
+
+                <div class="radio-description">
+                    {uiText[language].radioDesc}
+                </div>
+
+                {#if openSection === 'radio'}
+                    <div class="radio-description">
+                        {uiText[language].radioHelp}
+                    </div>
+
+                    <div class="radio-buttons">
+                        <button
+                                class:active={radioMode === 'nostalgia'}
+                                on:click|stopPropagation={() => startRadio('nostalgia')}
+                        >
+                            {uiText[language].nostalgiaRadio}
+                        </button>
+
+                        <button
+                                class:active={radioMode === 'collections'}
+                                on:click|stopPropagation={() => startRadio('collections')}
+                        >
+                            {uiText[language].collectionsRadio}
+                        </button>
+
+                        <button
+                                class:active={radioMode === 'artist_spotlight'}
+                                on:click|stopPropagation={() => startRadio('artist_spotlight')}
+                        >
+                            {uiText[language].artistRadio}
+                        </button>
+                    </div>
+
+                    <span>{uiText[language].stations}</span>
+
+                    {#if radioMode === 'nostalgia'}
+                        <div style="margin-top: 10px;">
+                            <button class="start-all-btn" on:click|stopPropagation={launchNostalgiaAll}>
+                                <span class="icon">📻</span>
+                                <span>{uiText[language].startAllGenres}</span>
+                            </button>
+                        </div>
+
+                        <div class="radio-genres">
+                            {#each genreOptions as g}
+                                <button
+                                        class="genre-btn"
+                                        class:selected={selectedGenre === g.id}
+                                        on:click|stopPropagation={() => {
+                                launchNostalgiaGenre(g.id);
+                            }}
+                                >
+                                    <span class="icon">{genreIcons[g.id] ?? '🎶'}</span>
+                                    <span>{g.label}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    {/if}
+
+                    {#if radioMode === 'collections'}
+                        <div style="margin-top: 10px;">
+                            <button class="start-all-btn" on:click|stopPropagation={launchCollectionsAll}>
+                                <span class="icon">📻</span>
+                                <span>{uiText[language].startAllCollections}</span>
+                            </button>
+                        </div>
+
+                        <div class="radio-genres">
+                            {#each collectionGroups as group}
+                                <button
+                                        class="genre-btn"
+                                        on:click|stopPropagation={() => launchCollectionGroup(group.slug)}
+                                >
+                                    <span class="icon">📀</span>
+                                    <span>{group.name}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    {/if}
+                {/if}
+            </div>
+
+            {#if radioMode === 'artist_spotlight'}
+                <div class="radio-description" style="margin-top: 10px;">
+                    {uiText[language].artistRadioDesc}
+                </div>
+
+                <div class="radio-genres">
+
+                    <button
+                            class="start-all-btn artist-start-all-btn"
+                            on:click|stopPropagation={() => launchArtistSpotlightRadioGenre('ALL')}
+                    >
+                        <span class="icon">🎤</span>
+                        <span>{uiText[language].startAllArtists}</span>
+                    </button>
+
+                    {#each genreOptions.filter(g => g.id !== 'tv_themes') as g}
+                        <button
+                                class="genre-btn"
+                                on:click|stopPropagation={() => {
+                        launchArtistSpotlightRadioGenre(g.id);
                     }}
-            />
-        </div>
+                        >
+                            <span class="icon">{genreIcons[g.id] ?? '🎤'}</span>
+                            <span>{g.label}</span>
+                        </button>
+                    {/each}
+                </div>
+            {/if}
+        {/if}
 
-
-        <!-- ✅ Playback History now at top -->
-        <!--        <PlaybackHistoryPanel {language} {languages}/>-->
 
     </div>
 </div>
@@ -804,28 +931,6 @@
         font-weight: 700;
     }
 
-    .radio-separator {
-        display: flex;
-        align-items: center;
-        margin: 10px 0 12px;
-        opacity: 0.9;
-    }
-
-    .radio-separator::before,
-    .radio-separator::after {
-        content: '';
-        flex: 1;
-        border-top: 1px dashed rgba(207, 184, 124, 0.35);
-    }
-
-    .radio-separator span {
-        padding: 0 8px;
-        font-size: 0.7rem;
-        color: rgba(207, 184, 124, 0.7);
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-    }
-
     .section-header-row {
         display: flex;
         align-items: center;
@@ -870,6 +975,28 @@
         font-size: 0.95rem;
         color: #aaa;
         letter-spacing: 0.01em;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .home-button {
+        background: transparent;
+        border: 1px solid #d6c17a;
+        color: #d6c17a;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .home-button:hover {
+        background: rgba(214, 193, 122, 0.15);
     }
 
 </style>

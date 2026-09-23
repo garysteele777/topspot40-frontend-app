@@ -1,0 +1,1377 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>QA - Video Game Themes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f7f7f7;
+        }
+        h1 {
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            margin-bottom: 24px;
+            color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            vertical-align: top;
+        }
+        th {
+            background: #222;
+            color: white;
+            text-align: left;
+        }
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+        .qa-line {
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            white-space: nowrap;
+            line-height: 1.5;
+        }
+        
+        .qa-label {
+            display: inline-block;
+            width: 58px;
+        }
+        
+        .legend {
+            margin: 12px 0 16px;
+            font-size: 14px;
+            color: #444;
+        }
+        .summary {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .summary-card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 12px 16px;
+            min-width: 220px;
+        }
+        .summary-card h3 {
+            margin: 0 0 8px;
+        }
+        .summary-line {
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Collection QA</h1>
+    <div class="subtitle">Video Game Themes — video_game_themes</div>
+
+    <div class="legend">
+        T = Text &nbsp;&nbsp; A = Audio
+    </div>
+
+    
+    <div class="summary">
+        
+            <div class="summary-card">
+                <h3>English</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+            </div>
+        
+            <div class="summary-card">
+                <h3>Spanish</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+            </div>
+        
+            <div class="summary-card">
+                <h3>Portuguese</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 45/45
+                    A 45/45
+                </div>
+            
+            </div>
+        
+    </div>
+    
+
+    <div style="margin-bottom:12px;">
+        <label>
+            <input type="checkbox" id="showFailuresOnly">
+            Show Failures Only
+        </label>
+    </div>
+    
+<div style="margin-bottom:12px;">
+    <label>
+        Failure Language:
+        <select id="failureLanguage">
+            <option value="all">All</option>
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="Portuguese">Portuguese</option>
+        </select>
+    </label>
+</div>    
+    
+
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Track</th>
+                <th>Artist</th>
+                <th>Spotify ID</th>
+                <th>English</th>
+                <th>Spanish</th>
+                <th>Portuguese</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>1</td>
+            <td>Super Mario Galaxy - Gusty Garden Galaxy</td>
+            <td>Koji Kondo</td>
+            <td class="small">05XPxcgHp4I4CFlOhMnskS</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>2</td>
+            <td>The Legend of Zelda: Ocarina of Time - Gerudo Valley</td>
+            <td>Koji Kondo</td>
+            <td class="small">6vdcizPLYIZhZOZZJUsAtS</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>3</td>
+            <td>Final Fantasy VII - One-Winged Angel</td>
+            <td>Nobuo Uematsu</td>
+            <td class="small">7GBP9vqKB9o9wcQrkblICD</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>4</td>
+            <td>Chrono Trigger - Frog&#x27;s Theme</td>
+            <td>Yasunori Mitsuda</td>
+            <td class="small">23SMorBnOftlg1jvMjA4FW</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>5</td>
+            <td>Pokémon Gold/Silver - Battle! Wild Pokémon</td>
+            <td>Junichi Masuda</td>
+            <td class="small">1WJxWrkvhvTHwWkpoe5h7h</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>6</td>
+            <td>The Elder Scrolls V: Skyrim - Dragonborn</td>
+            <td>Jeremy Soule</td>
+            <td class="small">2gaZJDgE71VL9PzzUUlpMg</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>7</td>
+            <td>Halo: Combat Evolved - Main Theme</td>
+            <td>Martin O&#x27;Donnell</td>
+            <td class="small">6DhcuZbi4FW28RLicWNmmx</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>8</td>
+            <td>Street Fighter II - Guile&#x27;s Theme</td>
+            <td>Yoko Shimomura</td>
+            <td class="small">43tsUfeC8G0J4md5489qFR</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>9</td>
+            <td>Castlevania - Vampire Killer</td>
+            <td>Kinuyo Yamashita</td>
+            <td class="small">1s84IbotZuiXBLgdu7NZMn</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>10</td>
+            <td>Mega Man 2 - Dr. Wily&#x27;s Castle</td>
+            <td>Takashi Tateishi</td>
+            <td class="small">073kb10WSVFoyyHZ4s1EnG</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>11</td>
+            <td>Donkey Kong Country - Aquatic Ambiance</td>
+            <td>David Wise</td>
+            <td class="small">4PnqMtmOmvOdkPL6XKV6kD</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>12</td>
+            <td>EarthBound - Smiles and Tears</td>
+            <td>Hirokazu Tanaka</td>
+            <td class="small">5esEbMt6LHtiha7cqsGdO7</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>13</td>
+            <td>Undertale - Megalovania</td>
+            <td>Toby Fox</td>
+            <td class="small">1J03Vp93ybKIxfzYI4YJtL</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>14</td>
+            <td>Dark Souls - Gwyn, Lord of Cinder</td>
+            <td>Motoi Sakuraba</td>
+            <td class="small">0g9LJzvd7Lu6qUlXIhTXsI</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>15</td>
+            <td>Bloodborne - Ludwig, the Holy Blade</td>
+            <td>Yuka Kitamura</td>
+            <td class="small">2mJimgkwwWQPKZQh4XrqT1</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>16</td>
+            <td>Kingdom Hearts - Dearly Beloved</td>
+            <td>Yoko Shimomura</td>
+            <td class="small">6Tkn4gwyqVcpU0ecgtU3bw</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>17</td>
+            <td>Animal Crossing: New Horizons - Main Theme</td>
+            <td>Kazumi Totaka</td>
+            <td class="small">1Zy9BrWcns5QVgXAuJWTJI</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>18</td>
+            <td>Splatoon 2 - Calamari Inkantation</td>
+            <td>Toru Minegishi</td>
+            <td class="small">3wjAWuLsf815CPt5ROfrpj</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>19</td>
+            <td>Fire Emblem: Three Houses - Edge of Dawn</td>
+            <td>Takeru Kanazaki</td>
+            <td class="small">2xzfzSUFtEOcHj4Gme0guk</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>20</td>
+            <td>Xenoblade Chronicles - Gaur Plain</td>
+            <td>Yoko Shimomura</td>
+            <td class="small">4gAggUJKL26EuWnXQdwQ2B</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>21</td>
+            <td>Dragon Quest XI - Overture</td>
+            <td>Koichi Sugiyama</td>
+            <td class="small">07vOIvpcKMXQSEsp9fQU9g</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>22</td>
+            <td>Okami - The Sun Rises</td>
+            <td>Hiroshi Yamaguchi</td>
+            <td class="small">2TFFRyPHLMp9b5d6SPBHRG</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>23</td>
+            <td>Shadow of the Colossus - The Opened Way</td>
+            <td>Kow Otani</td>
+            <td class="small">6YJa3jCV3UMS5STUzPplVg</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>24</td>
+            <td>Ico - You Were There</td>
+            <td>Michiru Oshima</td>
+            <td class="small">0ZsMCUijUwA6Hvv7tAwKJh</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>25</td>
+            <td>Katamari Damacy - Lonely Rolling Star</td>
+            <td>Yu Miyake</td>
+            <td class="small">30AqrdA0UJlmjOG8F7tvDd</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>26</td>
+            <td>Persona 5 - Rivers in the Desert</td>
+            <td>Shoji Meguro</td>
+            <td class="small">6rgIKCKKCnhyaNTgmY73tq</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>27</td>
+            <td>NieR: Automata - Weight of the World</td>
+            <td>Keiichi Okabe</td>
+            <td class="small">0W2mNz2vHyPE9xwqYLQPg6</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>28</td>
+            <td>NieR - Song of the Ancients</td>
+            <td>Keiichi Okabe</td>
+            <td class="small">0rSc1NL89ymNt2Og5T5vzg</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>29</td>
+            <td>Drakengard - Growing Wings</td>
+            <td>Nobuyoshi Sano</td>
+            <td class="small">0gkGOeHzsV7GkREYQIk3L4</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>30</td>
+            <td>Yakuza 0 - Baka Mitai</td>
+            <td>Mitsuharu Fukuyama</td>
+            <td class="small">4xXu9UO2qdBotUOfqru2UC</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>31</td>
+            <td>Metal Gear Solid - Main Theme</td>
+            <td>Harry Gregson-Williams</td>
+            <td class="small">4cgGUNjhlYYXKRjFX8M0DN</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>32</td>
+            <td>Resident Evil 2 - Save Room Theme</td>
+            <td>Masami Ueda</td>
+            <td class="small">22ouqMLw2VI29evuARj02j</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>33</td>
+            <td>Silent Hill 2 - Theme of Laura</td>
+            <td>Akira Yamaoka</td>
+            <td class="small">1gWL1q8vipVkWgwPWDsbWL</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>34</td>
+            <td>Dead Cells - Clock Tower</td>
+            <td>Yoann Laulan</td>
+            <td class="small">7uwNw2usjTVUncTY4gfILt</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>35</td>
+            <td>Hollow Knight - Greenpath</td>
+            <td>Christopher Larkin</td>
+            <td class="small">6fyI2QGPzUiqRHnuYD7oOp</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>36</td>
+            <td>Celeste - First Steps</td>
+            <td>Lena Raine</td>
+            <td class="small">5Yu2bToHMaZMqI1BNXZ9oV</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>37</td>
+            <td>Shovel Knight - Strike the Earth!</td>
+            <td>Jake Kaufman</td>
+            <td class="small">33SGhp4QaGuTrFlsMPoPkn</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>38</td>
+            <td>Cuphead - Floral Fury</td>
+            <td>Kristofer Maddigan</td>
+            <td class="small">3zD0YE28NZ9qTHvfVl6imU</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>39</td>
+            <td>Banjo-Kazooie - Spiral Mountain</td>
+            <td>Grant Kirkhope</td>
+            <td class="small">0mD6uTdPSQZZxuqVeFNLAt</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>40</td>
+            <td>GoldenEye 007 - Main Theme</td>
+            <td>Graeme Norgate</td>
+            <td class="small">6RcNQhWPRAuxE1KlfB4FAK</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>41</td>
+            <td>Perfect Dark - Institute Menu</td>
+            <td>Grant Kirkhope</td>
+            <td class="small">1z9rhrEEiCrn1x21H6H7fy</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>42</td>
+            <td>Conker&#x27;s Bad Fur Day - Windy &amp; Co.</td>
+            <td>Robin Beanland</td>
+            <td class="small">0NAOwMbLzhDmNmPfd37pPK</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>43</td>
+            <td>F-Zero - Mute City</td>
+            <td>Yumiko Kanki</td>
+            <td class="small">7KtbD7NcMWKQXcF72lLBy9</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>44</td>
+            <td>Star Fox 64 - Corneria</td>
+            <td>Koji Kondo</td>
+            <td class="small">3lNyWHaUYkJeD4rAJ07IQx</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        <tr class="qa-row"
+            data-failure="false"
+            data-failure-languages="">
+            <td>45</td>
+            <td>Metroid Prime - Phendrana Drifts</td>
+            <td>Kenji Yamamoto</td>
+            <td class="small">2rxu4DeP6KIIBZz1FF508G</td>
+            <td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td><td>
+    <div class="qa-line"><span class="qa-label">Intro</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Long</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">D Short</span> T✅ A✅</div>
+    <div class="qa-line"><span class="qa-label">Artist</span> T✅ A✅</div>
+    </td>
+        </tr>
+        
+        </tbody>
+    </table>
+
+<script>
+function applyFilters() {
+    const failuresOnly =
+        document.getElementById('showFailuresOnly').checked;
+
+    const failureLanguage =
+        document.getElementById('failureLanguage').value;
+
+    document.querySelectorAll('tr.qa-row').forEach(row => {
+        const isFailure =
+            row.getAttribute('data-failure') === 'true';
+
+        const failureLanguages =
+            row.getAttribute('data-failure-languages') || '';
+
+        const matchesFailure =
+            !failuresOnly || isFailure;
+
+        const matchesLanguage =
+            failureLanguage === 'all'
+            || failureLanguages.includes(failureLanguage);
+
+        row.style.display =
+            matchesFailure && matchesLanguage ? '' : 'none';
+    });
+}
+
+document.getElementById('showFailuresOnly')
+    .addEventListener('change', applyFilters);
+
+document.getElementById('failureLanguage')
+    .addEventListener('change', applyFilters);
+</script>
+
+</body>
+</html>

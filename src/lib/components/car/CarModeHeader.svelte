@@ -10,6 +10,9 @@
 
 <script lang="ts">
     import type {PlaybackProgramType} from '$lib/types/program';
+    import type {Language} from '$lib/stores/selection';
+    import {classicViewCopy} from '$lib/carmode/classicViewLabels';
+    import NarrationOptions from './NarrationOptions.svelte';
 
     // Props (runtime)
     export let decade: string | undefined;
@@ -17,16 +20,17 @@
     export let collection: string | undefined; // ✅ ADD THIS
     export let mode: import('./CarModeHeader.svelte').BrowseMode = 'decade_genre';
     export let programType: PlaybackProgramType | undefined;
+    export let language: Language = 'en';
 
 
-    export let languages: string[] = ['en'];
-    export let voices: string[] = ['intro'];
-
-    export let playbackOrder: import('./CarModeHeader.svelte').PlaybackOrder = 'up';
-    export let voicePlayMode: import('./CarModeHeader.svelte').VoicePlayMode = 'before';
-    export let pauseMode: import('./CarModeHeader.svelte').PauseMode = 'pause';
-    export let skipPlayed: boolean = false;
-    export let categoryMode: import('./CarModeHeader.svelte').CategoryMode = 'single';
+    export let compact: boolean = false;
+    export let detailLength: 'off' | 'short' | 'long' = 'short';
+    export let artistBioLength: 'short' | 'long' = 'short';
+    export let artistStoriesEnabled = false;
+    export let narrationOptionsLocked = false;
+    export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
+    export let onArtistStoriesChange: (value: boolean) => void;
+    export let onArtistBioLengthChange: (value: 'short' | 'long') => void = () => {};
 
     const modeLabel = (
         m: import('./CarModeHeader.svelte').BrowseMode,
@@ -58,50 +62,34 @@
         langs.map(l => l.toUpperCase()).join(' • ');
 </script>
 
-<div class="cm-panel">
+<div class="cm-panel" class:compact>
     <div class="cm-main">
         <div class="cm-row cm-row--title">
-            <span class="cm-tag">🚗 Car Mode</span>
+            <span class="cm-tag">🚗 {classicViewCopy[language].carMode}</span>
 
             {#if mode === 'decade_genre'}
-  <span class="cm-main-text">
-
-{#if programType === PROGRAM_TYPES.FAVORITES_DG}
-
-  {#if (decade ?? '').toUpperCase() === 'ALL'}
-
-      {#if genre}
-          ⭐ All Decades {genre.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} Favorites
-      {:else}
-          ⭐ All Decades Favorites (All Genres)
-      {/if}
-
-  {:else}
-
-      {#if genre}
-          ⭐ {decade ?? '—'} {genre.replace(/_/g, ' ')} Favorites
-      {:else}
-          ⭐ {decade ?? '—'} Favorites (All Genres)
-      {/if}
-
-  {/if}
-
-{:else}
-
-  {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
-
-{/if}
-
-      {#if programType === 'RADIO_DG'}
-        TopSpot Radio • {genre ? genre.replace(/_/g, ' ') : 'All Genres'}
-        {:else}
-            {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
-        {/if}
-
-  </span>
+                <span class="cm-main-text">
+                    {#if programType === PROGRAM_TYPES.FAVORITES_DG}
+                        {#if (decade ?? '').toUpperCase() === 'ALL'}
+                            {#if genre}
+                                ⭐ All Decades {genre.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} Favorites
+                            {:else}
+                                ⭐ All Decades Favorites (All Genres)
+                            {/if}
+                        {:else if genre}
+                            ⭐ {decade ?? '—'} {genre.replace(/_/g, ' ')} Favorites
+                        {:else}
+                            ⭐ {decade ?? '—'} Favorites (All Genres)
+                        {/if}
+                    {:else if programType === 'RADIO_DG'}
+                        TopSpot Radio • {genre ? genre.replace(/_/g, ' ') : 'All Genres'}
+                    {:else}
+                        {decade ?? '—'} • {genre ? genre.replace(/_/g, ' ') : '—'}
+                    {/if}
+                </span>
             {:else if mode === 'artist_spotlight'}
     <span class="cm-main-text">
-        Artist Spotlight
+        {programType === 'RADIO_ARTIST' ? 'Artist Radio' : 'Artist Spotlight'}
     </span>
             {:else}
     <span class="cm-main-text">
@@ -111,32 +99,12 @@
 
         </div>
 
-        <div class="cm-row cm-row--primary">
-            {modeLabel(mode, programType)}
-            <span>•</span>
-            <span>Category: {categoryLabel(categoryMode)}</span>
-            <span>•</span>
-            <span>
-                {languages.length > 1 ? 'Langs:' : 'Lang:'}
-                {languageText(languages)}
-            </span>
-        </div>
+        {#if programType === 'RADIO_ARTIST'}
+            <div class="cm-radio-options"><span>Details:</span>{#each ['off', 'short', 'long'] as value}<button class:selected={detailLength === value} on:click={() => onDetailLengthChange(value as 'off' | 'short' | 'long')}>{value === 'off' ? 'Off' : value === 'short' ? 'Short' : 'Long'}</button>{/each}<span>Artist bios:</span>{#each ['short', 'long'] as value}<button class:selected={artistBioLength === value} on:click={() => onArtistBioLengthChange(value as 'short' | 'long')}>{value === 'short' ? 'Short' : 'Long'}</button>{/each}</div>
+        {:else}
+            <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {narrationOptionsLocked} {onDetailLengthChange} {onArtistStoriesChange}/>
+        {/if}
 
-        <div class="cm-row cm-row--secondary">
-            <span>Voices: {voiceText(voices)}</span>
-            <span>•</span>
-            <span>Order: {orderLabel(playbackOrder)}</span>
-
-            {#if skipPlayed}
-                <span>•</span>
-                <span class="cm-accent">Skip Played</span>
-            {/if}
-
-            <span>•</span>
-            <span>{voicePlayLabel(voicePlayMode)}</span>
-            <span>•</span>
-            <span>{pauseLabel(pauseMode)}</span>
-        </div>
     </div>
 </div>
 
@@ -149,6 +117,11 @@
         color: #fff;
         font-size: 0.85rem;
         line-height: 1.4;
+    }
+
+    .cm-panel.compact {
+        margin-bottom: 0.25rem;
+        padding: 0.28rem 0.7rem;
     }
 
     .cm-main {
@@ -185,19 +158,6 @@
     .cm-main-text {
         opacity: 0.9;
     }
+    .cm-radio-options{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}.cm-radio-options button{border:1px solid #f7dc82;border-radius:999px;color:#f7dc82;background:#282115;padding:.2rem .5rem}.cm-radio-options button.selected{color:#211706;background:#f7dc82}
 
-    .cm-row--primary {
-        opacity: 0.95;
-    }
-
-    .cm-row--secondary {
-        opacity: 0.75;
-        font-size: 0.8rem;
-    }
-
-    .cm-accent {
-        color: #cfb87c;
-        font-weight: 600;
-        text-shadow: 0 0 4px rgba(207, 184, 124, 0.4);
-    }
 </style>

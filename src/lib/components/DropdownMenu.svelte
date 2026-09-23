@@ -1,12 +1,43 @@
 <script lang="ts">
-	// Props for the parent to handle clicks
-	export let onFeedback: () => void;
-	export let onContact: () => void;
+	import { onMount } from 'svelte';
+	import { readLanguagePreference } from '$lib/languagePreferences';
 
-	function handleClick(type: 'feedback' | 'contact') {
-		if (type === 'feedback') onFeedback?.();
-		else if (type === 'contact') onContact?.();
+	// Props for the parent to handle clicks
+	export let onManageAccount: () => void;
+	export let onFeedback: () => void;
+	export let onLogout: () => void;
+
+	let language: 'en' | 'es' | 'ptbr' = 'en';
+
+	const copy = {
+		en: {
+			manageAccount: 'Manage Account / Subscription',
+			feedback: 'Feedback',
+			logout: 'Logout'
+		},
+		es: {
+			manageAccount: 'Administrar cuenta / suscripción',
+			feedback: 'Comentarios',
+			logout: 'Cerrar sesión'
+		},
+		ptbr: {
+			manageAccount: 'Gerenciar conta / assinatura',
+			feedback: 'Feedback',
+			logout: 'Sair'
+		}
+	} as const;
+
+	$: text = copy[language];
+
+	function handleClick(type: 'manage-account' | 'feedback' | 'logout') {
+		if (type === 'manage-account') onManageAccount?.();
+		else if (type === 'feedback') onFeedback?.();
+		else if (type === 'logout') onLogout?.();
 	}
+
+	onMount(() => {
+		language = readLanguagePreference();
+	});
 </script>
 
 <!-- $lib/components/DropdownMenu.svelte -->
@@ -19,23 +50,23 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="dropdown-menu" on:click|stopPropagation>
 	<ul>
-		<li>Manage Account / Subscription</li>
-		<li>Stats & Analytics</li>
-		<li>Notifications</li>
+		<li>
+			<button type="button" on:click={() => handleClick('manage-account')}>
+				{text.manageAccount}
+			</button>
+		</li>
 
 		<li>
 			<button type="button" on:click={() => handleClick('feedback')}>
-				Feedback
+				{text.feedback}
 			</button>
 		</li>
 
 		<li>
-			<button type="button" on:click={() => handleClick('contact')}>
-				Contact Us
+			<button type="button" on:click={() => handleClick('logout')}>
+				{text.logout}
 			</button>
 		</li>
-
-		<li>Logout</li>
 	</ul>
 </div>
 

@@ -1,0 +1,917 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Collection QA Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f7f7f7;
+        }
+        h1 {
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            color: #555;
+            margin-bottom: 22px;
+        }
+        .summary {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .summary-card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 12px 16px;
+            min-width: 230px;
+        }
+        .summary-card h3 {
+            margin: 0 0 8px;
+        }
+        .summary-line {
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 9px;
+            text-align: left;
+        }
+        th {
+            background: #222;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+        a {
+            color: #0645ad;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .slug {
+            font-size: 12px;
+            color: #666;
+            margin-top: 3px;
+        }
+        .good {
+            background: #d9f2d9;
+        }
+        .warn {
+            background: #fff3cd;
+        }
+        .bad {
+            background: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <h1>Collection QA Summary</h1>
+    <div class="subtitle">
+        Worst collections appear first. Click a collection name to open its drill-down QA page.
+    </div>
+
+    <div class="summary">
+        
+            <div class="summary-card">
+                <h3>English</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 2332/2332
+                    A 2332/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 2332/2332
+                    A 2293/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 2332/2332
+                    A 2293/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 2328/2332
+                    A 2188/2332
+                </div>
+            
+            </div>
+        
+            <div class="summary-card">
+                <h3>Spanish</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 2332/2332
+                    A 2332/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 2287/2332
+                    A 2283/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 2287/2332
+                    A 2253/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 2332/2332
+                    A 2332/2332
+                </div>
+            
+            </div>
+        
+            <div class="summary-card">
+                <h3>Portuguese</h3>
+                
+                <div class="summary-line">
+                    <strong>Intro</strong>
+                    T 2332/2332
+                    A 2331/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Long</strong>
+                    T 2332/2332
+                    A 1579/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>D Short</strong>
+                    T 2332/2332
+                    A 1643/2332
+                </div>
+            
+                <div class="summary-line">
+                    <strong>Artist</strong>
+                    T 2319/2332
+                    A 2332/2332
+                </div>
+            
+            </div>
+        
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Collection</th>
+                <th>Tracks</th>
+                <th>English</th>
+                <th>Spanish</th>
+                <th>Portuguese</th>
+                <th>Overall</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            <tr>
+                <td>
+                    <a href="collection_qa_civil_war_songs.html">
+                        Civil War Songs
+                    </a>
+                    <div class="slug">civil_war_songs</div>
+                </td>
+                <td>45</td>
+                <td class="warn">96.9%</td>
+                <td class="bad">83.1%</td>
+                <td class="bad">78.3%</td>
+                <td class="bad"><strong>86.1%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_german_heritage_favorites.html">
+                        German Heritage Favorites
+                    </a>
+                    <div class="slug">german_heritage_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">96.7%</td>
+                <td class="warn">92.2%</td>
+                <td class="bad">78.9%</td>
+                <td class="bad"><strong>89.3%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_bluegrass_favorites.html">
+                        Bluegrass Favorites
+                    </a>
+                    <div class="slug">bluegrass_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">97.8%</td>
+                <td class="warn">99.2%</td>
+                <td class="bad">75.6%</td>
+                <td class="warn"><strong>90.8%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_cowboy_songs_western_favorites.html">
+                        Cowboy Songs &amp; Western Favorites
+                    </a>
+                    <div class="slug">cowboy_songs_western_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">97.8%</td>
+                <td class="warn">99.2%</td>
+                <td class="bad">75.6%</td>
+                <td class="warn"><strong>90.8%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_southern_gospel_favorites.html">
+                        Southern Gospel Favorites
+                    </a>
+                    <div class="slug">southern_gospel_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">98.3%</td>
+                <td class="warn">99.2%</td>
+                <td class="bad">75.0%</td>
+                <td class="warn"><strong>90.8%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_traditional_hymns.html">
+                        Traditional Hymns
+                    </a>
+                    <div class="slug">traditional_hymns</div>
+                </td>
+                <td>45</td>
+                <td class="warn">98.3%</td>
+                <td class="warn">99.2%</td>
+                <td class="bad">75.0%</td>
+                <td class="warn"><strong>90.8%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_railroad_train_songs.html">
+                        Railroad &amp; Train Songs
+                    </a>
+                    <div class="slug">railroad_train_songs</div>
+                </td>
+                <td>45</td>
+                <td class="warn">97.5%</td>
+                <td class="warn">99.2%</td>
+                <td class="bad">76.7%</td>
+                <td class="warn"><strong>91.1%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_celtic_favorites.html">
+                        Celtic Favorites
+                    </a>
+                    <div class="slug">celtic_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.4%</td>
+                <td class="warn">99.7%</td>
+                <td class="bad">75.0%</td>
+                <td class="warn"><strong>91.4%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_italian_favorites.html">
+                        Italian Favorites
+                    </a>
+                    <div class="slug">italian_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.4%</td>
+                <td class="warn">99.7%</td>
+                <td class="bad">75.0%</td>
+                <td class="warn"><strong>91.4%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_patriotic_favorites.html">
+                        Patriotic Favorites
+                    </a>
+                    <div class="slug">patriotic_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">97.8%</td>
+                <td class="warn">99.2%</td>
+                <td class="bad">77.2%</td>
+                <td class="warn"><strong>91.4%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_mexican_american_favorites.html">
+                        Mexican-American Favorites
+                    </a>
+                    <div class="slug">mexican_american_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">98.3%</td>
+                <td class="warn">99.2%</td>
+                <td class="bad">77.2%</td>
+                <td class="warn"><strong>91.6%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_traditional_mexican_favorites.html">
+                        Traditional Mexican Favorites
+                    </a>
+                    <div class="slug">traditional_mexican_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">98.9%</td>
+                <td class="warn">99.4%</td>
+                <td class="bad">76.4%</td>
+                <td class="warn"><strong>91.6%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_western_heritage_favorites.html">
+                        Western Heritage Favorites
+                    </a>
+                    <div class="slug">western_heritage_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.4%</td>
+                <td class="warn">99.7%</td>
+                <td class="bad">75.6%</td>
+                <td class="warn"><strong>91.6%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_african_american_heritage_favorites.html">
+                        African-American Heritage Favorites
+                    </a>
+                    <div class="slug">african_american_heritage_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.4%</td>
+                <td class="bad">77.8%</td>
+                <td class="warn">97.8%</td>
+                <td class="warn"><strong>91.7%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_crooner_classics.html">
+                        Crooner Classics
+                    </a>
+                    <div class="slug">crooner_classics</div>
+                </td>
+                <td>45</td>
+                <td class="warn">98.9%</td>
+                <td class="warn">99.4%</td>
+                <td class="bad">76.9%</td>
+                <td class="warn"><strong>91.8%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_american_folk_heroes.html">
+                        American Folk Heroes
+                    </a>
+                    <div class="slug">american_folk_heroes</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.4%</td>
+                <td class="warn">99.7%</td>
+                <td class="bad">76.7%</td>
+                <td class="warn"><strong>91.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_brazilian_classics.html">
+                        Brazilian Classics
+                    </a>
+                    <div class="slug">brazilian_classics</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="warn">94.4%</td>
+                <td class="bad">82.8%</td>
+                <td class="warn"><strong>92.4%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_great_american_songbook.html">
+                        Great American Songbook
+                    </a>
+                    <div class="slug">great_american_songbook</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="bad">77.5%</td>
+                <td class="warn"><strong>92.5%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_soft_rock_love_songs.html">
+                        Soft Rock Love Songs
+                    </a>
+                    <div class="slug">soft_rock_love_songs</div>
+                </td>
+                <td>45</td>
+                <td class="warn">93.3%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>97.7%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_disney_revival_after_1988.html">
+                        Disney: Revival (after-1988)
+                    </a>
+                    <div class="slug">disney_revival_after_1988</div>
+                </td>
+                <td>45</td>
+                <td class="warn">94.2%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>98.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_singer_songwriter.html">
+                        Singer-Songwriter
+                    </a>
+                    <div class="slug">singer_songwriter</div>
+                </td>
+                <td>45</td>
+                <td class="warn">94.7%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>98.1%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_yacht_rock.html">
+                        Yacht Rock
+                    </a>
+                    <div class="slug">yacht_rock</div>
+                </td>
+                <td>45</td>
+                <td class="warn">94.7%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn"><strong>98.2%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_easy_listening.html">
+                        Easy Listening
+                    </a>
+                    <div class="slug">easy_listening</div>
+                </td>
+                <td>44</td>
+                <td class="warn">95.7%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.4%</td>
+                <td class="warn"><strong>98.4%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_road_trip.html">
+                        Road Trip
+                    </a>
+                    <div class="slug">road_trip</div>
+                </td>
+                <td>45</td>
+                <td class="warn">95.8%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.4%</td>
+                <td class="warn"><strong>98.4%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_garys_missing_rock_pop_favorites.html">
+                        Gary&#x27;s Missing Rock &amp; Pop Favorites
+                    </a>
+                    <div class="slug">garys_missing_rock_pop_favorites</div>
+                </td>
+                <td>51</td>
+                <td class="warn">96.8%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn"><strong>98.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_protest_social_justice.html">
+                        Protest &amp; Social Justice
+                    </a>
+                    <div class="slug">protest_social_justice</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.7%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">98.9%</td>
+                <td class="warn"><strong>99.5%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_latin_crossovers.html">
+                        Latin Crossovers
+                    </a>
+                    <div class="slug">latin_crossovers</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.2%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn"><strong>99.7%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_legends_country.html">
+                        Legends – Country
+                    </a>
+                    <div class="slug">legends_country</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.2%</td>
+                <td class="warn"><strong>99.7%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_motown_magic.html">
+                        Motown Magic
+                    </a>
+                    <div class="slug">motown_magic</div>
+                </td>
+                <td>44</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.1%</td>
+                <td class="warn"><strong>99.7%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_power_ballads.html">
+                        Power Ballads
+                    </a>
+                    <div class="slug">power_ballads</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.4%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>99.7%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_novelty_songs.html">
+                        Novelty Songs
+                    </a>
+                    <div class="slug">novelty_songs</div>
+                </td>
+                <td>44</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.4%</td>
+                <td class="warn"><strong>99.8%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_pop_duets.html">
+                        Pop Duets
+                    </a>
+                    <div class="slug">pop_duets</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.4%</td>
+                <td class="warn"><strong>99.8%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_country_duets.html">
+                        Country Duets
+                    </a>
+                    <div class="slug">country_duets</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>99.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_disco_favorites.html">
+                        Disco Favorites
+                    </a>
+                    <div class="slug">disco_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.7%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn"><strong>99.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_disney_classics_pre_1988.html">
+                        Disney: Classics (pre-1988)
+                    </a>
+                    <div class="slug">disney_classics_pre_1988</div>
+                </td>
+                <td>45</td>
+                <td class="warn">99.7%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn"><strong>99.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_legends_folk_acoustic.html">
+                        Legends – Folk Acoustic
+                    </a>
+                    <div class="slug">legends_folk_acoustic</div>
+                </td>
+                <td>39</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>99.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_legends_latin_global.html">
+                        Legends – Latin Global
+                    </a>
+                    <div class="slug">legends_latin_global</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>99.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_legends_pop.html">
+                        Legends – Pop
+                    </a>
+                    <div class="slug">legends_pop</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>99.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_legends_tv_themes.html">
+                        Legends – TV Themes
+                    </a>
+                    <div class="slug">legends_tv_themes</div>
+                </td>
+                <td>44</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="warn">99.7%</td>
+                <td class="warn"><strong>99.9%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_classical_music_baroque_period_1600_1750.html">
+                        Classical Music: Baroque Period (1600-1750)
+                    </a>
+                    <div class="slug">classical_music_baroque_period_1600_1750</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_classical_music_classical_period_1750_1820.html">
+                        Classical Music: Classical Period (1750-1820)
+                    </a>
+                    <div class="slug">classical_music_classical_period_1750_1820</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_classical_music_romantic_period_1820_1910.html">
+                        Classical Music: Romantic Period (1820-1910)
+                    </a>
+                    <div class="slug">classical_music_romantic_period_1820_1910</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_dance_floor_anthems.html">
+                        Dance Floor Anthems
+                    </a>
+                    <div class="slug">dance_floor_anthems</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_garys_missing_country_favorites.html">
+                        Gary&#x27;s Missing Country Favorites
+                    </a>
+                    <div class="slug">garys_missing_country_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_holiday_favorites.html">
+                        Holiday Favorites
+                    </a>
+                    <div class="slug">holiday_favorites</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_legends_blues_jazz.html">
+                        Legends – Blues Jazz
+                    </a>
+                    <div class="slug">legends_blues_jazz</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_legends_rnb_soul.html">
+                        Legends – RnB Soul
+                    </a>
+                    <div class="slug">legends_rnb_soul</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_legends_rock.html">
+                        Legends – Rock
+                    </a>
+                    <div class="slug">legends_rock</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_one_hit_wonders.html">
+                        One-Hit Wonders
+                    </a>
+                    <div class="slug">one_hit_wonders</div>
+                </td>
+                <td>44</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_stage_screen_broadway_classics.html">
+                        Stage &amp; Screen: Broadway Classics
+                    </a>
+                    <div class="slug">stage_screen_broadway_classics</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_stage_screen_movie_themes.html">
+                        Stage &amp; Screen: Movie Themes
+                    </a>
+                    <div class="slug">stage_screen_movie_themes</div>
+                </td>
+                <td>42</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+            <tr>
+                <td>
+                    <a href="collection_qa_video_game_themes.html">
+                        Video Game Themes
+                    </a>
+                    <div class="slug">video_game_themes</div>
+                </td>
+                <td>45</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good">100.0%</td>
+                <td class="good"><strong>100.0%</strong></td>
+            </tr>
+        
+        </tbody>
+    </table>
+</body>
+</html>

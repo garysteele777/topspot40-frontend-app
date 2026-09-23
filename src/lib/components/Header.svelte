@@ -3,15 +3,66 @@
 	import { onMount, onDestroy } from 'svelte';
 	import DropdownMenu from './DropdownMenu.svelte';
 	import { browser } from '$app/environment';
-	import ContactModal from './profile-components/ContactModal.svelte';
 	import FeedbackModal from './profile-components/FeedbackModal.svelte';
+	import MarketingPreferenceModal from './profile-components/MarketingPreferenceModal.svelte';
+	import { goto } from '$app/navigation';
+	import { getBackendUrl } from '$lib/config';
+	import { supabase } from '$lib/supabaseClient';
+	import posthog from 'posthog-js';
+	import { resetPostHog } from '$lib/analytics/posthog';
 
 	let dropdownRef: HTMLElement; // reference to the dropdown container
 	let showDropdown = false;
 	let showFeedbackModal = false;
-	let showContactModal = false;
+	let showMarketingModal = false;
+	let isLoggingOut = false;
 
 	export let user: any = null;
+	export let subscriptionStatus: any = null;
+
+	async function handleLogout() {
+		if (isLoggingOut) return;
+
+		isLoggingOut = true;
+		showDropdown = false;
+
+		let backendError: Error | null = null;
+
+		try {
+			const response = await fetch(`${getBackendUrl()}/api/auth/logout`, {
+				method: 'POST',
+				credentials: 'include'
+			});
+
+			if (!response.ok) {
+				backendError = new Error(`Backend logout failed with status ${response.status}`);
+			}
+		} catch (error) {
+			backendError = error instanceof Error
+				? error
+				: new Error('Backend logout failed');
+		}
+
+		const { error: supabaseError } = await supabase.auth.signOut();
+
+		if (backendError || supabaseError) {
+			console.error('Logout failed', {
+				backendError,
+				supabaseError
+			});
+			window.alert('TopSpot40 could not fully log you out. Please try again.');
+			isLoggingOut = false;
+			return;
+		}
+
+		try {
+			resetPostHog(posthog);
+		} catch (analyticsError) {
+			console.error('Unable to reset analytics identity:', analyticsError);
+		}
+
+		await goto('/signin', { replaceState: true });
+	}
 
 	function handleClickOutside(event: MouseEvent) {
 		if (dropdownRef && !dropdownRef.contains(event.target as Node)) {
@@ -34,22 +85,30 @@
 
 <header class="header">
 	<div class="logo">TopSpot40</div>
-	<div class="user-profile" bind:this={dropdownRef} on:click={() => (showDropdown = !showDropdown)}>
-		<!-- <img src="/user-avatar.png" alt="User" /> -->
-		 <img
-			src={user?.app_avatar_url || user?.spotify_profile_image || '/user-avatar.png'}
-			alt="User"/>
+	<div class="user-profile" bind:this={dropdownRef}>
+		<button
+			type="button"
+			class="profile-toggle"
+			aria-haspopup="menu"
+			aria-expanded={showDropdown}
+			on:click={() => (showDropdown = !showDropdown)}
+		>
+			<img
+				src={user?.app_avatar_url || user?.spotify_profile_image || '/old-dog-icon.png'}
+				alt="User"
+			/>
+		</button>
 		{#if showDropdown}
 			<DropdownMenu
+				onManageAccount={() => {
+					showMarketingModal = true;
+					showDropdown = false;
+				}}
 				onFeedback={() => {
 					showFeedbackModal = true;
 					showDropdown = false;
 				}}
-				onContact={() => {
-					console.log('Contact clicked!');
-					showContactModal = true;
-					showDropdown = false;
-				}}
+				onLogout={handleLogout}
 			/>
 		{/if}
 	</div>
@@ -58,8 +117,12 @@
 <!-- Feedback Modal -->
 <FeedbackModal visible={showFeedbackModal} onClose={() => (showFeedbackModal = false)} />
 
-<!-- Contact Us Modal -->
-<ContactModal visible={showContactModal} onClose={() => (showContactModal = false)} />
+<!-- Manage Account / Marketing Preference Modal -->
+<MarketingPreferenceModal
+	visible={showMarketingModal}
+	subscriptionStatus={subscriptionStatus}
+	onClose={() => (showMarketingModal = false)}
+/>
 
 <style>
 	.header {
@@ -73,6 +136,12 @@
 
 	.user-profile {
 		position: relative;
+	}
+
+	.profile-toggle {
+		padding: 0;
+		border: 0;
+		background: none;
 		cursor: pointer;
 	}
 

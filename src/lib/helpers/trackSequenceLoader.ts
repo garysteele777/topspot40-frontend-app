@@ -54,6 +54,13 @@ type SequenceItemExtended = SequenceItem & {
     artist_image?: string | null;
     artist_artwork?: string | null;
     artistArtwork?: string | null;
+
+    introUrl?: string | null;
+    detailUrl?: string | null;
+    shortDetailUrl?: string | null;
+    introKey?: {bucket: string; key: string} | null;
+    detailKey?: {bucket: string; key: string} | null;
+    shortDetailKey?: {bucket: string; key: string} | null;
 };
 
 // const PROGRAM_LENGTH = 40;

@@ -12,6 +12,7 @@ import {getFavorites} from '$lib/favorites/favorites';
 import {upsertProgram, type ProgramKey} from '$lib/carmode/programHistory';
 import {get} from 'svelte/store';
 import {programHistoryStore} from '$lib/carmode/programHistory';
+import {resetPlaybackApi} from '$lib/api/playbackApi';
 
 const sequenceCache = new Map<string, LoadedTrack[]>();
 
@@ -19,6 +20,7 @@ type ArtistRadioApiTrack = {
     track_id: number;
     track_name: string;
     artist_name: string;
+    artist_id?: number | null;
     spotify_track_id: string;
     spotify_artist_id?: string | null;
     album_artwork?: string | null;
@@ -35,9 +37,7 @@ export async function loadForSelection(
 ): Promise<void> {
 
     try {
-        await fetch(`${import.meta.env.VITE_API_BASE_URL}/playback/reset`, {
-            method: 'POST'
-        });
+        await resetPlaybackApi();
     } catch (err) {
         console.warn('Playback reset failed', err);
     }
@@ -46,36 +46,35 @@ export async function loadForSelection(
 
 
     // 🎧 RADIO MODE DETECTION (ALL / ALL)
+    // Radio is backend-owned: /play-sequence chooses one decade/genre set at
+    // a time and publishes each active track through playback status. Do not
+    // flatten ALL/<genre> into a client-side sequence.
     const decade =
         sel.context?.decade ??
         sel.context?.decade_slug ??
         sel.context?.decadeName ??
         sel.context?.decadeSlug;
 
-    if (
-        sel.mode === 'decade_genre' &&
-        decade === 'ALL'
-    ) {
+    if (sel.mode === 'decade_genre' && decade === 'ALL') {
+        sel.programType = PROGRAM_TYPES.RADIO_DG;
 
-        // 🔥 THIS IS THE FIX
-        sel.programType = 'RADIO_DG';
-
+        const genre = sel.context?.genre ?? 'ALL';
         const placeholder: CarModeTrack = {
             id: null,
             rankingId: null,
             rank: 0,
             trackName: 'TopSpot Radio',
-            artistName: 'Press Play to Start',
+            artistName: 'Load the first set to begin',
             spotifyTrackId: '',
             albumArtwork: null,
-            durationSeconds: 0
+            durationSeconds: 0,
+            genreSlug: genre,
+            genreName: genre.replace(/(^|_)([a-z])/g, (_, prefix, letter) => `${prefix} ${letter.toUpperCase()}`).trim()
         };
 
         tracks.set([placeholder]);
         currentTrack.set(placeholder);
-
-        status.set('Radio ready. Press Play.');
-
+        status.set(`${placeholder.genreName} Radio ready. Load the first set.`);
         return;
     }
 
@@ -95,7 +94,7 @@ export async function loadForSelection(
     ) {
         sel.programType = 'RADIO_COL';
 
-        if (collectionGroup === 'ALL') {
+        if (collectionGroup) {
 
             const placeholder: CarModeTrack = {
                 id: null,
@@ -131,6 +130,24 @@ export async function loadForSelection(
         if (!artistId) {
 
             if (sel.programType === 'RADIO_ARTIST') {
+                // The backend chooses the artist only after the initiating
+                // Auto Play click. Do not preload the legacy radio-set API:
+                // it bypasses the Artist Radio biography phase.
+                const placeholder: CarModeTrack = {
+                    id: null,
+                    rankingId: null,
+                    rank: 0,
+                    trackName: 'Artist Radio',
+                    artistName: 'Press Auto Play to Start',
+                    spotifyTrackId: '',
+                    albumArtwork: null,
+                    durationSeconds: 0
+                };
+                tracks.set([placeholder]);
+                currentTrack.set(placeholder);
+                status.set('Artist Radio ready. Press Auto Play to Start.');
+                return;
+
                 const genre = sel.context?.genre ?? 'ALL';
 
                 status.set('Loading Artist Spotlight Radio set…');
@@ -157,7 +174,7 @@ export async function loadForSelection(
                     rank: index + 1,
 
                     trackName: track.track_name,
-                    artistName: track.artist_name,
+                    artistId: track.artist_id ?? null,
 
                     spotifyTrackId: track.spotify_track_id,
                     spotifyArtistId: track.spotify_artist_id ?? null,
@@ -211,6 +228,7 @@ export async function loadForSelection(
 
             trackName: track.track_name,
             artistName: track.artist_name,
+            artistId: track.artist_id ?? null,
 
             spotifyTrackId: track.spotify_track_id,
             spotifyArtistId: track.spotify_artist_id ?? null,
@@ -224,6 +242,11 @@ export async function loadForSelection(
 
             artistText:
                 track.artist_description ??
+                null,
+
+            textsByLanguage:
+                track.texts_by_language ??
+                track.textsByLanguage ??
                 null,
 
             durationSeconds: Math.floor((track.duration_ms ?? 0) / 1000)
@@ -600,11 +623,22 @@ function toCarModeTrack(t: LoadedTrack): CarModeTrack {
 
     return {
         ...t,
+
         rankingId: t.rankingId ?? null,
 
-        // 🔥 ADD THESE
+        artistId:
+            (t as any).artistId ??
+            (t as any).artist_id ??
+            null,
+
+        spotifyArtistId:
+            (t as any).spotifyArtistId ??
+            (t as any).spotify_artist_id ??
+            null,
+
         intro: (t as any).intro ?? null,
         detail: (t as any).detail ?? null,
+
         artistText:
             (t as any).artistText ??
             (t as any).artistDescription ??

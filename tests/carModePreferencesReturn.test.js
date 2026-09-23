@@ -1,0 +1,323 @@
+// @ts-nocheck -- executed directly by Node's built-in test runner.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {register} from 'node:module';
+
+register('./helpers/svelteKitAliasLoader.mjs', import.meta.url);
+
+const {
+    buildCarModePreferencesReturnUrl,
+    buildCarModePreferencesUrl,
+    findReturnedCarModeTrack,
+    getCarModePreferencesReturnUrl,
+    isChangedCarModePreferencesReturn,
+    isUnchangedCarModePreferencesReturn
+} = await import('../src/lib/carmode/CarModePreferencesReturn.ts');
+const {createCarModeNarration} = await import('../src/lib/carmode/CarModeNarration.ts');
+const {createCarModeSpotify} = await import('../src/lib/carmode/CarModeSpotify.ts');
+const {
+    cancelAllCarModeAutoPlay,
+    createCarModeAutoPlay
+} = await import('../src/lib/carmode/CarModeAutoPlay.ts');
+
+const tracks = [
+    {rankingId: 22, spotifyTrackId: 'spotify-a', rank: 7},
+    {rankingId: 23, spotifyTrackId: 'spotify-b', rank: 8}
+];
+
+test('Car Mode preferences return updates EN to ES without changing unrelated selection fields', () => {
+    const carUrl = new URL(
+        'https://topspot.test/car-page?mode=nostalgia&decade=1980s&genre=pop&language=en&languages=en&playbackOrder=shuffle&view=studio&custom=keep'
+    );
+    const preferencesPath = buildCarModePreferencesUrl(carUrl, tracks[0]);
+    const returnUrl = getCarModePreferencesReturnUrl(
+        new URL(preferencesPath, carUrl.origin)
+    );
+
+    assert.ok(returnUrl);
+    const returned = new URL(
+        buildCarModePreferencesReturnUrl(returnUrl, 'es'),
+        carUrl.origin
+    );
+
+    assert.equal(returned.searchParams.get('language'), 'es');
+    assert.equal(returned.searchParams.get('languages'), 'es');
+    assert.equal(returned.searchParams.get('custom'), 'keep');
+    assert.equal(returned.searchParams.get('view'), 'studio');
+    assert.equal(returned.searchParams.get('playbackOrder'), 'shuffle');
+    assert.equal(returned.searchParams.get('currentRankingId'), '22');
+    assert.equal(returned.searchParams.get('currentSpotifyTrackId'), 'spotify-a');
+    assert.equal(returned.searchParams.get('currentRank'), '7');
+    assert.equal(isChangedCarModePreferencesReturn(returned), true);
+});
+
+test('Car Mode preferences return updates ES to PT-BR and marks no-op language returns', () => {
+    const esUrl = new URL(
+        'https://topspot.test/car-page?language=es&languages=es&genre=latin&custom=preserve&carModePreferencesReturn=1'
+    );
+    const ptbrUrl = new URL(
+        buildCarModePreferencesReturnUrl(esUrl, 'ptbr'),
+        esUrl.origin
+    );
+    const unchangedUrl = new URL(
+        buildCarModePreferencesReturnUrl(esUrl, 'es'),
+        esUrl.origin
+    );
+
+    assert.equal(ptbrUrl.searchParams.get('language'), 'ptbr');
+    assert.equal(ptbrUrl.searchParams.get('languages'), 'ptbr');
+    assert.equal(ptbrUrl.searchParams.get('custom'), 'preserve');
+    assert.equal(isChangedCarModePreferencesReturn(ptbrUrl), true);
+    assert.equal(isUnchangedCarModePreferencesReturn(unchangedUrl), true);
+});
+
+test('language-refresh track restoration prefers ranking ID, then Spotify ID, then rank', () => {
+    const rankingFirst = new URL(
+        'https://topspot.test/car-page?currentRankingId=23&currentSpotifyTrackId=spotify-a&currentRank=7'
+    );
+    const spotifySecond = new URL(
+        'https://topspot.test/car-page?currentRankingId=999&currentSpotifyTrackId=spotify-b&currentRank=7'
+    );
+    const rankLast = new URL(
+        'https://topspot.test/car-page?currentRankingId=999&currentSpotifyTrackId=missing&currentRank=7'
+    );
+
+    assert.equal(findReturnedCarModeTrack(tracks, rankingFirst), tracks[1]);
+    assert.equal(findReturnedCarModeTrack(tracks, spotifySecond), tracks[1]);
+    assert.equal(findReturnedCarModeTrack(tracks, rankLast), tracks[0]);
+});
+
+test('Guided narration cancellation invalidates an in-flight narration and never becomes ready', async () => {
+    let resolveNarration;
+    let ready = false;
+    let stopped = 0;
+    let bedUrl = null;
+    const track = {...tracks[0]};
+    let currentTrack = track;
+
+    const narration = createCarModeNarration({
+        getCurrentTrack: () => currentTrack,
+        getNarrations: () => [{phase: 'intro', url: 'intro.mp3'}],
+        getBedUrl: () => 'english-bed.mp3',
+        unlockBed: async () => {},
+        startBed: async (url) => { bedUrl = url; },
+        stopBed: () => { stopped += 1; },
+        playNarration: async () => new Promise(resolve => { resolveNarration = resolve; }),
+        stopNarration: () => { stopped += 1; },
+        updateTiming: () => {},
+        resetTiming: () => {},
+        getPlaybackPhase: () => 'intro',
+        setPlaybackPhase: () => {},
+        setIsPlaying: () => {},
+        resetGuidedReadyState: () => { ready = false; },
+        setGuidedReady: value => { ready = value; }
+    });
+
+    const running = narration.start(track);
+    await new Promise(resolve => setImmediate(resolve));
+    narration.abandon();
+    resolveNarration();
+
+    assert.equal(await running, false);
+    assert.equal(ready, false);
+    assert.ok(stopped >= 2);
+    assert.equal(bedUrl, 'english-bed.mp3');
+});
+
+test('pausing during Artist Bio preserves the artist narration phase', () => {
+    const track = {...tracks[0]};
+    let playbackPhase = 'artist';
+
+    const narration = createCarModeNarration({
+        getCurrentTrack: () => track,
+        getNarrations: () => [],
+        getBedUrl: () => 'english-bed.mp3',
+        unlockBed: async () => {},
+        startBed: async () => {},
+        stopBed: () => {},
+        playNarration: async () => {},
+        stopNarration: () => {},
+        updateTiming: () => {},
+        resetTiming: () => {},
+        getPlaybackPhase: () => playbackPhase,
+        setPlaybackPhase: phase => { playbackPhase = phase; },
+        setIsPlaying: () => {},
+        resetGuidedReadyState: () => {},
+        setGuidedReady: () => {}
+    });
+
+    narration.pause();
+
+    assert.equal(narration.takePausedPhase(), 'artist');
+});
+test('desktop Spotify open reports failure when the popup is blocked', () => {
+    const originalNavigator = globalThis.navigator;
+    const originalWindow = globalThis.window;
+    const originalLocalStorage = globalThis.localStorage;
+
+    Object.defineProperty(globalThis, 'navigator', {
+        configurable: true,
+        value: {userAgent: 'Desktop Test Browser'}
+    });
+
+    Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: {
+            open: () => null,
+            focus: () => {},
+            screen: {
+                availWidth: 1920
+            }
+        }
+    });
+
+    Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: {
+            setItem: () => {}
+        }
+    });
+
+    try {
+        let captures = 0;
+
+        const spotify = createCarModeSpotify({
+            getGuidedReady: () => true,
+            setStatus: () => {},
+            captureSpotifyOpen: () => {
+                captures += 1;
+            }
+        });
+
+        const opened = spotify.open(tracks[0]);
+
+        assert.equal(opened, false);
+        assert.equal(captures, 0);
+    } finally {
+        Object.defineProperty(globalThis, 'navigator', {
+            configurable: true,
+            value: originalNavigator
+        });
+
+        Object.defineProperty(globalThis, 'window', {
+            configurable: true,
+            value: originalWindow
+        });
+
+        Object.defineProperty(globalThis, 'localStorage', {
+            configurable: true,
+            value: originalLocalStorage
+        });
+    }
+});
+test('Auto cancellation invalidates queued advancement before a language-refresh session reset', async () => {
+    let advanced = 0;
+    const auto = createCarModeAutoPlay({
+        getActivePlayMode: () => 'auto',
+        setActivePlayMode: () => {},
+        getCurrentTrack: () => ({...tracks[0], durationSeconds: 1}),
+        getIsPlaying: () => false,
+        setIsPlaying: () => {},
+        getPlaybackPhase: () => 'track',
+        setPlaybackPhase: () => {},
+        pauseNarration: () => {},
+        takePausedNarrationPhase: () => null,
+        abandonNarration: () => {},
+        startNarration: async () => true,
+        prepareSpotifyWindow: () => {},
+        isMobile: () => true,
+        openSpotify: () => {},
+        closeSpotify: () => true,
+        queueNextTrack: async () => {},
+        setStatus: () => {},
+        continueAutoPlayback: async () => { advanced += 1; },
+        nextTrack: async () => {},
+        previousTrack: async () => {},
+        startPreviousAutoPlayback: async () => {}
+    }, 0);
+
+    auto.handleNext();
+    cancelAllCarModeAutoPlay();
+    await new Promise(resolve => setTimeout(resolve, 130));
+
+    assert.equal(advanced, 0);
+});
+
+test('Auto Play does not advance when the Spotify handoff fails', async () => {
+    let advanced = 0;
+    let spotifyOpens = 0;
+    let activePlayMode = null;
+
+    const track = {
+        ...tracks[0],
+        durationSeconds: 0.01
+    };
+
+    const auto = createCarModeAutoPlay({
+        getActivePlayMode: () => activePlayMode,
+        setActivePlayMode: mode => { activePlayMode = mode; },
+        getCurrentTrack: () => track,
+        getIsPlaying: () => false,
+        setIsPlaying: () => {},
+        getPlaybackPhase: () => 'track',
+        setPlaybackPhase: () => {},
+        pauseNarration: () => {},
+        takePausedNarrationPhase: () => null,
+        abandonNarration: () => {},
+        startNarration: async () => true,
+        prepareSpotifyWindow: () => {},
+        isMobile: () => true,
+        openSpotify: () => {
+            spotifyOpens += 1;
+            return false;
+        },
+        closeSpotify: () => {},
+        continueAutoPlayback: async () => { advanced += 1; },
+        nextTrack: async () => {},
+        previousTrack: async () => {},
+        startPreviousAutoPlayback: async () => {}
+    }, 0);
+
+    await auto.handlePlay();
+    await new Promise(resolve => setTimeout(resolve, 40));
+
+    assert.equal(spotifyOpens, 1);
+    assert.equal(advanced, 0);
+
+    auto.cancel();
+});
+test('Car Mode preferences return preserves whether program playback had actually started', () => {
+    const carUrl = new URL(
+        'https://topspot.test/car-page?mode=nostalgia&decade=1980s&genre=pop&language=en'
+    );
+
+    const notStartedPath = buildCarModePreferencesUrl(
+        carUrl,
+        tracks[0],
+        false
+    );
+    const startedPath = buildCarModePreferencesUrl(
+        carUrl,
+        tracks[0],
+        true
+    );
+
+    const notStartedReturn = getCarModePreferencesReturnUrl(
+        new URL(notStartedPath, carUrl.origin)
+    );
+    const startedReturn = getCarModePreferencesReturnUrl(
+        new URL(startedPath, carUrl.origin)
+    );
+
+    assert.ok(notStartedReturn);
+    assert.ok(startedReturn);
+
+    assert.equal(
+        notStartedReturn.searchParams.get('carModeProgramStarted'),
+        'false'
+    );
+    assert.equal(
+        startedReturn.searchParams.get('carModeProgramStarted'),
+        'true'
+    );
+});

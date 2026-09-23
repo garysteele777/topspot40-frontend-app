@@ -22,25 +22,31 @@ type PlaybackBaseTrack = Record<string, unknown> & {
 
 type FallbackTrackInput = {
     spotifyId: string;
+    rankingId?: number | null;
     currentRank: number;
     trackName: string;
     artistName: string;
 
     normalizedCtx: NormalizedPlaybackContext;
+    // `/playback/status` may publish the active track duration at the
+    // response root while the collection metadata lives in `context`.
+    statusDurationMs?: number | null;
 };
 
 export function buildFallbackPlaybackTrack({
                                                spotifyId,
+                                               rankingId,
                                                currentRank,
                                                trackName,
                                                artistName,
-                                               normalizedCtx
+                                               normalizedCtx,
+                                               statusDurationMs
                                            }: FallbackTrackInput) {
 
     return {
         id: null,
 
-        rankingId: null,
+        rankingId: rankingId ?? null,
 
         rank: currentRank,
 
@@ -48,6 +54,9 @@ export function buildFallbackPlaybackTrack({
         artistName,
 
         spotifyTrackId: spotifyId,
+
+        durationMs:
+            normalizedCtx.durationMs ?? statusDurationMs ?? null,
 
         collection_name:
             normalizedCtx.collection_name ?? null,
@@ -88,7 +97,7 @@ export function buildFallbackPlaybackTrack({
         genreName:
             normalizedCtx.genre_name ?? null,
 
-        yearReleased: null,
+        yearReleased: normalizedCtx.yearReleased ?? null,
 
         albumArtwork:
             normalizedCtx.album_artwork ?? null,
@@ -106,10 +115,13 @@ export function buildFallbackPlaybackTrack({
 
 export function buildEnrichedPlaybackTrack({
                                                baseTrack,
-                                               normalizedCtx
+                                               normalizedCtx,
+                                               statusDurationMs
                                            }: {
     baseTrack: PlaybackBaseTrack;
     normalizedCtx: NormalizedPlaybackContext;
+    /** Normalized once from the public `/playback/status` response root. */
+    statusDurationMs?: number | null;
 }) {
     return {
         ...baseTrack,
@@ -138,8 +150,17 @@ export function buildEnrichedPlaybackTrack({
         artistArtwork:
             normalizedCtx.artist_artwork ?? baseTrack.artistArtwork,
 
+        // Narration frames establish this same track before the backend has
+        // armed its Spotify clock. Do not let that earlier null context value
+        // retain priority over the later public track-frame duration.
+        durationMs:
+            normalizedCtx.durationMs ?? statusDurationMs ?? baseTrack.durationMs ?? null,
+
         textsByLanguage:
-            normalizedCtx.textsByLanguage ?? baseTrack.textsByLanguage,
+            normalizedCtx.textsByLanguage &&
+            Object.keys(normalizedCtx.textsByLanguage).length > 0
+                ? normalizedCtx.textsByLanguage
+                : baseTrack.textsByLanguage,
 
         decadeSlug:
             normalizedCtx.decade_slug ?? baseTrack.decadeSlug,

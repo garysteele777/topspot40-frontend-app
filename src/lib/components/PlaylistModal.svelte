@@ -33,6 +33,7 @@
                     : 'up';
 
         playbackSettingsStore.set({
+            playbackMethod: current.playbackMethod,
             playbackOrder,
             skipPlayed,
             pauseMode,
@@ -40,7 +41,8 @@
                 voiceOption === 'all'
                     ? ['intro', 'detail', 'artist']
                     : [voiceOption],
-            voicePlayMode: 'before'
+            voicePlayMode: 'before',
+            detailLength: current.detailLength
         });
 
         onClose();

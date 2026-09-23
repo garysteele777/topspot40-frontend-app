@@ -4,7 +4,8 @@ export type AudioKey = { bucket: string; key: string };
 export type LoadedTrack = {
     id?: number | string | null;
 
-    rankingId?: number | null;   // ⭐ NEW
+    rankingId?: number | null;
+    artistId?: number | null;
 
     rank: number;
 
@@ -23,6 +24,7 @@ export type LoadedTrack = {
     durationSeconds?: number | null;
 
     spotifyTrackId?: string | null;
+    spotifyArtistId?: string | null;
 
     intro?: string | null;
     detail?: string | null;
@@ -30,7 +32,12 @@ export type LoadedTrack = {
 
     introKey?: AudioKey | null;
     detailKey?: AudioKey | null;
+    shortDetailKey?: AudioKey | null;
     artistKey?: AudioKey | null;
+
+    introUrl?: string | null;
+    detailUrl?: string | null;
+    shortDetailUrl?: string | null;
 
     // ─────────────────────────────
     // ⭐ Favorites support (new)
@@ -163,6 +170,11 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         'track_spotify_id'
     ]);
 
+    const spotifyArtistIdVal = firstDefined(raw, [
+        'spotifyArtistId',
+        'spotify_artist_id'
+    ]);
+
     const introVal = firstDefined(raw, ['intro']);
     const detailVal = firstDefined(raw, ['detail', 'detail_text']);
     const artistDescVal = firstDefined(raw, [
@@ -172,7 +184,11 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
 
     const introKeyVal = firstDefined(raw, ['introKey']);
     const detailKeyVal = firstDefined(raw, ['detailKey']);
+    const shortDetailKeyVal = firstDefined(raw, ['shortDetailKey']);
     const artistKeyVal = firstDefined(raw, ['artistKey']);
+    const introUrlVal = firstDefined(raw, ['introUrl']);
+    const detailUrlVal = firstDefined(raw, ['detailUrl']);
+    const shortDetailUrlVal = firstDefined(raw, ['shortDetailUrl']);
 
     const yearReleased = asNumber(yearReleasedVal, undefined);
 
@@ -194,6 +210,10 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
         trackName: asString(trackNameVal, '') ?? '',
         artistName:
             asString(artistNameVal, 'Unknown Artist') ?? 'Unknown Artist',
+        artistId:
+            asNumber(raw.artistId, undefined) ??
+            asNumber(raw.artist_id, undefined) ??
+            null,
 
         albumName: asString(albumNameVal, null),
         albumArtwork: asString(albumArtworkVal, null),
@@ -218,6 +238,7 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
             : null,
 
         spotifyTrackId: asString(spotifyTrackIdVal, null),
+        spotifyArtistId: asString(spotifyArtistIdVal, null),
 
         intro: asString(introVal, null),
         detail: asString(detailVal, null),
@@ -225,7 +246,12 @@ export function normalizeTrack(raw: RawTrack): LoadedTrack {
 
         introKey: asAudioKey(introKeyVal),
         detailKey: asAudioKey(detailKeyVal),
+        shortDetailKey: asAudioKey(shortDetailKeyVal),
         artistKey: asAudioKey(artistKeyVal),
+
+        introUrl: asString(introUrlVal, null),
+        detailUrl: asString(detailUrlVal, null),
+        shortDetailUrl: asString(shortDetailUrlVal, null),
 
     };
 }

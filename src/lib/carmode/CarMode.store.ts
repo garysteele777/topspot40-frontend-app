@@ -36,6 +36,11 @@ export type CarModeTrack = LoadedTrack & {
     decadeSlug?: string | null;
     decadeName?: string | null;
 
+    // Backend-owned Interactive Radio set metadata
+    setNumber?: number | null;
+    blockPosition?: number | null;
+    blockSize?: number | null;
+
     // Collections radio metadata
     collection_name?: string | null;
     collection_group_name?: string | null;

@@ -3,15 +3,23 @@
     import CarModeTrackMeta from './CarModeTrackMeta.svelte';
     import CarModeNarration from './CarModeNarration.svelte';
     import CarModeNarrationModal from './CarModeNarrationModal.svelte';
-    import CarModeTicker from './CarModeTicker.svelte';
+    import ReportProblemButton from './ReportProblemButton.svelte';
     import {favoritesStore} from '$lib/favorites/favorites';
+    import TrackListPanel from '$lib/components/shared/TrackListPanel.svelte';
 
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
     import type {PlaybackPhase} from '$lib/helpers/car/types';
+    import type {Language} from '$lib/stores/selection';
+    import {formatClassicTrackPosition} from '$lib/carmode/classicViewLabels';
 
     import {currentSelection} from '$lib/carmode/CarMode.store';
     import {programHistoryStore} from '$lib/carmode/programHistory';
-    import {PROGRAM_TYPES} from '$lib/types/program';
+    import {createTrackListCsv, downloadCsv} from '$lib/program/trackListCsv';
+    import {
+        buildProgramHistoryKey,
+        calculateProgramProgress,
+        isProgramRankPlayed
+    } from '$lib/program/history';
 
 
     import {
@@ -20,6 +28,18 @@
         type ProgramType
     } from '$lib/favorites/favorites';
 
+    type ProgressCopy = {
+        completed: string;
+        of: string;
+        remaining: string;
+    };
+
+    const progressCopy: Record<Language, ProgressCopy> = {
+        en: {completed: 'Completed', of: 'of', remaining: 'Remaining'},
+        es: {completed: 'Completadas', of: 'de', remaining: 'Restantes'},
+        ptbr: {completed: 'Concluídas', of: 'de', remaining: 'Restantes'}
+    };
+
     /* ─────────────────────────────────────────────
        Props
     ───────────────────────────────────────────── */
@@ -27,6 +47,7 @@
     export let tracks: CarModeTrack[] = [];
     export let phase: PlaybackPhase | null = null;
     export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
+    export let activePlayMode: 'guided' | 'auto' | null = null;
 
     export let isPlaying: boolean;
     export let elapsed: number;
@@ -39,11 +60,23 @@
     export let onBackToOptions: () => void;
 
     export let showNarrationModal: boolean;
+    export let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
     export let setShowNarrationModal: (v: boolean) => void;
+    export let onReportProblem: (() => void) | undefined;
+    export let onReportNarration: ((mode: 'intro' | 'detail' | 'artist') => void) | undefined;
+    export let openTrackList = false;
+    export let onTrackListClosed: (() => void) | undefined;
 
     let isFav = false;
     let favBurst = false;
     let showTrackList = false;
+
+    $: if (openTrackList) showTrackList = true;
+
+    function closeTrackList(): void {
+        showTrackList = false;
+        onTrackListClosed?.();
+    }
 
     $: favoriteRefresh = $favoritesStore;
 
@@ -53,41 +86,25 @@
 
     let completed = 0;
     let programTotal = 0;
+    let programProgress = {completed: 0, total: 0, remaining: 0, percent: 0};
 
     $: isArtistSpotlight = $currentSelection?.mode === 'artist_spotlight';
 
     $: {
-        const sel = $currentSelection;
-        let key: string | null = null;
-
-        if (sel?.mode === 'decade_genre') {
-            const d = sel.context?.decade;
-            const g = sel.context?.genre;
-            if (d && g) key = `DG|${d}|${g}`;
-        }
-
-        if (sel?.mode === 'collection') {
-            const collection = sel.context?.collection_slug ?? sel.context?.collection;
-            const group = sel.context?.collection_group_slug ?? sel.context?.collectionCategory;
-            if (collection && group) key = `COL|${collection}|${group}`;
-        }
-
-        if (!key) {
-            completed = 0;
-            programTotal = 0;
-        } else {
-            const program = $programHistoryStore.find(p => p.key === key);
-            programTotal = tracks.length;
-            completed = program?.playedRanks.length ?? 0;
-        }
+        programProgress = calculateProgramProgress(
+            $programHistoryStore,
+            buildProgramHistoryKey($currentSelection),
+            tracks.length
+        );
+        completed = programProgress.completed;
+        programTotal = programProgress.total;
     }
 
-    $: remaining = Math.max(0, programTotal - completed);
+    $: remaining = programProgress.remaining;
 
-    $: percent =
-        programTotal > 0
-            ? (completed / programTotal) * 100
-            : 0;
+    $: percent = programProgress.percent;
+
+    $: localizedProgressCopy = progressCopy[$currentSelection?.language ?? 'en'];
 
     /* ─────────────────────────────────────────────
        Favorites logic (Decade only)
@@ -110,6 +127,37 @@
             : programType === 'COL'
                 ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
                 : null;
+
+    function displayName(value: string): string {
+        return value
+            .replaceAll('_', ' ')
+            .replaceAll('-', ' ')
+            .replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    $: trackListProgramLabel =
+        $currentSelection?.mode === 'decade_genre'
+            ? `Nostalgia: ${$currentSelection?.context?.decade ?? ''} ${displayName($currentSelection?.context?.genre ?? '')}`.trim()
+            : $currentSelection?.mode === 'collection'
+                ? `Collections: ${$currentSelection?.context?.collection_slug ?? ''}`
+                : $currentSelection?.mode === 'artist_spotlight'
+                    ? `Artist Spotlight: ${
+                        $currentSelection?.context?.artist_name ??
+                        currentTrack?.artistName ??
+                        ''
+                    }`
+                    : '';
+
+    $: trackListExportName =
+        trackListProgramLabel
+            ? `TopSpot40 ${trackListProgramLabel.replace(':', '')}.csv`
+            : 'TopSpot40 Track List.csv';
+
+    function exportCsv(): void {
+        if (tracks.length === 0) return;
+
+        downloadCsv(createTrackListCsv(tracks), trackListExportName);
+    }
 
 
     $: {
@@ -159,40 +207,12 @@
     }
 
 
-    $: isFavoritesProgram =
-        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG ||
-        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_COL;
-
-
-    $: favoriteTickerText =
-        isFavoritesProgram && currentTrack
-            ? `From Rank #${currentTrack.sourceRank ?? currentTrack.rank}
-           • Decade: ${currentTrack.decadeName ?? currentTrack.decadeSlug ?? ''}
-           • Genre: ${currentTrack.genreName ?? currentTrack.genreSlug ?? ''}`
-            : null;
-
     function isPlayed(rank: number): boolean {
-        const sel = $currentSelection;
-        if (!sel) return false;
-
-        let key: string | null = null;
-
-        if (sel.mode === 'decade_genre') {
-            const decade = sel.context?.decade;
-            const genre = sel.context?.genre;
-            if (decade && genre) key = `DG|${decade}|${genre}`;
-        }
-
-        if (sel.mode === 'collection') {
-            const collection = sel.context?.collection_slug ?? sel.context?.collection;
-            const group = sel.context?.collection_group_slug ?? sel.context?.collectionCategory;
-            if (collection && group) key = `COL|${collection}|${group}`;
-        }
-
-        if (!key) return false;
-
-        const program = $programHistoryStore.find(p => p.key === key);
-        return program?.playedRanks.includes(rank) ?? false;
+        return isProgramRankPlayed(
+            $programHistoryStore,
+            buildProgramHistoryKey($currentSelection),
+            rank
+        );
     }
 
 
@@ -234,7 +254,9 @@
                 onPrev={onPrev}
                 onNext={onNext}
                 onPlayPause={onPlayPause}
+                {activePlayMode}
                 hideMeta={true}
+                language={$currentSelection?.language ?? 'en'}
         />
     </div>
 
@@ -268,7 +290,11 @@
             </button>
 
             <span>
-            {currentTrack.rank} of {tracks.length}
+            {formatClassicTrackPosition(
+                currentTrack.rank,
+                tracks.length,
+                $currentSelection?.language ?? 'en'
+            )}
                 {#if currentTrack.yearReleased}
                 • {currentTrack.yearReleased}
             {/if}
@@ -286,25 +312,16 @@
                     {duration}
                     {progress}
                     {phase}
+                    language={$currentSelection?.language ?? 'en'}
             />
         </div>
     </div>
 
-    <!-- Phase ticker -->
-    <CarModeTicker
-            text={
-        favoriteTickerText ??
-        phase ??
-        ''
-    }
-    />
-
-
     {#if !isRadioMode && !isArtistSpotlight}
         <div class="progress-line">
-            Completed {completed} of {programTotal} ({Math.round(percent)}%)
+            {localizedProgressCopy.completed} {completed} {localizedProgressCopy.of} {programTotal} ({Math.round(percent)}%)
             <span class="dot">•</span>
-            Remaining {remaining}
+            {localizedProgressCopy.remaining} {remaining}
         </div>
 
         <div class="overall-progress">
@@ -320,13 +337,18 @@
                 onBackToOptions={onBackToOptions}
                 onOpenModal={() => setShowNarrationModal(true)}
                 onOpenTrackList={!isRadioMode ? (() => showTrackList = true) : undefined}
+                language={$currentSelection?.language ?? 'en'}
         />
     </div>
+    <div class="report-slot"><ReportProblemButton language={$currentSelection?.language ?? 'en'} onReport={() => onReportProblem?.()} /></div>
 
     <CarModeNarrationModal
             track={currentTrack}
+            languages={$currentSelection?.languages ?? [$currentSelection?.language ?? 'en']}
             open={showNarrationModal}
+            initialMode={narrationModalInitialMode}
             onClose={() => setShowNarrationModal(false)}
+            onReport={(mode) => onReportNarration?.(mode)}
     />
 
     {#if showTrackList}
@@ -341,81 +363,34 @@
                         </div>
                     </div>
 
-                    <button
-                            class="close-btn"
-                            on:click={() => showTrackList = false}
-                    >
-                        ✕
-                    </button>
-                </div>
-
-                <div class="tracklist-scroll">
-
-                    <div class="track-row track-row-header">
-                        <span>Played</span>
-                        <span>Fav</span>
-                        <span>Rank</span>
-                        <span>Title</span>
-                        <span>Artist</span>
-                    </div>
-
-                    {#each [...tracks].sort((a, b) => a.rank - b.rank) as t}
-
-                        <div
-                                class="track-row"
-                                role="button"
-                                tabindex="0"
-                                class:active={currentTrack?.rankingId === t.rankingId}
-                                on:click={() => {
-                                    onJumpToTrack?.(t);
-                                    showTrackList = false;
-                                }}
-                                on:keydown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault();
-                                        onJumpToTrack?.(t);
-                                        showTrackList = false;
-                                    }
-                                }}
+                    <div class="tracklist-actions">
+                        <button
+                                class="export-btn"
+                                on:click={exportCsv}
+                                type="button"
                         >
-    <span class="played-col">
-        {#if isPlayed(t.rank)}
-            ✓
-        {/if}
-    </span>
+                            ↓ Export CSV
+                        </button>
 
-                            <button
-                                    type="button"
-                                    class="fav-col"
-                                    class:active={
-            favoriteRefresh &&
-            programType &&
-            programGroup &&
-            t.rankingId != null &&
-            isFavorite(programType, programGroup, t.rankingId)
-        }
-                                    on:click|stopPropagation={() => {
-                                        console.log('FAV CLICK', {
-                                            programType,
-                                            programGroup,
-                                            rankingId: t.rankingId,
-                                            track: t
-                                        });
-
-                                        if (programType && programGroup && t.rankingId != null) {
-                                            toggleFavorite(programType, programGroup, t.rankingId);
-                                        }
-                                    }}
-                            >
-                                ★
-                            </button>
-
-                            <span class="rank">#{t.rank}</span>
-                            <span class="title">{t.trackName}</span>
-                            <span class="artist">{t.artistName}</span>
-                        </div>
-                    {/each}
+                        <button
+                                class="close-btn"
+                                on:click={closeTrackList}
+                                type="button"
+                        >
+                            ✕
+                        </button>
+                    </div>
                 </div>
+
+                <TrackListPanel
+                        {tracks}
+                        {currentTrack}
+                        {onJumpToTrack}
+                        {isPlayed}
+                        {programType}
+                        {programGroup}
+                        closeOnJump={closeTrackList}
+                />
             </div>
         </div>
     {/if}
@@ -423,6 +398,7 @@
 
 </div>
 <style>
+    .report-slot { display:flex; justify-content:center; margin-top:12px; }
     /* ─────────────────────────────────────────────
        Progress + Next Section
     ───────────────────────────────────────────── */
@@ -583,14 +559,19 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 14px;
+        padding: 8px 14px 4px;
         border-bottom: 1px solid rgba(207, 184, 124, 0.25);
     }
 
     .tracklist-header h3 {
         margin: 0;
-        color: #cfb87c;
-        font-size: 1rem;
+        line-height: 1.1;
+    }
+
+    .tracklist-subtitle {
+        margin-top: 2px;
+        font-size: 0.8rem;
+        opacity: 0.7;
     }
 
     .close-btn {
@@ -602,88 +583,35 @@
         padding: 4px 10px;
     }
 
-    .tracklist-scroll {
-        max-height: 60vh;
-        overflow-y: auto;
-        padding: 8px;
-    }
-
-    .track-row {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 64px 44px 56px 1fr 1fr;
-        gap: 8px;
-        align-items: center;
-        text-align: left;
-        padding: 9px 10px;
-        border: none;
-        border-radius: 10px;
-        background: transparent;
-        color: #eee;
-        cursor: pointer;
-    }
-
-    .track-row:hover {
-        background: rgba(207, 184, 124, 0.12);
-    }
-
-    .track-row.active {
-        background: rgba(29, 185, 84, 0.18);
-        outline: 1px solid rgba(29, 185, 84, 0.45);
-    }
-
-    .rank {
-        color: #cfb87c;
-        font-weight: 700;
-    }
-
-    .title {
-        font-weight: 600;
-    }
-
-    .artist {
-        opacity: 0.75;
-    }
-
-    .track-row-header {
-        color: #cfb87c;
-        font-size: 0.75rem;
-        font-weight: 700;
-        opacity: 0.9;
-        cursor: default;
-    }
-
-    .played-col,
-    .fav-col {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        min-height: 24px;
-    }
-
-    .played-col {
-        opacity: 0.7;
-    }
-
-    .fav-col {
-        border: none;
-        background: transparent;
-        color: rgba(255, 255, 255, 0.35);
-        cursor: pointer;
-        font-size: 1rem;
-        width: 100%;
-    }
-
-    .fav-col.active {
-        color: #cfb87c;
-    }
 
     .tracklist-subtitle {
         margin-top: 2px;
         font-size: 0.72rem;
         color: #d1d5db;
         opacity: 0.72;
+    }
+
+    .tracklist-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .export-btn {
+        padding: 7px 11px;
+        color: #f7dc82;
+        background: #1c1a16;
+        border: 1px solid #8b6d24;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .export-btn:hover,
+    .export-btn:focus-visible {
+        border-color: #d9b84f;
+        color: #fff2b2;
     }
 
 </style>

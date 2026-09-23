@@ -1,37 +1,84 @@
 <script>
-    // No imports, no components
+    import { submitFeedback as submitFeedbackRequest } from '$lib/api/feedback';
+    import posthog from 'posthog-js';
 
     let showContactUsModal = false;
     let showFeedbackForm = false;
     let showThankYou = false;
+    let submitting = false;
+    let error = '';
 
     let feedbackText = '';
 
-    function toggleContactUsModal() {
-        showContactUsModal = !showContactUsModal;
-        // Reset when modal opens/closes
+    function resetFeedbackState() {
         showFeedbackForm = false;
         showThankYou = false;
+        submitting = false;
+        error = '';
         feedbackText = '';
+    }
+
+    function toggleContactUsModal() {
+        if (showContactUsModal) {
+            closeContactUsModal();
+            return;
+        }
+
+        showContactUsModal = true;
+        resetFeedbackState();
     }
 
     function openFeedbackForm() {
         showFeedbackForm = true;
         showThankYou = false;
+        error = '';
     }
 
-    function submitFeedback() {
-        if (feedbackText.trim() === '') return; // simple validation
-        showThankYou = true;
-        showFeedbackForm = false;
+    async function submitFeedback() {
+        const message = feedbackText.trim();
+
+        if (message === '') {
+            error = 'Please enter a message before sending.';
+            return;
+        }
+
+        error = '';
+        submitting = true;
+
+        try {
+            await submitFeedbackRequest({
+                type: 'feedback',
+                category: 'contact',
+                title: 'Landing page contact message',
+                message,
+                route: window.location.pathname
+            });
+
+            try {
+                posthog.capture('feedback_submitted', {
+                    source: 'landing_contact',
+                    category: 'contact'
+                });
+            } catch (analyticsError) {
+                console.error('Unable to record feedback submission:', analyticsError);
+            }
+
+            showThankYou = true;
+            showFeedbackForm = false;
+            feedbackText = '';
+        } catch (err) {
+            error =
+                err instanceof Error
+                    ? err.message
+                    : 'Unable to send your feedback. Please try again.';
+        } finally {
+            submitting = false;
+        }
     }
 
     function closeContactUsModal() {
         showContactUsModal = false;
-        //reset
-        showFeedbackForm = false;
-        showThankYou = false;
-        feedbackText = '';
+        resetFeedbackState();
     }
 </script>
 
@@ -39,7 +86,7 @@
 <nav class="header">
     <div class="logo">
         <a href="/">
-            <img src="/favicon.ico" alt="TopSpot40 Logo"/>
+            <img src="/old-dog-icon.png" alt="TopSpot40 Logo"/>
             <span>TopSpot40</span>
         </a>
     </div>
@@ -81,8 +128,11 @@
                 <h2>Feedback</h2>
                 <textarea placeholder="Type your feedback here..." bind:value={feedbackText} rows="6"
                 ></textarea>
-                <button  type="button" on:click={submitFeedback} class="submit-btn" disabled={feedbackText.trim() === ''}
-                >Send Feedback
+                {#if error}
+                    <p class="error">{error}</p>
+                {/if}
+                <button  type="button" on:click={submitFeedback} class="submit-btn" disabled={feedbackText.trim() === '' || submitting}
+                >{submitting ? 'Sending...' : 'Send Feedback'}
                 </button
                 >
             {:else}
@@ -280,5 +330,11 @@
     .feedback-btn:hover {
         background-color: #1db954;
         color: black;
+    }
+
+    .error {
+        color: #ff4d4f;
+        margin: 0.75rem 0 0;
+        font-size: 0.9rem;
     }
 </style>

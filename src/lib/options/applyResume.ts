@@ -1,13 +1,18 @@
 import type {ResumeState} from '$lib/utils/smartResume';
 import type {SelectionState} from '$lib/stores/selection';
 import {PROGRAM_TYPES} from '$lib/types/program';
+import {
+    narrationFlagsFromVoices,
+    normalizeSelectedVoices
+} from '$lib/playbackPreferences';
 
 export function buildSelectionFromResume(
     resumed: ResumeState | null
 ): SelectionState | null {
     if (!resumed) return null;
 
-    const {voices} = resumed;
+    const voices = normalizeSelectedVoices(resumed.voices);
+    const narrationFlags = narrationFlagsFromVoices(voices);
 
     return {
         programType:
@@ -18,17 +23,17 @@ export function buildSelectionFromResume(
         mode: resumed.mode,
         context: resumed.context ?? null,
 
-        playIntro: voices.includes('intro'),
-        playDetail: voices.includes('detail'),
-        playArtistDescription: voices.includes('artist'),
+        ...narrationFlags,
 
-        textIntro: voices.includes('intro'),
-        textDetail: voices.includes('detail'),
-        textArtistDescription: voices.includes('artist'),
+        textIntro: narrationFlags.playIntro,
+        textDetail: narrationFlags.playDetail,
+        textArtistDescription: narrationFlags.playArtistDescription,
 
         voices,
         language: resumed.language,
         languages: resumed.languages ?? [resumed.language],
+        // Preserve malformed-present snapshot values for compatibility.
+        // Input hardening at this persistence boundary is intentionally deferred.
         playbackOrder: resumed.playbackOrder,
 
         startRank: resumed.startRank,

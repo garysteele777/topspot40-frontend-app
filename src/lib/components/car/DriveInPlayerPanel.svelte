@@ -1,0 +1,915 @@
+<script lang="ts">
+    import CarModeNarrationModal from './CarModeNarrationModal.svelte';
+    import DriveInJukeboxPanel from '$lib/components/car/DriveInJukeboxPanel.svelte';
+    import ReportProblemButton from './ReportProblemButton.svelte';
+    import {currentSelection} from '$lib/carmode/CarMode.store';
+    import {programHistoryStore} from '$lib/carmode/programHistory';
+    import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import type {PlaybackPhase} from '$lib/helpers/car/types';
+    import type {ProgramType} from '$lib/favorites/favorites';
+    import {buildProgramHistoryKey, isProgramRankPlayed} from '$lib/program/history';
+    import {narrationActionCopy} from '$lib/carmode/narrationActionCopy';
+    import type {Language} from '$lib/stores/selection';
+    import {
+        classicViewCopy,
+        formatDriveInTrackPosition
+    } from '$lib/carmode/classicViewLabels';
+    import {getCarModePlaybackPhaseCopy} from '$lib/carmode/playbackPhaseCopy';
+
+    type DriveInTransportCopy = {
+        previous: string;
+        previousAria: string;
+        guided: string;
+        guidedAria: string;
+        guidedPauseAria: string;
+        auto: string;
+        autoAria: string;
+        autoPauseAria: string;
+        pause: string;
+        next: string;
+        nextAria: string;
+        previousUnavailable: string;
+    };
+
+    const driveInTransportCopy: Record<Language, DriveInTransportCopy> = {
+        en: {
+            previous: 'Previous',
+            previousAria: 'Previous track',
+            guided: 'Guided Play',
+            guidedAria: 'Start Guided Playback',
+            guidedPauseAria: 'Pause Guided Playback',
+            auto: 'Auto Play',
+            autoAria: 'Start Auto Play',
+            autoPauseAria: 'Pause Auto Play',
+            pause: 'Pause',
+            next: 'Next',
+            nextAria: 'Next track',
+            previousUnavailable: 'Previous track is unavailable for Radio'
+        },
+        es: {
+            previous: 'Anterior',
+            previousAria: 'Pista anterior',
+            guided: 'Guiada',
+            guidedAria: 'Iniciar reproducción guiada',
+            guidedPauseAria: 'Pausar reproducción guiada',
+            auto: 'Automática',
+            autoAria: 'Iniciar reproducción automática',
+            autoPauseAria: 'Pausar reproducción automática',
+            pause: 'Pausa',
+            next: 'Siguiente',
+            nextAria: 'Pista siguiente',
+            previousUnavailable: 'La pista anterior no está disponible para Radio'
+        },
+        ptbr: {
+            previous: 'Anterior',
+            previousAria: 'Faixa anterior',
+            guided: 'Guiada',
+            guidedAria: 'Iniciar reprodução guiada',
+            guidedPauseAria: 'Pausar reprodução guiada',
+            auto: 'Automática',
+            autoAria: 'Iniciar reprodução automática',
+            autoPauseAria: 'Pausar reprodução automática',
+            pause: 'Pausar',
+            next: 'Próxima',
+            nextAria: 'Próxima faixa',
+            previousUnavailable: 'A faixa anterior não está disponível no Rádio'
+        }
+    };
+
+    const upNextCopy: Record<Language, (rank: number, count: number) => string> = {
+        en: (rank, count) => `Up next: #${rank} (${count})`,
+        es: (rank, count) => `Sigue: #${rank} (${count})`,
+        ptbr: (rank, count) => `A seguir: #${rank} (${count})`
+    };
+
+    export let currentTrack: CarModeTrack | null = null;
+    export let tracks: CarModeTrack[] = [];
+    export let phase: PlaybackPhase | null = null;
+    export let isPlaying = false;
+    export let elapsed = 0;
+    export let duration = 0;
+    export let progress = 0;
+    export let programTitle = '';
+    export let language: Language = 'en';
+
+    export let onPrev: () => void;
+    export let onNext: () => void;
+    export let onPlayPause: () => void;
+    export let onAutoPlay: () => void;
+    export let onBackToOptions: () => void;
+    export let onUseClassicView: () => void;
+    export let radioAutoOnly = false;
+    export let radioSetNumber: number | null = null;
+    export let radioSetPosition: number | null = null;
+    export let radioSetSize: number | null = null;
+    export let radioSetLabel = '';
+    export let radioLoadPending = false;
+    export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
+
+    export let showNarrationModal = false;
+    export let narrationModalInitialMode: 'intro' | 'detail' | 'artist' = 'intro';
+    export let setShowNarrationModal: (value: boolean) => void;
+    export let activePlayMode: 'guided' | 'auto' | null = null;
+    export let onReportProblem: (() => void) | undefined;
+    export let onReportNarration: ((mode: 'intro' | 'detail' | 'artist') => void) | undefined;
+    export let openTrackList = false;
+    export let onTrackListClosed: (() => void) | undefined;
+    export let requests: CarModeTrack[] = [];
+    export let onAddRequest: ((track: CarModeTrack) => void) | undefined = undefined;
+    export let onMoveRequest: ((index: number, direction: -1 | 1) => void) | undefined = undefined;
+    export let onRemoveRequest: ((index: number) => void) | undefined = undefined;
+    export let onClearRequests: (() => void) | undefined = undefined;
+
+    let showTrackList = false;
+    let openRequestsView = false;
+
+    $: if (openTrackList) showTrackList = true;
+    $: pendingRequests = requests.filter(request =>
+        request.rankingId != null && currentTrack?.rankingId != null
+            ? request.rankingId !== currentTrack.rankingId
+            : request.rank !== currentTrack?.rank
+    );
+
+    function closeTrackList(): void {
+        showTrackList = false;
+        onTrackListClosed?.();
+    }
+
+    function openRequests(): void {
+        openRequestsView = true;
+        showTrackList = true;
+    }
+
+    $: transportCopy = driveInTransportCopy[language];
+
+    $: narrationActive = [
+        'prelude',
+        'set_intro',
+        'collection_intro',
+        'liner',
+        'intro',
+        'detail',
+        'artist'
+    ].includes(phase ?? '');
+
+    const driveInPhaseCopy: Record<Language, Partial<Record<PlaybackPhase, string>>> = {
+        en: {intro: 'Track Intro', detail: 'More About the Song', artist: 'Artist Bio', collection_intro: 'Collection Introduction', set_intro: 'Program Introduction', liner: 'TopSpot40'},
+        es: {intro: 'Introducción de la canción', detail: 'Más sobre la canción', artist: 'Biografía del artista', collection_intro: 'Introducción de la colección', set_intro: 'Introducción del programa', liner: 'TopSpot40'},
+        ptbr: {intro: 'Introdução da música', detail: 'Mais sobre a música', artist: 'Biografia do artista', collection_intro: 'Introdução da coleção', set_intro: 'Introdução do programa', liner: 'TopSpot40'}
+    };
+
+    $: phaseLabel = phase
+        ? driveInPhaseCopy[language][phase] ?? getCarModePlaybackPhaseCopy(phase, language).meta
+        : '';
+
+    $: effectiveDuration =
+        phase === 'track' && currentTrack?.durationMs
+            ? Math.floor(currentTrack.durationMs / 1000)
+            : duration;
+
+    $: programType =
+        $currentSelection?.mode === 'decade_genre'
+            ? ('DG' as ProgramType)
+            : $currentSelection?.mode === 'collection'
+                ? ('COL' as ProgramType)
+                : null;
+
+    $: programGroup =
+        programType === 'DG'
+            ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
+            : programType === 'COL'
+                ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
+                : null;
+
+    function displayName(value: string): string {
+        return value
+            .replaceAll('_', ' ')
+            .replaceAll('-', ' ')
+            .replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    $: trackListProgramLabel =
+        $currentSelection?.mode === 'decade_genre'
+            ? `Nostalgia: ${$currentSelection?.context?.decade ?? ''} ${displayName($currentSelection?.context?.genre ?? '')}`.trim()
+            : $currentSelection?.mode === 'collection'
+                ? `Collections: ${programTitle}`
+                : $currentSelection?.mode === 'artist_spotlight'
+                    ? `Artist Spotlight: ${
+                        $currentSelection?.context?.artist_name ??
+                        currentTrack?.artistName ??
+                        programTitle
+                    }`
+                    : programTitle;
+
+    $: trackListExportName =
+        trackListProgramLabel
+            ? `TopSpot40 ${trackListProgramLabel.replace(':', '')}.csv`
+            : 'TopSpot40 Track List.csv';
+
+    $: printCategory = $currentSelection?.mode === 'decade_genre'
+        ? 'NOSTALGIA'
+        : $currentSelection?.mode === 'collection'
+            ? 'COLLECTIONS'
+            : $currentSelection?.mode === 'artist_spotlight'
+                ? 'ARTIST SPOTLIGHT'
+                : '';
+    $: printTitle = $currentSelection?.mode === 'decade_genre'
+        ? `${$currentSelection?.context?.decade ?? ''} ${displayName($currentSelection?.context?.genre ?? '')}`.trim()
+        : programTitle;
+
+
+    function formatTime(seconds: number): string {
+        if (!seconds || seconds < 0) return '0:00';
+        const minutes = Math.floor(seconds / 60);
+        const remainder = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${remainder}`;
+    }
+
+    function isPlayed(rank: number): boolean {
+        return isProgramRankPlayed(
+            $programHistoryStore,
+            buildProgramHistoryKey($currentSelection),
+            rank
+        );
+    }
+
+    function jumpToTrack(track: CarModeTrack): void {
+        closeTrackList();
+        onJumpToTrack?.(track);
+    }
+</script>
+
+<section class="drive-in-shell" aria-label="TopSpot40 Drive-In View">
+    <div class="drive-in-stage">
+        <img
+                class="drive-in-background"
+                src="/images/car/drive-in-background.png"
+                alt=""
+        />
+
+        <div class="movie-screen">
+            <img
+                    src={currentTrack?.albumArtwork ?? '/default_album.png'}
+                    alt={currentTrack?.trackName
+                    ? `${currentTrack.trackName} album artwork`
+                    : 'Album artwork'}
+            />
+        </div>
+
+        <div class="marquee-copy">
+            <span>{classicViewCopy[language].nowPlaying}</span>
+            <strong>{programTitle}</strong>
+        </div>
+
+        <div
+                class:narrating={narrationActive}
+                class="speaker-pulse"
+                aria-hidden="true"
+        >
+            <span class="pulse-ring ring-one"></span>
+            <span class="pulse-ring ring-two"></span>
+            <span class="pulse-ring ring-three"></span>
+            <span class="speaker-glow"></span>
+        </div>
+
+        <div class="track-copy">
+            <h1>{currentTrack?.trackName ?? 'Ready to begin'}</h1>
+            <h2>{currentTrack?.artistName ?? 'TopSpot40'}</h2>
+
+            {#if radioSetNumber && radioSetLabel}
+                <div class="radio-set-info">Set {radioSetNumber}: {radioSetLabel}</div>
+            {/if}
+
+            {#if currentTrack}
+                <div class="rank">
+                    {radioSetPosition && radioSetSize
+                        ? formatDriveInTrackPosition(radioSetPosition, radioSetSize, language)
+                        : formatDriveInTrackPosition(currentTrack.rank, tracks.length, language)}
+                    {#if currentTrack.yearReleased}
+                        <span>•</span>
+                        {currentTrack.yearReleased}
+                    {/if}
+                </div>
+            {/if}
+
+            {#if phaseLabel}
+                <div class="phase-label">{phaseLabel}</div>
+            {/if}
+        </div>
+
+        <div class="track-progress">
+            <span>{formatTime(elapsed)}</span>
+            <div class="progress-rail" aria-label="Playback progress">
+                <div class="progress-fill" style={`width: ${progress}%`}></div>
+            </div>
+            <span>{formatTime(effectiveDuration)}</span>
+        </div>
+
+        <div class="primary-controls">
+            <button
+                    type="button"
+                    class:transport-unavailable={radioAutoOnly}
+                    disabled={radioAutoOnly}
+                    on:click={onPrev}
+                    aria-label={radioAutoOnly
+                        ? `${transportCopy.previousAria}. ${transportCopy.previousUnavailable}`
+                        : transportCopy.previousAria}
+                    title={radioAutoOnly ? transportCopy.previousUnavailable : undefined}
+            >
+                <span class="control-icon">|◀</span>
+                <span>{transportCopy.previous}</span>
+            </button>
+
+            {#if !radioAutoOnly}
+            <button
+                    type="button"
+                    class="play-control"
+                    class:playing={isPlaying && activePlayMode === 'guided'}
+                    on:click={onPlayPause}
+                    aria-label={
+            isPlaying && activePlayMode === 'guided'
+                ? transportCopy.guidedPauseAria
+                : transportCopy.guidedAria
+        }
+            >
+    <span class="control-icon">
+        {isPlaying && activePlayMode === 'guided' ? 'Ⅱ' : '▶'}
+    </span>
+                <span>
+        {isPlaying && activePlayMode === 'guided' ? transportCopy.pause : transportCopy.guided}
+    </span>
+            </button>
+            {/if}
+
+            <button
+                    type="button"
+                    class="play-control auto-play-control"
+                    class:playing={isPlaying && activePlayMode === 'auto'}
+                    disabled={radioLoadPending}
+                    on:click={onAutoPlay}
+                    aria-label={
+            isPlaying && activePlayMode === 'auto'
+                ? transportCopy.autoPauseAria
+                : transportCopy.autoAria
+        }
+            >
+    <span class="control-icon">
+        {isPlaying && activePlayMode === 'auto' ? 'Ⅱ' : '▶'}
+    </span>
+                <span>
+        {isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
+    </span>
+            </button>
+            <button
+                    type="button"
+                    disabled={radioAutoOnly && (radioLoadPending || phase !== 'track')}
+                    on:click={onNext}
+                    aria-label={transportCopy.nextAria}
+            >
+                <span class="control-icon">▶|</span>
+                <span>{transportCopy.next}</span>
+            </button>
+
+            {#if !radioAutoOnly}
+            <button
+                    type="button"
+                    class="gold-control"
+                    on:click={() => setShowNarrationModal(true)}
+            >
+                <span class="control-icon">ⓘ</span>
+                <span>{narrationActionCopy[language].moreInfo}</span>
+            </button>
+
+            <button
+                    type="button"
+                    class="gold-control"
+                    on:click={() => (showTrackList = true)}
+            >
+                <span class="control-icon">☷</span>
+                <span>{narrationActionCopy[language].trackList}</span>
+            </button>
+
+            {#if pendingRequests.length}
+                <button type="button" class="gold-control up-next-control" on:click={openRequests}>
+                    <span>{upNextCopy[language](pendingRequests[0].rank, pendingRequests.length)}</span>
+                </button>
+            {/if}
+            {/if}
+        </div>
+
+        <div class:radio-actions={radioAutoOnly} class="secondary-controls">
+            <button type="button" class="back-button" on:click={onBackToOptions}>
+                ← {narrationActionCopy[language].changeMusic}
+            </button>
+
+            {#if radioAutoOnly}
+                <div class="radio-report-action">
+                    <ReportProblemButton
+                            language={$currentSelection?.language ?? 'en'}
+                            onReport={() => onReportProblem?.()}
+                    />
+                </div>
+            {:else}
+            <div class="view-switch" aria-label={classicViewCopy[language].playbackView}>
+                    <button type="button" on:click={onUseClassicView}>{classicViewCopy[language].carView}</button>
+                    <span aria-hidden="true"></span>
+                <button type="button" class="active" aria-current="true">
+                    {classicViewCopy[language].driveInView}
+                </button>
+            </div>
+            {/if}
+        </div>
+    </div>
+    {#if !radioAutoOnly}
+    <div class="drive-in-report-slot">
+        <ReportProblemButton
+                language={$currentSelection?.language ?? 'en'}
+                onReport={() => onReportProblem?.()}
+        />
+    </div>
+    {/if}
+</section>
+
+<CarModeNarrationModal
+        track={currentTrack}
+        languages={$currentSelection?.languages ?? [
+        $currentSelection?.language ?? 'en'
+    ]}
+        open={showNarrationModal}
+        initialMode={narrationModalInitialMode}
+        onClose={() => setShowNarrationModal(false)}
+        onReport={(mode) => onReportNarration?.(mode)}
+/>
+
+{#if showTrackList}
+    <DriveInJukeboxPanel
+            {tracks}
+            {currentTrack}
+            onJumpToTrack={jumpToTrack}
+            onClose={closeTrackList}
+            {isPlayed}
+            {programType}
+            {programGroup}
+            programLabel={trackListProgramLabel}
+            catalogLookupName={printTitle}
+            {printCategory}
+            {printTitle}
+            exportFileName={trackListExportName}
+            {language}
+            {requests}
+            {onAddRequest}
+            {onMoveRequest}
+            {onRemoveRequest}
+            {onClearRequests}
+            openRequests={openRequestsView}
+            onRequestsViewOpened={() => (openRequestsView = false)}
+    />
+{/if}
+
+<style>
+    .drive-in-shell {
+        width: 100%;
+        overflow: hidden;
+        background: #030303;
+    }
+
+    .drive-in-stage {
+        position: relative;
+        width: min(94vw, calc((100dvh - 28px) * 1.780618));
+        max-width: 1672px;
+        aspect-ratio: 1672 / 939;
+        margin: -2.8rem auto 0;
+        overflow: visible;
+        color: #fff;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .drive-in-background {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center top;
+        user-select: none;
+        pointer-events: none;
+    }
+
+    .movie-screen {
+        position: absolute;
+        z-index: 2;
+        left: 30.25%;
+        top: 10.8%;
+        width: 38.7%;
+        height: 37.2%;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+    }
+
+    .movie-screen img {
+        display: block;
+        width: 54%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        filter: brightness(0.96) contrast(1.03);
+    }
+
+    .marquee-copy {
+        position: absolute;
+        z-index: 3;
+        left: 74.9%;
+        top: 40.1%;
+        width: 21.2%;
+        height: 7.25%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #17110b;
+        text-align: center;
+        text-transform: uppercase;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+        overflow: hidden;
+    }
+
+    .marquee-copy span {
+        font-size: clamp(7px, 0.8vw, 15px);
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        line-height: 1;
+    }
+
+    .marquee-copy strong {
+        width: 94%;
+        margin-top: 0.22em;
+        font-size: clamp(8px, 1.05vw, 19px);
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .speaker-pulse {
+        position: absolute;
+        z-index: 4;
+        left: 22.45%;
+        top: 35.5%;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+    }
+
+    .pulse-ring,
+    .speaker-glow {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        border-radius: 50%;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3);
+    }
+
+    .speaker-glow {
+        width: clamp(28px, 3.5vw, 62px);
+        height: clamp(28px, 3.5vw, 62px);
+        background: radial-gradient(
+                circle,
+                rgba(255, 226, 139, 0.98) 0%,
+                rgba(255, 170, 48, 0.58) 52%,
+                rgba(236, 154, 55, 0) 75%
+        );
+    }
+
+    .pulse-ring {
+        width: clamp(36px, 4.7vw, 86px);
+        height: clamp(36px, 4.7vw, 86px);
+        border: 3px solid rgba(255, 205, 102, 0.96);
+        box-shadow: 0 0 12px rgba(255, 185, 64, 0.9),
+        0 0 26px rgba(255, 137, 25, 0.58);
+    }
+
+    .speaker-pulse.narrating .speaker-glow {
+        animation: speaker-breathe 1.35s ease-in-out infinite;
+    }
+
+    .speaker-pulse.narrating .pulse-ring {
+        animation: speaker-wave 2.4s ease-out infinite;
+    }
+
+    .speaker-pulse.narrating .ring-two {
+        animation-delay: 0.8s;
+    }
+
+    .speaker-pulse.narrating .ring-three {
+        animation-delay: 1.6s;
+    }
+
+    @keyframes speaker-wave {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.25);
+        }
+        14% {
+            opacity: 0.96;
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(2.7);
+        }
+    }
+
+    @keyframes speaker-breathe {
+        0%,
+        100% {
+            opacity: 0.35;
+            transform: translate(-50%, -50%) scale(0.8);
+        }
+        50% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.35);
+        }
+    }
+
+    .track-copy,
+    .track-progress,
+    .primary-controls,
+    .secondary-controls {
+        transform: translateY(0);
+    }
+
+
+    .track-copy {
+        position: absolute;
+        z-index: 5;
+        left: 31%;
+        top: 57.5%;
+        width: 38%;
+        text-align: center;
+        text-shadow: 0 2px 7px #000, 0 0 20px #000;
+    }
+
+    .track-copy h1,
+    .track-copy h2 {
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .track-copy h1 {
+        color: #eadfc8;
+        font-size: clamp(15px, 1.7vw, 30px);
+        line-height: 1;
+        text-transform: capitalize;
+    }
+
+    .track-copy h2 {
+        margin-top: 0.25em;
+        color: #e0bd68;
+        font-size: clamp(11px, 1.15vw, 20px);
+        line-height: 1;
+    }
+
+    .radio-set-info {
+        margin-top: 0.35em;
+        color: #f7dc82;
+        font-size: clamp(10px, 1vw, 17px);
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .rank {
+        margin-top: 0.45em;
+        font-size: clamp(10px, 1.08vw, 20px);
+    }
+
+    .rank span {
+        margin: 0 0.35em;
+        color: #d6bd7e;
+    }
+
+    .phase-label {
+        display: inline-block;
+        margin-top: 0.45em;
+        padding: 0.2em 0.75em;
+        border: 1px solid rgba(255, 198, 92, 0.58);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.58);
+        color: #ffe3a0;
+        font-size: clamp(8px, 0.83vw, 15px);
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .track-progress {
+        position: absolute;
+        z-index: 5;
+        left: 12.9%;
+        top: 74%;
+        width: 74.2%;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: clamp(6px, 0.9vw, 16px);
+        color: #e8c86f;
+        font-size: clamp(9px, 1vw, 18px);
+        text-shadow: 0 2px 5px #000;
+        transform: translateY(8px);
+    }
+
+    .progress-rail {
+        height: clamp(4px, 0.62vw, 10px);
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(219, 219, 219, 0.35);
+        box-shadow: 0 1px 5px #000;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #e8c866, #f4df94);
+        transition: width 200ms linear;
+    }
+
+    .primary-controls {
+        position: absolute;
+        z-index: 6;
+        left: 12%;
+        top: 81%;
+        width: 76%;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2.7%;
+    }
+
+    .primary-controls button {
+        border: 0;
+        background: transparent;
+        color: #fff;
+        cursor: pointer;
+        font: inherit;
+        text-shadow: 0 2px 5px #000;
+    }
+
+    .primary-controls button > span:last-child {
+        display: block;
+        margin-top: 0.25em;
+        font-size: clamp(8px, 0.8vw, 14px);
+        font-weight: 700;
+    }
+
+    .up-next-control {
+        min-width: 0;
+        border: 1px solid rgba(244, 197, 95, 0.72) !important;
+        border-radius: 999px !important;
+        background: rgba(62, 31, 10, 0.78) !important;
+        color: #ffe5a5 !important;
+        padding: 0.25em 0.45em !important;
+        align-self: center;
+    }
+
+    .control-icon {
+        display: grid;
+        width: clamp(24px, 2.8vw, 48px);
+        aspect-ratio: 1;
+        margin: 0 auto;
+        place-items: center;
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.48);
+        font-size: clamp(12px, 1.4vw, 23px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .primary-controls button:hover .control-icon,
+    .primary-controls button:focus-visible .control-icon {
+        transform: scale(1.06);
+        box-shadow: 0 0 18px rgba(41, 210, 100, 0.65);
+    }
+
+    .primary-controls button.transport-unavailable:disabled {
+        cursor: not-allowed;
+        opacity: 0.42;
+        filter: grayscale(0.7);
+    }
+
+    .play-control .control-icon {
+        border-color: #21c55d;
+        color: #21c55d;
+    }
+
+    .gold-control .control-icon {
+        border-color: #e4c365;
+        color: #e4c365;
+    }
+
+    .secondary-controls {
+        position: absolute;
+        z-index: 6;
+        left: 27%;
+        bottom: 0.4%;
+        width: 46%;
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 6%;
+    }
+
+    .secondary-controls.radio-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: clamp(8px, 1vw, 18px);
+    }
+
+    .secondary-controls.radio-actions > * {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
+    .radio-report-action :global(.report-problem-button) {
+        width: 100%;
+        min-height: clamp(28px, 2.9vw, 46px);
+        box-sizing: border-box;
+    }
+
+    .drive-in-report-slot {
+        display: flex;
+        justify-content: center;
+        padding: 10px 0 16px;
+    }
+
+    .back-button,
+    .view-switch {
+        min-height: clamp(28px, 2.9vw, 46px);
+        border: 2px solid #22c55e;
+        border-radius: 999px;
+        background: rgba(3, 8, 5, 0.77);
+        color: #28d66b;
+        box-shadow: 0 6px 19px rgba(0, 0, 0, 0.5);
+    }
+
+    .back-button {
+        cursor: pointer;
+        font-size: clamp(10px, 1.15vw, 20px);
+        font-weight: 700;
+    }
+
+    .view-switch {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .view-switch span {
+        width: 1px;
+        height: 55%;
+        background: rgba(255, 255, 255, 0.6);
+    }
+
+    .view-switch button {
+        height: 100%;
+        border: 0;
+        background: transparent;
+        color: #eee;
+        cursor: pointer;
+        font-size: clamp(9px, 1.05vw, 18px);
+    }
+
+    .view-switch button.active {
+        color: #2bd469;
+    }
+
+    @media (max-width: 820px) {
+        .drive-in-stage {
+            width: min(100%, calc((100dvh - 86px) * 1.780618));
+        }
+
+        .secondary-controls {
+            left: 20%;
+            width: 60%;
+        }
+
+
+        .auto-play-control {
+            display: none;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .speaker-pulse.narrating .speaker-glow,
+        .speaker-pulse.narrating .pulse-ring {
+            animation: none;
+        }
+
+        .speaker-pulse.narrating .speaker-glow {
+            opacity: 0.72;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
+</style>

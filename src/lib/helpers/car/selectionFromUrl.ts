@@ -1,9 +1,18 @@
 // src/lib/helpers/car/selectionFromUrl.ts
 import type {SelectionState} from './types';
 import type {PlaybackOrder} from './types';
-import {normalizeLanguage} from '$lib/helpers/normalizeLanguage';
-import {normalizeVoices} from '$lib/helpers/normalizeVoices';
+import {
+    normalizeLanguagePreference as normalizeLanguage,
+    normalizeSelectedLanguages
+} from '$lib/languagePreferences';
+import {
+    narrationFlagsFromVoices,
+    normalizeSelectedVoices,
+    normalizeVoicePlayMode
+} from '$lib/playbackPreferences';
 import {PROGRAM_TYPES} from '$lib/types/program';
+import {serializeNostalgiaRadioGenres} from '$lib/journey/nostalgiaRadioGenres';
+import {normalizeArtistRadioGenres} from '$lib/journey/artistRadioGenres';
 
 export function buildSelectionFromUrl(url: URL): SelectionState {
     const sp = url.searchParams;
@@ -16,25 +25,38 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
     const decade = sp.get('decade') ?? '';
     const genre = sp.get('genre') ?? '';
+    const radioGenres = serializeNostalgiaRadioGenres(
+        sp.getAll('genres').flatMap(value => value.split(','))
+    );
     const collection = sp.get('collection') ?? '';
     const collectionGroup = sp.get('collection_group') ?? '';
+    const radioCollectionGroups = Array.from(new Set(
+        sp.getAll('collection_groups')
+            .flatMap(value => value.split(','))
+            .map(value => value.trim().toLowerCase())
+            .filter(Boolean)
+    )).join(',');
     const favoritesGroup = sp.get('favoritesGroup') ?? '';
 
     const language = normalizeLanguage(sp.get('language'));
-    const languages = (sp.get('languages') ?? language)
-        .split(',')
-        .map(normalizeLanguage)
-        .filter((lang, index, arr) => arr.indexOf(lang) === index);
+    const languages = normalizeSelectedLanguages(
+        (sp.get('languages') ?? language).split(',')
+    );
 
     const startRank = Number(sp.get('startRank') ?? 1);
 
     const rawEndRank = sp.get('endRank');
     const endRank = rawEndRank != null ? Number(rawEndRank) : startRank;
 
-    const voices = normalizeVoices((sp.get('voices') ?? 'intro').split(','));
+    const voices = normalizeSelectedVoices(
+        (sp.get('voices') ?? 'intro').split(',')
+    );
+    const narrationFlags = narrationFlagsFromVoices(voices);
 
+    // Keep malformed-present values as-is for compatibility. Tightening this
+    // URL boundary is a separate input-hardening decision.
     const playbackOrder = (sp.get('playbackOrder') ?? 'up') as PlaybackOrder;
-    const voicePlayMode = sp.get('voicePlayMode') === 'over' ? 'over' : 'before';
+    const voicePlayMode = normalizeVoicePlayMode(sp.get('voicePlayMode'), 'before');
     const pauseMode = sp.get('pauseMode') === 'continuous' ? 'continuous' : 'pause';
     const skipPlayed = sp.get('skipPlayed') === 'true';
 
@@ -59,14 +81,13 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             language,
             languages,
             context: {
-                collection_group_slug: group
+                collection_group_slug: group,
+                radioCollectionGroups
             },
             startRank: finalStartRank,
             endRank: 9999,
             currentRank,
-            playIntro: voices.includes('intro'),
-            playDetail: voices.includes('detail'),
-            playArtistDescription: voices.includes('artist'),
+            ...narrationFlags,
             textIntro: false,
             textDetail: false,
             textArtistDescription: false,
@@ -95,9 +116,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 startRank: finalStartRank,
                 endRank: finalEndRank,
                 currentRank,
-                playIntro: voices.includes('intro'),
-                playDetail: voices.includes('detail'),
-                playArtistDescription: voices.includes('artist'),
+                ...narrationFlags,
                 textIntro: false,
                 textDetail: false,
                 textArtistDescription: false,
@@ -123,9 +142,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
                 startRank: finalStartRank,
                 endRank: finalEndRank,
                 currentRank,
-                playIntro: voices.includes('intro'),
-                playDetail: voices.includes('detail'),
-                playArtistDescription: voices.includes('artist'),
+                ...narrationFlags,
                 textIntro: false,
                 textDetail: false,
                 textArtistDescription: false,
@@ -152,9 +169,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             startRank: finalStartRank,
             endRank: finalEndRank,
             currentRank,
-            playIntro: voices.includes('intro'),
-            playDetail: voices.includes('detail'),
-            playArtistDescription: voices.includes('artist'),
+            ...narrationFlags,
             textIntro: false,
             textDetail: false,
             textArtistDescription: false,
@@ -169,6 +184,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
     if (modeParam === 'artist_radio') {
         const genre = sp.get('genre') ?? 'ALL';
+        const artistRadioGenres = normalizeArtistRadioGenres(sp.getAll('genres').flatMap(value => value.split(',')));
 
         return {
             programType: 'RADIO_ARTIST',
@@ -176,14 +192,17 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             language,
             languages,
             context: {
-                genre
+                genre,
+                artistRadioGenres: artistRadioGenres.join(','),
+                artistDetailLength: sp.get('artistDetailLength') === 'off' || sp.get('artistDetailLength') === 'long' ? sp.get('artistDetailLength')! : 'short',
+                artistBioLength: sp.get('artistBioLength') === 'long' ? 'long' : 'short'
             },
             startRank: finalStartRank,
             endRank: 9999,
             currentRank,
             playIntro: false,
-            playDetail: voices.includes('detail'),
-            playArtistDescription: voices.includes('artist'),
+            playDetail: narrationFlags.playDetail,
+            playArtistDescription: narrationFlags.playArtistDescription,
             textIntro: false,
             textDetail: false,
             textArtistDescription: false,
@@ -216,8 +235,8 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
             endRank: 9999,
             currentRank,
             playIntro: false,
-            playDetail: voices.includes('detail'),
-            playArtistDescription: voices.includes('artist'),
+            playDetail: narrationFlags.playDetail,
+            playArtistDescription: narrationFlags.playArtistDescription,
             textIntro: false,
             textDetail: false,
             textArtistDescription: false,
@@ -238,6 +257,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         context: {
             decade,
             genre,
+            radioGenres,
             favoritesType:
                 programType === PROGRAM_TYPES.FAVORITES_DG
                     ? 'DG'
@@ -251,9 +271,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         startRank: finalStartRank,
         endRank: finalEndRank,
         currentRank,
-        playIntro: voices.includes('intro'),
-        playDetail: voices.includes('detail'),
-        playArtistDescription: voices.includes('artist'),
+        ...narrationFlags,
         textIntro: false,
         textDetail: false,
         textArtistDescription: false,

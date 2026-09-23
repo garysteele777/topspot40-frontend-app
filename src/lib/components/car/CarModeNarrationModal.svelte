@@ -1,10 +1,25 @@
 <script lang="ts">
+    import {onMount, tick} from 'svelte';
     import {fade, fly} from 'svelte/transition';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import type {Language} from '$lib/stores/selection';
+
+    type InfoMode = 'intro' | 'detail' | 'artist';
+
+    type NarrationModalCopy = {intro: string; detail: string; artist: string; unavailable: string; artistFallback: string; close: string;};
+
+    const narrationModalCopy: Record<Language, NarrationModalCopy> = {
+        en: {intro: 'Intro', detail: 'Detail', artist: 'Artist', unavailable: 'No narration available for this track.', artistFallback: 'Artist', close: 'Close narration'},
+        es: {intro: 'Introducción', detail: 'Detalles', artist: 'Artista', unavailable: 'No hay narración disponible para esta canción.', artistFallback: 'Artista', close: 'Cerrar narración'},
+        ptbr: {intro: 'Introdução', detail: 'Detalhes', artist: 'Artista', unavailable: 'Não há narração disponível para esta faixa.', artistFallback: 'Artista', close: 'Fechar narração'}
+    };
 
     export let track: CarModeTrack | null = null;
     export let open = false;
     export let onClose: () => void;
+    export let languages: string[] = ['en'];
+    export let initialMode: InfoMode = 'intro';
+    export let onReport: ((mode: InfoMode) => void) | undefined;
 
     /* ──────────────────────────────
        Swipe / drag physics
@@ -15,6 +30,82 @@
     let isDragging = false;
 
     let modalEl: HTMLDivElement | null = null;
+    let closeButton: HTMLButtonElement | null = null;
+    let previouslyFocusedElement: HTMLElement | null = null;
+    let wasOpen = false;
+
+    function getFocusableElements(): HTMLElement[] {
+        return modalEl
+            ? Array.from(
+                modalEl.querySelectorAll<HTMLElement>(
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                )
+            )
+            : [];
+    }
+
+    function trapFocus(event: KeyboardEvent): void {
+        const focusable = getFocusableElements();
+
+        if (!focusable.length) {
+            event.preventDefault();
+            modalEl?.focus();
+            return;
+        }
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    }
+
+    function handleKeyDown(event: KeyboardEvent): void {
+        if (!open) return;
+
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            onClose();
+        } else if (event.key === 'Tab') {
+            trapFocus(event);
+        }
+    }
+
+    async function focusModal(): Promise<void> {
+        await tick();
+        if (open) closeButton?.focus();
+    }
+
+    async function restoreFocus(): Promise<void> {
+        await tick();
+        if (!open && previouslyFocusedElement?.isConnected) {
+            previouslyFocusedElement.focus();
+        }
+        previouslyFocusedElement = null;
+    }
+
+    $: if (open && !wasOpen) {
+        wasOpen = true;
+        previouslyFocusedElement =
+            typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+        void focusModal();
+    } else if (!open && wasOpen) {
+        wasOpen = false;
+        void restoreFocus();
+    }
+
+    onMount(() => {
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => window.removeEventListener('keydown', handleKeyDown, true);
+    });
 
     /* ──────────────────────────────
        Parallax state
@@ -35,7 +126,10 @@
         if (!isDragging) return;
         currentY = e.touches[0].clientY;
         translateY = Math.max(0, currentY - startY);
-        modalEl?.style.setProperty('transform', `translateY(${translateY}px)`);
+        modalEl?.style.setProperty(
+            'transform',
+            `translateX(-50%) translateY(${translateY}px)`
+        );
     }
 
     function onTouchEnd() {
@@ -47,7 +141,7 @@
         } else {
             if (modalEl) {
                 modalEl.style.transition = 'transform 0.25s ease-out';
-                modalEl.style.transform = 'translateY(0)';
+                modalEl.style.transform = 'translateX(-50%) translateY(0)';
                 setTimeout(() => {
                     if (modalEl) modalEl.style.transition = '';
                 }, 260);
@@ -59,7 +153,6 @@
     /* ──────────────────────────────
        Info navigation (Intro / Detail / Artist)
        ────────────────────────────── */
-    type InfoMode = 'intro' | 'detail' | 'artist';
     type LanguageTexts = {
         intro?: string | null;
         detail?: string | null;
@@ -68,15 +161,12 @@
 
     type TextsByLanguage = Record<string, LanguageTexts>;
     let mode: InfoMode = 'intro';
+    let primaryLanguage: Language = 'en';
 
     // Reset whenever modal opens
     $: if (open) {
-        mode = 'intro';
+        mode = initialMode;
     }
-
-    // $: if (open && track) {
-    //     console.log("🎭 MODAL TRACK:", track);
-    // }
 
     $: headerImage =
         track?.artistArtwork ??
@@ -98,17 +188,31 @@
                     'intro';
     }
 
-    $: headerLabel =
-        mode === 'intro' ? 'Intro' :
-            mode === 'detail' ? 'Detail' :
-                'Artist';
-
     $: textsByLanguage =
         ((track as typeof track & {
             textsByLanguage?: TextsByLanguage;
         })?.textsByLanguage) ?? {};
 
-    $: languageEntries = Object.entries(textsByLanguage);
+    $: selectedLanguages = languages?.length ? languages : ['en'];
+
+    $: primaryLanguage = selectedLanguages[0] === 'es'
+        ? 'es'
+        : selectedLanguages[0] === 'ptbr' || selectedLanguages[0] === 'pt-BR'
+            ? 'ptbr'
+            : 'en';
+    $: copy = narrationModalCopy[primaryLanguage];
+    $: headerLabel = mode === 'intro' ? copy.intro : mode === 'detail' ? copy.detail : copy.artist;
+
+    $: reportInformationLabel =
+        selectedLanguages[0] === 'es'
+            ? 'Informar un problema con esta información.'
+            : selectedLanguages[0] === 'ptbr' || selectedLanguages[0] === 'pt-BR'
+                ? 'Informar um problema com estas informações.'
+                : 'Report a problem with this information.';
+
+    $: languageEntries = Object.entries(textsByLanguage).filter(([lang]) =>
+        selectedLanguages.includes(lang)
+    );
 
     function getModeText(
         texts: LanguageTexts,
@@ -122,7 +226,7 @@
     function languageLabel(lang: string): string {
         if (lang === 'en') return '🇺🇸 English';
         if (lang === 'es') return '🇪🇸 Español';
-        if (lang === 'ptbr') return '🇧🇷 Português';
+        if (lang === 'ptbr' || lang === 'pt-BR') return '🇧🇷 Português';
         return lang;
     }
 
@@ -139,6 +243,10 @@
     <div
             bind:this={modalEl}
             class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="narration-modal-title"
+            tabindex="-1"
             transition:fly={{ y: 30, duration: 160 }}
             on:touchstart={onTouchStart}
             on:touchmove={onTouchMove}
@@ -157,17 +265,20 @@
                 <div class="hero-wrap">
                     <img
                             src={headerImage}
-                            alt={track?.artistName ?? 'Artist'}
+                            alt={track?.artistName ?? copy.artistFallback}
                             class="hero-art"
                     />
                 </div>
             {/if}
 
             <div class="album-text">
-                <h2 class="track-title">{track?.trackName}</h2>
+                <h2 id="narration-modal-title" class="track-title">{track?.trackName}</h2>
                 <p class="track-artist">{track?.artistName}</p>
             </div>
         </div>
+        <button class="report-info" type="button" on:click={() => onReport?.(mode)}>
+            {reportInformationLabel}
+        </button>
 
 
         <!-- Main text navigator -->
@@ -193,17 +304,17 @@
             {:else}
                 <p transition:fade>
                     {mode === 'intro'
-                        ? (track?.intro ?? 'No narration available for this track.')
+                        ? (track?.intro ?? copy.unavailable)
                         : mode === 'detail'
-                            ? (track?.detail ?? 'No narration available for this track.')
-                            : (track?.artistText ?? 'No narration available for this track.')}
+                            ? (track?.detail ?? copy.unavailable)
+                            : (track?.artistText ?? copy.unavailable)}
                 </p>
             {/if}
 
         </div>
 
         <!-- Close button -->
-        <button class="close-btn" on:click={onClose}>✕</button>
+        <button bind:this={closeButton} class="close-btn" on:click={onClose} aria-label={copy.close}>✕</button>
     </div>
 {/if}
 
@@ -212,7 +323,7 @@
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.55);
-        z-index: 900;
+        z-index: 1100;
     }
 
     .modal {
@@ -229,7 +340,7 @@
         padding: 0.75rem 1rem 2rem;
         border-radius: 16px 16px 0 0;
         overflow-y: auto;
-        z-index: 999;
+        z-index: 1101;
         touch-action: pan-y;
     }
 
@@ -319,6 +430,7 @@
         font-size: 1.25rem;
         cursor: pointer;
     }
+    .report-info { width: 100%; min-height: 44px; margin-top: 18px; border: 1px solid #9b8050; border-radius: 999px; background: #24211b; color: #fff; font: inherit; cursor: pointer; }
 
     .hero-wrap {
         width: min(100%, 420px);

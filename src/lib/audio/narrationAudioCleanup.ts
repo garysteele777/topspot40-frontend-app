@@ -7,19 +7,23 @@ export function cleanupNarrationAudio({
     timer,
     setTimer,
     setAudio,
-    setResolve
+    setResolve,
+    preserveAudio = false
 }: {
     timer: number | null;
     setTimer: (value: number | null) => void;
     setAudio: (value: HTMLAudioElement | null) => void;
     setResolve: (value: (() => void) | null) => void;
+    preserveAudio?: boolean;
 }): void {
     if (timer !== null) {
         clearInterval(timer);
         setTimer(null);
     }
 
-    setAudio(null);
+    if (!preserveAudio) {
+        setAudio(null);
+    }
     setResolve(null);
 
     resetPlaybackProgress();

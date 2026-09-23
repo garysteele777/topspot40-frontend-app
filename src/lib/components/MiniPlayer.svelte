@@ -1,33 +1,110 @@
 <script lang="ts">
+    import type {Language} from '$lib/stores/selection';
+    import {sendPlaybackDiagnostic} from '$lib/api/playbackApi';
+
+    type ControlCopy = {
+        previous: string;
+        previousAria: string;
+        guided: string;
+        guidedAria: string;
+        pause: string;
+        pauseAria: string;
+        next: string;
+        nextAria: string;
+    };
+
+    const controlCopy: Record<Language, ControlCopy> = {
+        en: {
+            previous: 'Previous',
+            previousAria: 'Play previous track',
+            guided: 'Guided',
+            guidedAria: 'Start Guided Playback',
+            pause: 'Pause',
+            pauseAria: 'Pause Guided Playback',
+            next: 'Next',
+            nextAria: 'Play next track'
+        },
+        es: {
+            previous: 'Anterior',
+            previousAria: 'Reproducir la canción anterior',
+            guided: 'Guiada',
+            guidedAria: 'Iniciar reproducción guiada',
+            pause: 'Pausa',
+            pauseAria: 'Pausar reproducción guiada',
+            next: 'Siguiente',
+            nextAria: 'Reproducir la siguiente canción'
+        },
+        ptbr: {
+            previous: 'Anterior',
+            previousAria: 'Tocar a faixa anterior',
+            guided: 'Guiada',
+            guidedAria: 'Iniciar reprodução guiada',
+            pause: 'Pausar',
+            pauseAria: 'Pausar reprodução guiada',
+            next: 'Próxima',
+            nextAria: 'Tocar a próxima faixa'
+        }
+    };
     export let coverUrl = "/default_album.png";
     export let trackTitle = "Unknown Track";
     export let artistName = "Unknown Artist";
     export let isPlaying = false;
+    export let language: Language = 'en';
     export let hideMeta = false; // ✅ NEW prop
 
     export let onPrev: () => void;
     export let onPlayPause: () => void;
     export let onNext: () => void;
 
+    export let activePlayMode: 'guided' | 'auto' | null = null;
+
     function handleImgError(e: Event) {
         const img = e.currentTarget as HTMLImageElement;
         img.src = "/default_album.png";
+    }
+
+    function handlePlayClick(): void {
+        void sendPlaybackDiagnostic({
+                event: 'MiniPlayer play button tapped',
+                phase: null,
+                mode: null,
+                programType: null,
+                hasCurrentTrack: false,
+                trackRank: null,
+                decade: null,
+                genre: null
+        }).catch(() => {
+            // Temporary diagnostic only; never block playback.
+        });
+
+        onPlayPause();
     }
 </script>
 
 <div class="player-wrapper">
     <div class="cover-container">
         <img class="album-cover" src={coverUrl} alt="Album cover" on:error={handleImgError}/>
+    </div>
 
-        <div class="controls-overlay">
-            <button class="btn" on:click={onPrev} aria-label="Previous">
+    <div class="controls-overlay">
+        <div class="control-item">
+            <button class="btn" on:click={onPrev} aria-label={controlCopy[language].previousAria}>
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                     <path d="M6 6h2v12H6V6zm11.5 6L10 18V6l7.5 6z"/>
                 </svg>
             </button>
+            <span>{controlCopy[language].previous}</span>
+        </div>
 
-            <button class="btn play" on:click={onPlayPause} aria-label="Play/Pause">
-                {#if isPlaying}
+        <div class="control-item">
+            <button
+                    class="btn play"
+                    on:click={handlePlayClick}
+                    aria-label={isPlaying && activePlayMode === 'guided'
+                        ? controlCopy[language].pauseAria
+                        : controlCopy[language].guidedAria}
+            >
+                {#if isPlaying && activePlayMode === 'guided'}
                     <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
                         <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
                     </svg>
@@ -37,12 +114,20 @@
                     </svg>
                 {/if}
             </button>
+            <span>
+            {isPlaying && activePlayMode === 'guided'
+                ? controlCopy[language].pause
+                : controlCopy[language].guided}
+        </span>
+        </div>
 
-            <button class="btn" on:click={onNext} aria-label="Next">
+        <div class="control-item">
+            <button class="btn" on:click={onNext} aria-label={controlCopy[language].nextAria}>
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                     <path d="M16 6h2v12h-2V6zM6.5 12L14 18V6l-7.5 6z"/>
                 </svg>
             </button>
+            <span>{controlCopy[language].next}</span>
         </div>
     </div>
 
@@ -80,20 +165,26 @@
     }
 
     .controls-overlay {
-        position: absolute;
-        inset: 0;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         gap: 14px;
-        opacity: 0;
-        transition: opacity 0.25s ease;
-        background: rgba(0, 0, 0, 0.35);
+        margin-top: 12px;
     }
 
-    .cover-container:hover .controls-overlay,
-    .cover-container:focus-within .controls-overlay {
-        opacity: 1;
+    .control-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        min-width: 58px;
+    }
+
+    .control-item > span {
+        color: #ddd;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
     }
 
     .btn {
@@ -114,8 +205,8 @@
     }
 
     .btn.play {
-        width: 56px;
-        height: 56px;
+        width: 50px;
+        height: 50px;
     }
 
     .track-info {
@@ -141,10 +232,4 @@
         text-overflow: ellipsis;
     }
 
-    @media (hover: none) and (pointer: coarse) {
-        .controls-overlay {
-            opacity: 1;
-            background: rgba(0, 0, 0, 0.25);
-        }
-    }
 </style>

@@ -1,5 +1,7 @@
 <script lang="ts">
     import type {LoadedTrack as BaseLoadedTrack} from '$lib/utils/normalizeTrack';
+    import type {Language} from '$lib/stores/selection';
+    import {narrationActionCopy} from '$lib/carmode/narrationActionCopy';
 
     // Extend LoadedTrack locally to allow optional intro_short
     type NarrationTrack = BaseLoadedTrack & {
@@ -7,6 +9,7 @@
     };
 
     export let track: NarrationTrack | null = null;
+    export let language: Language = 'en';
     export let onOpenModal: () => void;
     export let onOpenTrackList: (() => void) | undefined;
     // NEW: optional callback for “Back to Options”
@@ -20,18 +23,18 @@
     <div class="narration-inline">
         <div class="button-row">
             <button class="more-btn" on:click={onOpenModal}>
-                More Info →
+                {narrationActionCopy[language].moreInfo} →
             </button>
 
             {#if onOpenTrackList}
                 <button class="track-list-btn" on:click={onOpenTrackList}>
-                    🎵 Track List
+                    🎵 {narrationActionCopy[language].trackList}
                 </button>
             {/if}
 
             {#if onBackToOptions}
                 <button class="back-btn" on:click={onBackToOptions}>
-                    ⚙ Back to Options
+                    ← {narrationActionCopy[language].changeMusic}
                 </button>
             {/if}
         </div>
