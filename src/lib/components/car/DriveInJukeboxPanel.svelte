@@ -1,6 +1,10 @@
 <script lang="ts">
-    import {onDestroy, onMount} from 'svelte';
+    import {onDestroy, onMount, tick} from 'svelte';
     import type {CarModeTrack} from '$lib/carmode/CarMode.store';
+    import {
+        displayTrackListArtist,
+        displayTrackListTitle
+    } from '$lib/carmode/trackListDisplay.js';
     import {createTrackListCsv, downloadCsv} from '$lib/program/trackListCsv';
     import {
         favoritesStore,
@@ -9,6 +13,7 @@
         type ProgramType
     } from '$lib/favorites/favorites';
     import type {Language} from '$lib/stores/selection';
+    import {getBackendUrl} from '$lib/config';
 
     type JukeboxCopy = {
         dialogLabel: string; heading: string; close: string; export: string; exportHint: string;
@@ -22,6 +27,18 @@
         en: {dialogLabel: 'TopSpot40 jukebox track selector', heading: 'Choose Track to Play', close: 'Close jukebox', export: 'Export CSV', exportHint: 'Save this track list as a CSV for playlist transfer tools that work with Spotify and other music services.', page: (current, total) => `Page ${current} of ${total}`, playing: 'Playing', alreadyPlayed: 'Already played', favorite: trackName => `Favorite ${trackName}`, previous: 'Previous', previousAria: 'Previous five tracks', next: 'Next', nextAria: 'Next five tracks', playRank: rank => `Play #${rank}`, selectTrack: 'Select a Track', selectTrackAria: (rank, trackName, artistName) => `Select track #${rank}: ${trackName} by ${artistName}`, empty: 'No tracks available.'},
         es: {dialogLabel: 'Selector de canciones de la jukebox TopSpot40', heading: 'Elige una canción para reproducir', close: 'Cerrar jukebox', export: 'Exportar CSV', exportHint: 'Guarda esta lista de canciones como CSV para herramientas de transferencia de playlists compatibles con Spotify y otros servicios de música.', page: (current, total) => `Página ${current} de ${total}`, playing: 'Reproduciendo', alreadyPlayed: 'Ya reproducida', favorite: trackName => `Agregar ${trackName} a favoritos`, previous: 'Anterior', previousAria: 'Cinco canciones anteriores', next: 'Siguiente', nextAria: 'Siguientes cinco canciones', playRank: rank => `Reproducir n.º ${rank}`, selectTrack: 'Selecciona una canción', selectTrackAria: (rank, trackName, artistName) => `Seleccionar canción n.º ${rank}: ${trackName} de ${artistName}`, empty: 'No hay canciones disponibles.'},
         ptbr: {dialogLabel: 'Seletor de faixas da jukebox TopSpot40', heading: 'Escolha uma faixa para tocar', close: 'Fechar jukebox', export: 'Exportar CSV', exportHint: 'Salve esta lista de faixas como CSV para ferramentas de transferência de playlists compatíveis com Spotify e outros serviços de música.', page: (current, total) => `Página ${current} de ${total}`, playing: 'Tocando', alreadyPlayed: 'Já reproduzida', favorite: trackName => `Adicionar ${trackName} aos favoritos`, previous: 'Anterior', previousAria: 'Cinco faixas anteriores', next: 'Próxima', nextAria: 'Próximas cinco faixas', playRank: rank => `Tocar nº ${rank}`, selectTrack: 'Selecione uma faixa', selectTrackAria: (rank, trackName, artistName) => `Selecionar faixa nº ${rank}: ${trackName} de ${artistName}`, empty: 'Não há faixas disponíveis.'}
+    };
+
+    const printLabels: Record<Language, string> = {
+        en: 'Print List',
+        es: 'Imprimir lista',
+        ptbr: 'Imprimir lista'
+    };
+
+    const printHints: Record<Language, string> = {
+        en: 'Print the complete program track list with catalog number, titles, and artists.',
+        es: 'Imprime la lista completa de canciones del programa con número de catálogo, títulos y artistas.',
+        ptbr: 'Imprima a lista completa de faixas do programa com número de catálogo, títulos e artistas.'
     };
 
     export let tracks: CarModeTrack[] = [];
@@ -38,15 +55,22 @@
     export let programType: ProgramType | null = null;
     export let programGroup: string | null = null;
     export let language: Language = 'en';
+    export let catalogLookupName = '';
+    export let printCategory = '';
+    export let printTitle = '';
 
     const PAGE_SIZE = 5;
+    const PRINT_TRACKS_PER_PAGE = 23;
 
     let pageIndex = 0;
     let selectedTrack: CarModeTrack | null = currentTrack;
     let lastCurrentIdentity = '';
+    let printCatalogNumber = '';
 
     $: embedded = variant === 'embedded';
     $: copy = jukeboxCopy[language];
+    $: printLabel = printLabels[language];
+    $: printHint = printHints[language];
 
     $: favoriteRefresh = $favoritesStore;
     $: sortedTracks = [...tracks].sort((a, b) => a.rank - b.rank);
@@ -54,6 +78,13 @@
     $: visibleTracks = sortedTracks.slice(
         pageIndex * PAGE_SIZE,
         pageIndex * PAGE_SIZE + PAGE_SIZE
+    );
+    $: printedTrackPages = Array.from(
+        {length: Math.ceil(sortedTracks.length / PRINT_TRACKS_PER_PAGE)},
+        (_, page) => sortedTracks.slice(
+            page * PRINT_TRACKS_PER_PAGE,
+            (page + 1) * PRINT_TRACKS_PER_PAGE
+        )
     );
     $: selectedIdentity = selectedTrack ? trackIdentity(selectedTrack) : '';
 
@@ -87,11 +118,6 @@
             trackIdentity(track) === trackIdentity(currentTrack);
     }
 
-    function selectionCode(index: number): string {
-        const pageLetter = String.fromCharCode(65 + pageIndex);
-        return `${pageLetter}${index + 1}`;
-    }
-
     function previousPage(): void {
         if (pageIndex > 0) {
             pageIndex -= 1;
@@ -120,6 +146,23 @@
         if (sortedTracks.length === 0) return;
 
         downloadCsv(createTrackListCsv(sortedTracks), exportFileName);
+    }
+
+    async function printTrackList(): Promise<void> {
+        if (catalogLookupName && !printCatalogNumber) {
+            try {
+                const response = await fetch(`${getBackendUrl()}/api/catalog/programs`);
+                const payload = await response.json() as {programs?: Array<{code?: string; name?: string; is_active?: boolean}>};
+                const normalizedName = catalogLookupName.trim().toLocaleLowerCase();
+                printCatalogNumber = payload.programs?.find(program =>
+                    program.is_active && program.name?.trim().toLocaleLowerCase() === normalizedName
+                )?.code ?? '';
+            } catch {
+                printCatalogNumber = '';
+            }
+        }
+        await tick();
+        window.print();
     }
 
 
@@ -194,6 +237,22 @@
                         </div>
                     </div>
 
+                    {#if !embedded}
+                        <div class="print-wrapper">
+                            <button
+                                    type="button"
+                                    class="print-button"
+                                    on:click={printTrackList}
+                                    aria-describedby="print-list-hint"
+                            >
+                                {printLabel}
+                            </button>
+                            <div id="print-list-hint" class="print-tooltip" role="tooltip">
+                                {printHint}
+                            </div>
+                        </div>
+                    {/if}
+
                     <div class="page-label">
                         {copy.page(pageIndex + 1, pageCount)}
                     </div>
@@ -201,7 +260,7 @@
             </header>
 
             <div class="selection-list">
-                {#each visibleTracks as track, index}
+                {#each visibleTracks as track}
                     <div
                             class="selection-card"
                             class:current={isCurrent(track)}
@@ -220,7 +279,7 @@
                             aria-label={copy.selectTrackAria(track.rank, track.trackName, track.artistName)}
                     >
                         <span class="selection-code">
-                            {selectionCode(index)}
+                            #{track.rank}
                         </span>
 
                         <img
@@ -229,8 +288,8 @@
                         />
 
                         <span class="track-copy">
-                            <strong>#{track.rank} {track.trackName}</strong>
-                            <span>{track.artistName}</span>
+                            <strong>{displayTrackListTitle(track.trackName, track.rank)}</strong>
+                            <span>{displayTrackListArtist(track.artistName)}</span>
                         </span>
 
                         <span class="status-icons">
@@ -320,6 +379,26 @@
     </div>
 </div>
 
+{#if !embedded}
+    <section class="print-list" aria-hidden="true">
+        {#each printedTrackPages as printedTracks}
+            <section class="print-page">
+                <p class="print-catalog-line">{printCatalogNumber}{printCatalogNumber && printCategory ? '\u00a0\u00a0' : ''}{printCategory}</p>
+                <h1>{printTitle || programLabel || heading || copy.heading}</h1>
+                <ol>
+                    {#each printedTracks as track}
+                        <li>
+                            <span class="print-rank">#{track.rank}</span>
+                            <span class="print-track">{displayTrackListTitle(track.trackName, track.rank)}</span>
+                            <span class="print-artist">{displayTrackListArtist(track.artistName)}</span>
+                        </li>
+                    {/each}
+                </ol>
+            </section>
+        {/each}
+    </section>
+{/if}
+
 <style>
     .jukebox-overlay {
         position: fixed;
@@ -384,14 +463,18 @@
     .header-actions {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
         gap: 10px;
     }
 
-    .export-wrapper {
+    .export-wrapper,
+    .print-wrapper {
         position: relative;
     }
 
-    .export-tooltip {
+    .export-tooltip,
+    .print-tooltip {
         position: absolute;
         z-index: 10;
         right: 0;
@@ -423,13 +506,16 @@
     }
 
     .export-wrapper:hover .export-tooltip,
-    .export-wrapper:focus-within .export-tooltip {
+    .export-wrapper:focus-within .export-tooltip,
+    .print-wrapper:hover .print-tooltip,
+    .print-wrapper:focus-within .print-tooltip {
         opacity: 1;
         visibility: visible;
         transform: translateY(0);
     }
 
-    .export-button {
+    .export-button,
+    .print-button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -464,7 +550,9 @@
     }
 
     .export-button:hover,
-    .export-button:focus-visible {
+    .export-button:focus-visible,
+    .print-button:hover,
+    .print-button:focus-visible {
         background: linear-gradient(
                 180deg,
                 #f5cf69,
@@ -478,14 +566,17 @@
         outline: none;
     }
 
-    .export-button:active {
+    .export-button:active,
+    .print-button:active {
         transform: translateY(1px);
     }
 
     header {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         justify-content: space-between;
+        gap: 6px;
         min-height: 0;
         padding: 0 clamp(2px, 0.5vw, 8px);
     }
@@ -744,6 +835,109 @@
 
     .jukebox-cabinet.embedded footer {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .print-list {
+        display: none;
+    }
+
+    @media print {
+        @page {
+            size: letter portrait;
+            margin: 0.45in 0.55in;
+        }
+
+        :global(html),
+        :global(body) {
+            background: #fff !important;
+        }
+
+        .jukebox-overlay {
+            display: none !important;
+        }
+        :global(body *) {
+            visibility: hidden;
+        }
+
+        .print-list,
+        .print-list * {
+            visibility: visible;
+        }
+
+        .print-list {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            display: block;
+            box-sizing: border-box;
+            padding: 0;
+            color: #000;
+            background: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .export-tooltip,
+        .print-tooltip {
+            display: none !important;
+        }
+
+        .print-page {
+            break-after: page;
+            page-break-after: always;
+        }
+
+        .print-page:last-child {
+            break-after: auto;
+            page-break-after: auto;
+        }
+
+        .print-page p,
+        .print-page h1 {
+            margin: 0;
+        }
+
+        .print-page p {
+            font-size: 11pt;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .print-page h1 {
+            margin-top: 4pt;
+            font-size: 21pt;
+        }
+
+        .print-page ol {
+            margin: 14pt 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .print-page li {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin: 0 0 6pt;
+            font-size: 16pt;
+            line-height: 1.16;
+        }
+
+        .print-rank {
+            font-weight: 800;
+        }
+
+        .print-track {
+            font-weight: 700;
+        }
+
+        .print-artist {
+            color: #222;
+        }
+
+        .print-track::after {
+            content: ' — ';
+        }
     }
 
     @media (max-width: 900px) {

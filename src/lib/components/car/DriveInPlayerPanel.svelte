@@ -184,6 +184,17 @@
             ? `TopSpot40 ${trackListProgramLabel.replace(':', '')}.csv`
             : 'TopSpot40 Track List.csv';
 
+    $: printCategory = $currentSelection?.mode === 'decade_genre'
+        ? 'NOSTALGIA'
+        : $currentSelection?.mode === 'collection'
+            ? 'COLLECTIONS'
+            : $currentSelection?.mode === 'artist_spotlight'
+                ? 'ARTIST SPOTLIGHT'
+                : '';
+    $: printTitle = $currentSelection?.mode === 'decade_genre'
+        ? `${$currentSelection?.context?.decade ?? ''} ${displayName($currentSelection?.context?.genre ?? '')}`.trim()
+        : programTitle;
+
 
     function formatTime(seconds: number): string {
         if (!seconds || seconds < 0) return '0:00';
@@ -412,6 +423,9 @@
             {programType}
             {programGroup}
             programLabel={trackListProgramLabel}
+            catalogLookupName={printTitle}
+            {printCategory}
+            {printTitle}
             exportFileName={trackListExportName}
             {language}
     />

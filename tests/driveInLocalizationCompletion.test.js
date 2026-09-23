@@ -51,6 +51,40 @@ test('jukebox localizes visible and accessible copy while retaining dynamic trac
     }
 });
 
+test('jukebox prints the complete formatted program list without its controls or artwork', () => {
+    assert.match(jukebox, /en: 'Print List'/);
+    assert.match(jukebox, /es: 'Imprimir lista'/);
+    assert.match(jukebox, /ptbr: 'Imprimir lista'/);
+    assert.match(jukebox, /async function printTrackList\(\): Promise<void>/);
+    assert.match(jukebox, /window\.print\(\);/);
+    assert.match(jukebox, /await tick\(\);/);
+    assert.match(jukebox, /aria-describedby="print-list-hint"/);
+    assert.match(jukebox, /Print the complete program track list with catalog number, titles, and artists\./);
+    assert.match(jukebox, /\{#each sortedTracks as track\}/);
+    assert.match(jukebox, /displayTrackListTitle\(track\.trackName, track\.rank\)/);
+    assert.match(jukebox, /displayTrackListArtist\(track\.artistName\)/);
+    assert.match(jukebox, /@media print/);
+    assert.match(jukebox, /:global\(body \*\)/);
+});
+
+test('print list uses the approved catalog registry and paginated senior-friendly handout layout', () => {
+    assert.match(jukebox, /\/api\/catalog\/programs/);
+    assert.match(jukebox, /program\.is_active && program\.name/);
+    assert.match(jukebox, /printCatalogNumber/);
+    assert.match(jukebox, /printCategory/);
+    assert.match(jukebox, /PRINT_TRACKS_PER_PAGE = 23/);
+    assert.match(jukebox, /printedTrackPages/);
+    assert.match(jukebox, /break-after: page/);
+    assert.match(jukebox, /size: letter portrait/);
+    assert.match(jukebox, /font-size: 16pt/);
+    assert.match(jukebox, /box-sizing: border-box/);
+    assert.doesNotMatch(jukebox, /\.print-list \{\s*position: fixed/);
+    assert.match(jukebox, /\.export-tooltip,\s*\.print-tooltip \{\s*display: none !important;/);
+    assert.match(jukebox, /\.jukebox-overlay \{\s*display: none !important;/);
+    assert.match(jukebox, /\.print-track::after/);
+    assert.doesNotMatch(jukebox, /grid-template-columns: 0\.55in/);
+});
+
 test('shared narration modal localizes tabs and fallbacks without changing its report or focus behavior', () => {
     for (const label of ['Introducción', 'Detalles', 'Fechar narração', 'No hay narración disponible para esta canción.', 'Não há narração disponível para esta faixa.']) {
         assert.match(narration, new RegExp(label));
