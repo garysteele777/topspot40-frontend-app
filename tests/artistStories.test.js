@@ -48,7 +48,7 @@ test('Narration options summary is accessible, localized, and placed beneath the
     assert.match(control, /aria-expanded=\{open\}/);
     assert.match(control, /aria-controls="narration-options-panel"/);
     assert.match(control, /aria-label=\{`\$\{text\.title\}: \$\{summary\}`\}/);
-    assert.match(control, /\$: summary = `\$\{text\.detailsLabel\}: \$\{detailValue\} • \$\{text\.biosLabel\}: \$\{biosValue\}`/);
+    assert.match(control, /\$: summary = `\$\{text\.detailsLabel\}: \$\{detailValue\} • \$\{text\.biosLabel\}: \$\{biosValue\} • Name That Tune: \$\{nameThatTuneValue\}`/);
     assert.match(control, /role="dialog"/);
     assert.match(control, /event\.key === 'Escape'/);
     assert.match(control, /trigger\?\.focus\(\)/);

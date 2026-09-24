@@ -26,10 +26,12 @@ export type CarModeAutoPlayDependencies = {
         track: CarModeTrack,
         startPhase?: 'intro' | 'detail'
     ) => Promise<boolean>;
+    isNameThatTuneEnabled?: () => boolean;
     prepareSpotifyWindow: () => void;
     isMobile: () => boolean;
     openSpotify: () => boolean;
     closeSpotify: () => boolean;
+    returnSpotifyToWaitingPage?: () => boolean;
     queueNextTrack: () => Promise<void>;
     setStatus: (message: string) => void;
     continueAutoPlayback: () => Promise<void>;
@@ -49,6 +51,7 @@ export function createCarModeAutoPlay(
     let timer: ReturnType<typeof setTimeout> | null = null;
     let runId = 0;
     let handoffToken: string | null = null;
+    let nameThatTuneNarrationPendingToken: string | null = null;
     // This is deliberately different from a completed cycle.  A Spotify
     // window cannot be reliably paused/resumed, so an interrupted track must
     // be handed back to the backend only when the listener explicitly starts
@@ -67,7 +70,7 @@ export function createCarModeAutoPlay(
         return ++runId;
     }
 
-    function startTimer(track: CarModeTrack): void {
+    function startTimer(track: CarModeTrack): boolean {
         const activeRunId = cancelCycle();
         const durationSeconds =
             track.durationSeconds ??
@@ -75,7 +78,7 @@ export function createCarModeAutoPlay(
 
         if (durationSeconds <= 0) {
             console.warn('Auto Play: no track duration available');
-            return;
+            return false;
         }
 
         const delayMs = (durationSeconds + bufferSeconds) * 1000;
@@ -121,6 +124,7 @@ export function createCarModeAutoPlay(
                 });
             });
         }, delayMs);
+        return true;
     }
 
     function handoff(track: CarModeTrack, scheduleAdvance = true): boolean {
@@ -148,7 +152,18 @@ export function createCarModeAutoPlay(
         dependencies.onSpotifyHandoff?.(track);
         dependencies.setPlaybackPhase('track');
         dependencies.setIsPlaying(true);
-        if (scheduleAdvance) startTimer(track);
+        if (scheduleAdvance && !startTimer(track)) {
+            // Spotify's page cannot report its ended event to this window.
+            // Do not leave a no-duration track falsely shown as playing with
+            // no possible transition. A subsequent Auto Play press performs
+            // the pending Name That Tune narration for this same track.
+            if (dependencies.isNameThatTuneEnabled?.()) {
+                nameThatTuneNarrationPendingToken = token;
+                dependencies.setIsPlaying(false);
+                dependencies.setPlaybackPhase('paused');
+                dependencies.setStatus('Spotify duration is unavailable. After the song ends, press Auto Play for its narration.');
+            }
+        }
         return true;
     }
 
@@ -167,6 +182,17 @@ export function createCarModeAutoPlay(
         console.info('[car-mode] Auto Play advance accepted', {runId: activeRunId});
         dependencies.setIsPlaying(false);
         dependencies.stopEstimatedTrackClock?.();
+
+        if (dependencies.isNameThatTuneEnabled?.()) {
+            const completedTrack = dependencies.getCurrentTrack();
+            nameThatTuneNarrationPendingToken = null;
+            // This can only navigate the browser window away from Spotify;
+            // it cannot verify or control Spotify's playback state.
+            dependencies.returnSpotifyToWaitingPage?.();
+            if (!completedTrack || !await dependencies.startNarration(completedTrack)) {
+                return;
+            }
+        }
         await dependencies.continueAutoPlayback();
 
         if (
@@ -193,6 +219,7 @@ export function createCarModeAutoPlay(
         dependencies.abandonNarration();
         dependencies.stopEstimatedTrackClock?.();
         handoffToken = null;
+        nameThatTuneNarrationPendingToken = null;
 
         return cancelCycle();
     }
@@ -262,6 +289,19 @@ export function createCarModeAutoPlay(
             dependencies.getPlaybackPhase() === 'track' &&
             handoffToken === trackToken(track)
         ) {
+            if (dependencies.isNameThatTuneEnabled?.()) {
+                // Closing/navigating the popup is best effort only. Once the
+                // listener returns after the song, the next Auto Play press
+                // takes the narration branch below instead of skipping ahead.
+                abandonCycle();
+                if (!dependencies.closeSpotify()) {
+                    dependencies.setStatus('Please close Spotify manually.');
+                }
+                dependencies.setIsPlaying(false);
+                dependencies.setPlaybackPhase('paused');
+                nameThatTuneNarrationPendingToken = trackToken(track);
+                return;
+            }
             await pauseSpotifyAndQueueNext();
             return;
         }
@@ -276,6 +316,29 @@ export function createCarModeAutoPlay(
         }
 
         dependencies.setActivePlayMode('auto');
+
+        if (
+            dependencies.isNameThatTuneEnabled?.() &&
+            dependencies.getPlaybackPhase() === 'paused' &&
+            nameThatTuneNarrationPendingToken === trackToken(track)
+        ) {
+            // A no-duration handoff cannot self-complete. Continue this same
+            // song's narration; never reopen Spotify or jump the queue.
+            const activeRunId = cancelCycle();
+            await advance(activeRunId);
+            return;
+        }
+
+        if (
+            dependencies.isNameThatTuneEnabled?.() &&
+            (dependencies.getPlaybackPhase() === 'idle' ||
+                dependencies.getPlaybackPhase() === 'paused' ||
+                dependencies.getPlaybackPhase() === 'track')
+        ) {
+            if (!dependencies.isMobile()) dependencies.prepareSpotifyWindow();
+            handoff(track);
+            return;
+        }
 
         if (dependencies.getPlaybackPhase() === 'paused') {
             const paused = dependencies.takePausedNarrationPhase();
@@ -322,6 +385,11 @@ export function createCarModeAutoPlay(
 
         if (!options.preserveSpotifyWindow && !dependencies.isMobile()) {
             dependencies.prepareSpotifyWindow();
+        }
+
+        if (dependencies.isNameThatTuneEnabled?.()) {
+            handoff(track);
+            return;
         }
 
         const completed = await dependencies.startNarration(track);

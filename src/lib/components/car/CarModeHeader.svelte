@@ -27,9 +27,11 @@
     export let detailLength: 'off' | 'short' | 'long' = 'short';
     export let artistBioLength: 'short' | 'long' = 'short';
     export let artistStoriesEnabled = false;
+    export let nameThatTuneEnabled = false;
     export let narrationOptionsLocked = false;
     export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
     export let onArtistStoriesChange: (value: boolean) => void;
+    export let onNameThatTuneChange: (value: boolean) => void;
     export let onArtistBioLengthChange: (value: 'short' | 'long') => void = () => {};
 
     const modeLabel = (
@@ -102,7 +104,7 @@
         {#if programType === 'RADIO_ARTIST'}
             <div class="cm-radio-options"><span>Details:</span>{#each ['off', 'short', 'long'] as value}<button class:selected={detailLength === value} on:click={() => onDetailLengthChange(value as 'off' | 'short' | 'long')}>{value === 'off' ? 'Off' : value === 'short' ? 'Short' : 'Long'}</button>{/each}<span>Artist bios:</span>{#each ['short', 'long'] as value}<button class:selected={artistBioLength === value} on:click={() => onArtistBioLengthChange(value as 'short' | 'long')}>{value === 'short' ? 'Short' : 'Long'}</button>{/each}</div>
         {:else}
-            <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {narrationOptionsLocked} {onDetailLengthChange} {onArtistStoriesChange}/>
+            <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {nameThatTuneEnabled} {narrationOptionsLocked} {onDetailLengthChange} {onArtistStoriesChange} {onNameThatTuneChange}/>
         {/if}
 
     </div>
