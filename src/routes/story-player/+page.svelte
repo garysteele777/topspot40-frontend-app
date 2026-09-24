@@ -31,7 +31,7 @@
     let audio: HTMLAudioElement | null = null;
     let bedAudio: HTMLAudioElement | null = null;
     const BED_VOLUME = 0.035;
-    const DOCUSERIES_BED_VOLUME = 0.0175;
+    const DOCUSERIES_BED_VOLUME = 0.006;
 
     let isPlaying = false;
     let currentTime = 0;
