@@ -1,6 +1,6 @@
 <script lang="ts">
     import {afterNavigate, goto} from '$app/navigation';
-    import {onMount} from 'svelte';
+    import {onMount, tick} from 'svelte';
     import ProgramJourneyShell from '$lib/components/journey/ProgramJourneyShell.svelte';
     import MusicDocuseriesCollectionCard from '$lib/components/journey/MusicDocuseriesCollectionCard.svelte';
     import MusicDocuseriesCollectionPreview from '$lib/components/journey/MusicDocuseriesCollectionPreview.svelte';
@@ -21,6 +21,10 @@
     let invalidCollectionSlug: string | null = null;
     let initialized = false;
     let previewRequest = 0;
+    let collectionButtons: HTMLDivElement;
+
+    const MOBILE_BREAKPOINT = '(max-width: 800px)';
+    const COLLECTION_SCROLL_KEY = 'topspot40:docuseries:collection-scroll';
 
     const COLLECTION_ORDER = [
         'history_eras',
@@ -57,9 +61,9 @@
     }
 
     const text = {
-        en: {title:'Choose a Music Docuseries',instruction:'Select a documentary collection, preview its stories, and continue your journey.',back:'Choose Experience',home:'Home',collections:'Docuseries Collections',loading:'Loading documentary series…',empty:'No Music Docuseries collections are currently available.',error:'We could not load the Music Docuseries catalog.',invalid:'That Music Docuseries collection is not available.',show:'Show available collections',previewLoading:'Loading available stories…',previewError:'The collection is available, but its stories could not be loaded.',previewEmpty:'No stories are currently available in this collection.',explore:'Explore'},
-        es: {title:'Elige una docuserie musical',instruction:'Selecciona una colección documental, conoce sus historias y continúa tu viaje.',back:'Elegir experiencia',home:'Inicio',collections:'Colecciones de docuseries',loading:'Cargando series documentales…',empty:'No hay colecciones de docuseries musicales disponibles.',error:'No pudimos cargar el catálogo de docuseries musicales.',invalid:'Esa colección de docuseries musicales no está disponible.',show:'Mostrar colecciones disponibles',previewLoading:'Cargando historias disponibles…',previewError:'La colección está disponible, pero no pudimos cargar sus historias.',previewEmpty:'No hay historias disponibles en esta colección.',explore:'Explorar'},
-        ptbr: {title:'Escolha uma docussérie musical',instruction:'Selecione uma coleção documental, conheça suas histórias e continue sua jornada.',back:'Escolher experiência',home:'Início',collections:'Coleções de docusséries',loading:'Carregando séries documentais…',empty:'Nenhuma coleção de docusséries musicais está disponível.',error:'Não foi possível carregar o catálogo de docusséries musicais.',invalid:'Essa coleção de docusséries musicais não está disponível.',show:'Mostrar coleções disponíveis',previewLoading:'Carregando histórias disponíveis…',previewError:'A coleção está disponível, mas não foi possível carregar suas histórias.',previewEmpty:'Nenhuma história está disponível nesta coleção.',explore:'Explorar'}
+        en: {title:'Choose a Music Docuseries',instruction:'Select a documentary collection to see its stories and continue your journey.',back:'Choose Experience',home:'Home',collections:'Docuseries Collections',loading:'Loading documentary series…',empty:'No Music Docuseries collections are currently available.',error:'We could not load the Music Docuseries catalog.',invalid:'That Music Docuseries collection is not available.',show:'Show available collections',previewLoading:'Loading available stories…',previewError:'The collection is available, but its stories could not be loaded.',previewEmpty:'No stories are currently available in this collection.',explore:'Explore'},
+        es: {title:'Elige una docuserie musical',instruction:'Selecciona una colección documental para ver sus historias y continuar tu viaje.',back:'Elegir experiencia',home:'Inicio',collections:'Colecciones de docuseries',loading:'Cargando series documentales…',empty:'No hay colecciones de docuseries musicales disponibles.',error:'No pudimos cargar el catálogo de docuseries musicales.',invalid:'Esa colección de docuseries musicales no está disponible.',show:'Mostrar colecciones disponibles',previewLoading:'Cargando historias disponibles…',previewError:'La colección está disponible, pero no pudimos cargar sus historias.',previewEmpty:'No hay historias disponibles en esta colección.',explore:'Explorar'},
+        ptbr: {title:'Escolha uma docussérie musical',instruction:'Selecione uma coleção documental para ver suas histórias e continuar sua jornada.',back:'Escolher experiência',home:'Início',collections:'Coleções de docusséries',loading:'Carregando séries documentais…',empty:'Nenhuma coleção de docusséries musicais está disponível.',error:'Não foi possível carregar o catálogo de docusséries musicais.',invalid:'Essa coleção de docusséries musicais não está disponível.',show:'Mostrar coleções disponíveis',previewLoading:'Carregando histórias disponíveis…',previewError:'A coleção está disponível, mas não foi possível carregar suas histórias.',previewEmpty:'Nenhuma história está disponível nesta coleção.',explore:'Explorar'}
     };
 
     function readLanguage(): Language {
@@ -113,6 +117,16 @@
     }
 
     function selectCollection(collection: MusicDocuseriesCollection): void {
+        if (window.matchMedia(MOBILE_BREAKPOINT).matches) {
+            sessionStorage.setItem(COLLECTION_SCROLL_KEY, JSON.stringify({
+                slug: collection.slug,
+                pageScrollY: window.scrollY,
+                listScrollTop: collectionButtons?.scrollTop ?? 0
+            }));
+            void goto(`/journey-prototype/music-docuseries/${encodeURIComponent(collection.slug)}`);
+            return;
+        }
+
         const url = new URL(window.location.href);
         url.searchParams.set('collection', collection.slug);
         void goto(`${url.pathname}${url.search}`, {keepFocus:true,noScroll:true});
@@ -138,6 +152,23 @@
             initialized = true;
         }
         synchronizeSelection(new URL(window.location.href), true);
+
+        const savedScroll = sessionStorage.getItem(COLLECTION_SCROLL_KEY);
+        sessionStorage.removeItem(COLLECTION_SCROLL_KEY);
+        if (savedScroll && window.matchMedia(MOBILE_BREAKPOINT).matches) {
+            try {
+                const {slug, pageScrollY, listScrollTop} = JSON.parse(savedScroll);
+                if (slug === new URL(window.location.href).searchParams.get('collection')) {
+                    await tick();
+                    requestAnimationFrame(() => {
+                        collectionButtons?.scrollTo({top: listScrollTop});
+                        window.scrollTo({top: pageScrollY});
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to restore Music Docuseries collection position:', error);
+            }
+        }
     });
 
     const accent = MUSIC_DOCUSERIES_ACCENT;
@@ -158,7 +189,7 @@
         <div class="browser-layout">
             <section class="collection-picker" aria-labelledby="docuseries-collections-heading">
                 <h2 id="docuseries-collections-heading">{text[language].collections}</h2>
-                <div class="collection-buttons">
+                <div class="collection-buttons" bind:this={collectionButtons}>
                     {#each collections as collection, index (`${collection.id}:${collection.slug}`)}
                         <MusicDocuseriesCollectionCard
                             {collection}
@@ -169,14 +200,14 @@
                     {/each}
                 </div>
             </section>
-            <MusicDocuseriesCollectionPreview collection={selectedCollection} stories={selectedStories} storiesLoading={previewLoading} storiesError={previewError} exploreLabel={text[language].explore} loadingLabel={text[language].previewLoading} emptyLabel={text[language].previewEmpty}/>
+            <div class="desktop-preview"><MusicDocuseriesCollectionPreview collection={selectedCollection} stories={selectedStories} storiesLoading={previewLoading} storiesError={previewError} exploreLabel={text[language].explore} loadingLabel={text[language].previewLoading} emptyLabel={text[language].previewEmpty}/></div>
         </div>
     {/if}
 </ProgramJourneyShell>
 
 <style>
     .browser-layout { display:grid; grid-template-columns:minmax(330px,.9fr) minmax(0,1.55fr); gap:clamp(20px,3vw,34px); align-items:stretch; }
-    .collection-picker { min-width:0; }
+    .collection-picker, .desktop-preview { min-width:0; }
     .collection-picker h2 { margin:0 0 12px; color:#f7dc82; font-family:Georgia,serif; font-size:23px; }
     .collection-buttons { display:grid; max-height:520px; gap:7px; padding-right:6px; overflow-y:auto; scrollbar-color:#d7a64a rgba(255,255,255,.08); scrollbar-width:thin; }
     .state { min-height:210px; display:grid; place-items:center; padding:30px; color:#e8dfcb; background:rgba(29,27,23,.78); border:1px solid rgba(215,166,74,.28); border-radius:16px; text-align:center; }
@@ -184,6 +215,6 @@
     .state button { min-height:44px; padding:10px 18px; color:#171006; background:#d7a64a; border:0; border-radius:999px; font-weight:900; cursor:pointer; }
     .state.error,.state.invalid { color:#ffd3cd; border-color:rgba(255,112,95,.5); }
     @media (min-width:801px) and (min-height:800px) { .browser-layout { gap:24px; } .collection-picker h2 { margin-bottom:9px; font-size:21px; } .collection-buttons { max-height:490px; gap:5px; } }
-    @media (max-width:800px) { .browser-layout { grid-template-columns:1fr; } .collection-buttons { max-height:370px; } }
+    @media (max-width:800px) { .browser-layout { grid-template-columns:1fr; } .collection-buttons { max-height:370px; } .desktop-preview { display:none; } }
     @media (max-width:520px) { .collection-buttons { max-height:330px; } }
 </style>
