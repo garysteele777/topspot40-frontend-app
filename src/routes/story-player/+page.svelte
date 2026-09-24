@@ -31,6 +31,7 @@
     let audio: HTMLAudioElement | null = null;
     let bedAudio: HTMLAudioElement | null = null;
     const BED_VOLUME = 0.035;
+    const DOCUSERIES_BED_VOLUME = 0.0175;
 
     let isPlaying = false;
     let currentTime = 0;
@@ -90,7 +91,9 @@
         if (bedUrl) {
             bedAudio = new Audio(bedUrl);
             bedAudio.loop = true;
-            bedAudio.volume = BED_VOLUME;
+            bedAudio.volume = contentType === 'music_docuseries'
+                ? DOCUSERIES_BED_VOLUME
+                : BED_VOLUME;
         } else {
             bedAudio = null;
         }
