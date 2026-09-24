@@ -21,7 +21,6 @@
     let invalidCollectionSlug: string | null = null;
     let initialized = false;
     let previewRequest = 0;
-    let collectionButtons: HTMLDivElement;
 
     const MOBILE_BREAKPOINT = '(max-width: 800px)';
     const COLLECTION_SCROLL_KEY = 'topspot40:docuseries:collection-scroll';
@@ -120,8 +119,7 @@
         if (window.matchMedia(MOBILE_BREAKPOINT).matches) {
             sessionStorage.setItem(COLLECTION_SCROLL_KEY, JSON.stringify({
                 slug: collection.slug,
-                pageScrollY: window.scrollY,
-                listScrollTop: collectionButtons?.scrollTop ?? 0
+                pageScrollY: window.scrollY
             }));
             void goto(`/journey-prototype/music-docuseries/${encodeURIComponent(collection.slug)}`);
             return;
@@ -157,11 +155,10 @@
         sessionStorage.removeItem(COLLECTION_SCROLL_KEY);
         if (savedScroll && window.matchMedia(MOBILE_BREAKPOINT).matches) {
             try {
-                const {slug, pageScrollY, listScrollTop} = JSON.parse(savedScroll);
+                const {slug, pageScrollY} = JSON.parse(savedScroll);
                 if (slug === new URL(window.location.href).searchParams.get('collection')) {
                     await tick();
                     requestAnimationFrame(() => {
-                        collectionButtons?.scrollTo({top: listScrollTop});
                         window.scrollTo({top: pageScrollY});
                     });
                 }
@@ -189,7 +186,7 @@
         <div class="browser-layout">
             <section class="collection-picker" aria-labelledby="docuseries-collections-heading">
                 <h2 id="docuseries-collections-heading">{text[language].collections}</h2>
-                <div class="collection-buttons" bind:this={collectionButtons}>
+                <div class="collection-buttons">
                     {#each collections as collection, index (`${collection.id}:${collection.slug}`)}
                         <MusicDocuseriesCollectionCard
                             {collection}
