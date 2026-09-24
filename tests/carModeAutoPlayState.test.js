@@ -39,7 +39,8 @@ function createHarness({
     onSpotifyOpenFailed = null,
     onLocalNextTrack = null,
     onSpotifyHandoff = null,
-    stopNarrationBedAtSpotifyHandoff = null
+    stopNarrationBedAtSpotifyHandoff = null,
+    nameThatTuneEnabled = false
 } = {}) {
     let currentTrack = track;
     let activeMode = 'auto';
@@ -54,6 +55,7 @@ function createHarness({
     let pausedPhase = pausedNarrationPhase;
     let preparedWindows = 0;
     let closedWindows = 0;
+    let events = [];
 
     const auto = createCarModeAutoPlay({
         getActivePlayMode: () => activeMode,
@@ -71,12 +73,15 @@ function createHarness({
         },
         abandonNarration: () => { pausedPhase = null; },
         startNarration: async track => {
+            events.push(`narration:${track.spotifyTrackId}`);
             starts.push(track);
             return true;
         },
+        isNameThatTuneEnabled: () => nameThatTuneEnabled,
         prepareSpotifyWindow: () => { preparedWindows += 1; },
         isMobile: () => true,
         openSpotify: () => {
+            events.push(`song:${currentTrack.spotifyTrackId}`);
             opened += 1;
             return openSpotify ? openSpotify() : true;
         },
@@ -93,6 +98,7 @@ function createHarness({
         onSpotifyHandoff,
         stopNarrationBedAtSpotifyHandoff,
         continueAutoPlayback: async () => {
+            events.push('advance');
             continued += 1;
             if (onContinue) await onContinue({
                 auto,
@@ -120,7 +126,8 @@ function createHarness({
             paused,
             starts,
             status,
-            continued
+            continued,
+            ...(nameThatTuneEnabled ? {events} : {})
         })
     };
 }
@@ -225,6 +232,49 @@ test('a known track duration arms one Auto Play timer and continues once', async
 
     assert.equal(harness.state().continued, 1);
     assert.equal(harness.state().opened, 1);
+    harness.auto.cancel();
+});
+
+test('Name That Tune Auto Play hands off the song, then narration, then advances', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const harness = createHarness({
+        phase: 'idle',
+        playing: false,
+        track: {...firstTrack, durationSeconds: 2},
+        nameThatTuneEnabled: true
+    });
+
+    await harness.auto.handlePlay();
+    t.mock.timers.tick(2000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    assert.deepEqual(harness.state().events, ['song:first', 'narration:first', 'advance']);
+    harness.auto.cancel();
+});
+
+test('Name That Tune does not remain falsely playing when Spotify duration is missing', async () => {
+    const missingDuration = {...firstTrack, spotifyTrackId: 'jed-clampett', durationSeconds: null, durationMs: null};
+    const harness = createHarness({
+        phase: 'idle',
+        playing: false,
+        track: missingDuration,
+        nameThatTuneEnabled: true
+    });
+
+    await harness.auto.handlePlay();
+
+    assert.equal(harness.state().playbackPhase, 'paused');
+    assert.equal(harness.state().isPlaying, false);
+    assert.deepEqual(harness.state().status, [
+        'Spotify duration is unavailable. After the song ends, press Auto Play for its narration.'
+    ]);
+
+    await harness.auto.handlePlay();
+
+    assert.deepEqual(harness.state().events, [
+        'song:jed-clampett', 'narration:jed-clampett', 'advance'
+    ]);
     harness.auto.cancel();
 });
 

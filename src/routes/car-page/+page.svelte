@@ -160,6 +160,8 @@
     let lastProgramKey: string | null = null;
     let artistBioPlayedThisSet = false;
     let artistStoriesEnabled = false;
+    // Session-only game setting: never persist this with playback preferences.
+    let nameThatTuneEnabled = false;
     let artistStoriesPlayed = new Set<string>();
     let guidedSpotifyOpenedThisProgram = false;
     let guidedReady = false;
@@ -893,6 +895,15 @@
         return started;
     }
 
+    function startNameThatTuneGuidedSong(): void {
+        // Guided Play keeps the Spotify launch behind the existing user tap.
+        // After that song, Continue runs this track's narration before advance.
+        guidedReady = true;
+        isPlaying.set(false);
+        playbackPhase.set('track');
+        resetGuidedNarrationTiming();
+    }
+
     function openGuidedSpotify(): boolean {
         const track = get(currentTrack);
         const opened = spotify.open(track);
@@ -955,6 +966,12 @@
             sel?.programType === 'RADIO_DG' ||
             sel?.programType === 'RADIO_COL' ||
             sel?.programType === 'RADIO_ARTIST';
+
+        if (nameThatTuneEnabled && !isRadioProgram && track) {
+            const completed = await startGuidedTrack(track);
+            if (completed) await advanceRequestOrRegular();
+            return;
+        }
 
         if (isRadioProgram) {
             await signalTrackFinishedApi({
@@ -1068,6 +1085,10 @@
             sel.mode !== 'artist_spotlight';
 
         if (settings.playbackMethod === 'guided' && guidedSupported) {
+            if (nameThatTuneEnabled) {
+                startNameThatTuneGuidedSong();
+                return;
+            }
             await startGuidedTrack(trackObj);
             return;
         }
@@ -1296,10 +1317,13 @@
             takePausedNarrationPhase: narration.takePausedPhase,
             abandonNarration: narration.abandon,
             startNarration: startGuidedTrack,
+            isNameThatTuneEnabled: () =>
+                nameThatTuneEnabled && !isBackendRadioAutoHandoffSelection(),
             prepareSpotifyWindow: spotify.prepareAutoWindow,
             isMobile: spotify.isMobile,
             openSpotify: openGuidedSpotify,
             closeSpotify: spotify.close,
+            returnSpotifyToWaitingPage: spotify.returnToWaitingPage,
             queueNextTrack: queueNextAutoTrack,
             setStatus: message => status.set(message),
             continueAutoPlayback,
@@ -1908,6 +1932,10 @@
             get(playbackSettingsStore).detailLength,
             enabled
         );
+    }
+
+    function handleNameThatTuneChange(enabled: boolean): void {
+        nameThatTuneEnabled = enabled;
     }
 
     async function advancePrivateRadioTrack(trackOverride?: CarModeTrack): Promise<boolean> {
@@ -2616,6 +2644,8 @@
     onMount(async () => {
         console.info('[car-page] build marker main@3ce2b0b mini-player-tap-diagnostic');
 
+        // Each fresh Car Mode visit starts with Name That Tune off.
+        nameThatTuneEnabled = false;
         carScreen = window.matchMedia('(max-width: 1199px)');
         updateCarLayout();
         carScreen.addEventListener('change', updateCarLayout);
@@ -2941,8 +2971,10 @@
                             ? (($currentSelection.context?.artistBioLength as 'short' | 'long' | undefined) ?? 'short')
                             : 'short'}
                         {artistStoriesEnabled}
+                        {nameThatTuneEnabled}
                         onDetailLengthChange={(value) => { handleDetailLengthChange(value); if ($currentSelection.programType === 'RADIO_ARTIST') currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistDetailLength: value}} : selection); }}
                         onArtistStoriesChange={handleArtistStoriesChange}
+                        onNameThatTuneChange={handleNameThatTuneChange}
                         onArtistBioLengthChange={(value) => currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistBioLength: value}} : selection)}
             />
         {/if}

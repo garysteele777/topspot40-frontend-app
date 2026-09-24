@@ -5,9 +5,11 @@
     export let language: Language = 'en';
     export let detailLength: 'off' | 'short' | 'long' = 'short';
     export let artistStoriesEnabled = false;
+    export let nameThatTuneEnabled = false;
     export let narrationOptionsLocked = false;
     export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
     export let onArtistStoriesChange: (value: boolean) => void;
+    export let onNameThatTuneChange: (value: boolean) => void;
 
     const copy: Record<Language, Record<string, string>> = {
         en: { detailsLabel: 'Details', biosLabel: 'Artist bios', offDetails: 'Off', shortDetails: 'Short', longDetails: 'Long', storiesOff: 'Off', storiesOn: 'On', title: 'Narration options', details: 'Track details', detailsHelp: 'Choose how much you hear about each song.', short: 'Short', long: 'Long', stories: 'Artist bios', storiesHelp: 'Hear each available artist bio once during this program.', off: 'Off', on: 'On', close: 'Close' },
@@ -20,7 +22,8 @@
     $: text = copy[language];
     $: detailValue = detailLength === 'off' ? text.offDetails : detailLength === 'short' ? text.shortDetails : text.longDetails;
     $: biosValue = artistStoriesEnabled ? text.storiesOn : text.storiesOff;
-    $: summary = `${text.detailsLabel}: ${detailValue} • ${text.biosLabel}: ${biosValue}`;
+    $: nameThatTuneValue = nameThatTuneEnabled ? 'On' : 'Off';
+    $: summary = `${text.detailsLabel}: ${detailValue} • ${text.biosLabel}: ${biosValue} • Name That Tune: ${nameThatTuneValue}`;
 
     async function show(): Promise<void> { open = true; await tick(); panel?.focus(); }
     function close(): void { open = false; tick().then(() => trigger?.focus()); }
@@ -34,6 +37,8 @@
             <span class="summary-pair"><span class="summary-label">{text.detailsLabel}:</span><span class="summary-value">{detailValue}</span></span>
             <span class="summary-separator">•</span>
             <span class="summary-pair"><span class="summary-label">{text.biosLabel}:</span><span class="summary-value">{biosValue}</span></span>
+            <span class="summary-separator">•</span>
+            <span class="summary-pair"><span class="summary-label">Name That Tune:</span><span class="summary-value">{nameThatTuneValue}</span></span>
         </span>
     </button>
 </div>
@@ -48,6 +53,13 @@
                 <button type="button" disabled={narrationOptionsLocked} class:selected={detailLength === 'off'} aria-pressed={detailLength === 'off'} on:click={() => onDetailLengthChange('off')}>{text.offDetails}</button>
                 <button type="button" disabled={narrationOptionsLocked} class:selected={detailLength === 'short'} aria-pressed={detailLength === 'short'} on:click={() => onDetailLengthChange('short')}>{text.short}</button>
                 <button type="button" disabled={narrationOptionsLocked} class:selected={detailLength === 'long'} aria-pressed={detailLength === 'long'} on:click={() => onDetailLengthChange('long')}>{text.long}</button>
+            </div>
+        </section>
+        <section aria-labelledby="name-that-tune-options-title">
+            <h3 id="name-that-tune-options-title">Name That Tune</h3><p>Hear each song before its selected introduction and details for this Car Mode session.</p>
+            <div class="choices" role="group" aria-label="Name That Tune">
+                <button type="button" disabled={narrationOptionsLocked} class:selected={!nameThatTuneEnabled} aria-pressed={!nameThatTuneEnabled} on:click={() => onNameThatTuneChange(false)}>Off</button>
+                <button type="button" disabled={narrationOptionsLocked} class:selected={nameThatTuneEnabled} aria-pressed={nameThatTuneEnabled} on:click={() => onNameThatTuneChange(true)}>On</button>
             </div>
         </section>
         <section aria-labelledby="stories-options-title">
