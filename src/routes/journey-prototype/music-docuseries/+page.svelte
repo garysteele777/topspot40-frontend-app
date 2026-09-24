@@ -215,6 +215,5 @@
     .state button { min-height:44px; padding:10px 18px; color:#171006; background:#d7a64a; border:0; border-radius:999px; font-weight:900; cursor:pointer; }
     .state.error,.state.invalid { color:#ffd3cd; border-color:rgba(255,112,95,.5); }
     @media (min-width:801px) and (min-height:800px) { .browser-layout { gap:24px; } .collection-picker h2 { margin-bottom:9px; font-size:21px; } .collection-buttons { max-height:490px; gap:5px; } }
-    @media (max-width:800px) { .browser-layout { grid-template-columns:1fr; } .collection-buttons { max-height:370px; } .desktop-preview { display:none; } }
-    @media (max-width:520px) { .collection-buttons { max-height:330px; } }
+    @media (max-width:800px) { .browser-layout { grid-template-columns:1fr; } .collection-buttons { max-height:none; padding-right:0; overflow-y:visible; } .desktop-preview { display:none; } }
 </style>
