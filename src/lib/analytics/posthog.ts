@@ -39,7 +39,7 @@ export async function syncPostHogIdentity(
 export function initializePostHog(client: PostHogClient, fetcher: typeof fetch = fetch): void {
     if (initialized) return;
     client.init('phc_mQ9iZBjF46F7TSgopnPcZ7VWq358b6wS9xpCBrZHJuje', {
-        api_host: 'https://us.i.posthog.com', defaults: '2026-05-30', disable_session_recording: true, autocapture: false, capture_pageview: false
+        api_host: 'https://us.i.posthog.com', defaults: '2026-05-30', disable_session_recording: true, autocapture: false, capture_pageview: 'history_change'
     });
     initialized = true;
     void syncPostHogIdentity(client, fetcher);
