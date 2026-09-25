@@ -21,3 +21,14 @@ test('a completed request is removed only on the following transition and regula
     assert.match(route, /await nextTrack\(auto\);/);
     assert.match(navigation, /isTrackExcludedFromRegularProgression/);
 });
+
+test('a searched request already displayed as current is not resumed and played twice', () => {
+    assert.match(
+        route,
+        /requestTrackIdentity\(current\) !== requestTrackIdentity\(nextRequest\)[\s\S]*regularResumeTrack = current/
+    );
+    assert.match(
+        route,
+        /currentTrack\.set\(requestedTrack\);[\s\S]*currentRank\.set\(requestedTrack\.rank\);[\s\S]*addTrackRequest\(requestedTrack\)/
+    );
+});

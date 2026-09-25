@@ -1,0 +1,910 @@
+[
+  {
+    "code": "A-186",
+    "name": "AC/DC"
+  },
+  {
+    "code": "A-128",
+    "name": "Adele"
+  },
+  {
+    "code": "A-187",
+    "name": "Aerosmith"
+  },
+  {
+    "code": "A-098",
+    "name": "Agustin Lara"
+  },
+  {
+    "code": "A-163",
+    "name": "Al Green"
+  },
+  {
+    "code": "A-001",
+    "name": "Al Jarreau"
+  },
+  {
+    "code": "A-038",
+    "name": "Alabama"
+  },
+  {
+    "code": "A-002",
+    "name": "Alabama Shakes"
+  },
+  {
+    "code": "A-039",
+    "name": "Alan Jackson"
+  },
+  {
+    "code": "A-164",
+    "name": "Alicia Keys"
+  },
+  {
+    "code": "A-003",
+    "name": "Aloe Blacc"
+  },
+  {
+    "code": "A-078",
+    "name": "America"
+  },
+  {
+    "code": "A-004",
+    "name": "Amy Winehouse"
+  },
+  {
+    "code": "A-165",
+    "name": "Anita Baker"
+  },
+  {
+    "code": "A-188",
+    "name": "Arctic Monkeys"
+  },
+  {
+    "code": "A-129",
+    "name": "Aretha Franklin"
+  },
+  {
+    "code": "A-130",
+    "name": "Ariana Grande"
+  },
+  {
+    "code": "A-099",
+    "name": "Aventura"
+  },
+  {
+    "code": "A-131",
+    "name": "Avril Lavigne"
+  },
+  {
+    "code": "A-005",
+    "name": "B.b. King"
+  },
+  {
+    "code": "A-132",
+    "name": "Backstreet Boys"
+  },
+  {
+    "code": "A-100",
+    "name": "Bad Bunny"
+  },
+  {
+    "code": "A-133",
+    "name": "Barry Manilow"
+  },
+  {
+    "code": "A-134",
+    "name": "Bee Gees"
+  },
+  {
+    "code": "A-135",
+    "name": "Beyonce"
+  },
+  {
+    "code": "A-006",
+    "name": "Bill Withers"
+  },
+  {
+    "code": "A-136",
+    "name": "Billy Joel"
+  },
+  {
+    "code": "A-040",
+    "name": "Blake Shelton"
+  },
+  {
+    "code": "A-189",
+    "name": "Bo Diddley"
+  },
+  {
+    "code": "A-079",
+    "name": "Bob Dylan"
+  },
+  {
+    "code": "A-190",
+    "name": "Bon Jovi"
+  },
+  {
+    "code": "A-166",
+    "name": "Boyz Ii Men"
+  },
+  {
+    "code": "A-041",
+    "name": "Brad Paisley"
+  },
+  {
+    "code": "A-137",
+    "name": "Britney Spears"
+  },
+  {
+    "code": "A-042",
+    "name": "Brooks and Dunn"
+  },
+  {
+    "code": "A-191",
+    "name": "Bruce Springsteen"
+  },
+  {
+    "code": "A-138",
+    "name": "Bruno Mars"
+  },
+  {
+    "code": "A-139",
+    "name": "Bts"
+  },
+  {
+    "code": "A-043",
+    "name": "Buck Owens"
+  },
+  {
+    "code": "A-007",
+    "name": "Buddy Guy"
+  },
+  {
+    "code": "A-140",
+    "name": "Buddy Holly"
+  },
+  {
+    "code": "A-080",
+    "name": "Caamp"
+  },
+  {
+    "code": "A-101",
+    "name": "Camilo"
+  },
+  {
+    "code": "A-102",
+    "name": "Carlos Vives"
+  },
+  {
+    "code": "A-103",
+    "name": "Cazuza"
+  },
+  {
+    "code": "A-104",
+    "name": "Celia Cruz"
+  },
+  {
+    "code": "A-081",
+    "name": "Charley Crockett"
+  },
+  {
+    "code": "A-167",
+    "name": "Chris Brown"
+  },
+  {
+    "code": "A-044",
+    "name": "Chris Stapleton"
+  },
+  {
+    "code": "A-141",
+    "name": "Christina Aguilera"
+  },
+  {
+    "code": "A-192",
+    "name": "Chuck Berry"
+  },
+  {
+    "code": "A-193",
+    "name": "Coldplay"
+  },
+  {
+    "code": "A-168",
+    "name": "Commodores"
+  },
+  {
+    "code": "A-194",
+    "name": "Creedence Clearwater Revival"
+  },
+  {
+    "code": "A-008",
+    "name": "Curtis Mayfield"
+  },
+  {
+    "code": "A-105",
+    "name": "Daddy Yankee"
+  },
+  {
+    "code": "A-195",
+    "name": "Def Leppard"
+  },
+  {
+    "code": "A-169",
+    "name": "Destinys Child"
+  },
+  {
+    "code": "A-009",
+    "name": "Diana Krall"
+  },
+  {
+    "code": "A-045",
+    "name": "Dierks Bentley"
+  },
+  {
+    "code": "A-046",
+    "name": "Dolly Parton"
+  },
+  {
+    "code": "A-047",
+    "name": "Don Williams"
+  },
+  {
+    "code": "A-142",
+    "name": "Drake"
+  },
+  {
+    "code": "A-143",
+    "name": "Dua Lipa"
+  },
+  {
+    "code": "A-196",
+    "name": "Eagles"
+  },
+  {
+    "code": "A-010",
+    "name": "Earth Wind and Fire"
+  },
+  {
+    "code": "A-144",
+    "name": "Ed Sheeran"
+  },
+  {
+    "code": "A-082",
+    "name": "Elliott Smith"
+  },
+  {
+    "code": "A-145",
+    "name": "Elton John"
+  },
+  {
+    "code": "A-048",
+    "name": "Elvis Presley"
+  },
+  {
+    "code": "A-106",
+    "name": "Enrique Iglesias"
+  },
+  {
+    "code": "A-049",
+    "name": "Eric Church"
+  },
+  {
+    "code": "A-011",
+    "name": "Esperanza Spalding"
+  },
+  {
+    "code": "A-012",
+    "name": "Etta James"
+  },
+  {
+    "code": "A-197",
+    "name": "Fall Out Boy"
+  },
+  {
+    "code": "A-227",
+    "name": "Freddy Fender"
+  },
+  {
+    "code": "A-146",
+    "name": "Fats Domino"
+  },
+  {
+    "code": "A-050",
+    "name": "Florida Georgia Line"
+  },
+  {
+    "code": "A-198",
+    "name": "Foo Fighters"
+  },
+  {
+    "code": "A-170",
+    "name": "Four Tops"
+  },
+  {
+    "code": "A-013",
+    "name": "Gary Clark Jr."
+  },
+  {
+    "code": "A-014",
+    "name": "George Benson"
+  },
+  {
+    "code": "A-051",
+    "name": "George Jones"
+  },
+  {
+    "code": "A-052",
+    "name": "George Strait"
+  },
+  {
+    "code": "A-171",
+    "name": "Gladys Knight"
+  },
+  {
+    "code": "A-053",
+    "name": "Glen Campbell"
+  },
+  {
+    "code": "A-199",
+    "name": "Green Day"
+  },
+  {
+    "code": "A-083",
+    "name": "Gregory Alan Isakov"
+  },
+  {
+    "code": "A-015",
+    "name": "Gregory Porter"
+  },
+  {
+    "code": "A-200",
+    "name": "Guns N Roses"
+  },
+  {
+    "code": "A-054",
+    "name": "Hank Williams"
+  },
+  {
+    "code": "A-055",
+    "name": "Hank Williams Jr"
+  },
+  {
+    "code": "A-016",
+    "name": "Herbie Hancock"
+  },
+  {
+    "code": "A-017",
+    "name": "Howlin' Wolf"
+  },
+  {
+    "code": "A-201",
+    "name": "Imagine Dragons"
+  },
+  {
+    "code": "A-107",
+    "name": "J Balvin"
+  },
+  {
+    "code": "A-172",
+    "name": "James Brown"
+  },
+  {
+    "code": "A-084",
+    "name": "James Taylor"
+  },
+  {
+    "code": "A-056",
+    "name": "Jason Aldean"
+  },
+  {
+    "code": "A-085",
+    "name": "Jason Mraz"
+  },
+  {
+    "code": "A-202",
+    "name": "Jerry Lee Lewis"
+  },
+  {
+    "code": "A-057",
+    "name": "Jim Reeves"
+  },
+  {
+    "code": "A-203",
+    "name": "Jimi Hendrix"
+  },
+  {
+    "code": "A-018",
+    "name": "John Coltrane"
+  },
+  {
+    "code": "A-058",
+    "name": "John Denver"
+  },
+  {
+    "code": "A-173",
+    "name": "John Legend"
+  },
+  {
+    "code": "A-086",
+    "name": "John Mayer"
+  },
+  {
+    "code": "A-059",
+    "name": "John Michael Montgomery"
+  },
+  {
+    "code": "A-060",
+    "name": "Johnny Cash"
+  },
+  {
+    "code": "A-087",
+    "name": "Josiah Queen"
+  },
+  {
+    "code": "A-108",
+    "name": "José José"
+  },
+  {
+    "code": "A-204",
+    "name": "Journey"
+  },
+  {
+    "code": "A-109",
+    "name": "João Gilberto"
+  },
+  {
+    "code": "A-110",
+    "name": "Juan Luis Guerra"
+  },
+  {
+    "code": "A-111",
+    "name": "Juanes"
+  },
+  {
+    "code": "A-112",
+    "name": "Julio Iglesias"
+  },
+  {
+    "code": "A-147",
+    "name": "Justin Bieber"
+  },
+  {
+    "code": "A-148",
+    "name": "Justin Timberlake"
+  },
+  {
+    "code": "A-113",
+    "name": "Karol G"
+  },
+  {
+    "code": "A-149",
+    "name": "Katy Perry"
+  },
+  {
+    "code": "A-061",
+    "name": "Keith Urban"
+  },
+  {
+    "code": "A-062",
+    "name": "Kenny Chesney"
+  },
+  {
+    "code": "A-019",
+    "name": "Kenny G"
+  },
+  {
+    "code": "A-063",
+    "name": "Kenny Rogers"
+  },
+  {
+    "code": "A-150",
+    "name": "Lady Gaga"
+  },
+  {
+    "code": "A-205",
+    "name": "Led Zeppelin"
+  },
+  {
+    "code": "A-020",
+    "name": "Lee Ritenour"
+  },
+  {
+    "code": "A-064",
+    "name": "Lefty Frizzell"
+  },
+  {
+    "code": "A-151",
+    "name": "Lil Nas X"
+  },
+  {
+    "code": "A-206",
+    "name": "Linkin Park"
+  },
+  {
+    "code": "A-152",
+    "name": "Lionel Richie"
+  },
+  {
+    "code": "A-153",
+    "name": "Little Richard"
+  },
+  {
+    "code": "A-088",
+    "name": "Luigi Tenco"
+  },
+  {
+    "code": "A-114",
+    "name": "Luis Miguel"
+  },
+  {
+    "code": "A-065",
+    "name": "Luke Bryan"
+  },
+  {
+    "code": "A-066",
+    "name": "Luke Combs"
+  },
+  {
+    "code": "A-207",
+    "name": "Machine Gun Kelly Blackbear"
+  },
+  {
+    "code": "A-154",
+    "name": "Madonna"
+  },
+  {
+    "code": "A-115",
+    "name": "Maluma"
+  },
+  {
+    "code": "A-208",
+    "name": "Maneskin"
+  },
+  {
+    "code": "A-116",
+    "name": "Manu Chao"
+  },
+  {
+    "code": "A-117",
+    "name": "Marc Anthony"
+  },
+  {
+    "code": "A-021",
+    "name": "Marcus Miller"
+  },
+  {
+    "code": "A-155",
+    "name": "Mariah Carey"
+  },
+  {
+    "code": "A-067",
+    "name": "Marty Robbins"
+  },
+  {
+    "code": "A-022",
+    "name": "Marvin Gaye"
+  },
+  {
+    "code": "A-068",
+    "name": "Mary Chapin Carpenter"
+  },
+  {
+    "code": "A-174",
+    "name": "Mary J Blige"
+  },
+  {
+    "code": "A-069",
+    "name": "Merle Haggard"
+  },
+  {
+    "code": "A-209",
+    "name": "Metallica"
+  },
+  {
+    "code": "A-156",
+    "name": "Michael Jackson"
+  },
+  {
+    "code": "A-023",
+    "name": "Miles Davis"
+  },
+  {
+    "code": "A-070",
+    "name": "Miranda Lambert"
+  },
+  {
+    "code": "A-024",
+    "name": "Muddy Waters"
+  },
+  {
+    "code": "A-210",
+    "name": "Mumford & Sons"
+  },
+  {
+    "code": "A-175",
+    "name": "Ne-Yo"
+  },
+  {
+    "code": "A-089",
+    "name": "Neil Young"
+  },
+  {
+    "code": "A-118",
+    "name": "Nicky Jam"
+  },
+  {
+    "code": "A-211",
+    "name": "Nirvana"
+  },
+  {
+    "code": "A-025",
+    "name": "Norah Jones"
+  },
+  {
+    "code": "A-090",
+    "name": "Odetta"
+  },
+  {
+    "code": "A-212",
+    "name": "Paramore"
+  },
+  {
+    "code": "A-071",
+    "name": "Patsy Cline"
+  },
+  {
+    "code": "A-091",
+    "name": "Paul Clayton"
+  },
+  {
+    "code": "A-092",
+    "name": "Paul Simon"
+  },
+  {
+    "code": "A-213",
+    "name": "Pearl Jam"
+  },
+  {
+    "code": "A-093",
+    "name": "Peggy Seeger"
+  },
+  {
+    "code": "A-119",
+    "name": "Perez Prado"
+  },
+  {
+    "code": "A-094",
+    "name": "Pete Seeger"
+  },
+  {
+    "code": "A-214",
+    "name": "Phoebe Bridgers"
+  },
+  {
+    "code": "A-215",
+    "name": "Pink Floyd"
+  },
+  {
+    "code": "A-120",
+    "name": "Pitbull"
+  },
+  {
+    "code": "A-176",
+    "name": "Prince"
+  },
+  {
+    "code": "A-216",
+    "name": "Queen"
+  },
+  {
+    "code": "A-177",
+    "name": "R Kelly"
+  },
+  {
+    "code": "A-217",
+    "name": "Radiohead"
+  },
+  {
+    "code": "A-072",
+    "name": "Randy Travis"
+  },
+  {
+    "code": "A-073",
+    "name": "Rascal Flatts"
+  },
+  {
+    "code": "A-121",
+    "name": "Rauw Alejandro"
+  },
+  {
+    "code": "A-026",
+    "name": "Ray Charles"
+  },
+  {
+    "code": "A-218",
+    "name": "Red Hot Chili Peppers"
+  },
+  {
+    "code": "A-157",
+    "name": "Rihanna"
+  },
+  {
+    "code": "A-027",
+    "name": "Robert Cray"
+  },
+  {
+    "code": "A-028",
+    "name": "Robert Glasper Experiment"
+  },
+  {
+    "code": "A-122",
+    "name": "Roberto Carlos"
+  },
+  {
+    "code": "A-123",
+    "name": "Rosalia"
+  },
+  {
+    "code": "A-178",
+    "name": "Sade"
+  },
+  {
+    "code": "A-179",
+    "name": "Sam Cooke"
+  },
+  {
+    "code": "A-074",
+    "name": "Sam Hunt"
+  },
+  {
+    "code": "A-124",
+    "name": "Selena"
+  },
+  {
+    "code": "A-125",
+    "name": "Shakira"
+  },
+  {
+    "code": "A-095",
+    "name": "Simon and Garfunkel"
+  },
+  {
+    "code": "A-029",
+    "name": "Steely Dan"
+  },
+  {
+    "code": "A-030",
+    "name": "Stevie Ray Vaughan"
+  },
+  {
+    "code": "A-031",
+    "name": "Stevie Wonder"
+  },
+  {
+    "code": "A-032",
+    "name": "Susan Tedeschi"
+  },
+  {
+    "code": "A-033",
+    "name": "Sza"
+  },
+  {
+    "code": "A-034",
+    "name": "Tedeschi Trucks Band"
+  },
+  {
+    "code": "A-126",
+    "name": "Thalia"
+  },
+  {
+    "code": "A-158",
+    "name": "The Beatles"
+  },
+  {
+    "code": "A-035",
+    "name": "The Black Keys"
+  },
+  {
+    "code": "A-219",
+    "name": "The Clash"
+  },
+  {
+    "code": "A-036",
+    "name": "The Derek Trucks Band"
+  },
+  {
+    "code": "A-220",
+    "name": "The Doors"
+  },
+  {
+    "code": "A-180",
+    "name": "The Drifters"
+  },
+  {
+    "code": "A-075",
+    "name": "The Everly Brothers"
+  },
+  {
+    "code": "A-181",
+    "name": "The Isley Brothers"
+  },
+  {
+    "code": "A-182",
+    "name": "The Jackson 5"
+  },
+  {
+    "code": "A-221",
+    "name": "The Killers"
+  },
+  {
+    "code": "A-096",
+    "name": "The Lumineers"
+  },
+  {
+    "code": "A-159",
+    "name": "The Platters"
+  },
+  {
+    "code": "A-222",
+    "name": "The Rolling Stones"
+  },
+  {
+    "code": "A-223",
+    "name": "The Strokes"
+  },
+  {
+    "code": "A-160",
+    "name": "The Supremes"
+  },
+  {
+    "code": "A-183",
+    "name": "The Temptations"
+  },
+  {
+    "code": "A-161",
+    "name": "The Weeknd"
+  },
+  {
+    "code": "A-037",
+    "name": "The White Stripes"
+  },
+  {
+    "code": "A-224",
+    "name": "The Who"
+  },
+  {
+    "code": "A-184",
+    "name": "Tina Turner"
+  },
+  {
+    "code": "A-076",
+    "name": "Toby Keith"
+  },
+  {
+    "code": "A-225",
+    "name": "Twenty One Pilots"
+  },
+  {
+    "code": "A-226",
+    "name": "U2"
+  },
+  {
+    "code": "A-185",
+    "name": "Usher"
+  },
+  {
+    "code": "A-097",
+    "name": "Vance Joy"
+  },
+  {
+    "code": "A-127",
+    "name": "Vicente Fernández"
+  },
+  {
+    "code": "A-077",
+    "name": "Waylon Jennings"
+  },
+  {
+    "code": "A-162",
+    "name": "Whitney Houston"
+  }
+]
