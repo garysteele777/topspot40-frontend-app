@@ -70,7 +70,7 @@
     {language}
     {title}
     instruction={text[language].instruction}
-    backHref="/journey-prototype/music-docuseries"
+    backHref={`/journey-prototype/music-docuseries?collection=${encodeURIComponent(page.params.collectionSlug ?? '')}`}
     backLabel={text[language].back}
     homeLabel={text[language].home}
     accent={presentation.accent ?? MUSIC_DOCUSERIES_ACCENT}

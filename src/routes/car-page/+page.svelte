@@ -44,6 +44,7 @@
     import {createCarModeNavigation} from '$lib/carmode/CarModeNavigation';
     import {createEstimatedTrackClock} from '$lib/carmode/EstimatedTrackClock';
     import {addRequest, clearRequests, moveRequest, removeRequest} from '$lib/carmode/requestsQueue.js';
+    import {requestedTrackFromId} from '$lib/carmode/requestedTrack';
     import {
         buildProgramStartedProperties,
         createProgramStartedTracker
@@ -212,7 +213,16 @@
             return;
         }
 
-        if (!regularResumeTrack && current) regularResumeTrack = current;
+        // A requested track can also be the initial display track when it was
+        // launched from Artist Track Search. It is already the next regular
+        // position, so do not retain it as a resume target and play it twice.
+        if (
+            !regularResumeTrack &&
+            current &&
+            requestTrackIdentity(current) !== requestTrackIdentity(nextRequest)
+        ) {
+            regularResumeTrack = current;
+        }
         activeRequestIdentity = requestTrackIdentity(nextRequest);
         requestedTrackIdentities = new Set([...requestedTrackIdentities, activeRequestIdentity]);
         currentTrack.set(nextRequest);
@@ -2830,6 +2840,18 @@
             return;
         }
         await loadForSelection(sel, initialRank);
+        const requestedTrack = requestedTrackFromId(
+            get(tracks),
+            url.searchParams.get('requestTrackId')
+        );
+        if (requestedTrack) {
+            // Show the requested recording immediately, but leave it in the
+            // request queue so Guided and Auto both use their normal first
+            // request handoff when the listener presses Play.
+            currentTrack.set(requestedTrack);
+            currentRank.set(requestedTrack.rank);
+            addTrackRequest(requestedTrack);
+        }
         if (languageChangedReturn) {
             const returnedTrack = findReturnedCarModeTrack(get(tracks), url);
             if (returnedTrack) {

@@ -30,7 +30,7 @@ function client(previousUserId) {
     };
 }
 
-test('PostHog initialization disables automatic interaction and session recording', async () => {
+test('PostHog initialization tracks navigation while disabling interaction and session recording', async () => {
     const source = await readFile(
         new URL('../src/lib/analytics/posthog.ts', import.meta.url),
         'utf8'
@@ -38,7 +38,7 @@ test('PostHog initialization disables automatic interaction and session recordin
 
     assert.match(source, /disable_session_recording:\s*true/);
     assert.match(source, /autocapture:\s*false/);
-    assert.match(source, /capture_pageview:\s*false/);
+    assert.match(source, /capture_pageview:\s*'history_change'/);
 });
 test('newly authenticated users and normal sign-ins identify with the backend UUID', () => {
     for (const userId of ['new-user-uuid', 'returning-user-uuid']) {
