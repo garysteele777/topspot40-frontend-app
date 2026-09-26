@@ -18,6 +18,7 @@
     } from '$lib/musicDocuseries/catalogAdapter';
     import {buildMusicDocuseriesLaunchUrl} from '$lib/musicDocuseries/launchMusicDocuseries';
     import type {MusicDocuseriesCollection, MusicDocuseriesStory} from '$lib/musicDocuseries/types';
+    import {docuseriesCodeForSlug} from '$lib/musicDocuseries/programCodes';
     import type {Language} from '$lib/types/playback';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
     import posthog from 'posthog-js';
@@ -97,6 +98,7 @@
     $: presentation = musicDocuseriesCollectionPresentation(collection?.slug ?? '');
     $: artwork = !imageFailed && story?.artwork_url ? story.artwork_url : MUSIC_DOCUSERIES_FALLBACK_ARTWORK;
     $: targetLength = formatTargetLength(story?.target_length);
+    $: catalogCode = docuseriesCodeForSlug(story?.slug);
     $: backHref = collectionPath();
 </script>
 
@@ -136,7 +138,7 @@
                 <span class="play-mark" aria-hidden="true">▶</span>
             </div>
             <div class="preview-copy">
-                <span class="eyebrow">{text[language].story}<span aria-hidden="true"> • </span>{collection.name}</span>
+                <span class="eyebrow">{text[language].story}{catalogCode ? ` • ${catalogCode}` : ''}<span aria-hidden="true"> • </span>{collection.name}</span>
                 <h2>{story.title}</h2>
                 {#if targetLength}<strong>{targetLength}</strong>{/if}
                 {#if story.short_description}<p>{story.short_description}</p>{/if}

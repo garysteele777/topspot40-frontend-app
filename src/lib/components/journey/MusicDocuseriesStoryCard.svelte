@@ -4,6 +4,7 @@
         formatTargetLength
     } from '$lib/config/musicDocuseriesJourney';
     import type {MusicDocuseriesStory} from '$lib/musicDocuseries/types';
+    import {docuseriesCodeForSlug} from '$lib/musicDocuseries/programCodes';
 
     export let story: MusicDocuseriesStory;
     export let collectionSlug: string;
@@ -14,6 +15,7 @@
     $: returnTo = `/journey-prototype/music-docuseries/${encodeURIComponent(collectionSlug)}`;
     $: href = `/story-player?type=music_docuseries&slug=${encodeURIComponent(story.slug)}&language=en&collection=${encodeURIComponent(collectionSlug)}&returnTo=${encodeURIComponent(returnTo)}`;
     $: targetLength = formatTargetLength(story.target_length);
+    $: catalogCode = docuseriesCodeForSlug(story.slug);
 </script>
 
 <a class="story-card" {href}>
@@ -25,7 +27,7 @@
         <span class="episode">{episodeNumber}</span>
     </span>
     <span class="copy">
-        <small>Story {episodeNumber}{targetLength ? ` • ${targetLength}` : ''}</small>
+        <small>Story {episodeNumber}{catalogCode ? ` • ${catalogCode}` : ''}{targetLength ? ` • ${targetLength}` : ''}</small>
         <strong>{story.title}</strong>
         {#if story.short_description}<span class="description">{story.short_description}</span>{/if}
         <span class="open">{openLabel} <span aria-hidden="true">→</span></span>

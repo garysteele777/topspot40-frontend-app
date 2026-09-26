@@ -204,12 +204,40 @@
 
     async function openArtistCode(code: string) {
         closeArtistsBrowser();
-        await openCatalogCode(code, 'artist');
+        await openArtistPreview(code);
     }
 
     async function openTrackArtistCode(track: ArtistTrackResult) {
         closeTrackSearch();
-        await openCatalogCode(track.artist_code, 'artist', track.track_id);
+        await openArtistPreview(track.artist_code, track.track_id);
+    }
+
+    async function openArtistPreview(code: string, requestTrackId: number | null = null) {
+        try {
+            const program = await lookupProgramCode(code);
+            const artistId = program?.kind === 'artist_spotlight' &&
+                (typeof program.target?.artist_id === 'number' || typeof program.target?.artist_id === 'string')
+                ? String(program.target.artist_id)
+                : null;
+
+            if (!artistId) {
+                catalogStatus = catalogText().unavailable;
+                catalogStatusKind = 'error';
+                return;
+            }
+
+            const query = new URLSearchParams({
+                genre: 'all',
+                language
+            });
+            if (requestTrackId !== null) query.set('requestTrackId', String(requestTrackId));
+            await goto(`/journey-prototype/artist-spotlights/${encodeURIComponent(artistId)}?${query.toString()}`);
+        } catch (error) {
+            catalogStatus = error instanceof ProgramCodeLookupError && error.kind === 'not-found'
+                ? catalogText().notFound
+                : catalogText().unavailable;
+            catalogStatusKind = 'error';
+        }
     }
 
     async function openCatalogCode(code: string, family: ExperienceFamily, requestTrackId: number | null = null) {

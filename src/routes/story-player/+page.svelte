@@ -3,6 +3,7 @@
     import {page} from '$app/stores';
     import {goto} from '$app/navigation';
     import {isSafeMusicDocuseriesReturnPath} from '$lib/musicDocuseries/launchMusicDocuseries';
+    import {docuseriesCodeForSlug} from '$lib/musicDocuseries/programCodes';
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
@@ -53,6 +54,7 @@
     let returnTo: string | null = null;
 
     let story: StoryResponse | null = null;
+    $: catalogCode = contentType === 'music_docuseries' ? docuseriesCodeForSlug(story?.slug ?? slug) : null;
     let error: string | null = null;
     let loading = true;
 
@@ -278,7 +280,7 @@
         <div class="story-card">
             <div class="label">
                 {contentType === 'music_docuseries'
-                    ? 'Music Docuseries'
+                    ? `Music Docuseries${catalogCode ? ` • ${catalogCode}` : ''}`
                     : 'Artist Story'}
             </div>
 
