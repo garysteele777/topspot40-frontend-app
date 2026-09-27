@@ -76,6 +76,7 @@
     export let onMoveRequest: ((index: number, direction: -1 | 1) => void) | undefined = undefined;
     export let onRemoveRequest: ((index: number) => void) | undefined = undefined;
     export let onClearRequests: (() => void) | undefined = undefined;
+    export let onPrintStart: (() => void) | undefined = undefined;
     export let openRequests = false;
     export let onRequestsViewOpened: (() => void) | undefined = undefined;
 
@@ -206,6 +207,7 @@
             }
         }
         await tick();
+        onPrintStart?.();
         window.print();
     }
 
