@@ -43,7 +43,7 @@
     } from '$lib/carmode/CarModeAutoPlay';
     import {createCarModeNavigation} from '$lib/carmode/CarModeNavigation';
     import {createEstimatedTrackClock} from '$lib/carmode/EstimatedTrackClock';
-    import {addRequest, clearRequests, moveRequest, removeRequest} from '$lib/carmode/requestsQueue.js';
+    import {addRequest, clearPendingRequests, moveRequest, removeRequest} from '$lib/carmode/requestsQueue.js';
     import {requestedTrackFromId} from '$lib/carmode/requestedTrack';
     import {
         buildProgramStartedProperties,
@@ -184,7 +184,7 @@
     }
     function moveTrackRequest(index: number, direction: -1 | 1): void { requests = moveRequest(requests, index, direction); }
     function removeTrackRequest(index: number): void { requests = removeRequest(requests, index); }
-    function clearTrackRequests(): void { requests = clearRequests(requests, true); }
+    function clearTrackRequests(): void { requests = clearPendingRequests(requests, activeRequestIdentity); }
 
     async function advanceRequestOrRegular(
         auto = false,
@@ -3036,6 +3036,7 @@
                         openTrackList={openGuidedTrackList}
                         onTrackListClosed={() => (openGuidedTrackList = false)}
                         {requests}
+                        {activeRequestIdentity}
                         onAddRequest={addTrackRequest}
                         onMoveRequest={moveTrackRequest}
                         onRemoveRequest={removeTrackRequest}
@@ -3252,7 +3253,6 @@
     }
 
 </style>
-
 
 
 
