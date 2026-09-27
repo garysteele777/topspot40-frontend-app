@@ -27,6 +27,19 @@ export function clearRequests(queue, confirmed) {
     return confirmed ? [] : queue;
 }
 
+// The active request stays in the playback queue until the next transition.
+// Expose only waiting requests to the listener, retaining their source indices
+// so moving or removing a displayed item updates the correct queue entry.
+export function pendingRequestEntries(queue, activeIdentity) {
+    return queue.flatMap((track, index) =>
+        requestIdentity(track) === activeIdentity ? [] : [{track, index}]
+    );
+}
+
+export function clearPendingRequests(queue, activeIdentity) {
+    return queue.filter(track => requestIdentity(track) === activeIdentity);
+}
+
 export function takeNextRequest(queue) {
     return {track: queue[0] ?? null, queue: queue.slice(1)};
 }
