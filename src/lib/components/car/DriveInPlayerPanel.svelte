@@ -15,6 +15,7 @@
         formatDriveInTrackPosition
     } from '$lib/carmode/classicViewLabels';
     import {getCarModePlaybackPhaseCopy} from '$lib/carmode/playbackPhaseCopy';
+    import {pendingRequestEntries} from '$lib/carmode/requestsQueue.js';
 
     type DriveInTransportCopy = {
         previous: string;
@@ -115,6 +116,7 @@
     export let openTrackList = false;
     export let onTrackListClosed: (() => void) | undefined;
     export let requests: CarModeTrack[] = [];
+    export let activeRequestIdentity: string | null = null;
     export let onAddRequest: ((track: CarModeTrack) => void) | undefined = undefined;
     export let onMoveRequest: ((index: number, direction: -1 | 1) => void) | undefined = undefined;
     export let onRemoveRequest: ((index: number) => void) | undefined = undefined;
@@ -124,11 +126,8 @@
     let openRequestsView = false;
 
     $: if (openTrackList) showTrackList = true;
-    $: pendingRequests = requests.filter(request =>
-        request.rankingId != null && currentTrack?.rankingId != null
-            ? request.rankingId !== currentTrack.rankingId
-            : request.rank !== currentTrack?.rank
-    );
+    $: pendingRequests = pendingRequestEntries(requests, activeRequestIdentity)
+        .map(({track}: {track: CarModeTrack}) => track);
 
     function closeTrackList(): void {
         showTrackList = false;
@@ -457,6 +456,7 @@
             exportFileName={trackListExportName}
             {language}
             {requests}
+            {activeRequestIdentity}
             {onAddRequest}
             {onMoveRequest}
             {onRemoveRequest}
