@@ -171,3 +171,30 @@ test('Next releases its lock after a failed narration path and Previous remains 
 
     assert.equal(playAttempts, 3);
 });
+
+test('Favor New remembers ranks instead of ranking IDs when skipping completed tracks', () => {
+    const tracks = [
+        {rankingId: 700, rank: 7},
+        {rankingId: 800, rank: 8},
+        {rankingId: 100, rank: 1}
+    ];
+    let current = tracks[0];
+    const navigation = createCarModeNavigation({
+        getCurrentTrack: () => current,
+        getTracks: () => tracks,
+        getSelection: () => null,
+        getPlaybackSettings: () => ({playbackOrder: 'shuffle', skipPlayed: true}),
+        setCurrentTrack: value => { current = value; },
+        setCurrentRank: () => {},
+        stopNarrationAudio: () => {},
+        stopCurrentNarrationPhase: () => {},
+        stopBed: () => {},
+        stopPlayback: async () => {},
+        markUserStartedPlayback: () => {},
+        setUserStartedPlayback: () => {},
+        playTrack: async () => {},
+        startAutoPlay: async () => {}
+    });
+    navigation.setPlayedRanks([1, 8]);
+    assert.equal(navigation.queueNext()?.rank, 8);
+});
