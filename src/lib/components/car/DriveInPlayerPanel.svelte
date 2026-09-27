@@ -121,6 +121,7 @@
     export let onMoveRequest: ((index: number, direction: -1 | 1) => void) | undefined = undefined;
     export let onRemoveRequest: ((index: number) => void) | undefined = undefined;
     export let onClearRequests: (() => void) | undefined = undefined;
+    export let onPrintStart: (() => void) | undefined = undefined;
 
     let showTrackList = false;
     let openRequestsView = false;
@@ -461,6 +462,7 @@
             {onMoveRequest}
             {onRemoveRequest}
             {onClearRequests}
+            {onPrintStart}
             openRequests={openRequestsView}
             onRequestsViewOpened={() => (openRequestsView = false)}
     />
