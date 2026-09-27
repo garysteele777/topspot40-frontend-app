@@ -342,15 +342,33 @@
     let openGuidedTrackList = false;
     let guidedReturnActionInProgress = false;
     let carScreen: MediaQueryList | null = null;
+    let carDisplayBeforePrint: CarDisplayView | null = null;
 
     function updateCarLayout() {
-        if (!carScreen) return;
+        if (!carScreen || carDisplayBeforePrint !== null) return;
 
         isSmallScreen = carScreen.matches;
 
         if (isSmallScreen) {
             carDisplayView = 'classic';
         }
+    }
+
+    function beginTrackListPrint(): void {
+        carDisplayBeforePrint = carDisplayView;
+    }
+
+    function restoreCarLayoutAfterPrint(): void {
+        if (carDisplayBeforePrint === null) return;
+        // Chrome briefly applies a narrow viewport during print preview.
+        // Wait for the normal viewport before applying the saved player view.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            const previousView = carDisplayBeforePrint;
+            if (previousView === null) return;
+            isSmallScreen = carScreen?.matches ?? false;
+            carDisplayView = isSmallScreen ? 'classic' : previousView;
+            carDisplayBeforePrint = null;
+        }));
     }
 
     function setCarDisplayView(view: CarDisplayView): void {
@@ -2659,6 +2677,7 @@
         carScreen = window.matchMedia('(max-width: 1199px)');
         updateCarLayout();
         carScreen.addEventListener('change', updateCarLayout);
+        window.addEventListener('afterprint', restoreCarLayoutAfterPrint);
 
         const url = new URL(window.location.href);
         interactiveRadioTest = url.searchParams.get('interactiveRadioTest') === 'true';
@@ -2876,6 +2895,7 @@
 
     onDestroy(() => {
         carScreen?.removeEventListener('change', updateCarLayout);
+        window.removeEventListener('afterprint', restoreCarLayoutAfterPrint);
 
         window.removeEventListener(
             'keydown',
@@ -3041,6 +3061,7 @@
                         onMoveRequest={moveTrackRequest}
                         onRemoveRequest={removeTrackRequest}
                         onClearRequests={clearTrackRequests}
+                        onPrintStart={beginTrackListPrint}
                 />
             {:else}
                 {#if !isSmallScreen}
@@ -3253,6 +3274,5 @@
     }
 
 </style>
-
 
 
