@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {lookupProgramCode, ProgramCodeLookupError, programCodeUrl} from '../src/lib/api/programCode.js';
+import {lookupProgramCode, ProgramCodeLookupError, programCodeUrl, programCodeUrlFromPreferences} from '../src/lib/api/programCode.js';
 
 const settings = {language: 'en', languages: ['en'], voices: ['intro'], playbackOrder: 'up', voicePlayMode: 'before', pauseMode: 'pause', skipPlayed: false};
 const json = (body, status = 200) => ({status, ok: status >= 200 && status < 300, json: async () => body});
@@ -26,6 +26,19 @@ test('builds existing N, C, A, and D program navigation URLs', () => {
     assert.equal(programCodeUrl({kind: 'docuseries_story', target: {slug: 'electric_guitar'}}, settings), '/story-player?type=music_docuseries&slug=electric_guitar&language=en');
     assert.equal(programCodeUrl({kind: 'docuseries_story', target: {slug: 'electric_guitar'}}, {...settings, language: 'ptbr'}), '/story-player?type=music_docuseries&slug=electric_guitar&language=pt-BR');
     assert.match(programCodeUrl({kind: 'collection', target: {slug: 'music & legends'}}, settings), /collection=music%20%26%20legends/);
+});
+
+test('catalog number launch keeps Shuffle and Favor New preferences', () => {
+    const url = programCodeUrlFromPreferences(
+        {kind: 'nostalgia', target: {decade_slug: '1980s', genre_slug: 'country'}},
+        'en',
+        {voices: ['intro', 'detail'], playbackOrder: 'shuffle', voicePlayMode: 'before', pauseMode: 'continuous', skipPlayed: true}
+    );
+    const params = new URL(url, 'https://example.test').searchParams;
+    assert.equal(params.get('playbackOrder'), 'shuffle');
+    assert.equal(params.get('skipPlayed'), 'true');
+    assert.equal(params.get('pauseMode'), 'continuous');
+    assert.equal(params.get('voices'), 'intro,detail');
 });
 
 test('reports 404 separately from service failures', async () => {
