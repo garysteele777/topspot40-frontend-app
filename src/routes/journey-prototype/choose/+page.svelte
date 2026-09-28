@@ -414,7 +414,15 @@
     function goToCatalogProgram() {
         if (!catalogDestination || !selectedProgram) return;
         captureExperienceSelected(posthog, selectedProgram);
-        void goto(catalogDestination);
+        const destination = new URL(catalogDestination, window.location.origin);
+        if (destination.pathname === '/car-page') {
+            const returnParams = new URLSearchParams({program: selectedProgram});
+            if (showNostalgiaBrowser) returnParams.set('browse', 'nostalgia');
+            else if (showCollectionsBrowser) returnParams.set('browse', 'collections');
+            else if (showArtistsBrowser) returnParams.set('browse', 'artist');
+            destination.searchParams.set('returnTo', `/journey-prototype/choose?${returnParams}`);
+        }
+        void goto(`${destination.pathname}${destination.search}`);
     }
 
     function description(choice: ExperienceFamily) {
@@ -447,6 +455,19 @@
 
         updateLayout();
         journeyScreen.addEventListener('change', updateLayout);
+
+        const returnParams = new URL(window.location.href).searchParams;
+        const program = returnParams.get('program');
+        if (choices.includes(program as ExperienceFamily)) {
+            selectedProgram = program as ExperienceFamily;
+        }
+        const browse = returnParams.get('browse');
+        if (browse === 'nostalgia' && selectedProgram === 'nostalgia') showNostalgiaBrowser = true;
+        if (browse === 'collections' && selectedProgram === 'collections') showCollectionsBrowser = true;
+        if (browse === 'artist' && selectedProgram === 'artist') showArtistsBrowser = true;
+        if (showNostalgiaBrowser || showCollectionsBrowser || showArtistsBrowser) {
+            void tick().then(() => browserCloseButton?.focus());
+        }
 
         return () => {
             journeyScreen.removeEventListener('change', updateLayout);
