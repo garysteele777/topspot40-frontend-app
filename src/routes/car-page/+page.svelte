@@ -61,6 +61,7 @@
     } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
     import {isRadioExperienceDestination} from '$lib/journey/experienceMode';
+    import {isSafeJourneyReturnPath} from '$lib/journey/changeMusicReturn.js';
     import {
         startPlaybackPolling,
         stopPlaybackPolling,
@@ -2576,7 +2577,7 @@
         const language = currentParams.get('language') ?? 'en';
         const returnTo = currentParams.get('returnTo');
 
-        if (isSafeCollectionsReturnPath(returnTo) || isSafeArtistSpotlightsReturnPath(returnTo)) {
+        if (returnTo && (isSafeCollectionsReturnPath(returnTo) || isSafeArtistSpotlightsReturnPath(returnTo) || isSafeJourneyReturnPath(returnTo))) {
             window.location.href = returnTo;
         } else if (mode === 'nostalgia' && decade) {
             const genreParams = new URLSearchParams({
@@ -2586,7 +2587,7 @@
 
             window.location.href = `/journey-prototype/genre?${genreParams.toString()}`;
         } else {
-            window.location.href = '/options-v4';
+            window.location.href = '/journey-prototype/choose';
         }
     }
 
@@ -3288,4 +3289,3 @@
     }
 
 </style>
-
