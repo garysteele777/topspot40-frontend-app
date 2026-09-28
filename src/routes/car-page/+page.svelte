@@ -32,6 +32,7 @@
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
+    import {findCollectionGroupSlug} from '$lib/program/history';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import {classicViewCopy} from '$lib/carmode/classicViewLabels';
@@ -2842,6 +2843,19 @@
         try {
             const normalized = await loadCatalogOnce();
 
+            // Catalog-number links contain the collection slug but no group.
+            // History and Favor New need the same group key as browser launches.
+            if (sel?.mode === 'collection' && sel.context?.collection_slug && !sel.context.collection_group_slug) {
+                const groupSlug = findCollectionGroupSlug(
+                    normalized.collectionGroups,
+                    sel.context.collection_slug
+                );
+                if (groupSlug) {
+                    sel.context = {...sel.context, collection_group_slug: groupSlug};
+                    currentSelection.set(sel);
+                }
+            }
+
             const map: Record<string, string> = {};
             for (const group of normalized.collectionGroups ?? []) {
                 for (const item of group.items) {
@@ -3274,5 +3288,4 @@
     }
 
 </style>
-
 
