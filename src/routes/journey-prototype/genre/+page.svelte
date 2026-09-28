@@ -110,6 +110,7 @@
             pauseMode: 'continuous',
             skipPlayed: 'false'
         });
+        params.set('returnTo', `/journey-prototype/genre?${new URLSearchParams({decade: selectedDecade || 'ALL', language})}`);
 
         captureProgramSelected(posthog, {
             program_type: 'nostalgia',
