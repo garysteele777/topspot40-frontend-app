@@ -37,6 +37,20 @@ export function buildProgramHistoryKey(selection) {
     return null;
 }
 
+/** Resolve a collection's group when a catalog-number URL supplies only its slug. */
+/**
+ * @param {{slug: string, items?: {slug: string}[]}[] | null | undefined} groups
+ * @param {string} collectionSlug
+ * @returns {string | null}
+ */
+export function findCollectionGroupSlug(groups, collectionSlug) {
+    if (!collectionSlug) return null;
+    const matches = (groups ?? []).filter(group =>
+        group.items?.some(item => item.slug === collectionSlug)
+    );
+    return matches.length === 1 ? matches[0].slug : null;
+}
+
 /**
  * @param {ProgramHistoryEntry[] | null | undefined} history
  * @param {string | null | undefined} key
