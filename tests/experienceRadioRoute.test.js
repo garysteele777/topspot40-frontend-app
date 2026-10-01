@@ -59,7 +59,8 @@ test('chooser copy and mobile program navigation remain intact', () => {
     assert.match(chooser, /modeCopy\[language\]\.radio/);
     const mobileStart = chooser.indexOf('{:else}');
     const mobile = chooser.slice(mobileStart, chooser.indexOf('</main>', mobileStart));
-    assert.match(mobile, /goto\(buildExperienceDestination\(choice, 'program'\)\)/);
+    assert.match(mobile, /startExperience\('program'\)/);
+    assert.match(chooser, /goto\(buildExperienceDestination\(selectedProgram, mode\)\)/);
     assert.doesNotMatch(mobile, /Radio Mode|mode-button/);
 });
 

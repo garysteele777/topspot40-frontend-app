@@ -41,6 +41,7 @@ test('all family destinations preserve program and radio contracts', () => {
 test('mobile cards remain direct Program journeys and contain no Radio Mode button', () => {
     const mobileStart = page.indexOf('{:else}');
     const mobile = page.slice(mobileStart, page.indexOf('</main>', mobileStart));
-    assert.match(mobile, /goto\(buildExperienceDestination\(choice, 'program'\)\)/);
+    assert.match(mobile, /startExperience\('program'\)/);
+    assert.match(page, /goto\(buildExperienceDestination\(selectedProgram, mode\)\)/);
     assert.doesNotMatch(mobile, /Program Mode|Radio Mode|startExperience\('radio'\)|mode-button/);
 });
