@@ -4,11 +4,13 @@ export type EstimatedTrackTiming = {
     progress: number;
 };
 
+// Browser timers are numeric; Node-based component tests use Timeout objects.
+type IntervalHandle = number | ReturnType<typeof setInterval>;
 type EstimatedTrackClockDependencies = {
     setTiming: (timing: EstimatedTrackTiming) => void;
     now?: () => number;
-    setInterval?: (callback: () => void, milliseconds: number) => ReturnType<typeof setInterval>;
-    clearInterval?: (timer: ReturnType<typeof setInterval>) => void;
+    setInterval?: (callback: () => void, milliseconds: number) => IntervalHandle;
+    clearInterval?: (timer: IntervalHandle) => void;
 };
 
 /**
@@ -20,7 +22,7 @@ export function createEstimatedTrackClock(dependencies: EstimatedTrackClockDepen
     const now = dependencies.now ?? Date.now;
     const schedule = dependencies.setInterval ?? setInterval;
     const cancel = dependencies.clearInterval ?? clearInterval;
-    let timer: ReturnType<typeof setInterval> | null = null;
+    let timer: IntervalHandle | null = null;
     let startedAt = 0;
     let duration = 0;
 

@@ -5,15 +5,21 @@
         musicDocuseriesCollectionPresentation
     } from '$lib/config/musicDocuseriesJourney';
     import type {MusicDocuseriesCollection} from '$lib/musicDocuseries/types';
+    import type {Language} from '$lib/types/playback';
+    import {docuseriesHistoryStore, docuseriesProgress} from '$lib/musicDocuseries/history';
+    import {docuseriesCatalogStore} from '$lib/musicDocuseries/catalogAdapter';
+    import {docuseriesText} from '$lib/musicDocuseries/groupPlayback';
 
     export let collection: MusicDocuseriesCollection;
     export let referenceNumber: number;
     export let selected = false;
+    export let language: Language = 'en';
     export let onSelect: () => void;
 
     $: presentation = musicDocuseriesCollectionPresentation(collection.slug);
     $: description = musicDocuseriesCollectionDescription(collection);
     $: artwork = musicDocuseriesCollectionArtwork(collection.slug);
+    $: complete = docuseriesProgress($docuseriesCatalogStore[collection.slug] ?? [], $docuseriesHistoryStore).complete;
 </script>
 
 <button type="button" class:active={selected} aria-pressed={selected} on:click={onSelect}
@@ -22,7 +28,7 @@
 <span class="icon" aria-hidden="true">
     <img src={artwork} alt=""/>
 </span>
-    <span class="copy"><strong>{collection.name}</strong><small>{description}</small></span>
+    <span class="copy"><strong>{collection.name}</strong><small>{complete ? `✓ ${docuseriesText[language].complete}` : description}</small></span>
 </button>
 
 <style>

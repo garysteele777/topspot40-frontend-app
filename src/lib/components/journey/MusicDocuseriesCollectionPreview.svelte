@@ -5,8 +5,12 @@
         musicDocuseriesCollectionPresentation
     } from '$lib/config/musicDocuseriesJourney';
     import type {MusicDocuseriesCollection, MusicDocuseriesStory} from '$lib/musicDocuseries/types';
+    import {docuseriesHistoryStore, docuseriesProgress} from '$lib/musicDocuseries/history';
+    import {docuseriesText} from '$lib/musicDocuseries/groupPlayback';
+    import type {Language} from '$lib/types/playback';
 
     export let collection: MusicDocuseriesCollection;
+    export let language: Language = 'en';
     export let stories: MusicDocuseriesStory[] = [];
     export let storiesLoading = false;
     export let storiesError: string | null = null;
@@ -20,6 +24,7 @@
     $: remainingStories = Math.max(0, stories.length - previewStories.length);
     $: exploreHref = `/journey-prototype/music-docuseries/${encodeURIComponent(collection.slug)}`;
     $: artwork = musicDocuseriesCollectionArtwork(collection.slug);
+    $: progress = docuseriesProgress(stories, $docuseriesHistoryStore);
 </script>
 
 <article class="preview" style={`--series-accent: ${presentation.accent}`}>
@@ -46,9 +51,10 @@
         {:else if stories.length === 0}
             <p class="preview-state">{emptyLabel}</p>
         {:else}
+            <p class="completion">{progress.complete ? `✓ ${docuseriesText[language].allComplete}` : docuseriesText[language].progress(progress.completed, progress.total)}</p>
             <ul aria-label={`${collection.name} story preview`}>
                 {#each previewStories as story, index (`${story.id}:${story.slug}`)}
-                    <li><span>{index + 1}</span>{story.title}</li>
+                    <li><span>{index + 1}</span>{story.title}{#if $docuseriesHistoryStore[story.slug]}<small aria-label={docuseriesText[language].complete}>✓</small>{/if}</li>
                 {/each}
                 {#if remainingStories > 0}
                     <li class="more">+{remainingStories} more</li>
@@ -63,6 +69,7 @@
 </article>
 
 <style>
+    .completion {color:#f7dc82;font-weight:800;}
     .preview {
         min-height: 100%;
         padding: clamp(22px, 3vw, 32px);

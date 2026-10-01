@@ -9,6 +9,7 @@
     import type {MusicDocuseriesCollection, MusicDocuseriesStory} from '$lib/musicDocuseries/types';
     import type {Language} from '$lib/types/playback';
     import {readLanguagePreference} from '$lib/languagePreferences';
+    import {refreshDocuseriesHistory} from '$lib/musicDocuseries/history';
 
     let language: Language = 'en';
     let collections: MusicDocuseriesCollection[] = [];
@@ -137,6 +138,7 @@
     afterNavigate(({to}) => { if (to) synchronizeSelection(to.url); });
 
     onMount(async () => {
+        refreshDocuseriesHistory();
         language = readLanguage();
         try {
             collections = orderMusicDocuseriesCollections(
@@ -150,6 +152,9 @@
             initialized = true;
         }
         synchronizeSelection(new URL(window.location.href), true);
+        // Load group membership for accurate completion badges, including
+        // groups that have not been selected in this visit.
+        void Promise.allSettled(collections.map(collection => loadMusicDocuseriesStories(collection.slug)));
 
         const savedScroll = sessionStorage.getItem(COLLECTION_SCROLL_KEY);
         sessionStorage.removeItem(COLLECTION_SCROLL_KEY);
@@ -190,6 +195,7 @@
                     {#each collections as collection, index (`${collection.id}:${collection.slug}`)}
                         <MusicDocuseriesCollectionCard
                             {collection}
+                            {language}
                             referenceNumber={index + 1}
                             selected={collection.slug === selectedCollection.slug}
                             onSelect={() => selectCollection(collection)}
@@ -197,7 +203,7 @@
                     {/each}
                 </div>
             </section>
-            <div class="desktop-preview"><MusicDocuseriesCollectionPreview collection={selectedCollection} stories={selectedStories} storiesLoading={previewLoading} storiesError={previewError} exploreLabel={text[language].explore} loadingLabel={text[language].previewLoading} emptyLabel={text[language].previewEmpty}/></div>
+            <div class="desktop-preview"><MusicDocuseriesCollectionPreview {language} collection={selectedCollection} stories={selectedStories} storiesLoading={previewLoading} storiesError={previewError} exploreLabel={text[language].explore} loadingLabel={text[language].previewLoading} emptyLabel={text[language].previewEmpty}/></div>
         </div>
     {/if}
 </ProgramJourneyShell>

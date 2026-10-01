@@ -1,5 +1,6 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
+    import {onMount, onDestroy} from 'svelte';
+    import DocuseriesPlayer from '$lib/musicDocuseries/DocuseriesPlayer.svelte';
     import {page} from '$app/stores';
     import {goto} from '$app/navigation';
     import {isSafeMusicDocuseriesReturnPath} from '$lib/musicDocuseries/launchMusicDocuseries';
@@ -224,6 +225,11 @@
             $page.url.searchParams.get('collection');
         returnTo = $page.url.searchParams.get('returnTo');
 
+        if (contentType === 'music_docuseries') {
+            loading = false;
+            return;
+        }
+
         try {
             let url = '';
 
@@ -265,8 +271,13 @@
         }
     });
 
+    onDestroy(() => { audio?.pause(); bedAudio?.pause(); });
+
 </script>
 
+{#if contentType === 'music_docuseries'}
+    {#key $page.url.search}<DocuseriesPlayer search={$page.url.search}/>{/key}
+{:else}
 <div class="story-page">
     <button class="back-btn" on:click={goBack}>
         ← Back
@@ -372,6 +383,7 @@
         </div>
     {/if}
 </div>
+{/if}
 
 <style>
     .story-page {
