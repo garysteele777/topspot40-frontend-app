@@ -5,6 +5,7 @@ import {
     buildProgramHistoryKey,
     calculatePlayedPercent,
     calculateProgramProgress,
+    findCollectionGroupSlug,
     isProgramRankPlayed,
     playedRankCount
 } from '../src/lib/program/history.js';
@@ -18,6 +19,22 @@ test('preserves every selection-context program key format byte-for-byte', () =>
     assert.equal(buildProgramHistoryKey({mode: 'artist_spotlight', context: {artist_id: '12'}}), null);
     assert.equal(buildProgramHistoryKey({mode: 'decade_genre', context: {decade: '', genre: 'rock'}}), null);
     assert.equal(buildProgramHistoryKey({mode: 'collection', context: {collection_slug: 'mix'}}), null);
+});
+
+test('catalog number for a collection resolves the same history key as browsing its group', () => {
+    const groups = [
+        {slug: 'american_heritage_favorites', items: [{slug: 'railroad_train_songs'}]},
+        {slug: 'music_legends', items: [{slug: 'legends_country'}]}
+    ];
+    const group = findCollectionGroupSlug(groups, 'railroad_train_songs');
+    assert.equal(group, 'american_heritage_favorites');
+    const key = buildProgramHistoryKey({mode: 'collection', context: {
+        collection_slug: 'railroad_train_songs', collection_group_slug: group
+    }});
+    assert.equal(key, 'COL|railroad_train_songs|american_heritage_favorites');
+    assert.equal(isProgramRankPlayed([{key, playedRanks: [16, 17]}], key, 17), true);
+    assert.equal(findCollectionGroupSlug(groups, 'unknown'), null);
+    assert.equal(findCollectionGroupSlug([...groups, {slug: 'duplicate', items: [{slug: 'railroad_train_songs'}]}], 'railroad_train_songs'), null);
 });
 
 test('matches persisted keys and ranks with the existing strict played-state rules', () => {

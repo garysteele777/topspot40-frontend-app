@@ -1,14 +1,16 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {onMount, tick} from 'svelte';
+    import {get} from 'svelte/store';
     import posthog from 'posthog-js';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
     import {captureExperienceSelected} from '$lib/analytics/posthog';
     import {buildExperienceDestination, EXPERIENCE_FAMILIES, type ExperienceFamily, type ExperienceMode} from '$lib/journey/experienceMode';
-    import {lookupProgramCode, ProgramCodeLookupError, programCodeUrl} from '$lib/api/programCode.js';
+    import {lookupProgramCode, ProgramCodeLookupError, programCodeUrlFromPreferences} from '$lib/api/programCode.js';
     import artistSpotlights from '$lib/catalog/artistSpotlights.json';
     import {findArtistsByTrack, type ArtistTrackResult} from '$lib/api/artistTrackSearch';
+    import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
     let language: LandingLanguage = 'en';
@@ -296,9 +298,6 @@
     const catalogKinds: Record<ExperienceFamily, string> = {
         nostalgia: 'nostalgia', collections: 'collection', artist: 'artist_spotlight', docuseries: 'docuseries_story'
     };
-    const catalogSettings = {
-        languages: ['en'], voices: ['intro'], playbackOrder: 'up', voicePlayMode: 'before', pauseMode: 'pause', skipPlayed: false
-    };
     const desktopInstruction: Record<LandingLanguage, string> = {
         en: "Choose an experience, then choose how you'd like to listen.",
         es: 'Elige una experiencia y luego elige cómo quieres escuchar.',
@@ -391,7 +390,7 @@
                 catalogStatusKind = 'error';
                 return;
             }
-            catalogDestination = programCodeUrl(program, {...catalogSettings, language});
+            catalogDestination = programCodeUrlFromPreferences(program, language, get(playbackSettingsStore));
             if (catalogDestination && requestedTrackId !== null) {
                 const destination = new URL(catalogDestination, window.location.origin);
                 destination.searchParams.set('requestTrackId', String(requestedTrackId));
@@ -415,7 +414,15 @@
     function goToCatalogProgram() {
         if (!catalogDestination || !selectedProgram) return;
         captureExperienceSelected(posthog, selectedProgram);
-        void goto(catalogDestination);
+        const destination = new URL(catalogDestination, window.location.origin);
+        if (destination.pathname === '/car-page') {
+            const returnParams = new URLSearchParams({program: selectedProgram});
+            if (showNostalgiaBrowser) returnParams.set('browse', 'nostalgia');
+            else if (showCollectionsBrowser) returnParams.set('browse', 'collections');
+            else if (showArtistsBrowser) returnParams.set('browse', 'artist');
+            destination.searchParams.set('returnTo', `/journey-prototype/choose?${returnParams}`);
+        }
+        void goto(`${destination.pathname}${destination.search}`);
     }
 
     function description(choice: ExperienceFamily) {
@@ -448,6 +455,19 @@
 
         updateLayout();
         journeyScreen.addEventListener('change', updateLayout);
+
+        const returnParams = new URL(window.location.href).searchParams;
+        const program = returnParams.get('program');
+        if (choices.includes(program as ExperienceFamily)) {
+            selectedProgram = program as ExperienceFamily;
+        }
+        const browse = returnParams.get('browse');
+        if (browse === 'nostalgia' && selectedProgram === 'nostalgia') showNostalgiaBrowser = true;
+        if (browse === 'collections' && selectedProgram === 'collections') showCollectionsBrowser = true;
+        if (browse === 'artist' && selectedProgram === 'artist') showArtistsBrowser = true;
+        if (showNostalgiaBrowser || showCollectionsBrowser || showArtistsBrowser) {
+            void tick().then(() => browserCloseButton?.focus());
+        }
 
         return () => {
             journeyScreen.removeEventListener('change', updateLayout);

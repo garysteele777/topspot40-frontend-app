@@ -86,3 +86,16 @@ export function programCodeUrl(program, settings) {
 
     return null;
 }
+
+/** Apply the listener's playback preferences when entering a catalog program. */
+export function programCodeUrlFromPreferences(program, language, preferences) {
+    return programCodeUrl(program, {
+        language,
+        languages: [language],
+        voices: preferences.voices,
+        playbackOrder: preferences.playbackOrder,
+        voicePlayMode: preferences.voicePlayMode,
+        pauseMode: preferences.pauseMode,
+        skipPlayed: preferences.skipPlayed
+    });
+}

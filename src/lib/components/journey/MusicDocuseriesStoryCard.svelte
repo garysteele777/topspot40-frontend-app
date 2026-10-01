@@ -5,15 +5,19 @@
     } from '$lib/config/musicDocuseriesJourney';
     import type {MusicDocuseriesStory} from '$lib/musicDocuseries/types';
     import {docuseriesCodeForSlug} from '$lib/musicDocuseries/programCodes';
+    import {docuseriesHistoryStore} from '$lib/musicDocuseries/history';
+    import {docuseriesText} from '$lib/musicDocuseries/groupPlayback';
+    import type {Language} from '$lib/types/playback';
 
     export let story: MusicDocuseriesStory;
     export let collectionSlug: string;
     export let episodeNumber: number;
     export let openLabel = 'Open story';
+    export let language: Language = 'en';
 
     let imageFailed = false;
     $: returnTo = `/journey-prototype/music-docuseries/${encodeURIComponent(collectionSlug)}`;
-    $: href = `/story-player?type=music_docuseries&slug=${encodeURIComponent(story.slug)}&language=en&collection=${encodeURIComponent(collectionSlug)}&returnTo=${encodeURIComponent(returnTo)}`;
+    $: href = `/story-player?type=music_docuseries&slug=${encodeURIComponent(story.slug)}&language=${language === 'ptbr' ? 'pt-BR' : language}&collection=${encodeURIComponent(collectionSlug)}&returnTo=${encodeURIComponent(returnTo)}`;
     $: targetLength = formatTargetLength(story.target_length);
     $: catalogCode = docuseriesCodeForSlug(story.slug);
 </script>
@@ -29,12 +33,14 @@
     <span class="copy">
         <small>Story {episodeNumber}{catalogCode ? ` • ${catalogCode}` : ''}{targetLength ? ` • ${targetLength}` : ''}</small>
         <strong>{story.title}</strong>
+        {#if $docuseriesHistoryStore[story.slug]}<span class="complete">✓ {docuseriesText[language].complete}</span>{/if}
         {#if story.short_description}<span class="description">{story.short_description}</span>{/if}
         <span class="open">{openLabel} <span aria-hidden="true">→</span></span>
     </span>
 </a>
 
 <style>
+    .complete {color:#bce2b7;font-size:13px;font-weight:800;margin-top:8px;}
     .story-card {
         display: grid;
         grid-template-columns: 150px minmax(0, 1fr);

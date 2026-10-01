@@ -14,6 +14,7 @@
     } from '$lib/favorites/favorites';
     import type {Language} from '$lib/stores/selection';
     import {getBackendUrl} from '$lib/config';
+    import {pendingRequestEntries} from '$lib/carmode/requestsQueue.js';
 
     type JukeboxCopy = {
         dialogLabel: string; heading: string; close: string; export: string; exportHint: string;
@@ -70,10 +71,12 @@
     export let printCategory = '';
     export let printTitle = '';
     export let requests: CarModeTrack[] = [];
+    export let activeRequestIdentity: string | null = null;
     export let onAddRequest: ((track: CarModeTrack) => void) | undefined = undefined;
     export let onMoveRequest: ((index: number, direction: -1 | 1) => void) | undefined = undefined;
     export let onRemoveRequest: ((index: number) => void) | undefined = undefined;
     export let onClearRequests: (() => void) | undefined = undefined;
+    export let onPrintStart: (() => void) | undefined = undefined;
     export let openRequests = false;
     export let onRequestsViewOpened: (() => void) | undefined = undefined;
 
@@ -94,6 +97,7 @@
     $: printLabel = printLabels[language];
     $: printHint = printHints[language];
     $: requestsText = requestCopy[language];
+    $: pendingRequests = pendingRequestEntries(requests, activeRequestIdentity);
     $: if (openRequests) {
         showRequests = true;
         onRequestsViewOpened?.();
@@ -203,6 +207,7 @@
             }
         }
         await tick();
+        onPrintStart?.();
         window.print();
     }
 
@@ -301,7 +306,7 @@
                         {copy.page(pageIndex + 1, pageCount)}
                     </div>
                     <button type="button" class="requests-button" on:click={() => (showRequests = !showRequests)}>
-                        {requestsText.requests(requests.length)}
+                        {requestsText.requests(pendingRequests.length)}
                     </button>
                 </div>
             </header>
@@ -312,20 +317,20 @@
 
             {#if showRequests}
                 <div class="requests-list">
-                    <h3>{requestsText.requests(requests.length)}</h3>
-                    {#each requests as request, index}
+                    <h3>{requestsText.requests(pendingRequests.length)}</h3>
+                    {#each pendingRequests as {track: request, index}, pendingIndex}
                         <div class="request-row">
                             <span>#{request.rank} <strong>{displayTrackListTitle(request.trackName, request.rank)}</strong> — {displayTrackListArtist(request.artistName)}</span>
                             <div class="request-controls">
-                                <button type="button" disabled={index === 0} on:click={() => onMoveRequest?.(index, -1)}>{requestsText.moveUp}</button>
-                                <button type="button" disabled={index === requests.length - 1} on:click={() => onMoveRequest?.(index, 1)}>{requestsText.moveDown}</button>
+                                <button type="button" disabled={pendingIndex === 0} on:click={() => onMoveRequest?.(index, -1)}>{requestsText.moveUp}</button>
+                                <button type="button" disabled={pendingIndex === pendingRequests.length - 1} on:click={() => onMoveRequest?.(index, 1)}>{requestsText.moveDown}</button>
                                 <button type="button" on:click={() => onRemoveRequest?.(index)}>{requestsText.remove}</button>
                             </div>
                         </div>
                     {:else}<p class="empty-tracks">{requestsText.empty}</p>{/each}
-                    {#if requests.length}
+                    {#if pendingRequests.length}
                         {#if clearRequestsConfirmation}
-                            <button type="button" class="clear-requests" on:click={() => { onClearRequests?.(); clearRequestsConfirmation = false; }}>{requestsText.confirmClear(requests.length)}</button>
+                            <button type="button" class="clear-requests" on:click={() => { onClearRequests?.(); clearRequestsConfirmation = false; }}>{requestsText.confirmClear(pendingRequests.length)}</button>
                         {:else}
                             <button type="button" class="clear-requests" on:click={() => (clearRequestsConfirmation = true)}>{requestsText.clear}</button>
                         {/if}

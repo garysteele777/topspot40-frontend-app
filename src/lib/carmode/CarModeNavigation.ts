@@ -77,12 +77,9 @@ export function createCarModeNavigation(
     }
 
     function recordCurrentTrackCompletion(current: CarModeTrack): void {
-        const rankingId = current.rankingId;
         const rank = current.rank;
-        const playedKey = rankingId ?? rank;
-
-        if (playedKey != null && !playedRanks.includes(playedKey)) {
-            playedRanks.push(playedKey);
+        if (rank != null && !playedRanks.includes(rank)) {
+            playedRanks.push(rank);
         }
 
         const selection = dependencies.getSelection();

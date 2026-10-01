@@ -32,6 +32,7 @@
     import {get} from 'svelte/store';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
     import {loadCatalogOnce} from '$lib/stores/loadCatalogOnce';
+    import {findCollectionGroupSlug} from '$lib/program/history';
 
     import CarModeHeader from '$lib/components/car/CarModeHeader.svelte';
     import {classicViewCopy} from '$lib/carmode/classicViewLabels';
@@ -43,7 +44,7 @@
     } from '$lib/carmode/CarModeAutoPlay';
     import {createCarModeNavigation} from '$lib/carmode/CarModeNavigation';
     import {createEstimatedTrackClock} from '$lib/carmode/EstimatedTrackClock';
-    import {addRequest, clearRequests, moveRequest, removeRequest} from '$lib/carmode/requestsQueue.js';
+    import {addRequest, clearPendingRequests, moveRequest, removeRequest} from '$lib/carmode/requestsQueue.js';
     import {requestedTrackFromId} from '$lib/carmode/requestedTrack';
     import {
         buildProgramStartedProperties,
@@ -60,6 +61,7 @@
     } from '$lib/carmode/programHistory';
     import {goto} from '$app/navigation';
     import {isRadioExperienceDestination} from '$lib/journey/experienceMode';
+    import {isSafeJourneyReturnPath} from '$lib/journey/changeMusicReturn.js';
     import {
         startPlaybackPolling,
         stopPlaybackPolling,
@@ -184,7 +186,7 @@
     }
     function moveTrackRequest(index: number, direction: -1 | 1): void { requests = moveRequest(requests, index, direction); }
     function removeTrackRequest(index: number): void { requests = removeRequest(requests, index); }
-    function clearTrackRequests(): void { requests = clearRequests(requests, true); }
+    function clearTrackRequests(): void { requests = clearPendingRequests(requests, activeRequestIdentity); }
 
     async function advanceRequestOrRegular(
         auto = false,
@@ -342,15 +344,33 @@
     let openGuidedTrackList = false;
     let guidedReturnActionInProgress = false;
     let carScreen: MediaQueryList | null = null;
+    let carDisplayBeforePrint: CarDisplayView | null = null;
 
     function updateCarLayout() {
-        if (!carScreen) return;
+        if (!carScreen || carDisplayBeforePrint !== null) return;
 
         isSmallScreen = carScreen.matches;
 
         if (isSmallScreen) {
             carDisplayView = 'classic';
         }
+    }
+
+    function beginTrackListPrint(): void {
+        carDisplayBeforePrint = carDisplayView;
+    }
+
+    function restoreCarLayoutAfterPrint(): void {
+        if (carDisplayBeforePrint === null) return;
+        // Chrome briefly applies a narrow viewport during print preview.
+        // Wait for the normal viewport before applying the saved player view.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            const previousView = carDisplayBeforePrint;
+            if (previousView === null) return;
+            isSmallScreen = carScreen?.matches ?? false;
+            carDisplayView = isSmallScreen ? 'classic' : previousView;
+            carDisplayBeforePrint = null;
+        }));
     }
 
     function setCarDisplayView(view: CarDisplayView): void {
@@ -2557,7 +2577,7 @@
         const language = currentParams.get('language') ?? 'en';
         const returnTo = currentParams.get('returnTo');
 
-        if (isSafeCollectionsReturnPath(returnTo) || isSafeArtistSpotlightsReturnPath(returnTo)) {
+        if (returnTo && (isSafeCollectionsReturnPath(returnTo) || isSafeArtistSpotlightsReturnPath(returnTo) || isSafeJourneyReturnPath(returnTo))) {
             window.location.href = returnTo;
         } else if (mode === 'nostalgia' && decade) {
             const genreParams = new URLSearchParams({
@@ -2567,7 +2587,7 @@
 
             window.location.href = `/journey-prototype/genre?${genreParams.toString()}`;
         } else {
-            window.location.href = '/options-v4';
+            window.location.href = '/journey-prototype/choose';
         }
     }
 
@@ -2659,6 +2679,7 @@
         carScreen = window.matchMedia('(max-width: 1199px)');
         updateCarLayout();
         carScreen.addEventListener('change', updateCarLayout);
+        window.addEventListener('afterprint', restoreCarLayoutAfterPrint);
 
         const url = new URL(window.location.href);
         interactiveRadioTest = url.searchParams.get('interactiveRadioTest') === 'true';
@@ -2823,6 +2844,19 @@
         try {
             const normalized = await loadCatalogOnce();
 
+            // Catalog-number links contain the collection slug but no group.
+            // History and Favor New need the same group key as browser launches.
+            if (sel?.mode === 'collection' && sel.context?.collection_slug && !sel.context.collection_group_slug) {
+                const groupSlug = findCollectionGroupSlug(
+                    normalized.collectionGroups,
+                    sel.context.collection_slug
+                );
+                if (groupSlug) {
+                    sel.context = {...sel.context, collection_group_slug: groupSlug};
+                    currentSelection.set(sel);
+                }
+            }
+
             const map: Record<string, string> = {};
             for (const group of normalized.collectionGroups ?? []) {
                 for (const item of group.items) {
@@ -2876,6 +2910,7 @@
 
     onDestroy(() => {
         carScreen?.removeEventListener('change', updateCarLayout);
+        window.removeEventListener('afterprint', restoreCarLayoutAfterPrint);
 
         window.removeEventListener(
             'keydown',
@@ -3036,10 +3071,12 @@
                         openTrackList={openGuidedTrackList}
                         onTrackListClosed={() => (openGuidedTrackList = false)}
                         {requests}
+                        {activeRequestIdentity}
                         onAddRequest={addTrackRequest}
                         onMoveRequest={moveTrackRequest}
                         onRemoveRequest={removeTrackRequest}
                         onClearRequests={clearTrackRequests}
+                        onPrintStart={beginTrackListPrint}
                 />
             {:else}
                 {#if !isSmallScreen}
@@ -3252,7 +3289,3 @@
     }
 
 </style>
-
-
-
-
