@@ -11,6 +11,21 @@ count as completing the story. The introduction does not count toward history.
 History uses browser storage, like the existing Nostalgia and Collections
 history. It does not sync across phones, computers, or browser profiles.
 
+## Opening sound cues
+
+Both group modes start with a gentle 3.1-second musical cue. Play All then
+plays the spoken group introduction. Each story, including an individually
+selected story, starts with a related 1.4-second cue. Cues play at a softer
+volume than narration, use the same audio element, and never count toward
+completion. Pause/Resume continues the current audio without repeating a cue.
+Stop and a fresh start replay the current story's cue. Next during the group
+opening skips to the first story; Next during a story cue skips that story.
+Missing cue files fall through to the introduction or narration.
+
+The two original, language-independent MP3s are included under
+`static/docuseries/cues`. To regenerate them with Python 3 and ffmpeg:
+`python scripts/generate_docuseries_cues.py`. No TTS credentials are needed.
+
 ## Generate the introductions before release
 
 Scripts for 14 groups in EN, ES and PT-BR are in
@@ -37,6 +52,8 @@ load, group playback continues with the first story.
 - Stop below 90%: it remains unheard and starts at the beginning next visit.
 - Play Unheard skips only completed stories and stops after the last remaining story.
 - Play All plays one introduction, every story in sequence, then stops.
+- Listen to the group and story cues; pause/resume each cue and confirm it
+  continues in place. Neither cue should mark a story complete.
 - Next during the introduction starts story 1; Next during a story does not
   mark the skipped story complete unless 90% was actually heard.
 - Test Stop and Pause during loading, failed narration, missing intro, and

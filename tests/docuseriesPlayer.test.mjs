@@ -98,23 +98,32 @@ async function open(search, completed = {}) {
 }
 function button(label) {flushSync(); return [...target.querySelectorAll('button')].find(item => item.textContent.includes(label));}
 function heard(audio, seconds) {state(audio).time = seconds; state(audio).ranges = [[0, seconds]]; audio.dispatchEvent(new window.Event('timeupdate')); flushSync();}
+async function finishCue(audio, kind) {
+    await waitFor(() => audio.src.endsWith(`/cues/${kind}-opening.mp3`) && !audio.paused);
+    heard(audio, 100);
+    audio.dispatchEvent(new window.Event('ended'));
+}
 async function close() {if (instance) await unmount(instance); target?.remove(); instance = null;}
 
 test('group intro plays once, then all stories in order and stops; skipped audio is not marked complete', async () => {
     try {
         const audio = await open('?type=music_docuseries&collection=history_eras&language=en&group=all');
         button('Start Group').click();
+        await finishCue(audio, 'group');
         await waitFor(() => audio.src.includes('/group-intros/en/history_eras.mp3'));
         heard(audio, 100);
         assert.deepEqual(JSON.parse(window.localStorage.getItem('ts_docuseries_history_v1')), {}, 'The intro is not a completed story');
         audio.dispatchEvent(new window.Event('ended'));
+        await finishCue(audio, 'story');
         await waitFor(() => audio.src.endsWith('/story_1.mp3'));
         heard(audio, 20);
         button('Next Story').click();
+        await finishCue(audio, 'story');
         await waitFor(() => audio.src.endsWith('/story_2.mp3'));
         assert.deepEqual(JSON.parse(window.localStorage.getItem('ts_docuseries_history_v1')), {});
         heard(audio, 90);
         audio.dispatchEvent(new window.Event('ended'));
+        await finishCue(audio, 'story');
         await waitFor(() => audio.src.endsWith('/story_3.mp3'));
         const history = JSON.parse(window.localStorage.getItem('ts_docuseries_history_v1'));
         assert.ok(history.story_2);
@@ -132,6 +141,8 @@ test('Play Unheard respects shared history in Spanish and never plays an introdu
         const audio = await open('?type=music_docuseries&collection=history_eras&language=es&group=unheard', {story_1: 123, story_3: 456});
         const start = [...target.querySelectorAll('button')].find(item => item.textContent.includes('Iniciar grupo'));
         start.click();
+        await finishCue(audio, 'group');
+        await finishCue(audio, 'story');
         await waitFor(() => audio.src.endsWith('/story_2.mp3'));
         assert.equal(requested.filter(url => url.pathname.endsWith('/play')).every(url => url.searchParams.get('language') === 'es'), true);
         heard(audio, 100);
@@ -144,6 +155,7 @@ test('Pause resumes this session, Stop restarts at zero, and navigating away rel
     try {
         const audio = await open('?type=music_docuseries&slug=story_1&language=en');
         button('Play Story').click();
+        await finishCue(audio, 'story');
         await waitFor(() => audio.src.endsWith('/story_1.mp3'));
         heard(audio, 45);
         button('Pause').click();
@@ -154,6 +166,7 @@ test('Pause resumes this session, Stop restarts at zero, and navigating away rel
         button('Stop').click();
         await waitFor(() => audio.getAttribute('src') === null);
         button('Play Story').click();
+        await finishCue(audio, 'story');
         await waitFor(() => audio.src.endsWith('/story_1.mp3'));
         assert.equal(audio.currentTime, 0);
         const bed = target.querySelectorAll('audio')[1];
@@ -168,13 +181,66 @@ test('missing intro continues with story 1 and a seek near the end does not comp
     try {
         const audio = await open('?type=music_docuseries&collection=history_eras&language=en&group=all');
         button('Start Group').click();
+        await finishCue(audio, 'group');
         await waitFor(() => audio.src.includes('/group-intros/'));
         audio.dispatchEvent(new window.Event('error'));
+        await finishCue(audio, 'story');
         await waitFor(() => audio.src.endsWith('/story_1.mp3'));
         state(audio).time = 99;
         state(audio).ranges = [[0, 5], [98, 99]];
         audio.dispatchEvent(new window.Event('timeupdate'));
         flushSync();
+        assert.deepEqual(JSON.parse(window.localStorage.getItem('ts_docuseries_history_v1')), {});
+    } finally {await close();}
+});
+
+test('cue pause/resume retains position, missing cues continue, and cues never count toward history', async () => {
+    try {
+        const audio = await open('?type=music_docuseries&collection=history_eras&language=en&group=unheard');
+        button('Start Group').click();
+        await waitFor(() => audio.src.endsWith('/cues/group-opening.mp3') && !audio.paused);
+        heard(audio, 45);
+        button('Pause').click();
+        button('Resume').click();
+        await waitFor(() => !audio.paused);
+        assert.equal(audio.currentTime, 45);
+        assert.ok(audio.src.endsWith('/cues/group-opening.mp3'));
+        audio.dispatchEvent(new window.Event('error'));
+        await waitFor(() => audio.src.endsWith('/cues/story-opening.mp3') && !audio.paused);
+        heard(audio, 100);
+        assert.deepEqual(JSON.parse(window.localStorage.getItem('ts_docuseries_history_v1')), {});
+        assert.equal(target.querySelectorAll('audio')[1].getAttribute('src'), null, 'No bed during cues');
+        audio.dispatchEvent(new window.Event('error'));
+        await waitFor(() => audio.src.endsWith('/story_1.mp3'));
+        assert.equal(audio.currentTime, 0);
+        assert.equal(audio.volume, .75);
+        heard(audio, 100);
+        audio.dispatchEvent(new window.Event('ended'));
+        await waitFor(() => audio.src.endsWith('/cues/story-opening.mp3'));
+        heard(audio, 100);
+        button('Next Story').click();
+        await finishCue(audio, 'story');
+        await waitFor(() => audio.src.endsWith('/story_3.mp3'));
+        const history = JSON.parse(window.localStorage.getItem('ts_docuseries_history_v1'));
+        assert.ok(history.story_1);
+        assert.equal(history.story_2, undefined, 'Skipping a story cue cannot complete its story');
+        assert.equal(history.story_3, undefined);
+    } finally {await close();}
+});
+
+test('Stop during group cue restarts the opening; Next during the opening skips to story 1', async () => {
+    try {
+        const audio = await open('?type=music_docuseries&collection=history_eras&language=en&group=all');
+        button('Start Group').click();
+        await waitFor(() => audio.src.endsWith('/cues/group-opening.mp3') && !audio.paused);
+        heard(audio, 45);
+        button('Stop').click();
+        button('Start Group').click();
+        await waitFor(() => audio.src.endsWith('/cues/group-opening.mp3') && !audio.paused);
+        assert.equal(audio.currentTime, 0);
+        button('Next Story').click();
+        await finishCue(audio, 'story');
+        await waitFor(() => audio.src.endsWith('/story_1.mp3'));
         assert.deepEqual(JSON.parse(window.localStorage.getItem('ts_docuseries_history_v1')), {});
     } finally {await close();}
 });
