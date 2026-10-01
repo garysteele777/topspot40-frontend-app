@@ -16,6 +16,8 @@
     import type {MusicDocuseriesCollection, MusicDocuseriesStory} from '$lib/musicDocuseries/types';
     import type {Language} from '$lib/types/playback';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
+    import {docuseriesHistoryStore, refreshDocuseriesHistory, docuseriesProgress} from '$lib/musicDocuseries/history';
+    import {buildDocuseriesGroupUrl, docuseriesText} from '$lib/musicDocuseries/groupPlayback';
 
     let language: Language = 'en';
     let collection: MusicDocuseriesCollection | null = null;
@@ -33,6 +35,7 @@
     };
 
     onMount(async () => {
+        refreshDocuseriesHistory();
         language = readStoredLanguagePreference() ?? 'en';
         const collectionSlug = page.params.collectionSlug ?? '';
 
@@ -62,6 +65,7 @@
 
     $: title = collection?.name ?? 'Music Docuseries';
     $: presentation = musicDocuseriesCollectionPresentation(collection?.slug ?? '');
+    $: progress = docuseriesProgress(stories, $docuseriesHistoryStore);
 </script>
 
 <svelte:head><title>{title} | TopSpot40</title></svelte:head>
@@ -96,9 +100,16 @@
         {:else if stories.length === 0}
             <div class="state">{text[language].empty}</div>
         {:else}
+            <div class="group-controls">
+                <span>{progress.complete ? `✓ ${docuseriesText[language].allComplete}` : docuseriesText[language].progress(progress.completed, progress.total)}</span>
+                {#if progress.remaining > 0}
+                    <a href={buildDocuseriesGroupUrl(collection.slug, language, 'unheard')}>▶ {docuseriesText[language].playUnheard} ({progress.remaining})</a>
+                {:else}<button disabled>▶ {docuseriesText[language].playUnheard} (0)</button>{/if}
+                <a href={buildDocuseriesGroupUrl(collection.slug, language, 'all')}>▶ {docuseriesText[language].playAll} ({progress.total})</a>
+            </div>
             <div class="story-grid">
                 {#each stories as story, index (`${story.id}:${story.slug}`)}
-                    <MusicDocuseriesStoryCard {story} collectionSlug={collection.slug} episodeNumber={index + 1} openLabel={text[language].open}/>
+                    <MusicDocuseriesStoryCard {story} {language} collectionSlug={collection.slug} episodeNumber={index + 1} openLabel={text[language].open}/>
                 {/each}
             </div>
         {/if}
@@ -106,6 +117,11 @@
 </ProgramJourneyShell>
 
 <style>
+    .group-controls {display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:24px;color:#f7dc82;}
+    .group-controls span {flex-basis:100%;font-weight:800;}
+    .group-controls a,.group-controls button {min-height:48px;padding:12px 20px;background:#d7a64a;color:#171006;border:1px solid #ffe0a2;border-radius:999px;text-decoration:none;font:inherit;font-weight:800;}
+    .group-controls button:disabled {opacity:.45;}
+    .group-controls a:focus-visible {outline:2px solid white;outline-offset:4px;}
     .collection-summary { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(215,166,74,.3); }
     .collection-summary p { max-width: 760px; margin: 7px 0 0; color: #eee5d2; font-size: 16px; line-height: 1.5; }
     .collection-summary strong { flex: 0 0 auto; color: #d7a64a; }

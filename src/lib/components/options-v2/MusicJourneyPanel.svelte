@@ -5,6 +5,7 @@
         resetAllPrograms
     } from '$lib/carmode/programHistory';
     import {calculatePlayedPercent, playedRankCount} from '$lib/program/history';
+    import DocuseriesHistoryPanel from '$lib/musicDocuseries/DocuseriesHistoryPanel.svelte';
 
     type HistoryEntry = {
         key: string;
@@ -31,6 +32,7 @@
     let musicJourneyMode:
         | 'nostalgia'
         | 'collections'
+        | 'docuseries'
         | null = null;
 
     let selectedJourneyDecade: string | null = null;
@@ -268,9 +270,13 @@
                 Collections History
             </button>
 
+            <button type="button" class:active={musicJourneyMode === 'docuseries'} on:click={() => musicJourneyMode = 'docuseries'}>Docuseries History</button>
+
         </div>
     {/if}
 </div>
+
+{#if !collapsed && musicJourneyMode === 'docuseries'}<DocuseriesHistoryPanel/>{/if}
 
 {#if !collapsed && musicJourneyMode === 'nostalgia'}
     <div class="journey-panel">
