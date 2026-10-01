@@ -35,6 +35,8 @@
     let finished = false;
     let introduction = false;
     let introPending = false;
+    let groupCuePending = false;
+    let cue: 'group' | 'story' | null = null;
     let message = '';
     let showText = false;
     let currentTime = 0;
@@ -103,7 +105,9 @@
         message = '';
         // Stop resets the current story, never saves a timestamp.
         if (introduction) introPending = true;
+        if (cue === 'group') { groupCuePending = true; introPending = mode === 'all'; }
         introduction = false;
+        cue = null;
     }
 
     async function playAudio(token: number) {
@@ -120,13 +124,26 @@
         }
     }
 
-    async function startCurrent() {
+    async function startCurrent(withStoryCue = true) {
         const token = ++run;
         releaseAudio();
         message = '';
         showText = false;
         finished = false;
         started = true;
+        cue = null;
+        audio.volume = 0.75;
+        if (groupCuePending) {
+            groupCuePending = false;
+            introduction = true;
+            cue = 'group';
+            audio.volume = 0.45;
+            audio.src = '/docuseries/cues/group-opening.mp3';
+            loading = false;
+            setMediaMetadata();
+            await playAudio(token);
+            return;
+        }
         if (introPending && mode === 'all') {
             introduction = true;
             introPending = false;
@@ -146,9 +163,15 @@
         story = recording;
         loading = false;
         if (!story) { started = false; message = text.unavailable; return; }
-        activeSlug = slug;
-        audio.src = `${storageBase}${story.tts_bucket}/${story.tts_key}`;
-        if (story.bed_bucket && story.bed_key) bed.src = `${storageBase}${story.bed_bucket}/${story.bed_key}`;
+        if (withStoryCue) {
+            cue = 'story';
+            audio.volume = 0.45;
+            audio.src = '/docuseries/cues/story-opening.mp3';
+        } else {
+            activeSlug = slug;
+            audio.src = `${storageBase}${story.tts_bucket}/${story.tts_key}`;
+            if (story.bed_bucket && story.bed_key) bed.src = `${storageBase}${story.bed_bucket}/${story.bed_key}`;
+        }
         setMediaMetadata();
         // Prepare the next response while this story plays; keep the same
         // narration element for transitions and phone media controls.
@@ -158,14 +181,14 @@
 
     async function toggle() {
         if (playing) { pause(); return; }
-        if (finished) { index = 0; introPending = mode === 'all'; }
+        if (finished) { index = 0; introPending = mode === 'all'; groupCuePending = Boolean(mode); }
         if (!started || finished) { await startCurrent(); return; }
         message = '';
         await playAudio(run);
     }
 
     async function next() {
-        if (introduction) { await startCurrent(); return; }
+        if (introduction) { introPending = false; await startCurrent(); return; }
         if (index + 1 < queue.length) { ++index; await startCurrent(); }
         else {
             ++run;
@@ -180,7 +203,8 @@
         trackCompletion();
         playing = false;
         bed.pause();
-        if (mode || introduction) void next();
+        if (cue || introduction) void startCurrent(cue !== 'story');
+        else if (mode) void next();
         else { started = false; }
     }
 
@@ -188,9 +212,9 @@
         if (!audio?.getAttribute('src') || disposed) return;
         playing = false;
         bed.pause();
-        if (introduction) {
+        if (cue || introduction) {
             // An absent introduction must not prevent the group from playing.
-            void startCurrent();
+            void startCurrent(cue !== 'story');
         } else { started = false; message = text.unavailable; }
     }
 
@@ -233,6 +257,7 @@
                     groupName = collections.find(item => item.slug === collection)?.name ?? collection;
                     queue = buildDocuseriesQueue(stories, mode, get(docuseriesHistoryStore));
                     introPending = mode === 'all';
+                    groupCuePending = true;
                 } else {
                     const slug = query.get('slug');
                     if (!slug) throw new Error('Missing story');
@@ -277,7 +302,7 @@
         <h1>{title}</h1>
         {#if complete && !introduction}<p class="complete">✓ {text.complete}</p>{/if}
         {#if mode && queue.length && !introduction}<p>{text.story} {index + 1} {text.of} {queue.length}</p>{/if}
-        {#if started}<progress value={progress} max="100" aria-label={title}></progress><p>{time(currentTime)} / {time(duration)}</p>
+        {#if started && !cue}<progress value={progress} max="100" aria-label={title}></progress><p>{time(currentTime)} / {time(duration)}</p>
         {:else if story?.duration_seconds}<p>{Math.max(1, Math.round(story.duration_seconds / 60))} min</p>{/if}
         {#if message}<p role="status">{message}</p>{/if}
         {#if finished}<p role="status">{text.finished}</p>{/if}
