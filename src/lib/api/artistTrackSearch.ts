@@ -4,8 +4,11 @@ export type ArtistTrackResult = {
     track_id: number;
     title: string;
     artist: string;
-    spotlight_artist: string;
-    artist_code: string;
+    spotlight_artist?: string;
+    artist_code?: string;
+    program_code?: string;
+    program_kind?: 'nostalgia' | 'collection';
+    program_name?: string;
 };
 
 export async function findArtistsByTrack(query: string, signal?: AbortSignal): Promise<ArtistTrackResult[]> {
