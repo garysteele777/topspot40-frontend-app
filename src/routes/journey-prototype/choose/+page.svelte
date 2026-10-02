@@ -75,9 +75,9 @@
         ptbr: {open: 'Ver números de Coleções', title: 'Números dos programas de Coleções', instruction: 'Escolha uma coleção para abrir o programa. Os nomes correspondem ao catálogo impresso.', group: 'Grupo de coleções', close: 'Fechar'}
     };
     const artistsBrowserCopy: Record<LandingLanguage, {open: string; searchLink: string; trackLink: string; title: string; instruction: string; letter: string; search: string; noResults: string; close: string; trackTitle: string; trackInstruction: string; trackPlaceholder: string; trackHint: string; trackLoading: string; trackEmpty: string; trackError: string}> = {
-        en: {open: 'Browse Artist Numbers', searchLink: 'Search by Artist Name', trackLink: 'Find Artist by Track Name', title: 'Artist Spotlight Numbers', instruction: 'Choose a letter or search an artist to open a spotlight.', letter: 'Starting letter', search: 'Search artists', noResults: 'No matching artists.', close: 'Close', trackTitle: 'Find Artist by Track Name', trackInstruction: 'Search songs recorded by artists with a TopSpot40 Artist Spotlight.', trackPlaceholder: 'Enter at least two letters of a track title', trackHint: 'Enter at least two letters to search.', trackLoading: 'Searching tracks…', trackEmpty: 'No matching tracks by Spotlight artists.', trackError: 'Track search is unavailable. Please try again.'},
-        es: {open: 'Ver números de artistas', searchLink: 'Buscar por nombre de artista', trackLink: 'Encontrar artista por canción', title: 'Números de artistas destacados', instruction: 'Elige una letra o busca un artista para abrir su programa.', letter: 'Letra inicial', search: 'Buscar artistas', noResults: 'No se encontraron artistas.', close: 'Cerrar', trackTitle: 'Encontrar artista por canción', trackInstruction: 'Busca canciones grabadas por artistas con un programa destacado en TopSpot40.', trackPlaceholder: 'Escribe al menos dos letras del título', trackHint: 'Escribe al menos dos letras para buscar.', trackLoading: 'Buscando canciones…', trackEmpty: 'No hay canciones coincidentes de artistas destacados.', trackError: 'La búsqueda no está disponible. Inténtalo de nuevo.'},
-        ptbr: {open: 'Ver números de artistas', searchLink: 'Buscar pelo nome do artista', trackLink: 'Encontrar artista pela música', title: 'Números de artistas em destaque', instruction: 'Escolha uma letra ou procure um artista para abrir o programa.', letter: 'Letra inicial', search: 'Procurar artistas', noResults: 'Nenhum artista encontrado.', close: 'Fechar', trackTitle: 'Encontrar artista pela música', trackInstruction: 'Busque músicas gravadas por artistas com um programa em destaque no TopSpot40.', trackPlaceholder: 'Digite pelo menos duas letras do título', trackHint: 'Digite pelo menos duas letras para buscar.', trackLoading: 'Buscando músicas…', trackEmpty: 'Nenhuma música encontrada de artistas em destaque.', trackError: 'A busca está indisponível. Tente novamente.'}
+        en: {open: 'Browse Artist Numbers', searchLink: 'Search by Artist Name', trackLink: 'Find a Song', title: 'Artist Spotlight Numbers', instruction: 'Choose a letter or search an artist to open a spotlight.', letter: 'Starting letter', search: 'Search artists', noResults: 'No matching artists.', close: 'Close', trackTitle: 'Find a Song', trackInstruction: 'Search songs in Nostalgia, Collections, and Artist Spotlights.', trackPlaceholder: 'Enter at least two letters of a track title', trackHint: 'Enter at least two letters to search.', trackLoading: 'Searching tracks…', trackEmpty: 'No matching songs in the catalog.', trackError: 'Track search is unavailable. Please try again.'},
+        es: {open: 'Ver números de artistas', searchLink: 'Buscar por nombre de artista', trackLink: 'Buscar una canción', title: 'Números de artistas destacados', instruction: 'Elige una letra o busca un artista para abrir su programa.', letter: 'Letra inicial', search: 'Buscar artistas', noResults: 'No se encontraron artistas.', close: 'Cerrar', trackTitle: 'Buscar una canción', trackInstruction: 'Busca canciones en Nostalgia, Colecciones y Artistas destacados.', trackPlaceholder: 'Escribe al menos dos letras del título', trackHint: 'Escribe al menos dos letras para buscar.', trackLoading: 'Buscando canciones…', trackEmpty: 'No se encontraron canciones en el catálogo.', trackError: 'La búsqueda no está disponible. Inténtalo de nuevo.'},
+        ptbr: {open: 'Ver números de artistas', searchLink: 'Buscar pelo nome do artista', trackLink: 'Encontrar uma música', title: 'Números de artistas em destaque', instruction: 'Escolha uma letra ou procure um artista para abrir o programa.', letter: 'Letra inicial', search: 'Procurar artistas', noResults: 'Nenhum artista encontrado.', close: 'Fechar', trackTitle: 'Encontrar uma música', trackInstruction: 'Busque músicas em Nostalgia, Coleções e Artistas em destaque.', trackPlaceholder: 'Digite pelo menos duas letras do título', trackHint: 'Digite pelo menos duas letras para buscar.', trackLoading: 'Buscando músicas…', trackEmpty: 'Nenhuma música encontrada no catálogo.', trackError: 'A busca está indisponível. Tente novamente.'}
     };
     const artistLetters = [...new Set(artistSpotlights.map(artist => artist.name[0].toUpperCase()))].sort();
     $: visibleArtists = artistSpotlights.filter(artist => artistSearch.trim()
@@ -211,7 +211,12 @@
 
     async function openTrackArtistCode(track: ArtistTrackResult) {
         closeTrackSearch();
-        await openArtistPreview(track.artist_code, track.track_id);
+        if (track.program_code && track.program_kind) {
+            const family: ExperienceFamily = track.program_kind === 'nostalgia' ? 'nostalgia' : 'collections';
+            await openCatalogCode(track.program_code, family, track.track_id);
+        } else if (track.artist_code) {
+            await openArtistPreview(track.artist_code, track.track_id);
+        }
     }
 
     async function openArtistPreview(code: string, requestTrackId: number | null = null) {
@@ -513,8 +518,10 @@
                                     </div>
                                     {#if choice === 'nostalgia'}
                                         <button class="browse-nostalgia" type="button" on:click={openNostalgiaBrowser}>{nostalgiaBrowserCopy[language].open}</button>
+                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                     {:else if choice === 'collections'}
                                         <button class="browse-nostalgia" type="button" on:click={openCollectionsBrowser}>{collectionsBrowserCopy[language].open}</button>
+                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                     {:else if choice === 'artist'}
                                         <div class="artist-entry-links">
                                             <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event)}>{artistsBrowserCopy[language].open}</button>
@@ -567,8 +574,10 @@
                                 </div>
                                 {#if choice === 'nostalgia'}
                                     <button class="browse-nostalgia" type="button" on:click={openNostalgiaBrowser}>{nostalgiaBrowserCopy[language].open}</button>
+                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                 {:else if choice === 'collections'}
                                     <button class="browse-nostalgia" type="button" on:click={openCollectionsBrowser}>{collectionsBrowserCopy[language].open}</button>
+                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                 {:else if choice === 'artist'}
                                     <div class="artist-entry-links">
                                         <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event)}>{artistsBrowserCopy[language].open}</button>
@@ -721,8 +730,8 @@
                     {:else}
                         {#each trackResults as track (track.track_id)}
                             <button type="button" on:click={() => openTrackArtistCode(track)}>
-                                <span><strong>{track.title}</strong><small>{track.artist}</small></span>
-                                <strong class="track-artist-code">{track.artist_code}</strong>
+                                <span><strong>{track.title}</strong><small>{track.artist}</small>{#if track.program_name}<small>{track.program_name}</small>{/if}</span>
+                                <strong class="track-artist-code">{track.program_code ?? track.artist_code}</strong>
                             </button>
                         {/each}
                     {/if}

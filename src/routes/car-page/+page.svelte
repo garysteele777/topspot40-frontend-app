@@ -2571,6 +2571,19 @@
             saveResumeState(resume);
         }
 
+        // Stop the current session before leaving through Change Music.
+        preservePlaybackForPreferences = false;
+        autoPlay.cancel();
+        activePlayMode = null;
+        spotify.close();
+        spotify.reset();
+        guidedReady = false;
+        stopPlaybackPolling();
+        stopNarrationAudio();
+        stopBed();
+        isPlaying.set(false);
+        playbackPhase.set('idle');
+
         const currentParams = new URLSearchParams(window.location.search);
         const mode = currentParams.get('mode');
         const decade = currentParams.get('decade');
@@ -2945,6 +2958,8 @@
 
         if (!preservePlaybackForPreferences) {
             autoPlay.cancel();
+            spotify.close();
+            spotify.reset();
             stopPlaybackPolling();
             void clearAllPlayback();
         }
