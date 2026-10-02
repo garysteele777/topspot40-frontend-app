@@ -19,3 +19,12 @@ export async function findArtistsByTrack(query: string, signal?: AbortSignal): P
     const payload: {songs: ArtistTrackResult[]} = await response.json();
     return payload.songs;
 }
+
+export async function findArtistsByName(query: string, signal?: AbortSignal): Promise<ArtistTrackResult[]> {
+    const response = await fetch(`${API_BASE}/api/catalog/artists/search?q=${encodeURIComponent(query.trim())}`, {
+        headers: {Accept: 'application/json'}, signal
+    });
+    if (!response.ok) throw new Error('Artist search unavailable');
+    const payload: {artists: ArtistTrackResult[]} = await response.json();
+    return payload.artists;
+}
