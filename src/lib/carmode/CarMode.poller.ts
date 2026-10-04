@@ -229,9 +229,65 @@ export function setExternalRadioSpotifyHandoffReady(ready: boolean): void {
     externalRadioSpotifyHandoffReady = ready;
 }
 
+let radioBiographyPaused = false;
+let pausedRadioBiographyBedUrl: string | null = null;
+
+export async function toggleRadioBiographyPause(): Promise<boolean> {
+    const audio = activeNarrationAudio;
+    if (!audio || !activeNarrationResolve) return false;
+
+    if (radioBiographyPaused) {
+        await audio.play();
+        if (activeNarrationAudio !== audio || !radioBiographyPaused) return true;
+        radioBiographyPaused = false;
+        narrationPausedAtBoundary = false;
+        playbackPhase.set('artist');
+        isPlaying.set(true);
+        const bedUrl = pausedRadioBiographyBedUrl;
+        pausedRadioBiographyBedUrl = null;
+        if (bedUrl) {
+            void startBedUrl(bedUrl).catch(error =>
+                console.warn('Unable to resume biography bed:', error));
+        }
+        return true;
+    }
+
+    if (get(playbackPhase) !== 'artist') return false;
+    radioBiographyPaused = true;
+    narrationPausedAtBoundary = true;
+    pausedRadioBiographyBedUrl = lastStartedBedUrl;
+    audio.pause();
+    resetBed();
+    isPlaying.set(false);
+    playbackPhase.set('paused');
+    return true;
+}
+
+export function skipRadioBiography(): boolean {
+    if (!radioBiographyPaused && get(playbackPhase) !== 'artist') return false;
+    const resolve = activeNarrationResolve;
+    const key = activeNarrationKey;
+    if (!resolve || !key) return false;
+
+    // Remove the remaining cue/language items for this bio only.
+    narrationQueue = narrationQueue.filter(item => item.key !== key);
+    narrationPausedAtBoundary = false;
+    stopCurrentNarrationPhase({resolvePhase: false});
+    resetBed();
+    lastStartedBedUrl = null;
+    playbackPhase.set('artist');
+    isPlaying.set(false);
+    resolve();
+    return true;
+}
+
 export function stopCurrentNarrationPhase(
     options: { resolvePhase?: boolean; preserveResolve?: boolean; preserveAudioElement?: boolean } = {}
 ): void {
+    if (radioBiographyPaused) narrationPausedAtBoundary = false;
+    radioBiographyPaused = false;
+    pausedRadioBiographyBedUrl = null;
+
     if (options.preserveResolve) {
         narrationPausedAtBoundary = true;
     }

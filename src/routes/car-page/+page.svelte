@@ -68,6 +68,8 @@
         markUserStartedPlayback,
         stopCurrentNarrationPhase,
         continueStoppedNarrationPhase,
+        toggleRadioBiographyPause,
+        skipRadioBiography,
         resetNarrationPhaseState,
         resetSpotifyStartState,
         setExternalRadioTrackPaused,
@@ -1387,6 +1389,15 @@
     );
 
     async function handleAutoPlay() {
+        if (isArtistRadioSelection()) {
+            try {
+                if (await toggleRadioBiographyPause()) return;
+            } catch (error) {
+                status.set('Unable to resume biography. Please try again.');
+                console.warn('Biography resume failed:', error);
+                return;
+            }
+        }
         if (needsInitialCollectionsRadioStart()) {
             // This must remain in the click stack. The backend-owned
             // collection_intro/intro/detail pipeline reaches Spotify later,
@@ -2057,6 +2068,7 @@
     }
 
     async function handleDriveInNext(): Promise<void> {
+        if (isArtistRadioSelection() && skipRadioBiography()) return;
         if (isBackendRadioAutoHandoffSelection()) {
             if (
                 radioStartPending ||
@@ -2468,7 +2480,9 @@
                 $currentSelection?.context?.genre
             ).toUpperCase()} RADIO`;
 
-    $: radioSetLabel = interactiveRadioTest && $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+    $: radioSetLabel = interactiveRadioTest && $currentSelection?.programType === PROGRAM_TYPES.RADIO_ARTIST
+        ? ($currentTrack?.genreName ?? '')
+        : interactiveRadioTest && $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
         ? `${$currentTrack?.collection_name ?? ''}${$currentTrack?.collection_group_name ? ` • ${$currentTrack.collection_group_name}` : ''}`.trim()
         : interactiveRadioTest && $currentTrack?.decadeName && $currentTrack?.genreName
             ? `${$currentTrack.decadeName} ${$currentTrack.genreName}`
@@ -2484,10 +2498,17 @@
 
 
     function radioChangeMusicDestination(): string {
-        const radioReturnTo = new URLSearchParams(window.location.search).get('radioReturnTo');
-        return isRadioExperienceDestination(radioReturnTo)
-            ? radioReturnTo ?? '/interactive-radio-test'
-            : '/interactive-radio-test';
+        const params = new URLSearchParams(window.location.search);
+        const returnTo = params.get('returnTo');
+        if (returnTo && isSafeJourneyReturnPath(returnTo)) return returnTo;
+
+        const radioReturnTo = params.get('radioReturnTo');
+        if (radioReturnTo && (
+            isSafeJourneyReturnPath(radioReturnTo) ||
+            isRadioExperienceDestination(radioReturnTo)
+        )) return radioReturnTo;
+
+        return '/journey-prototype/choose';
     }
 
     async function abandonInteractiveRadioAndReturn(): Promise<void> {

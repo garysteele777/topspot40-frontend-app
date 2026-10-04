@@ -357,12 +357,14 @@
         {isPlaying && activePlayMode === 'auto' ? 'Ⅱ' : '▶'}
     </span>
                 <span>
-        {isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
+        {radioAutoOnly && phase === 'paused'
+            ? (language === 'en' ? 'Resume' : 'Continuar')
+            : isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
     </span>
             </button>
             <button
                     type="button"
-                    disabled={radioAutoOnly && (radioLoadPending || phase !== 'track')}
+                    disabled={radioAutoOnly && (radioLoadPending || (phase !== 'track' && phase !== 'artist' && phase !== 'paused'))}
                     on:click={onNext}
                     aria-label={transportCopy.nextAria}
             >
