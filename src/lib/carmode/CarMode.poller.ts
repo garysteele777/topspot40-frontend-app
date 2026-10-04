@@ -18,7 +18,7 @@ import {
 
 import {markCurrentTrackPlayed} from '$lib/carmode/programTracker';
 import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
-import {startBedUrl, stopBed, isBedPlaying, unlockBedAudio} from '$lib/audio/bedPlayer';
+import {startBedUrl, stopBed, resetBed, isBedPlaying, unlockBedAudio} from '$lib/audio/bedPlayer';
 import {calculatePlaybackTiming} from '$lib/utils/calculatePlaybackTiming';
 import {isWithinTrackSwitchProtectionWindow} from '$lib/utils/playbackSwitchTiming';
 import {
@@ -199,6 +199,8 @@ let activeNarrationKey: string | null = null;
 let queuedNarrationKeys = new Set<string>();
 let completedNarrationKeys = new Set<string>();
 let lastStartedBedUrl: string | null = null;
+let lastRadioSetCueKey: string | null = null;
+let lastRadioTrackCueKey: string | null = null;
 let trackFinalized = false;
 let narrationSignaled = false;
 
@@ -905,6 +907,43 @@ export function startPlaybackPolling(
                         data.context
                     );
 
+                    // Reuse Docuseries cues within the acknowledged narration
+                    // queue, once per radio set and track, across languages.
+                    if (isBackendRadio && narrationItems.length > 0) {
+                        const programType = get(currentSelection)?.programType;
+                        const setNumber = data.context?.set_number;
+                        const position = data.context?.block_position;
+                        if (typeof setNumber === 'number') {
+                            const setKey = `${programType}:${setNumber}`;
+                            const cues: NarrationQueueItem[] = [];
+                            if (lastRadioSetCueKey !== setKey) {
+                                lastRadioSetCueKey = setKey;
+                                lastRadioTrackCueKey = null;
+                                cues.push({
+                                    url: '/docuseries/cues/group-opening.mp3',
+                                    phase
+                                });
+                            }
+
+                            // Artist Radio's opening biography introduces the
+                            // set; its track details introduce individual songs.
+                            const trackNarration =
+                                phase === 'intro' || phase === 'detail' ||
+                                (phase === 'artist' && programType !== 'RADIO_ARTIST');
+                            if (trackNarration && typeof position === 'number') {
+                                const trackKey = `${setKey}:${position}`;
+                                if (lastRadioTrackCueKey !== trackKey) {
+                                    lastRadioTrackCueKey = trackKey;
+                                    cues.push({
+                                        url: '/docuseries/cues/story-opening.mp3',
+                                        phase
+                                    });
+                                }
+                            }
+                            narrationItems.unshift(...cues);
+                        }
+                    }
+
                     dlog(
                         '🎤 Queue:',
                         narrationItems.map(item => item.url)
@@ -942,6 +981,9 @@ export function startPlaybackPolling(
                 phase === 'track' &&
                 data.context?.spotify_track_id
             ) {
+                // Spotify owns the audio during tracks, including radio.
+                resetBed();
+                lastStartedBedUrl = null;
                 const spotifyTrackId = data.context.spotify_track_id as string;
                 const shouldDispatch = shouldDispatchSpotifyTrack(
                     phase,
@@ -1112,6 +1154,8 @@ export function resetNarrationPhaseState(): void {
     queuedNarrationKeys.clear();
     completedNarrationKeys.clear();
     lastStartedBedUrl = null;
+    lastRadioSetCueKey = null;
+    lastRadioTrackCueKey = null;
     resetSpotifyStartState();
     finishedTrackId = null;
     narrationSignaled = false;
@@ -1172,6 +1216,8 @@ export function stopPlaybackPolling() {
     queuedNarrationKeys.clear();
     completedNarrationKeys.clear();
     lastStartedBedUrl = null;
+    lastRadioSetCueKey = null;
+    lastRadioTrackCueKey = null;
     resetSpotifyStartState();
     finishedTrackId = null;
     externalRadioTrackPaused = false;
