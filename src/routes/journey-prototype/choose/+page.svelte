@@ -9,7 +9,7 @@
     import {buildExperienceDestination, EXPERIENCE_FAMILIES, type ExperienceFamily, type ExperienceMode} from '$lib/journey/experienceMode';
     import {lookupProgramCode, ProgramCodeLookupError, programCodeUrlFromPreferences} from '$lib/api/programCode.js';
     import artistSpotlights from '$lib/catalog/artistSpotlights.json';
-    import {findArtistsByTrack, type ArtistTrackResult} from '$lib/api/artistTrackSearch';
+    import {findArtistsByTrack, findArtistsByName, type ArtistTrackResult} from '$lib/api/artistTrackSearch';
     import {playbackSettingsStore} from '$lib/stores/playbackSettings.store';
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
@@ -54,9 +54,9 @@
         ptbr: ['Country', 'Pop', 'Rock', 'R&B / Soul', 'Latina / Global', 'Blues / Jazz', 'Folk / Acústico', 'Temas de TV']
     };
     const nostalgiaBrowserCopy: Record<LandingLanguage, {open: string; title: string; instruction: string; genre: string; decade: string; close: string}> = {
-        en: {open: 'Browse Nostalgia numbers', title: 'Nostalgia Program Numbers', instruction: 'Choose a decade and genre to open its program.', genre: 'Genre', decade: 'Decade', close: 'Close'},
-        es: {open: 'Ver números de Nostalgia', title: 'Números de programas de Nostalgia', instruction: 'Elige una década y un género para abrir el programa.', genre: 'Género', decade: 'Década', close: 'Cerrar'},
-        ptbr: {open: 'Ver números de Nostalgia', title: 'Números dos programas de Nostalgia', instruction: 'Escolha uma década e um gênero para abrir o programa.', genre: 'Gênero', decade: 'Década', close: 'Fechar'}
+        en: {open: 'Browse Nostalgia Programs', title: 'Nostalgia Programs', instruction: 'Choose a decade and genre to open its program.', genre: 'Genre', decade: 'Decade', close: 'Close'},
+        es: {open: 'Explorar programas de Nostalgia', title: 'Programas de Nostalgia', instruction: 'Elige una década y un género para abrir el programa.', genre: 'Género', decade: 'Década', close: 'Cerrar'},
+        ptbr: {open: 'Explorar programas de Nostalgia', title: 'Programas de Nostalgia', instruction: 'Escolha uma década e um gênero para abrir o programa.', genre: 'Gênero', decade: 'Década', close: 'Fechar'}
     };
     const collectionGroups = [
         {name: 'American Heritage Favorites', items: [['C-002', 'American Folk Heroes'], ['C-006', 'Civil War Songs'], ['C-037', 'Patriotic Favorites'], ['C-041', 'Railroad & Train Songs'], ['C-051', 'Western Heritage Favorites']]},
@@ -70,19 +70,116 @@
         {name: 'Specialty Mixes', items: [['C-010', 'Country Duets'], ['C-018', "Gary's Missing Country Favorites"], ['C-019', "Gary's Missing Rock & Pop Favorites"], ['C-022', 'Holiday Favorites'], ['C-024', 'Latin Crossovers'], ['C-035', 'Novelty Songs'], ['C-038', 'Pop Duets']]}
     ];
     const collectionsBrowserCopy: Record<LandingLanguage, {open: string; title: string; instruction: string; group: string; close: string}> = {
-        en: {open: 'Browse Collections numbers', title: 'Collections Program Numbers', instruction: 'Choose a collection to open its program. Names match the printed catalog.', group: 'Collection group', close: 'Close'},
-        es: {open: 'Ver números de Colecciones', title: 'Números de programas de Colecciones', instruction: 'Elige una colección para abrir el programa. Los nombres coinciden con el catálogo impreso.', group: 'Grupo de colecciones', close: 'Cerrar'},
-        ptbr: {open: 'Ver números de Coleções', title: 'Números dos programas de Coleções', instruction: 'Escolha uma coleção para abrir o programa. Os nomes correspondem ao catálogo impresso.', group: 'Grupo de coleções', close: 'Fechar'}
+        en: {open: 'Browse Collections', title: 'Collections', instruction: 'Choose a collection to open its program. Names match the printed catalog.', group: 'Collection group', close: 'Close'},
+        es: {open: 'Explorar colecciones', title: 'Colecciones', instruction: 'Elige una colección para abrir el programa. Los nombres coinciden con el catálogo impreso.', group: 'Grupo de colecciones', close: 'Cerrar'},
+        ptbr: {open: 'Explorar coleções', title: 'Coleções', instruction: 'Escolha uma coleção para abrir o programa. Os nomes correspondem ao catálogo impresso.', group: 'Grupo de coleções', close: 'Fechar'}
     };
     const artistsBrowserCopy: Record<LandingLanguage, {open: string; searchLink: string; trackLink: string; title: string; instruction: string; letter: string; search: string; noResults: string; close: string; trackTitle: string; trackInstruction: string; trackPlaceholder: string; trackHint: string; trackLoading: string; trackEmpty: string; trackError: string}> = {
-        en: {open: 'Browse Artist Numbers', searchLink: 'Search by Artist Name', trackLink: 'Find Artist by Track Name', title: 'Artist Spotlight Numbers', instruction: 'Choose a letter or search an artist to open a spotlight.', letter: 'Starting letter', search: 'Search artists', noResults: 'No matching artists.', close: 'Close', trackTitle: 'Find Artist by Track Name', trackInstruction: 'Search songs recorded by artists with a TopSpot40 Artist Spotlight.', trackPlaceholder: 'Enter at least two letters of a track title', trackHint: 'Enter at least two letters to search.', trackLoading: 'Searching tracks…', trackEmpty: 'No matching tracks by Spotlight artists.', trackError: 'Track search is unavailable. Please try again.'},
-        es: {open: 'Ver números de artistas', searchLink: 'Buscar por nombre de artista', trackLink: 'Encontrar artista por canción', title: 'Números de artistas destacados', instruction: 'Elige una letra o busca un artista para abrir su programa.', letter: 'Letra inicial', search: 'Buscar artistas', noResults: 'No se encontraron artistas.', close: 'Cerrar', trackTitle: 'Encontrar artista por canción', trackInstruction: 'Busca canciones grabadas por artistas con un programa destacado en TopSpot40.', trackPlaceholder: 'Escribe al menos dos letras del título', trackHint: 'Escribe al menos dos letras para buscar.', trackLoading: 'Buscando canciones…', trackEmpty: 'No hay canciones coincidentes de artistas destacados.', trackError: 'La búsqueda no está disponible. Inténtalo de nuevo.'},
-        ptbr: {open: 'Ver números de artistas', searchLink: 'Buscar pelo nome do artista', trackLink: 'Encontrar artista pela música', title: 'Números de artistas em destaque', instruction: 'Escolha uma letra ou procure um artista para abrir o programa.', letter: 'Letra inicial', search: 'Procurar artistas', noResults: 'Nenhum artista encontrado.', close: 'Fechar', trackTitle: 'Encontrar artista pela música', trackInstruction: 'Busque músicas gravadas por artistas com um programa em destaque no TopSpot40.', trackPlaceholder: 'Digite pelo menos duas letras do título', trackHint: 'Digite pelo menos duas letras para buscar.', trackLoading: 'Buscando músicas…', trackEmpty: 'Nenhuma música encontrada de artistas em destaque.', trackError: 'A busca está indisponível. Tente novamente.'}
+        en: {open: 'Browse Artists', searchLink: 'Search Artists', trackLink: 'Find a Song', title: 'Artist Spotlights', instruction: 'Choose a letter or search an artist to open a spotlight.', letter: 'Starting letter', search: 'Search artists', noResults: 'No matching artists.', close: 'Close', trackTitle: 'Find a Song', trackInstruction: 'Search songs in Nostalgia, Collections, and Artist Spotlights.', trackPlaceholder: 'Enter at least two letters of a track title', trackHint: 'Enter at least two letters to search.', trackLoading: 'Searching tracks…', trackEmpty: 'No matching songs in the catalog.', trackError: 'Track search is unavailable. Please try again.'},
+        es: {open: 'Explorar artistas', searchLink: 'Buscar artistas', trackLink: 'Buscar una canción', title: 'Artistas destacados', instruction: 'Elige una letra o busca un artista para abrir su programa.', letter: 'Letra inicial', search: 'Buscar artistas', noResults: 'No se encontraron artistas.', close: 'Cerrar', trackTitle: 'Buscar una canción', trackInstruction: 'Busca canciones en Nostalgia, Colecciones y Artistas destacados.', trackPlaceholder: 'Escribe al menos dos letras del título', trackHint: 'Escribe al menos dos letras para buscar.', trackLoading: 'Buscando canciones…', trackEmpty: 'No se encontraron canciones en el catálogo.', trackError: 'La búsqueda no está disponible. Inténtalo de nuevo.'},
+        ptbr: {open: 'Explorar artistas', searchLink: 'Buscar artistas', trackLink: 'Encontrar uma música', title: 'Artistas em destaque', instruction: 'Escolha uma letra ou procure um artista para abrir o programa.', letter: 'Letra inicial', search: 'Procurar artistas', noResults: 'Nenhum artista encontrado.', close: 'Fechar', trackTitle: 'Encontrar uma música', trackInstruction: 'Busque músicas em Nostalgia, Coleções e Artistas em destaque.', trackPlaceholder: 'Digite pelo menos duas letras do título', trackHint: 'Digite pelo menos duas letras para buscar.', trackLoading: 'Buscando músicas…', trackEmpty: 'Nenhuma música encontrada no catálogo.', trackError: 'A busca está indisponível. Tente novamente.'}
     };
     const artistLetters = [...new Set(artistSpotlights.map(artist => artist.name[0].toUpperCase()))].sort();
     $: visibleArtists = artistSpotlights.filter(artist => artistSearch.trim()
         ? `${artist.name} ${artist.code}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(artistSearch.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())
         : artist.name.toUpperCase().startsWith(artistLetter));
+
+    let showArtistNameSearch = false;
+    let artistNameQuery = '';
+    let artistNameResults: ArtistTrackResult[] = [];
+    let artistNameSearchState: 'idle' | 'loading' | 'done' | 'error' = 'idle';
+    let artistNameSearchTimer: ReturnType<typeof setTimeout> | null = null;
+    let artistNameSearchController: AbortController | null = null;
+    let artistNameSearchInput: HTMLInputElement;
+
+    const artistNameSearchCopy: Record<LandingLanguage, {
+        title: string; instruction: string; placeholder: string; hint: string;
+        loading: string; empty: string; error: string; spotlight: string;
+    }> = {
+        en: {
+            title: 'Search Artists',
+            instruction: 'Find artists in Artist Spotlights, Nostalgia, and Collections. Choose a result to open an available program.',
+            placeholder: 'Enter at least two letters of an artist name',
+            hint: 'Enter at least two letters to search.', loading: 'Searching artists…',
+            empty: 'No matching artists in the catalog.', error: 'Artist search is unavailable. Please try again.',
+            spotlight: 'Artist Spotlight'
+        },
+        es: {
+            title: 'Buscar artistas',
+            instruction: 'Busca artistas en Artistas destacados, Nostalgia y Colecciones. Elige un resultado para abrir un programa disponible.',
+            placeholder: 'Escribe al menos dos letras del nombre del artista',
+            hint: 'Escribe al menos dos letras para buscar.', loading: 'Buscando artistas…',
+            empty: 'No se encontraron artistas en el catálogo.', error: 'La búsqueda de artistas no está disponible. Inténtalo de nuevo.',
+            spotlight: 'Artista destacado'
+        },
+        ptbr: {
+            title: 'Buscar artistas',
+            instruction: 'Busque artistas em Artistas em destaque, Nostalgia e Coleções. Escolha um resultado para abrir um programa disponível.',
+            placeholder: 'Digite pelo menos duas letras do nome do artista',
+            hint: 'Digite pelo menos duas letras para buscar.', loading: 'Buscando artistas…',
+            empty: 'Nenhum artista encontrado no catálogo.', error: 'A busca por artistas está indisponível. Tente novamente.',
+            spotlight: 'Artista em destaque'
+        }
+    };
+
+    async function openArtistNameSearch(event: MouseEvent) {
+        browserReturnFocus = event.currentTarget as HTMLElement;
+        stopArtistNameSearch();
+        artistNameQuery = '';
+        artistNameResults = [];
+        artistNameSearchState = 'idle';
+        showArtistNameSearch = true;
+        await tick();
+        artistNameSearchInput?.focus();
+    }
+
+    function stopArtistNameSearch() {
+        if (artistNameSearchTimer) clearTimeout(artistNameSearchTimer);
+        artistNameSearchTimer = null;
+        artistNameSearchController?.abort();
+        artistNameSearchController = null;
+    }
+
+    function updateArtistNameSearch() {
+        stopArtistNameSearch();
+        artistNameResults = [];
+        const query = artistNameQuery.trim();
+        if (query.length < 2) {
+            artistNameSearchState = 'idle';
+            return;
+        }
+        artistNameSearchState = 'loading';
+        artistNameSearchTimer = setTimeout(async () => {
+            artistNameSearchTimer = null;
+            const controller = new AbortController();
+            artistNameSearchController = controller;
+            try {
+                const results = await findArtistsByName(query, controller.signal);
+                if (!controller.signal.aborted) {
+                    artistNameResults = results;
+                    artistNameSearchState = 'done';
+                }
+            } catch {
+                if (!controller.signal.aborted) artistNameSearchState = 'error';
+            }
+        }, 250);
+    }
+
+    function closeArtistNameSearch() {
+        stopArtistNameSearch();
+        showArtistNameSearch = false;
+        browserReturnFocus?.focus();
+    }
+
+    async function openArtistNameResult(artist: ArtistTrackResult) {
+        closeArtistNameSearch();
+        if (artist.program_code && artist.program_kind) {
+            const family: ExperienceFamily = artist.program_kind === 'nostalgia' ? 'nostalgia' : 'collections';
+            await openCatalogCode(artist.program_code, family, artist.track_id);
+        } else if (artist.artist_code) {
+            await openArtistPreview(artist.artist_code);
+        }
+    }
 
     function nostalgiaCode(decadeIndex: number, genreIndex: number) {
         return `N-${String(decadeIndex * nostalgiaGenres.length + genreIndex + 1).padStart(3, '0')}`;
@@ -103,11 +200,15 @@
     }
 
     async function openArtistsBrowser(event: MouseEvent, focus: 'letter' | 'search' = 'letter') {
+        if (focus === 'search') {
+            await openArtistNameSearch(event);
+            return;
+        }
         browserReturnFocus = event.currentTarget as HTMLElement;
         artistSearch = '';
         showArtistsBrowser = true;
         await tick();
-        (focus === 'search' ? artistSearchInput : artistLetterSelect)?.focus();
+        artistLetterSelect?.focus();
     }
 
     async function openTrackSearch(event: MouseEvent) {
@@ -173,11 +274,12 @@
     }
 
     function handleBrowserKeydown(event: KeyboardEvent) {
-        if (!showNostalgiaBrowser && !showCollectionsBrowser && !showArtistsBrowser && !showTrackSearch) return;
+        if (!showNostalgiaBrowser && !showCollectionsBrowser && !showArtistsBrowser && !showArtistNameSearch && !showTrackSearch) return;
         if (event.key === 'Escape') {
             if (showNostalgiaBrowser) closeNostalgiaBrowser();
             else if (showCollectionsBrowser) closeCollectionsBrowser();
             else if (showArtistsBrowser) closeArtistsBrowser();
+            else if (showArtistNameSearch) closeArtistNameSearch();
             else closeTrackSearch();
         } else if (event.key === 'Tab') {
             const controls = Array.from(browserDialog.querySelectorAll<HTMLElement>('button:not(:disabled), select, input:not(:disabled)'))
@@ -211,7 +313,12 @@
 
     async function openTrackArtistCode(track: ArtistTrackResult) {
         closeTrackSearch();
-        await openArtistPreview(track.artist_code, track.track_id);
+        if (track.program_code && track.program_kind) {
+            const family: ExperienceFamily = track.program_kind === 'nostalgia' ? 'nostalgia' : 'collections';
+            await openCatalogCode(track.program_code, family, track.track_id);
+        } else if (track.artist_code) {
+            await openArtistPreview(track.artist_code, track.track_id);
+        }
     }
 
     async function openArtistPreview(code: string, requestTrackId: number | null = null) {
@@ -473,6 +580,7 @@
             journeyScreen.removeEventListener('change', updateLayout);
             if (catalogLookupTimer) clearTimeout(catalogLookupTimer);
             stopTrackSearch();
+            stopArtistNameSearch();
         };
     });
 </script>
@@ -513,8 +621,10 @@
                                     </div>
                                     {#if choice === 'nostalgia'}
                                         <button class="browse-nostalgia" type="button" on:click={openNostalgiaBrowser}>{nostalgiaBrowserCopy[language].open}</button>
+                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                     {:else if choice === 'collections'}
                                         <button class="browse-nostalgia" type="button" on:click={openCollectionsBrowser}>{collectionsBrowserCopy[language].open}</button>
+                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                     {:else if choice === 'artist'}
                                         <div class="artist-entry-links">
                                             <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event)}>{artistsBrowserCopy[language].open}</button>
@@ -531,7 +641,7 @@
                 {/each}
             </div>
             {#if selectedProgram}
-                <button type="button" class="mode-button program-mode" disabled={catalogDigits.length > 0} on:click={() => startExperience('program')}>{modeCopy[language].program} <span
+                <button type="button" class="mode-button program-mode" disabled={catalogDigits.length > 0} on:click={() => startExperience('program')}>{selectedProgram === 'docuseries' ? mobileProgramCopy[language].docuseries : modeCopy[language].program} <span
                         aria-hidden="true">→</span></button>
                 {#if selectedProgram !== 'docuseries'}
                     <button type="button" class="mode-button radio-mode" on:click={() => startExperience('radio')}>{modeCopy[language].radio} <span aria-hidden="true">→</span></button>
@@ -567,8 +677,10 @@
                                 </div>
                                 {#if choice === 'nostalgia'}
                                     <button class="browse-nostalgia" type="button" on:click={openNostalgiaBrowser}>{nostalgiaBrowserCopy[language].open}</button>
+                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                 {:else if choice === 'collections'}
                                     <button class="browse-nostalgia" type="button" on:click={openCollectionsBrowser}>{collectionsBrowserCopy[language].open}</button>
+                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                 {:else if choice === 'artist'}
                                     <div class="artist-entry-links">
                                         <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event)}>{artistsBrowserCopy[language].open}</button>
@@ -697,6 +809,39 @@
             </div>
         </div>
     {/if}
+    {#if showArtistNameSearch}
+        <div class="browser-backdrop">
+            <div class="browser-dialog track-dialog" role="dialog" aria-modal="true" aria-labelledby="artist-name-search-title" aria-describedby="artist-name-search-instruction" bind:this={browserDialog}>
+                <div class="browser-heading">
+                    <div>
+                        <h2 id="artist-name-search-title">{artistNameSearchCopy[language].title}</h2>
+                        <p id="artist-name-search-instruction">{artistNameSearchCopy[language].instruction}</p>
+                    </div>
+                    <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeArtistNameSearch} aria-label={artistsBrowserCopy[language].close}>×</button>
+                </div>
+                <label class="track-search-label" for="artist-name-query">{artistsBrowserCopy[language].search}</label>
+                <input id="artist-name-query" class="track-search-input" type="search" maxlength="100" bind:this={artistNameSearchInput} bind:value={artistNameQuery} on:input={updateArtistNameSearch} autocomplete="off" placeholder={artistNameSearchCopy[language].placeholder}/>
+                <div class="track-search-results" role="status" aria-live="polite">
+                    {#if artistNameSearchState === 'idle'}
+                        <p>{artistNameSearchCopy[language].hint}</p>
+                    {:else if artistNameSearchState === 'loading'}
+                        <p>{artistNameSearchCopy[language].loading}</p>
+                    {:else if artistNameSearchState === 'error'}
+                        <p>{artistNameSearchCopy[language].error}</p>
+                    {:else}
+                        {#each artistNameResults as artist (artist.track_id)}
+                            <button type="button" on:click={() => openArtistNameResult(artist)}>
+                                <span><strong>{artist.spotlight_artist || artist.artist}</strong><small>{artist.program_name || artistNameSearchCopy[language].spotlight}{#if artist.program_code} · {artist.title}{/if}</small></span>
+                                <strong class="track-artist-code">{artist.artist_code || artist.program_code}</strong>
+                            </button>
+                        {:else}
+                            <p>{artistNameSearchCopy[language].empty}</p>
+                        {/each}
+                    {/if}
+                </div>
+            </div>
+        </div>
+    {/if}
     {#if showTrackSearch}
         <div class="browser-backdrop">
             <div class="browser-dialog track-dialog" role="dialog" aria-modal="true" aria-labelledby="track-search-title" aria-describedby="track-search-instruction" bind:this={browserDialog}>
@@ -721,8 +866,8 @@
                     {:else}
                         {#each trackResults as track (track.track_id)}
                             <button type="button" on:click={() => openTrackArtistCode(track)}>
-                                <span><strong>{track.title}</strong><small>{track.artist}</small></span>
-                                <strong class="track-artist-code">{track.artist_code}</strong>
+                                <span><strong>{track.title}</strong><small>{track.artist}</small>{#if track.program_name}<small>{track.program_name}</small>{/if}</span>
+                                <strong class="track-artist-code">{track.program_code ?? track.artist_code}</strong>
                             </button>
                         {/each}
                     {/if}
