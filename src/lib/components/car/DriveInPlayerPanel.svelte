@@ -105,6 +105,13 @@
     export let radioSetSize: number | null = null;
     export let radioSetLabel = '';
     export let radioLoadPending = false;
+    export let radioTrackRestartPending = false;
+
+    $: restartTrackLabel = language === 'es'
+        ? 'Reiniciar canción'
+        : language === 'ptbr'
+            ? 'Reiniciar faixa'
+            : 'Restart Track';
     export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
 
     export let showNarrationModal = false;
@@ -348,18 +355,22 @@
                     disabled={radioLoadPending}
                     on:click={onAutoPlay}
                     aria-label={
-            isPlaying && activePlayMode === 'auto'
-                ? transportCopy.autoPauseAria
-                : transportCopy.autoAria
+            radioTrackRestartPending
+                ? restartTrackLabel
+                : isPlaying && activePlayMode === 'auto'
+                    ? transportCopy.autoPauseAria
+                    : transportCopy.autoAria
         }
             >
     <span class="control-icon">
         {isPlaying && activePlayMode === 'auto' ? 'Ⅱ' : '▶'}
     </span>
                 <span>
-        {radioAutoOnly && phase === 'paused'
-            ? (language === 'en' ? 'Resume' : 'Continuar')
-            : isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
+        {radioTrackRestartPending
+            ? restartTrackLabel
+            : radioAutoOnly && phase === 'paused'
+                ? (language === 'en' ? 'Resume' : 'Continuar')
+                : isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
     </span>
             </button>
             <button

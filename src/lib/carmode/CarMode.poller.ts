@@ -1128,7 +1128,11 @@ export function startPlaybackPolling(
                 get(timingSource) === 'spotify' &&
                 phase === 'track';
 
-            if (spotifyOwnsClock) {
+            const artistRadioUsesLocalClock =
+                options.externalRadioTrackClock &&
+                get(currentSelection)?.programType === 'RADIO_ARTIST' &&
+                phase === 'track';
+            if (spotifyOwnsClock && !artistRadioUsesLocalClock) {
                 elapsed.set(elapsedSec);
                 duration.set(durationSec);
                 progress.set(progressPercent);

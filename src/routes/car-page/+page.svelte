@@ -1360,12 +1360,16 @@
             setStatus: message => status.set(message),
             continueAutoPlayback,
             onSpotifyHandoff: track => {
+                const trackDuration = track.durationSeconds ??
+                    (track.durationMs ? Math.floor(track.durationMs / 1000) : 0);
                 if (isBackendRadioAutoHandoffSelection()) {
+                    if (isArtistRadioSelection()) {
+                        // Every Spotify launch starts this estimated clock at zero.
+                        nostalgiaTrackClock.start(trackDuration);
+                    }
                     setExternalRadioSpotifyHandoffReady(true);
                     return;
                 }
-                const trackDuration = track.durationSeconds ??
-                    (track.durationMs ? Math.floor(track.durationMs / 1000) : 0);
                 nostalgiaTrackClock.start(trackDuration);
             },
             stopEstimatedTrackClock: () => nostalgiaTrackClock.stop(),
@@ -1532,7 +1536,9 @@
                 activePlayMode = null;
                 isPlaying.set(false);
                 playbackPhase.set('paused');
-                status.set('Auto Play paused. Press Auto Play to resume.');
+                status.set(isArtistRadioSelection()
+                    ? 'Track stopped. Press Restart Track to play it from the beginning.'
+                    : 'Auto Play paused. Press Auto Play to resume.');
                 return;
             }
 
@@ -3101,7 +3107,8 @@
                         radioSetPosition={interactiveRadioTest ? $currentTrack.blockPosition ?? null : null}
                         radioSetSize={interactiveRadioTest ? $currentTrack.blockSize ?? null : null}
                         {radioSetLabel}
-                        radioLoadPending={radioStartPending || radioAdvancePending}
+                        radioLoadPending={radioStartPending || radioAdvancePending || radioInterruptedResumePending}
+                        radioTrackRestartPending={$currentSelection?.programType === PROGRAM_TYPES.RADIO_ARTIST && Boolean(interruptedRadioTrack)}
                         onReportProblem={() => openReportProblem()}
                         onReportNarration={openNarrationReport}
                         openTrackList={openGuidedTrackList}
