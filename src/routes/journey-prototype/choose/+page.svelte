@@ -3,6 +3,7 @@
     import {onMount, tick} from 'svelte';
     import {get} from 'svelte/store';
     import posthog from 'posthog-js';
+    import SurpriseMe from '$lib/components/journey/SurpriseMe.svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
     import {captureExperienceSelected} from '$lib/analytics/posthog';
@@ -31,8 +32,6 @@
     let browserDecade = 0;
     let collectionGroupIndex = 0;
     let artistLetter = 'A';
-    let artistSearch = '';
-    let artistSearchInput: HTMLInputElement;
     let artistLetterSelect: HTMLSelectElement;
     let trackSearchInput: HTMLInputElement;
     let trackQuery = '';
@@ -75,14 +74,12 @@
         ptbr: {open: 'Explorar coleções', title: 'Coleções', instruction: 'Escolha uma coleção para abrir o programa. Os nomes correspondem ao catálogo impresso.', group: 'Grupo de coleções', close: 'Fechar'}
     };
     const artistsBrowserCopy: Record<LandingLanguage, {open: string; searchLink: string; trackLink: string; title: string; instruction: string; letter: string; search: string; noResults: string; close: string; trackTitle: string; trackInstruction: string; trackPlaceholder: string; trackHint: string; trackLoading: string; trackEmpty: string; trackError: string}> = {
-        en: {open: 'Browse Artists', searchLink: 'Search Artists', trackLink: 'Find a Song', title: 'Artist Spotlights', instruction: 'Choose a letter or search an artist to open a spotlight.', letter: 'Starting letter', search: 'Search artists', noResults: 'No matching artists.', close: 'Close', trackTitle: 'Find a Song', trackInstruction: 'Search songs in Nostalgia, Collections, and Artist Spotlights.', trackPlaceholder: 'Enter at least two letters of a track title', trackHint: 'Enter at least two letters to search.', trackLoading: 'Searching tracks…', trackEmpty: 'No matching songs in the catalog.', trackError: 'Track search is unavailable. Please try again.'},
-        es: {open: 'Explorar artistas', searchLink: 'Buscar artistas', trackLink: 'Buscar una canción', title: 'Artistas destacados', instruction: 'Elige una letra o busca un artista para abrir su programa.', letter: 'Letra inicial', search: 'Buscar artistas', noResults: 'No se encontraron artistas.', close: 'Cerrar', trackTitle: 'Buscar una canción', trackInstruction: 'Busca canciones en Nostalgia, Colecciones y Artistas destacados.', trackPlaceholder: 'Escribe al menos dos letras del título', trackHint: 'Escribe al menos dos letras para buscar.', trackLoading: 'Buscando canciones…', trackEmpty: 'No se encontraron canciones en el catálogo.', trackError: 'La búsqueda no está disponible. Inténtalo de nuevo.'},
-        ptbr: {open: 'Explorar artistas', searchLink: 'Buscar artistas', trackLink: 'Encontrar uma música', title: 'Artistas em destaque', instruction: 'Escolha uma letra ou procure um artista para abrir o programa.', letter: 'Letra inicial', search: 'Procurar artistas', noResults: 'Nenhum artista encontrado.', close: 'Fechar', trackTitle: 'Encontrar uma música', trackInstruction: 'Busque músicas em Nostalgia, Coleções e Artistas em destaque.', trackPlaceholder: 'Digite pelo menos duas letras do título', trackHint: 'Digite pelo menos duas letras para buscar.', trackLoading: 'Buscando músicas…', trackEmpty: 'Nenhuma música encontrada no catálogo.', trackError: 'A busca está indisponível. Tente novamente.'}
+        en: {open: 'Browse Artists', searchLink: 'Search Artists', trackLink: 'Find a Song', title: 'Artist Spotlights', instruction: 'Choose a letter to browse artists and open a spotlight.', letter: 'Starting letter', search: 'Search artists', noResults: 'No matching artists.', close: 'Close', trackTitle: 'Find a Song', trackInstruction: 'Search songs in Nostalgia, Collections, and Artist Spotlights.', trackPlaceholder: 'Enter at least two letters of a track title', trackHint: 'Enter at least two letters to search.', trackLoading: 'Searching tracks…', trackEmpty: 'No matching songs in the catalog.', trackError: 'Track search is unavailable. Please try again.'},
+        es: {open: 'Explorar artistas', searchLink: 'Buscar artistas', trackLink: 'Buscar una canción', title: 'Artistas destacados', instruction: 'Elige una letra para ver artistas y abrir su programa.', letter: 'Letra inicial', search: 'Buscar artistas', noResults: 'No se encontraron artistas.', close: 'Cerrar', trackTitle: 'Buscar una canción', trackInstruction: 'Busca canciones en Nostalgia, Colecciones y Artistas destacados.', trackPlaceholder: 'Escribe al menos dos letras del título', trackHint: 'Escribe al menos dos letras para buscar.', trackLoading: 'Buscando canciones…', trackEmpty: 'No se encontraron canciones en el catálogo.', trackError: 'La búsqueda no está disponible. Inténtalo de nuevo.'},
+        ptbr: {open: 'Explorar artistas', searchLink: 'Buscar artistas', trackLink: 'Encontrar uma música', title: 'Artistas em destaque', instruction: 'Escolha uma letra para ver artistas e abrir o programa.', letter: 'Letra inicial', search: 'Procurar artistas', noResults: 'Nenhum artista encontrado.', close: 'Fechar', trackTitle: 'Encontrar uma música', trackInstruction: 'Busque músicas em Nostalgia, Coleções e Artistas em destaque.', trackPlaceholder: 'Digite pelo menos duas letras do título', trackHint: 'Digite pelo menos duas letras para buscar.', trackLoading: 'Buscando músicas…', trackEmpty: 'Nenhuma música encontrada no catálogo.', trackError: 'A busca está indisponível. Tente novamente.'}
     };
     const artistLetters = [...new Set(artistSpotlights.map(artist => artist.name[0].toUpperCase()))].sort();
-    $: visibleArtists = artistSpotlights.filter(artist => artistSearch.trim()
-        ? `${artist.name} ${artist.code}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(artistSearch.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())
-        : artist.name.toUpperCase().startsWith(artistLetter));
+    $: visibleArtists = artistSpotlights.filter(artist => artist.name.toUpperCase().startsWith(artistLetter));
 
     let showArtistNameSearch = false;
     let artistNameQuery = '';
@@ -185,6 +182,24 @@
         return `N-${String(decadeIndex * nostalgiaGenres.length + genreIndex + 1).padStart(3, '0')}`;
     }
 
+    let surpriseCode = '';
+    $: nostalgiaSurprises = nostalgiaDecades.flatMap((decade, decadeIndex) =>
+        nostalgiaGenres.map((_, genreIndex) => ({
+            code: nostalgiaCode(decadeIndex, genreIndex),
+            name: `${decade} ${nostalgiaGenreLabels[language][genreIndex]}`
+        })));
+    const collectionSurprises = collectionGroups.flatMap(group => group.items.map(([code, name]) => ({code, name})));
+
+    function highlightSurprise(code: string, finished: boolean) {
+        surpriseCode = code;
+        if (code.startsWith('A-')) {
+            artistLetter = artistSpotlights.find(artist => artist.code === code)?.name[0].toUpperCase() || artistLetter;
+        }
+        if (!finished) return;
+        if (code.startsWith('N-')) browserDecade = Math.floor((Number(code.slice(2)) - 1) / nostalgiaGenres.length);
+        if (code.startsWith('C-')) collectionGroupIndex = collectionGroups.findIndex(group => group.items.some(item => item[0] === code));
+    }
+
     async function openNostalgiaBrowser(event: MouseEvent) {
         browserReturnFocus = event.currentTarget as HTMLElement;
         showNostalgiaBrowser = true;
@@ -205,7 +220,6 @@
             return;
         }
         browserReturnFocus = event.currentTarget as HTMLElement;
-        artistSearch = '';
         showArtistsBrowser = true;
         await tick();
         artistLetterSelect?.focus();
@@ -710,6 +724,7 @@
                     </div>
                     <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeNostalgiaBrowser} aria-label={nostalgiaBrowserCopy[language].close}>×</button>
                 </div>
+                <SurpriseMe {language} items={nostalgiaSurprises} onHighlight={highlightSurprise} onGo={openNostalgiaCode}/>
                 {#if showJourneyLayout}
                     <table class="nostalgia-matrix">
                         <thead><tr><th scope="col">{nostalgiaBrowserCopy[language].genre}</th>{#each nostalgiaDecades as decade}<th scope="col">{decade}</th>{/each}</tr></thead>
@@ -717,7 +732,7 @@
                             {#each nostalgiaGenres as genre, genreIndex}
                                 <tr><th scope="row">{nostalgiaGenreLabels[language][genreIndex]}</th>
                                     {#each nostalgiaDecades as _, decadeIndex}
-                                        <td><button type="button" on:click={() => openNostalgiaCode(nostalgiaCode(decadeIndex, genreIndex))} aria-label={`${nostalgiaDecades[decadeIndex]} ${nostalgiaGenreLabels[language][genreIndex]}: ${nostalgiaCode(decadeIndex, genreIndex)}`}>{nostalgiaCode(decadeIndex, genreIndex)}</button></td>
+                                        <td><button type="button" class:surprise-highlight={surpriseCode === nostalgiaCode(decadeIndex, genreIndex)} on:click={() => openNostalgiaCode(nostalgiaCode(decadeIndex, genreIndex))} aria-label={`${nostalgiaDecades[decadeIndex]} ${nostalgiaGenreLabels[language][genreIndex]}: ${nostalgiaCode(decadeIndex, genreIndex)}`}>{nostalgiaCode(decadeIndex, genreIndex)}</button></td>
                                     {/each}
                                 </tr>
                             {/each}
@@ -730,7 +745,7 @@
                     </select>
                     <div class="browser-mobile-list">
                         {#each nostalgiaGenres as genre, genreIndex}
-                            <button type="button" on:click={() => openNostalgiaCode(nostalgiaCode(browserDecade, genreIndex))}>
+                            <button type="button" class:surprise-highlight={surpriseCode === nostalgiaCode(browserDecade, genreIndex)} on:click={() => openNostalgiaCode(nostalgiaCode(browserDecade, genreIndex))}>
                                 <span>{nostalgiaGenreLabels[language][genreIndex]}</span><strong>{nostalgiaCode(browserDecade, genreIndex)}</strong>
                             </button>
                         {/each}
@@ -749,6 +764,7 @@
                     </div>
                     <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeCollectionsBrowser} aria-label={collectionsBrowserCopy[language].close}>×</button>
                 </div>
+                <SurpriseMe {language} items={collectionSurprises} onHighlight={highlightSurprise} onGo={openCollectionCode}/>
                 <div class="collections-desktop-groups">
                     {#each [0, 1, 2] as column}
                         <div class="collections-column">
@@ -756,7 +772,7 @@
                                 <section class="collections-group">
                                     <h3>{group.name}</h3>
                                     {#each group.items as [code, name]}
-                                        <button type="button" on:click={() => openCollectionCode(code)} aria-label={`${code}: ${name}`}><strong>{code}</strong><span>{name}</span></button>
+                                        <button type="button" class:surprise-highlight={surpriseCode === code} on:click={() => openCollectionCode(code)} aria-label={`${code}: ${name}`}><strong>{code}</strong><span>{name}</span></button>
                                     {/each}
                                 </section>
                             {/each}
@@ -770,7 +786,7 @@
                     </select>
                     <div class="browser-mobile-list">
                         {#each collectionGroups[collectionGroupIndex].items as [code, name]}
-                            <button type="button" on:click={() => openCollectionCode(code)}><span>{name}</span><strong>{code}</strong></button>
+                            <button type="button" class:surprise-highlight={surpriseCode === code} on:click={() => openCollectionCode(code)}><span>{name}</span><strong>{code}</strong></button>
                         {/each}
                     </div>
                 </div>
@@ -787,21 +803,18 @@
                     </div>
                     <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeArtistsBrowser} aria-label={artistsBrowserCopy[language].close}>×</button>
                 </div>
+                <SurpriseMe {language} items={artistSpotlights} onHighlight={highlightSurprise} onGo={openArtistCode}/>
                 <div class="artist-controls">
                     <div>
                         <label for="artist-letter">{artistsBrowserCopy[language].letter}</label>
-                        <select id="artist-letter" bind:this={artistLetterSelect} bind:value={artistLetter} on:change={() => artistSearch = ''}>
+                        <select id="artist-letter" bind:this={artistLetterSelect} bind:value={artistLetter}>
                             {#each artistLetters as letter}<option value={letter}>{letter}</option>{/each}
                         </select>
-                    </div>
-                    <div>
-                        <label for="artist-search">{artistsBrowserCopy[language].search}</label>
-                        <input id="artist-search" type="search" bind:this={artistSearchInput} bind:value={artistSearch} autocomplete="off" placeholder={artistsBrowserCopy[language].search}/>
                     </div>
                 </div>
                 <div class="artists-results" aria-live="polite">
                     {#each visibleArtists as artist (artist.code)}
-                        <button type="button" on:click={() => openArtistCode(artist.code)}><span>{artist.name}</span><strong>{artist.code}</strong></button>
+                        <button type="button" class:surprise-highlight={surpriseCode === artist.code} on:click={() => openArtistCode(artist.code)}><span>{artist.name}</span><strong>{artist.code}</strong></button>
                     {:else}
                         <p>{artistsBrowserCopy[language].noResults}</p>
                     {/each}
@@ -878,6 +891,21 @@
 </div>
 
 <style>
+    .browser-dialog .nostalgia-matrix tbody tr button.surprise-highlight,
+    .browser-dialog .collections-group button.surprise-highlight,
+    .browser-dialog .artists-results button.surprise-highlight,
+    .browser-dialog .browser-mobile-list button.surprise-highlight,
+    .browser-dialog button.surprise-highlight {
+        color: #091008;
+        background: #75ef4f;
+        border-color: #c6ffb2;
+        box-shadow: 0 0 14px rgba(117, 239, 79, .7);
+    }
+
+    .browser-dialog button.surprise-highlight strong {
+        color: inherit;
+    }
+
     :global(html), :global(body) {
         margin: 0;
         min-height: 100%;
@@ -1148,10 +1176,9 @@ button {
     .collections-group button:hover, .collections-group button:focus-visible { color: #1e1608; background: #f7dc82; outline: 2px solid #fff; outline-offset: 1px; }
     .collections-group button strong { flex: none; white-space: nowrap; }
     .collections-mobile-groups { display: none; }
-    .artist-controls { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(220px, 2fr); gap: 16px; margin-bottom: 18px; }
+    .artist-controls { display: grid; grid-template-columns: minmax(140px, 280px); gap: 16px; margin-bottom: 18px; }
     .artist-controls label { display: block; margin-bottom: 6px; font-weight: 700; }
-    .artist-controls input { width: 100%; min-height: 46px; padding: 8px 12px; border: 1px solid #dcb656; border-radius: 8px; color: #fff; background: #342814; font: inherit; }
-    .artist-controls input:focus-visible, .artist-controls select:focus-visible, .artists-results button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+    .artist-controls select:focus-visible, .artists-results button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
     .artists-results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: 7px; }
     .artists-results button { display: flex; align-items: center; justify-content: space-between; gap: 9px; min-height: 42px; padding: 7px 10px; border: 1px solid #a8873d; border-radius: 7px; color: #fff4d1; background: #342814; text-align: left; font: inherit; font-size: 14px; }
     .artists-results button:nth-child(even) { background: #49351d; }

@@ -34,6 +34,12 @@
     export let onNameThatTuneChange: (value: boolean) => void;
     export let onArtistBioLengthChange: (value: 'short' | 'long') => void = () => {};
 
+    const spotlightCopy = {
+        en: {details: 'Details', bio: 'Artist bio', off: 'Off', on: 'On', short: 'Short', long: 'Long'},
+        es: {details: 'Detalles', bio: 'Biografía del artista', off: 'Desactivado', on: 'Activado', short: 'Breve', long: 'Larga'},
+        ptbr: {details: 'Detalhes', bio: 'Biografia do artista', off: 'Desativado', on: 'Ativado', short: 'Curta', long: 'Longa'}
+    };
+
     const modeLabel = (
         m: import('./CarModeHeader.svelte').BrowseMode,
         p: PlaybackProgramType | undefined
@@ -103,6 +109,19 @@
 
         {#if programType === 'RADIO_ARTIST'}
             <div class="cm-radio-options"><span>Details:</span>{#each ['off', 'short', 'long'] as value}<button class:selected={detailLength === value} on:click={() => onDetailLengthChange(value as 'off' | 'short' | 'long')}>{value === 'off' ? 'Off' : value === 'short' ? 'Short' : 'Long'}</button>{/each}<span>Artist bios:</span>{#each ['short', 'long'] as value}<button class:selected={artistBioLength === value} on:click={() => onArtistBioLengthChange(value as 'short' | 'long')}>{value === 'short' ? 'Short' : 'Long'}</button>{/each}</div>
+        {:else if programType === 'PROGRAM_ARTIST'}
+            <div class="cm-radio-options">
+                <span>{spotlightCopy[language].details}:</span>
+                {#each ['off', 'short', 'long'] as value}
+                    <button disabled={narrationOptionsLocked} aria-pressed={detailLength === value} class:selected={detailLength === value} on:click={() => onDetailLengthChange(value as 'off' | 'short' | 'long')}>{spotlightCopy[language][value as 'off' | 'short' | 'long']}</button>
+                {/each}
+                <span>{spotlightCopy[language].bio}:</span>
+                {#each ['short', 'long'] as value}
+                    <button disabled={narrationOptionsLocked} aria-pressed={artistBioLength === value} class:selected={artistBioLength === value} on:click={() => onArtistBioLengthChange(value as 'short' | 'long')}>{spotlightCopy[language][value as 'short' | 'long']}</button>
+                {/each}
+                <span>Name That Tune:</span>
+                <button disabled={narrationOptionsLocked} aria-pressed={nameThatTuneEnabled} class:selected={nameThatTuneEnabled} on:click={() => onNameThatTuneChange(!nameThatTuneEnabled)}>{nameThatTuneEnabled ? spotlightCopy[language].on : spotlightCopy[language].off}</button>
+            </div>
         {:else}
             <NarrationOptions {language} {detailLength} {artistStoriesEnabled} {nameThatTuneEnabled} {narrationOptionsLocked} {onDetailLengthChange} {onArtistStoriesChange} {onNameThatTuneChange}/>
         {/if}

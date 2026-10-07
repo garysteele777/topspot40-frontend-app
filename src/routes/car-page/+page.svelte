@@ -164,6 +164,7 @@
 
     let lastProgramKey: string | null = null;
     let artistBioPlayedThisSet = false;
+    let spotlightBioLength: 'short' | 'long' = 'short';
     let artistStoriesEnabled = false;
     // Session-only game setting: never persist this with playback preferences.
     let nameThatTuneEnabled = false;
@@ -1197,6 +1198,7 @@
                     : programGenre;
         }
 
+        const launchedSpotlightBioLength = spotlightBioLength;
         const payload = {
                 track: {
                     track_id: trackObj.id,
@@ -1219,7 +1221,8 @@
                             spotify_artist_id: trackObj.spotifyArtistId,
                             genre: sel.context?.genre ?? trackObj.genreSlug,
                             language: sel.language ?? 'en',
-                            play_artist_bio: !artistBioPlayedThisSet
+                            play_artist_bio: !artistBioPlayedThisSet,
+                            bio_length: launchedSpotlightBioLength
                         }
                         : sel.mode === 'collection'
                             ? (
@@ -1315,7 +1318,7 @@
 
         const res = await fetch(`${API_BASE}/playback/play-track`, playbackTrackRequestInit(payload));
 
-        if (res.ok && sel.mode === 'artist_spotlight') {
+        if (res.ok && sel.mode === 'artist_spotlight' && spotlightBioLength === launchedSpotlightBioLength) {
             artistBioPlayedThisSet = true;
         }
     }
@@ -3068,13 +3071,21 @@
                             : settings.detailLength}
                         artistBioLength={$currentSelection.programType === 'RADIO_ARTIST'
                             ? (($currentSelection.context?.artistBioLength as 'short' | 'long' | undefined) ?? 'short')
-                            : 'short'}
+                            : spotlightBioLength}
                         {artistStoriesEnabled}
                         {nameThatTuneEnabled}
                         onDetailLengthChange={(value) => { handleDetailLengthChange(value); if ($currentSelection.programType === 'RADIO_ARTIST') currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistDetailLength: value}} : selection); }}
                         onArtistStoriesChange={handleArtistStoriesChange}
                         onNameThatTuneChange={handleNameThatTuneChange}
-                        onArtistBioLengthChange={(value) => currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistBioLength: value}} : selection)}
+                        onArtistBioLengthChange={(value) => {
+                            if ($currentSelection.programType === PROGRAM_TYPES.PROGRAM_ARTIST) {
+                                if (spotlightBioLength === value) return;
+                                spotlightBioLength = value;
+                                artistBioPlayedThisSet = false;
+                            } else {
+                                currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistBioLength: value}} : selection);
+                            }
+                        }}
             />
         {/if}
 
