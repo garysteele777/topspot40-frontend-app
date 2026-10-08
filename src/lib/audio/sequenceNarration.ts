@@ -6,6 +6,8 @@ export const SUPABASE_PUBLIC_AUDIO_BASE =
 
 export type SequenceNarrationTrack = {
     rank: number;
+    sourceRank?: number | null;
+    collectionSlug?: string | null;
     spotifyTrackId?: string | null;
     decadeSlug?: string | null;
     genreSlug?: string | null;
@@ -40,9 +42,14 @@ function languageBucket(language: string): string {
 }
 
 function legacyIntroUrl(track: SequenceNarrationTrack, language: string): string | null {
-    if (!track.decadeSlug || !track.genreSlug || !track.rank) return null;
+    const sourceRank = track.sourceRank ?? track.rank;
+    if (track.collectionSlug && sourceRank) {
+        return `${SUPABASE_PUBLIC_AUDIO_BASE}/${languageBucket(language)}/collections-intros/` +
+            `${track.collectionSlug}_${String(sourceRank).padStart(2, '0')}.mp3`;
+    }
+    if (!track.decadeSlug || !track.genreSlug || !sourceRank) return null;
 
-    const rank = String(track.rank).padStart(2, '0');
+    const rank = String(track.sourceRank ?? track.rank).padStart(2, '0');
     // This matches the backend's canonical decade/genre intro convention.  Do
     // not replace the separator with an underscore: genre slugs may contain
     // underscores, but the decade/genre boundary is a hyphen.

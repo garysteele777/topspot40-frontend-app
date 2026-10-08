@@ -12,7 +12,7 @@
         type ContentIssueType
     } from '$lib/reporting/contentIssue';
     import {derived} from 'svelte/store';
-    import {PROGRAM_TYPES} from '$lib/types/program';
+    import {isFavoritesProgram, PROGRAM_TYPES} from '$lib/types/program';
     import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
     import CameraPanel from '$lib/components/studio/CameraPanel.svelte';
     import {showCamera} from '$lib/studio/studio.store';
@@ -853,12 +853,13 @@
 
             if (!url && sel.mode === 'collection') {
                 const collectionSlug =
+                    trackObj.collectionSlug ??
                     sel.context?.collection_slug ??
                     sel.context?.collectionSlug;
 
                 if (collectionSlug) {
                     const rankText =
-                        String(trackObj.rank).padStart(2, '0');
+                        String(trackObj.sourceRank ?? trackObj.rank).padStart(2, '0');
 
                     url =
                         `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/` +
@@ -1221,6 +1222,10 @@
 
         // Keep every Spotlight track on the same browser narration path as
         // the initial Auto/Guided tap, including timer-driven progression.
+        if (isFavoritesProgram(sel.programType) && settings.playbackMethod === 'automatic') {
+            await autoPlay.playSelectedTrack(trackObj, {preserveSpotifyWindow: activePlayMode === 'auto'});
+            return;
+        }
         if (sel.programType === PROGRAM_TYPES.PROGRAM_ARTIST && activePlayMode === 'auto') {
             await autoPlay.playSelectedTrack(trackObj, {preserveSpotifyWindow: true});
             return;
@@ -1309,13 +1314,18 @@
                     : programGenre;
         }
 
+        if (isFavoritesProgram(sel.programType)) {
+            decadeForPlayback = trackObj.decadeSlug ?? undefined;
+            genreForPlayback = trackObj.genreSlug ?? undefined;
+        }
+
         const launchedSpotlightBioLength = spotlightBioLength;
         const payload = {
                 track: {
                     track_id: trackObj.id,
                     ranking_id: trackObj.rankingId,
                     spotify_track_id: trackObj.spotifyTrackId,
-                    rank: trackObj.rank,
+                    rank: isFavoritesProgram(sel.programType) ? trackObj.sourceRank ?? trackObj.rank : trackObj.rank,
                     track_name: trackObj.trackName,
                     artist_name: trackObj.artistName,
                     intro: trackObj.intro,
@@ -1347,7 +1357,7 @@
                                     }
                                     : {
                                         type: 'collection',
-                                        collection_slug: sel.context?.collection_slug
+                                        collection_slug: trackObj.collectionSlug ?? sel.context?.collection_slug
                                     }
                             )
                             : {
@@ -2235,6 +2245,10 @@
         if (!$currentTrack) return;
 
         const activeSettings = get(playbackSettingsStore);
+        if (isFavoritesProgram($currentSelection?.programType) && activeSettings.playbackMethod === 'automatic') {
+            await handleAutoPlay();
+            return;
+        }
 
         if (activeSettings.playbackMethod === 'guided') {
             logAudioDebug(get(isPlaying) ? 'Pause action' : 'Guided action', {
@@ -2531,16 +2545,21 @@
             }
 
             const history = $programHistoryStore.find(p => p.key === key);
-            navigation.setPlayedRanks(history?.playedRanks ?? []);
+            navigation.setPlayedRanks(isFavoritesProgram(sel.programType) ? [] : history?.playedRanks ?? []);
         }
     }
 
-    const isRadioMode =
+    $: isRadioMode =
+        !isFavoritesProgram($currentSelection?.programType) &&
         $currentSelection?.mode === 'decade_genre' &&
         $currentSelection?.context?.decade === 'ALL';
 
     $: uiDecade =
-        $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG
+            ? ($currentSelection.context?.decade ?? 'ALL')
+            : $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_COL
+                ? 'Collections Favorites'
+                : $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
             ? 'Collections Radio'
             : $currentSelection?.mode === 'decade_genre'
             ? (
@@ -2552,7 +2571,9 @@
             toTitleCase($currentSelection?.context?.collection_slug ?? '');
 
     $: uiGenre =
-        $currentSelection?.mode === 'decade_genre'
+        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG
+            ? ($currentSelection.context?.genre === 'ALL' ? 'All Genres' : toTitleCase($currentSelection.context?.genre))
+            : $currentSelection?.mode === 'decade_genre'
             ? (
                 isRadioMode
                     ? nostalgiaRadioStationLabel(
@@ -2590,7 +2611,11 @@
                 : uiGenre;
 
     $: driveInProgramTitle =
-        interactiveRadioTest
+        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG
+            ? `${uiDecade === 'ALL' ? 'All Decades' : uiDecade} ${uiGenre} Favorites`
+            : $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_COL
+                ? 'Collections Favorites'
+                : interactiveRadioTest
             ? radioMarqueeTitle
             : headerMode === 'collection'
             ? uiDecade
@@ -2696,7 +2721,7 @@
             void abandonInteractiveRadioAndReturn();
             return;
         }
-        if ($currentSelection && $currentTrack) {
+        if ($currentSelection && $currentTrack && !isFavoritesProgram($currentSelection.programType)) {
 
             const settings = get(playbackSettingsStore);
 
@@ -2926,7 +2951,7 @@
             sel = buildSelectionFromUrl(url);
 
             // 🔥 Normalize programType based on selection
-            if (sel.mode === 'decade_genre') {
+            if (!isFavoritesProgram(sel.programType) && sel.mode === 'decade_genre') {
                 const isRadio =
                     sel.context?.decade === 'ALL';
 
@@ -2935,7 +2960,7 @@
                     : PROGRAM_TYPES.PROGRAM_DG;
             }
 
-            if (sel.mode === 'collection') {
+            if (!isFavoritesProgram(sel.programType) && sel.mode === 'collection') {
                 const collectionGroup =
                     sel.context?.collection_group_slug ??
                     sel.context?.collectionGroupSlug ??
@@ -2987,7 +3012,7 @@
 
         const mountedSettings = get(playbackSettingsStore);
 
-        if (mountedSettings.playbackMethod === 'automatic' && !interactiveRadioTest) {
+        if (mountedSettings.playbackMethod === 'automatic' && !interactiveRadioTest && !isFavoritesProgram(sel.programType)) {
             // Automatic Playback keeps the existing backend transport.
             try {
                 await resetPlaybackApi();

@@ -1,5 +1,6 @@
 import {browser} from '$app/environment';
 import {writable, get} from 'svelte/store';
+import {selectFavoriteEntries, type FavoritesPlaybackScope} from './playback';
 
 export type ProgramType = 'DG' | 'COL';
 
@@ -142,4 +143,9 @@ export function getFavorites(
 ): number[] {
     const data = get(favoritesStore);
     return data[program][group] ?? [];
+}
+
+/** Read combined favorites without losing the originating program list. */
+export function getFavoritePlaybackEntries(scope: FavoritesPlaybackScope) {
+    return selectFavoriteEntries(get(favoritesStore), scope);
 }

@@ -101,7 +101,7 @@
     </span>
             {:else}
     <span class="cm-main-text">
-        {collection ?? '—'}
+        {programType === PROGRAM_TYPES.FAVORITES_COL ? '★ Collections Favorites' : collection ?? '—'}
     </span>
             {/if}
 

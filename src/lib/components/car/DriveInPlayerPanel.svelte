@@ -181,12 +181,12 @@
                 ? ('COL' as ProgramType)
                 : null;
 
-    $: programGroup =
+    $: programGroup = currentTrack?.favoriteGroup ?? (
         programType === 'DG'
             ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
             : programType === 'COL'
                 ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
-                : null;
+                : null);
 
     function displayName(value: string): string {
         return value
@@ -233,6 +233,11 @@
     }
 
     function isPlayed(rank: number): boolean {
+        const entry = tracks.find(track => track.rank === rank);
+        if (entry?.favoriteGroup && programType) {
+            return isProgramRankPlayed($programHistoryStore, `${programType}|${entry.favoriteGroup}`,
+                entry.sourceRank ?? rank);
+        }
         return isProgramRankPlayed(
             $programHistoryStore,
             buildProgramHistoryKey($currentSelection),

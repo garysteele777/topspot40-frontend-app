@@ -3,6 +3,7 @@
     import {onMount, tick} from 'svelte';
     import {get} from 'svelte/store';
     import posthog from 'posthog-js';
+    import FavoritesPlayback from '$lib/components/journey/FavoritesPlayback.svelte';
     import SurpriseMe from '$lib/components/journey/SurpriseMe.svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
@@ -59,15 +60,15 @@
         ptbr: {open: 'Explorar programas de Nostalgia', title: 'Programas de Nostalgia', instruction: 'Escolha uma década e um gênero para abrir o programa.', genre: 'Gênero', decade: 'Década', close: 'Fechar'}
     };
     const collectionGroups = [
-        {name: 'American Heritage Favorites', items: [['C-002', 'American Folk Heroes'], ['C-006', 'Civil War Songs'], ['C-037', 'Patriotic Favorites'], ['C-041', 'Railroad & Train Songs'], ['C-051', 'Western Heritage Favorites']]},
-        {name: 'Traditional Favorites', items: [['C-003', 'Bluegrass Favorites'], ['C-011', 'Cowboy Songs & Western Favorites'], ['C-012', 'Crooner Classics'], ['C-021', 'Great American Songbook'], ['C-045', 'Southern Gospel Favorites'], ['C-048', 'Traditional Hymns']]},
-        {name: 'World Heritage Favorites', items: [['C-001', 'African-American Heritage Favorites'], ['C-004', 'Brazilian Classics'], ['C-005', 'Celtic Favorites'], ['C-020', 'German Heritage Favorites'], ['C-023', 'Italian Favorites'], ['C-033', 'Mexican-American Favorites'], ['C-049', 'Traditional Mexican Favorites']]},
-        {name: 'Soft Rock 70s-90s', items: [['C-017', 'Easy Listening'], ['C-042', 'Road Trip'], ['C-043', 'Singer-Songwriter'], ['C-044', 'Soft Rock Love Songs'], ['C-052', 'Yacht Rock']]},
-        {name: 'Music Trends', items: [['C-013', 'Dance Floor Anthems'], ['C-014', 'Disco Favorites'], ['C-034', 'Motown Magic'], ['C-036', 'One-Hit Wonders'], ['C-039', 'Power Ballads'], ['C-040', 'Protest & Social Justice']]},
-        {name: 'Music Legends', items: [['C-025', 'Legends – Blues Jazz'], ['C-026', 'Legends – Country'], ['C-027', 'Legends – Folk Acoustic'], ['C-028', 'Legends – Latin Global'], ['C-029', 'Legends – Pop'], ['C-030', 'Legends – RnB Soul'], ['C-031', 'Legends – Rock'], ['C-032', 'Legends – TV Themes']]},
-        {name: 'Stage & Screen', items: [['C-015', 'Disney: Classics (Pre-1988)'], ['C-016', 'Disney: Revival (After-1988)'], ['C-046', 'Stage & Screen: Broadway Classics'], ['C-047', 'Stage & Screen: Movie Themes'], ['C-050', 'Video Game Themes']]},
-        {name: 'Classical Music', items: [['C-007', 'Classical Music: Baroque Period (1600-1750)'], ['C-008', 'Classical Music: Classical Period (1750-1820)'], ['C-009', 'Classical Music: Romantic Period (1820-1910)']]},
-        {name: 'Specialty Mixes', items: [['C-010', 'Country Duets'], ['C-018', "Gary's Missing Country Favorites"], ['C-019', "Gary's Missing Rock & Pop Favorites"], ['C-022', 'Holiday Favorites'], ['C-024', 'Latin Crossovers'], ['C-035', 'Novelty Songs'], ['C-038', 'Pop Duets']]}
+        {slug: 'american_heritage_favorites', name: 'American Heritage Favorites', items: [['C-002', 'American Folk Heroes'], ['C-006', 'Civil War Songs'], ['C-037', 'Patriotic Favorites'], ['C-041', 'Railroad & Train Songs'], ['C-051', 'Western Heritage Favorites']]},
+        {slug: 'traditional_favorites', name: 'Traditional Favorites', items: [['C-003', 'Bluegrass Favorites'], ['C-011', 'Cowboy Songs & Western Favorites'], ['C-012', 'Crooner Classics'], ['C-021', 'Great American Songbook'], ['C-045', 'Southern Gospel Favorites'], ['C-048', 'Traditional Hymns']]},
+        {slug: 'world_heritage_favorites', name: 'World Heritage Favorites', items: [['C-001', 'African-American Heritage Favorites'], ['C-004', 'Brazilian Classics'], ['C-005', 'Celtic Favorites'], ['C-020', 'German Heritage Favorites'], ['C-023', 'Italian Favorites'], ['C-033', 'Mexican-American Favorites'], ['C-049', 'Traditional Mexican Favorites']]},
+        {slug: 'soft_rock_70s_90s', name: 'Soft Rock 70s-90s', items: [['C-017', 'Easy Listening'], ['C-042', 'Road Trip'], ['C-043', 'Singer-Songwriter'], ['C-044', 'Soft Rock Love Songs'], ['C-052', 'Yacht Rock']]},
+        {slug: 'music_trends', name: 'Music Trends', items: [['C-013', 'Dance Floor Anthems'], ['C-014', 'Disco Favorites'], ['C-034', 'Motown Magic'], ['C-036', 'One-Hit Wonders'], ['C-039', 'Power Ballads'], ['C-040', 'Protest & Social Justice']]},
+        {slug: 'music_legends', name: 'Music Legends', items: [['C-025', 'Legends – Blues Jazz'], ['C-026', 'Legends – Country'], ['C-027', 'Legends – Folk Acoustic'], ['C-028', 'Legends – Latin Global'], ['C-029', 'Legends – Pop'], ['C-030', 'Legends – RnB Soul'], ['C-031', 'Legends – Rock'], ['C-032', 'Legends – TV Themes']]},
+        {slug: 'stage_and_screen', name: 'Stage & Screen', items: [['C-015', 'Disney: Classics (Pre-1988)'], ['C-016', 'Disney: Revival (After-1988)'], ['C-046', 'Stage & Screen: Broadway Classics'], ['C-047', 'Stage & Screen: Movie Themes'], ['C-050', 'Video Game Themes']]},
+        {slug: 'classical_music', name: 'Classical Music', items: [['C-007', 'Classical Music: Baroque Period (1600-1750)'], ['C-008', 'Classical Music: Classical Period (1750-1820)'], ['C-009', 'Classical Music: Romantic Period (1820-1910)']]},
+        {slug: 'specialty_mixes', name: 'Specialty Mixes', items: [['C-010', 'Country Duets'], ['C-018', "Gary's Missing Country Favorites"], ['C-019', "Gary's Missing Rock & Pop Favorites"], ['C-022', 'Holiday Favorites'], ['C-024', 'Latin Crossovers'], ['C-035', 'Novelty Songs'], ['C-038', 'Pop Duets']]}
     ];
     const collectionsBrowserCopy: Record<LandingLanguage, {open: string; title: string; instruction: string; group: string; close: string}> = {
         en: {open: 'Browse Collections', title: 'Collections', instruction: 'Choose a collection to open its program. Names match the printed catalog.', group: 'Collection group', close: 'Close'},
@@ -740,6 +741,7 @@
                     </div>
                     <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeNostalgiaBrowser} aria-label={nostalgiaBrowserCopy[language].close}>×</button>
                 </div>
+                <FavoritesPlayback program="DG" {language} options={nostalgiaGenres.map((value, index) => ({value, label: nostalgiaGenreLabels[language][index]}))}/>
                 <SurpriseMe {language} items={nostalgiaSurprises} onHighlight={highlightSurprise} onGo={openNostalgiaCode}/>
                 {#if showJourneyLayout}
                     <table class="nostalgia-matrix">
@@ -780,6 +782,7 @@
                     </div>
                     <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeCollectionsBrowser} aria-label={collectionsBrowserCopy[language].close}>×</button>
                 </div>
+                <FavoritesPlayback program="COL" {language} options={collectionGroups.map(group => ({value: group.slug, label: group.name}))}/>
                 <SurpriseMe {language} items={collectionSurprises} onHighlight={highlightSurprise} onGo={openCollectionCode}/>
                 <div class="collections-desktop-groups">
                     {#each [0, 1, 2] as column}

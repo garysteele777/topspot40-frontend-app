@@ -1,3 +1,4 @@
+import {isFavoritesProgram} from '$lib/types/program';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
 import {markRankPlayed, type ProgramKey} from '$lib/carmode/programHistory';
 import type {PlaybackSettings} from '$lib/stores/playbackSettings.store';
@@ -46,8 +47,8 @@ export function createCarModeNavigation(
         track: CarModeTrack
     ): ProgramKey | null {
         if (selection.mode === 'collection') {
-            const slug = selection.context?.collection_slug;
-            const group = selection.context?.collection_group_slug;
+            const slug = track.collectionSlug ?? selection.context?.collection_slug;
+            const group = track.collectionGroupSlug ?? selection.context?.collection_group_slug;
 
             return slug && group ? `COL|${slug}|${group}` : null;
         }
@@ -85,7 +86,7 @@ export function createCarModeNavigation(
         const selection = dependencies.getSelection();
         if (selection) {
             const key = historyKey(selection, current);
-            if (key) markRankPlayed(key, current.rank);
+            if (key) markRankPlayed(key, current.sourceRank ?? current.rank);
         }
     }
 
@@ -126,14 +127,16 @@ export function createCarModeNavigation(
         }
 
         const currentIndex =
-            rankingId != null
+            current.favoriteGroup
+                ? orderedTracks.findIndex(track => track.rank === rank)
+                : rankingId != null
                 ? orderedTracks.findIndex(track => track.rankingId === rankingId)
                 : orderedTracks.findIndex(track => track.rank === rank);
         if (currentIndex === -1) return null;
 
         const canUseRegularTrack = (track: CarModeTrack): boolean =>
             !dependencies.isTrackExcludedFromRegularProgression?.(track) &&
-            (!settings.skipPlayed || !playedRanks.includes(track.rank));
+            (isFavoritesProgram(selection?.programType) || !settings.skipPlayed || !playedRanks.includes(track.rank));
 
         let nextTrack = orderedTracks
             .slice(currentIndex + 1)
@@ -206,7 +209,7 @@ export function createCarModeNavigation(
         if (rankingId == null) return;
 
         const currentIndex = tracks.findIndex(
-            track => track.rankingId === rankingId
+            track => current.favoriteGroup ? track.rank === current.rank : track.rankingId === rankingId
         );
         if (currentIndex === -1) return;
 

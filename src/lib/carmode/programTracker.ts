@@ -11,7 +11,7 @@ export function markCurrentTrackPlayed(): void {
     const key = buildProgramKey(track, sel);
     if (!key) return;
 
-    markRankPlayed(key, track.rank);
+    markRankPlayed(key, track.sourceRank ?? track.rank);
 }
 
 function buildProgramKey(track: any, sel: any): ProgramKey | null {

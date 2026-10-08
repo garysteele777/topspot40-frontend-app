@@ -43,6 +43,9 @@ export type LoadedTrack = {
     // ⭐ Favorites support (new)
     // ─────────────────────────────
     sourceRank?: number | null;
+    favoriteGroup?: string;
+    collectionSlug?: string | null;
+    collectionGroupSlug?: string | null;
 
     decadeSlug?: string | null;
     decadeName?: string | null;
