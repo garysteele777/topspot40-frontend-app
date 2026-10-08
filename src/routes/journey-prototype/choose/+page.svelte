@@ -23,6 +23,7 @@
     let lookingUpCatalog = false;
     let catalogDestination: string | null = null;
     let requestedTrackId: number | null = null;
+    let requestedSong: ArtistTrackResult | null = null;
     let catalogLookupVersion = 0;
     let catalogLookupTimer: ReturnType<typeof setTimeout> | null = null;
     let showNostalgiaBrowser = false;
@@ -329,9 +330,10 @@
         closeTrackSearch();
         if (track.program_code && track.program_kind) {
             const family: ExperienceFamily = track.program_kind === 'nostalgia' ? 'nostalgia' : 'collections';
-            await openCatalogCode(track.program_code, family, track.track_id);
+            await openCatalogCode(track.program_code, family, track.track_id, track);
         } else if (track.artist_code) {
-            await openArtistPreview(track.artist_code, track.track_id);
+            // A song search chooses a recording, not the artist preview page.
+            await openCatalogCode(track.artist_code, 'artist', track.track_id, track);
         }
     }
 
@@ -363,9 +365,10 @@
         }
     }
 
-    async function openCatalogCode(code: string, family: ExperienceFamily, requestTrackId: number | null = null) {
+    async function openCatalogCode(code: string, family: ExperienceFamily, requestTrackId: number | null = null, song: ArtistTrackResult | null = null) {
         selectedProgram = family;
         requestedTrackId = requestTrackId;
+        requestedSong = song;
         catalogDigits = code.slice(2);
         catalogLookupVersion += 1;
         if (catalogLookupTimer) clearTimeout(catalogLookupTimer);
@@ -515,6 +518,10 @@
             if (catalogDestination && requestedTrackId !== null) {
                 const destination = new URL(catalogDestination, window.location.origin);
                 destination.searchParams.set('requestTrackId', String(requestedTrackId));
+                if (requestedSong) {
+                    destination.searchParams.set('requestTrackTitle', requestedSong.title);
+                    destination.searchParams.set('requestTrackArtist', requestedSong.artist);
+                }
                 catalogDestination = `${destination.pathname}${destination.search}`;
             }
             if (!catalogDestination) {
