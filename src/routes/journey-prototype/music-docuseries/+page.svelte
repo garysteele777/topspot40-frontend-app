@@ -1,6 +1,8 @@
 <script lang="ts">
     import {afterNavigate, goto} from '$app/navigation';
     import {onMount, tick} from 'svelte';
+    import SurpriseMe from '$lib/components/journey/SurpriseMe.svelte';
+    import {docuseriesCodeForSlug} from '$lib/musicDocuseries/programCodes';
     import ProgramJourneyShell from '$lib/components/journey/ProgramJourneyShell.svelte';
     import MusicDocuseriesCollectionCard from '$lib/components/journey/MusicDocuseriesCollectionCard.svelte';
     import MusicDocuseriesCollectionPreview from '$lib/components/journey/MusicDocuseriesCollectionPreview.svelte';
@@ -9,7 +11,7 @@
     import type {MusicDocuseriesCollection, MusicDocuseriesStory} from '$lib/musicDocuseries/types';
     import type {Language} from '$lib/types/playback';
     import {readLanguagePreference} from '$lib/languagePreferences';
-    import {refreshDocuseriesHistory} from '$lib/musicDocuseries/history';
+    import {docuseriesHistoryStore, refreshDocuseriesHistory} from '$lib/musicDocuseries/history';
 
     let language: Language = 'en';
     let collections: MusicDocuseriesCollection[] = [];
@@ -22,6 +24,79 @@
     let invalidCollectionSlug: string | null = null;
     let initialized = false;
     let previewRequest = 0;
+    type StoryPick = {code: string; name: string; collection: MusicDocuseriesCollection; story: MusicDocuseriesStory};
+    let surpriseItems: StoryPick[] = [];
+    let storiesByGroup: Record<string, MusicDocuseriesStory[]> = {};
+    let surprisePick: StoryPick | null = null;
+    let surpriseSpinning = false;
+    let surpriseLoading = true;
+    let surpriseReset = 0;
+    let includeHeard = false;
+    $: unheardItems = surpriseItems.filter(item => !$docuseriesHistoryStore[item.story.slug]);
+    $: eligibleSurprises = includeHeard ? surpriseItems : unheardItems;
+    $: catalogStorySlugs = [...new Set(surpriseItems.map(item => item.story.slug))];
+    $: heardStoryCount = catalogStorySlugs.filter(slug => Boolean($docuseriesHistoryStore[slug])).length;
+    const surpriseCopy = {
+        en: {heard:(count: number, total: number) => `Heard ${count} of ${total} stories`, pick:'Surprise Me — Unheard', again:'Pick Again — Unheard', complete:'You’ve heard them all!', all:'Pick from all Docuseries', unheard:'Choose unheard only'},
+        es: {heard:(count: number, total: number) => `Escuchadas ${count} de ${total} historias`, pick:'Sorpréndeme — Sin escuchar', again:'Elegir otra — Sin escuchar', complete:'¡Ya las has escuchado todas!', all:'Elegir entre todas las docuseries', unheard:'Elegir solo las no escuchadas'},
+        ptbr: {heard:(count: number, total: number) => `Ouvidas ${count} de ${total} histórias`, pick:'Surpreenda-me — Não ouvidas', again:'Escolher outra — Não ouvidas', complete:'Você já ouviu todas!', all:'Escolher entre todas as docusséries', unheard:'Escolher apenas as não ouvidas'}
+    };
+    $: displayedCollection = surprisePick?.collection ?? selectedCollection;
+
+    async function loadSurpriseStories(): Promise<void> {
+        const results = await Promise.allSettled(collections.map(collection => loadMusicDocuseriesStories(collection.slug)));
+        const items: StoryPick[] = [];
+        const groups: Record<string, MusicDocuseriesStory[]> = {};
+        for (const [index, result] of results.entries()) {
+            if (result.status !== 'fulfilled') continue;
+            const collection = collections[index];
+            groups[collection.slug] = result.value;
+            for (const story of result.value) {
+                const code = docuseriesCodeForSlug(story.slug);
+                if (code) items.push({code, name: story.title, collection, story});
+            }
+        }
+        storiesByGroup = groups;
+        surpriseItems = items;
+        surpriseLoading = false;
+    }
+
+    function scrollHighlight(node: HTMLElement, active: boolean) {
+        const scroll = () => {
+            if (!active || !node.parentElement) return;
+            const parent = node.parentElement;
+            const bounds = parent.getBoundingClientRect();
+            const item = node.getBoundingClientRect();
+            if (item.top < bounds.top) parent.scrollTop -= bounds.top - item.top;
+            else if (item.bottom > bounds.bottom) parent.scrollTop += item.bottom - bounds.bottom;
+        };
+        void tick().then(scroll);
+        return {update(value: boolean) {active = value; void tick().then(scroll);}};
+    }
+
+    function highlightStory(code: string, finished: boolean): void {
+        surprisePick = surpriseItems.find(item => item.code === code) ?? null;
+        surpriseSpinning = Boolean(surprisePick) && !finished;
+        if (!finished || !surprisePick) return;
+        // Commit the winning group only at the end; animation frames never navigate.
+        previewRequest += 1;
+        selectedCollection = surprisePick.collection;
+        selectedStories = storiesByGroup[selectedCollection.slug] ?? [];
+        previewLoading = false;
+        previewError = null;
+        const url = new URL(window.location.href);
+        url.searchParams.set('collection', selectedCollection.slug);
+        void goto(`${url.pathname}${url.search}`, {replaceState:true, noScroll:true, keepFocus:true});
+    }
+
+    function openSurpriseStory(code: string): void {
+        const pick = surpriseItems.find(item => item.code === code);
+        if (!pick || surpriseSpinning) return;
+        const query = new URLSearchParams({type:'music_docuseries', slug:pick.story.slug,
+            collection:pick.collection.slug, language:language === 'ptbr' ? 'pt-BR' : language,
+            returnTo:`/journey-prototype/music-docuseries?collection=${encodeURIComponent(pick.collection.slug)}`});
+        void goto(`/story-player?${query}`);
+    }
 
     const MOBILE_BREAKPOINT = '(max-width: 800px)';
     const COLLECTION_SCROLL_KEY = 'topspot40:docuseries:collection-scroll';
@@ -117,6 +192,9 @@
     }
 
     function selectCollection(collection: MusicDocuseriesCollection): void {
+        surpriseReset += 1;
+        surprisePick = null;
+        surpriseSpinning = false;
         if (window.matchMedia(MOBILE_BREAKPOINT).matches) {
             sessionStorage.setItem(COLLECTION_SCROLL_KEY, JSON.stringify({
                 slug: collection.slug,
@@ -154,7 +232,7 @@
         synchronizeSelection(new URL(window.location.href), true);
         // Load group membership for accurate completion badges, including
         // groups that have not been selected in this visit.
-        void Promise.allSettled(collections.map(collection => loadMusicDocuseriesStories(collection.slug)));
+        void loadSurpriseStories();
 
         const savedScroll = sessionStorage.getItem(COLLECTION_SCROLL_KEY);
         sessionStorage.removeItem(COLLECTION_SCROLL_KEY);
@@ -188,27 +266,82 @@
     {:else if invalidCollectionSlug}
         <div class="state invalid" role="alert"><h2>{text[language].invalid}</h2><p><code>{invalidCollectionSlug}</code></p><button type="button" on:click={resetSelection}>{text[language].show}</button></div>
     {:else if selectedCollection}
-        <div class="browser-layout">
+        {#if surpriseLoading}
+            <p class="surprise-loading" role="status">{text[language].previewLoading}</p>
+        {/if}
+        {#if !surpriseLoading && surpriseItems.length > 0}
+            <p class="heard-count">{surpriseCopy[language].heard(heardStoryCount, catalogStorySlugs.length)}</p>
+        {/if}
+        {#if !surpriseLoading && surpriseItems.length > 0 && !includeHeard && unheardItems.length === 0}
+            <div class="surprise-complete" role="status">
+                <span>{surpriseCopy[language].complete}</span>
+                <button type="button" on:click={() => includeHeard = true}>{surpriseCopy[language].all}</button>
+            </div>
+        {:else}
+            {#key `${surpriseReset}:${includeHeard}`}
+                <SurpriseMe {language} items={eligibleSurprises}
+                    pickLabel={includeHeard ? null : surpriseCopy[language].pick}
+                    againLabel={includeHeard ? null : surpriseCopy[language].again}
+                    onHighlight={highlightStory} onGo={openSurpriseStory}/>
+            {/key}
+            {#if includeHeard}
+                <button class="unheard-only" type="button" disabled={surpriseSpinning} on:click={() => includeHeard = false}>{surpriseCopy[language].unheard}</button>
+            {/if}
+        {/if}
+        <div class="browser-layout" class:has-surprise={Boolean(surprisePick)}>
             <section class="collection-picker" aria-labelledby="docuseries-collections-heading">
                 <h2 id="docuseries-collections-heading">{text[language].collections}</h2>
                 <div class="collection-buttons">
                     {#each collections as collection, index (`${collection.id}:${collection.slug}`)}
+                        <div use:scrollHighlight={surprisePick?.collection.slug === collection.slug}>
                         <MusicDocuseriesCollectionCard
                             {collection}
                             {language}
                             referenceNumber={index + 1}
-                            selected={collection.slug === selectedCollection.slug}
+                            selected={collection.slug === displayedCollection?.slug}
                             onSelect={() => selectCollection(collection)}
                         />
+                        </div>
                     {/each}
                 </div>
             </section>
-            <div class="desktop-preview"><MusicDocuseriesCollectionPreview {language} collection={selectedCollection} stories={selectedStories} storiesLoading={previewLoading} storiesError={previewError} exploreLabel={text[language].explore} loadingLabel={text[language].previewLoading} emptyLabel={text[language].previewEmpty}/></div>
+            <div class="desktop-preview">
+                {#if surprisePick}
+                    <section class="surprise-stories" aria-label={surprisePick.collection.name}>
+                        <h2>{surprisePick.collection.name}</h2>
+                        <div class="story-choices">
+                            {#each storiesByGroup[surprisePick.collection.slug] ?? [] as story (`${story.id}:${story.slug}`)}
+                                <div use:scrollHighlight={story.slug === surprisePick.story.slug}>
+                                    <button type="button" class:highlighted={story.slug === surprisePick.story.slug}
+                                        disabled={surpriseSpinning} on:click={() => openSurpriseStory(docuseriesCodeForSlug(story.slug) ?? '')}>
+                                        <span>{story.title}</span><small>{docuseriesCodeForSlug(story.slug) ?? ''}</small>
+                                    </button>
+                                </div>
+                            {/each}
+                        </div>
+                    </section>
+                {:else}
+                    <MusicDocuseriesCollectionPreview {language} collection={selectedCollection} stories={selectedStories} storiesLoading={previewLoading} storiesError={previewError} exploreLabel={text[language].explore} loadingLabel={text[language].previewLoading} emptyLabel={text[language].previewEmpty}/>
+                {/if}
+            </div>
         </div>
     {/if}
 </ProgramJourneyShell>
 
 <style>
+    .heard-count {margin:0 0 12px; color:#f7dc82; font-weight:800;}
+    .surprise-complete {display:flex; flex-wrap:wrap; align-items:center; gap:14px; padding:14px; margin-bottom:18px; color:#fff0bb; background:#242015; border:1px solid #b49a4c; border-radius:12px;}
+    .surprise-complete button, .unheard-only {min-height:44px; padding:10px 18px; font:inherit; font-weight:800; color:#181309; background:#f7dc82; border:2px solid #f7dc82; border-radius:999px; cursor:pointer;}
+    .unheard-only {margin-bottom:18px;}
+    .surprise-complete button:focus-visible, .unheard-only:focus-visible {outline:2px solid white; outline-offset:3px;}
+    .surprise-loading {color:#fff0bb;}
+    .surprise-stories {padding:24px; min-height:100%; background:rgba(20,17,11,.96); border:2px solid #d7a64a; border-radius:20px;}
+    .surprise-stories h2 {margin:0 0 18px; color:#f7dc82; font-family:Georgia,serif; font-size:28px;}
+    .story-choices {display:grid; gap:8px; max-height:420px; overflow-y:auto; padding:4px;}
+    .story-choices button {display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:46px; padding:10px 12px; color:#fff0bb; background:#292216; border:1px solid #b49a4c; border-radius:8px; text-align:left; font:inherit; cursor:pointer;}
+    .story-choices button.highlighted {color:#101909; background:#75ef4f; border-color:#b7ff9c; box-shadow:0 0 14px #75ef4f80;}
+    .story-choices button:focus-visible {outline:2px solid white; outline-offset:2px;}
+    .story-choices small {flex-shrink:0; font-weight:800;}
     .browser-layout { display:grid; grid-template-columns:minmax(330px,.9fr) minmax(0,1.55fr); gap:clamp(20px,3vw,34px); align-items:stretch; }
     .collection-picker, .desktop-preview { min-width:0; }
     .collection-picker h2 { margin:0 0 12px; color:#f7dc82; font-family:Georgia,serif; font-size:23px; }
@@ -219,4 +352,10 @@
     .state.error,.state.invalid { color:#ffd3cd; border-color:rgba(255,112,95,.5); }
     @media (min-width:801px) and (min-height:800px) { .browser-layout { gap:24px; } .collection-picker h2 { margin-bottom:9px; font-size:21px; } .collection-buttons { max-height:490px; gap:5px; } }
     @media (max-width:800px) { .browser-layout { grid-template-columns:1fr; } .collection-buttons { max-height:none; padding-right:0; overflow-y:visible; } .desktop-preview { display:none; } }
+    @media (max-width:800px) {
+        .has-surprise .collection-buttons {max-height:220px; overflow-y:auto;}
+        .has-surprise .desktop-preview {display:block;}
+        .has-surprise .surprise-stories {padding:18px;}
+        .has-surprise .story-choices {max-height:260px;}
+    }
 </style>

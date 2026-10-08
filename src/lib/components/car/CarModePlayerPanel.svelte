@@ -121,12 +121,12 @@
                 ? 'COL'
                 : null;
 
-    $: programGroup =
+    $: programGroup = currentTrack?.favoriteGroup ?? (
         programType === 'DG'
             ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
             : programType === 'COL'
                 ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
-                : null;
+                : null);
 
     function displayName(value: string): string {
         return value
@@ -208,6 +208,11 @@
 
 
     function isPlayed(rank: number): boolean {
+        const entry = tracks.find(track => track.rank === rank);
+        if (entry?.favoriteGroup && programType) {
+            return isProgramRankPlayed($programHistoryStore, `${programType}|${entry.favoriteGroup}`,
+                entry.sourceRank ?? rank);
+        }
         return isProgramRankPlayed(
             $programHistoryStore,
             buildProgramHistoryKey($currentSelection),
@@ -278,6 +283,7 @@
 
     {#if currentTrack && !isRadioMode}
         <div class="rank-line">
+            {#if programType && programGroup && currentTrack.rankingId != null}
             <button
                     class="fav-star"
                     class:active={isFav}
@@ -288,6 +294,7 @@
             >
                 ★
             </button>
+            {/if}
 
             <span>
             {formatClassicTrackPosition(
@@ -359,7 +366,7 @@
                     <div>
                         <h3>Track List</h3>
                         <div class="tracklist-subtitle">
-                            Click ★ to add favorites • Click Track Title to Jump to that Track
+                            {#if programType && programGroup}Click ★ to add favorites • {/if}Click Track Title to Jump to that Track
                         </div>
                     </div>
 

@@ -105,6 +105,13 @@
     export let radioSetSize: number | null = null;
     export let radioSetLabel = '';
     export let radioLoadPending = false;
+    export let radioTrackRestartPending = false;
+
+    $: restartTrackLabel = language === 'es'
+        ? 'Reiniciar canción'
+        : language === 'ptbr'
+            ? 'Reiniciar faixa'
+            : 'Restart Track';
     export let onJumpToTrack: ((track: CarModeTrack) => void) | undefined;
 
     export let showNarrationModal = false;
@@ -174,12 +181,12 @@
                 ? ('COL' as ProgramType)
                 : null;
 
-    $: programGroup =
+    $: programGroup = currentTrack?.favoriteGroup ?? (
         programType === 'DG'
             ? `${$currentSelection?.context?.decade}|${$currentSelection?.context?.genre}`
             : programType === 'COL'
                 ? `${$currentSelection?.context?.collection_slug}|${$currentSelection?.context?.collection_group_slug}`
-                : null;
+                : null);
 
     function displayName(value: string): string {
         return value
@@ -226,6 +233,11 @@
     }
 
     function isPlayed(rank: number): boolean {
+        const entry = tracks.find(track => track.rank === rank);
+        if (entry?.favoriteGroup && programType) {
+            return isProgramRankPlayed($programHistoryStore, `${programType}|${entry.favoriteGroup}`,
+                entry.sourceRank ?? rank);
+        }
         return isProgramRankPlayed(
             $programHistoryStore,
             buildProgramHistoryKey($currentSelection),
@@ -348,21 +360,27 @@
                     disabled={radioLoadPending}
                     on:click={onAutoPlay}
                     aria-label={
-            isPlaying && activePlayMode === 'auto'
-                ? transportCopy.autoPauseAria
-                : transportCopy.autoAria
+            radioTrackRestartPending
+                ? restartTrackLabel
+                : isPlaying && activePlayMode === 'auto'
+                    ? transportCopy.autoPauseAria
+                    : transportCopy.autoAria
         }
             >
     <span class="control-icon">
         {isPlaying && activePlayMode === 'auto' ? 'Ⅱ' : '▶'}
     </span>
                 <span>
-        {isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
+        {radioTrackRestartPending
+            ? restartTrackLabel
+            : radioAutoOnly && phase === 'paused'
+                ? (language === 'en' ? 'Resume' : 'Continuar')
+                : isPlaying && activePlayMode === 'auto' ? transportCopy.pause : transportCopy.auto}
     </span>
             </button>
             <button
                     type="button"
-                    disabled={radioAutoOnly && (radioLoadPending || phase !== 'track')}
+                    disabled={radioAutoOnly && (radioLoadPending || (phase !== 'track' && phase !== 'artist' && phase !== 'paused'))}
                     on:click={onNext}
                     aria-label={transportCopy.nextAria}
             >

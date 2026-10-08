@@ -339,6 +339,7 @@
             {:else}
             <div class="selection-list">
                 {#each visibleTracks as track}
+                    {@const favoriteGroup = track.favoriteGroup ?? programGroup}
                     <div
                             class="selection-card"
                             class:current={isCurrent(track)}
@@ -367,6 +368,7 @@
 
                         <span class="track-copy">
                             <strong>{displayTrackListTitle(track.trackName, track.rank)}</strong>
+                            {#if track.favoriteGroup}<small>{track.favoriteGroup.replaceAll('|', ' • ').replaceAll('_', ' ')} • #{track.sourceRank}</small>{/if}
                             <span>{displayTrackListArtist(track.artistName)}</span>
                         </span>
 
@@ -383,29 +385,30 @@
                                 <span class="played" title={copy.alreadyPlayed}>✓</span>
                             {/if}
 
+                            {#if programType && favoriteGroup && track.rankingId != null}
                             <button
                                     type="button"
                                     class="favorite"
                                     class:active={
                                     favoriteRefresh &&
                                     programType &&
-                                    programGroup &&
+                                    favoriteGroup &&
                                     track.rankingId != null &&
                                     isFavorite(
                                         programType,
-                                        programGroup,
+                                        favoriteGroup,
                                         track.rankingId
                                     )
                                 }
                                     on:click|stopPropagation={() => {
                                     if (
                                         programType &&
-                                        programGroup &&
+                                        favoriteGroup &&
                                         track.rankingId != null
                                     ) {
                                         toggleFavorite(
                                             programType,
-                                            programGroup,
+                                            favoriteGroup,
                                             track.rankingId
                                         );
                                     }
@@ -414,6 +417,7 @@
                             >
                                 ★
                             </button>
+                            {/if}
                         </span>
                     </div>
                 {/each}

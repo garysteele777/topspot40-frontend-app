@@ -16,6 +16,7 @@
     export let closeOnJump: (() => void) | undefined = undefined;
 
     $: favoriteRefresh = $favoritesStore;
+    $: showFavorites = !!(programType && programGroup);
 
     function handleJump(track: CarModeTrack) {
         onJumpToTrack?.(track);
@@ -32,17 +33,19 @@
 </script>
 
 <div class="tracklist-scroll">
-    <div class="track-row track-row-header">
+    <div class="track-row track-row-header" class:without-favorites={!showFavorites}>
         <span>Played</span>
-        <span>Fav</span>
+        {#if showFavorites}<span>Fav</span>{/if}
         <span>Rank</span>
         <span>Title</span>
         <span>Artist</span>
     </div>
 
     {#each [...tracks].sort((a, b) => a.rank - b.rank) as t}
+        {@const favoriteGroup = t.favoriteGroup ?? programGroup}
         <div
                 class="track-row"
+                class:without-favorites={!showFavorites}
                 role="button"
                 tabindex="0"
                 class:active={isCurrentTrack(t)}
@@ -60,27 +63,32 @@
                 {/if}
             </span>
 
+            {#if showFavorites}
             <button
                     type="button"
                     class="fav-col"
+                    disabled={t.rankingId == null}
                     class:active={
                         favoriteRefresh &&
                         programType &&
-                        programGroup &&
+                        favoriteGroup &&
                         t.rankingId != null &&
-                        isFavorite(programType, programGroup, t.rankingId)
+                        isFavorite(programType, favoriteGroup, t.rankingId)
                     }
                     on:click|stopPropagation={() => {
-                        if (programType && programGroup && t.rankingId != null) {
-                            toggleFavorite(programType, programGroup, t.rankingId);
+                        if (programType && favoriteGroup && t.rankingId != null) {
+                            toggleFavorite(programType, favoriteGroup, t.rankingId);
                         }
                     }}
             >
-                ★
+                {#if t.rankingId != null}★{/if}
             </button>
+            {/if}
 
             <span class="rank">#{t.rank}</span>
-            <span class="title">{t.trackName}</span>
+            <span class="title">{t.trackName}
+                {#if t.favoriteGroup}<small>{t.favoriteGroup.replaceAll('|', ' • ').replaceAll('_', ' ')} • #{t.sourceRank}</small>{/if}
+            </span>
             <span class="artist">{t.artistName}</span>
         </div>
     {/each}
@@ -109,6 +117,10 @@
         background: transparent;
         color: #eee;
         cursor: pointer;
+    }
+
+    .track-row.without-favorites {
+        grid-template-columns: 48px 56px minmax(0, 1.25fr) minmax(0, 1fr);
     }
 
     .track-row:hover {
@@ -161,6 +173,8 @@
     .title {
         font-weight: 600;
     }
+
+    .title small {display: block; font-weight: normal; opacity: .75; font-size: .8rem;}
 
     .artist {
         opacity: 0.75;

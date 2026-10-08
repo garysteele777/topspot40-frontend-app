@@ -9,6 +9,7 @@ let bedAudio: HTMLAudioElement | null = null;
 let currentBedUrl: string | null = null;
 let bedStartInFlight = false;
 let bedFadeTargetReached = false;
+let targetBedVolume = BED_VOLUME;
 let bedAudioContext: AudioContext | null = null;
 let bedGainNode: GainNode | null = null;
 let bedMediaSource: MediaElementAudioSourceNode | null = null;
@@ -276,7 +277,13 @@ export async function unlockBedAudio(): Promise<void> {
     }
 }
 
-export async function startBedUrl(url: string): Promise<void> {
+export function setBedVolume(volume: number): void {
+    targetBedVolume = Math.max(0, Math.min(1, volume));
+    if (bedAudio && !bedAudio.paused) setBedLevel(bedAudio, targetBedVolume);
+}
+
+export async function startBedUrl(url: string, volume = BED_VOLUME): Promise<void> {
+    setBedVolume(volume);
     if (bedStartInFlight && currentBedUrl === url) {
         return;
     }
@@ -388,7 +395,6 @@ export async function startBedUrl(url: string): Promise<void> {
     }
 
     // 🎧 Fade in
-    const targetVolume = BED_VOLUME;
     const step = 0.02;
     let fadeAudibleSent = false;
 
@@ -396,8 +402,8 @@ export async function startBedUrl(url: string): Promise<void> {
     const fadeIn = setInterval(() => {
         if (bedAudio !== audioRef) return clearInterval(fadeIn);
 
-        if (bedLevel(audioRef) < targetVolume) {
-            setBedLevel(audioRef, Math.min(targetVolume, bedLevel(audioRef) + step));
+        if (bedLevel(audioRef) < targetBedVolume) {
+            setBedLevel(audioRef, Math.min(targetBedVolume, bedLevel(audioRef) + step));
 
             if (!fadeAudibleSent && bedLevel(audioRef) > 0) {
                 fadeAudibleSent = true;

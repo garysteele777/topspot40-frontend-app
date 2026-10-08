@@ -4,10 +4,11 @@ import {cacheKey, applyPlaybackOrder, pickInitialTrack} from '$lib/helpers/car/t
 import type {SelectionState} from '$lib/stores/selection';
 import type {LoadedTrack} from '$lib/utils/normalizeTrack';
 import type {CarModeTrack} from '$lib/carmode/CarMode.store';
-import {PROGRAM_TYPES} from '$lib/types/program';
+import {PROGRAM_TYPES, isFavoritesProgram} from '$lib/types/program';
+import {loadFavoriteQueue} from '$lib/favorites/queue';
 
 import {loadTrackSequence} from '$lib/helpers/trackSequenceLoader';
-import {getFavorites} from '$lib/favorites/favorites';
+import {getFavorites, getFavoritePlaybackEntries} from '$lib/favorites/favorites';
 
 import {upsertProgram, type ProgramKey} from '$lib/carmode/programHistory';
 import {get} from 'svelte/store';
@@ -55,7 +56,7 @@ export async function loadForSelection(
         sel.context?.decadeName ??
         sel.context?.decadeSlug;
 
-    if (sel.mode === 'decade_genre' && decade === 'ALL') {
+    if (!isFavoritesProgram(sel.programType) && sel.mode === 'decade_genre' && decade === 'ALL') {
         sel.programType = PROGRAM_TYPES.RADIO_DG;
 
         const genre = sel.context?.genre ?? 'ALL';
@@ -88,6 +89,7 @@ export async function loadForSelection(
         sel.context?.collectionSlug;
 
     if (
+        !isFavoritesProgram(sel.programType) &&
         sel.mode === 'collection' &&
         collectionGroup &&
         !collectionSlug
@@ -278,148 +280,39 @@ export async function loadForSelection(
         return;
     }
 
-// ─────────────────────────────────────────────
-// FAVORITES: DECADE (programType = FAVORITES_DG)
-// ─────────────────────────────────────────────
-    if (sel.programType === PROGRAM_TYPES.FAVORITES_DG) {
-        const group = sel.context?.favoritesGroup;
-
-        if (!group) {
-            status.set('Missing favorites group.');
+// FAVORITES: retain each saved list's ranking and narration metadata.
+    if (isFavoritesProgram(sel.programType)) {
+        const specific = (value: string | undefined) => value && value !== 'ALL' ? value : undefined;
+        const scope = sel.programType === PROGRAM_TYPES.FAVORITES_COL
+            ? {program: 'COL' as const, collectionGroup: specific(collectionGroup), collectionSlug: specific(collectionSlug)}
+            : {program: 'DG' as const, genre: specific(sel.context?.genre), decade: specific(decade)};
+        const entries = getFavoritePlaybackEntries(scope);
+        if (!entries.length) {
+            status.set('No favorites saved for this selection yet.');
             return;
         }
-
-        let favoriteIds: number[] = [];
-
-        const raw = localStorage.getItem('ts-favorites-v1');
-
-        if (raw) {
-            const parsed = JSON.parse(raw) as { DG?: Record<string, number[]> };
-            const dg = parsed?.DG ?? {};
-
-            const decade =
-                sel.context?.decade ??
-                sel.context?.decade_slug ??
-                sel.context?.decadeName ??
-                sel.context?.decadeSlug;
-
-            const genre =
-                sel.context?.genre ??
-                sel.context?.genre_slug ??
-                sel.context?.genreName ??
-                sel.context?.genreSlug;
-
-            if (genre === 'ALL' && decade) {
-                // ⭐ combine all genres for the decade
-                favoriteIds = Object.entries(dg)
-                    .filter(([key]) => key.startsWith(`${decade}|`))
-                    .flatMap(([, ids]) => ids);
-            } else {
-                // ⭐ normal single-genre favorites
-                favoriteIds = dg[group] ?? [];
-            }
+        try {
+            const loaded = await loadFavoriteQueue(entries, sel, async source => {
+                const list = await loadTrackSequence(source);
+                if (list.length && source.context) {
+                    const key = source.mode === 'collection'
+                        ? `COL|${source.context.collection_slug}|${source.context.collection_group_slug}`
+                        : `DG|${source.context.decade}|${source.context.genre}`;
+                    upsertProgram(key as ProgramKey, key.slice(key.indexOf('|') + 1).replaceAll('|', ' • '), list.length);
+                }
+                return list;
+            });
+            const ordered = applyPlaybackOrder(loaded, sel.playbackOrder).map(toCarModeTrack);
+            tracks.set(ordered);
+            currentTrack.set(ordered.find(track => track.rank === initialRank) ?? ordered[0] ?? null);
+            const missing = entries.length - ordered.length;
+            status.set(missing
+                ? `Loaded ${ordered.length} of ${entries.length} favorites. ${missing} could not be loaded.`
+                : `Loaded ${ordered.length} favorite tracks.`);
+        } catch (error) {
+            console.error('Failed to load favorites', error);
+            status.set('Failed to load favorites. Please try again.');
         }
-
-// remove duplicates
-        favoriteIds = [...new Set(favoriteIds)];
-
-        const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/supabase/decade-genre/get-favorites`,
-            {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ranking_ids: favoriteIds})
-            }
-        );
-
-        if (!response.ok) {
-            status.set('Failed to load favorites.');
-            return;
-        }
-
-        const data: unknown = await response.json();
-
-        // Keep typing strict without using `any`
-        const tracksArr =
-            typeof data === 'object' && data !== null && 'tracks' in data && Array.isArray((data as {
-                tracks: unknown
-            }).tracks)
-                ? ((data as { tracks: unknown[] }).tracks as unknown[])
-                : [];
-
-        if (!tracksArr.length) {
-            status.set('No favorite tracks found.');
-            return;
-        }
-
-        const normalized: LoadedTrack[] = tracksArr
-            .map((t) => {
-                if (typeof t !== 'object' || t === null) return null;
-
-                const o = t as Record<string, unknown>;
-
-                // Minimal fields we rely on; we pass through the rest
-                const trackId = o.trackId;
-                const spotifyTrackId = o.spotifyTrackId;
-                const rankingId = o.rankingId;
-
-                return {
-                    ...(o as unknown as LoadedTrack),
-                    id: typeof trackId === 'number' ? trackId : (o.id as LoadedTrack['id']),
-                    spotifyTrackId: typeof spotifyTrackId === 'string' ? spotifyTrackId : (o.spotifyTrackId as string),
-                    rankingId: typeof rankingId === 'number' ? rankingId : (o.rankingId as number)
-                } as LoadedTrack;
-            })
-            .filter((x): x is LoadedTrack => x !== null);
-
-        const ordered = applyPlaybackOrder(normalized, 'shuffle');
-
-        tracks.set(ordered.map(toCarModeTrack));
-
-        // Initialize program history entry
-        if (sel.mode === 'decade_genre') {
-            const decade =
-                sel.context?.decade ??
-                sel.context?.decade_slug ??
-                sel.context?.decadeName ??
-                sel.context?.decadeSlug;
-
-            const genre =
-                sel.context?.genre ??
-                sel.context?.genre_slug ??
-                sel.context?.genreName ??
-                sel.context?.genreSlug;
-
-            if (decade && genre) {
-                const key = `DG|${decade}|${genre}` as ProgramKey;
-
-                upsertProgram(
-                    key,
-                    `${decade} • ${genre}`,
-                    ordered.length
-                );
-            }
-        }
-
-        if (sel.mode === 'collection') {
-            const slug = sel.context?.collection_slug;
-            const group = sel.context?.collection_group_slug;
-
-            if (slug && group) {
-                const key = `COL|${slug}|${group}` as ProgramKey;
-
-                upsertProgram(
-                    key,
-                    slug,
-                    ordered.length
-                );
-            }
-        }
-
-        const first = ordered[0] ?? null;
-        currentTrack.set(first ? toCarModeTrack(first) : null);
-
-        status.set(`Loaded ${ordered.length} favorite tracks.`);
         return;
     }
 

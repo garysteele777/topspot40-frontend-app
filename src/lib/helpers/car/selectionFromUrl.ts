@@ -71,6 +71,24 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
 
     const programKey = sp.get('programKey');
 
+    // Favorites have their own program type, even with ALL scope values.
+    if (programType === PROGRAM_TYPES.FAVORITES_DG || programType === PROGRAM_TYPES.FAVORITES_COL) {
+        const isCollection = programType === PROGRAM_TYPES.FAVORITES_COL;
+        return {
+            programType,
+            mode: isCollection ? 'collection' : 'decade_genre',
+            language, languages,
+            context: isCollection
+                ? {collection_slug: collection, collection_group_slug: collectionGroup || 'ALL'}
+                : {decade: decade || 'ALL', genre: genre || 'ALL', favoritesGroup},
+            startRank: 1, endRank: 9999, currentRank: 1,
+            ...narrationFlags,
+            textIntro: false, textDetail: false, textArtistDescription: false,
+            voices, playbackOrder, voicePlayMode, pauseMode,
+            categoryMode: 'single', skipPlayed: false
+        };
+    }
+
     // 🔥 Collections Radio from URL
     if (modeParam === 'radio_collections' || modeParam === 'collections') {
         const group = collectionGroup || 'ALL';
@@ -257,16 +275,7 @@ export function buildSelectionFromUrl(url: URL): SelectionState {
         context: {
             decade,
             genre,
-            radioGenres,
-            favoritesType:
-                programType === PROGRAM_TYPES.FAVORITES_DG
-                    ? 'DG'
-                    : '',
-
-            favoritesGroup:
-                programType === PROGRAM_TYPES.FAVORITES_DG
-                    ? favoritesGroup
-                    : ''
+            radioGenres
         },
         startRank: finalStartRank,
         endRank: finalEndRank,

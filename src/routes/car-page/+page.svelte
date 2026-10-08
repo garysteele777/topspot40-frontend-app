@@ -12,7 +12,7 @@
         type ContentIssueType
     } from '$lib/reporting/contentIssue';
     import {derived} from 'svelte/store';
-    import {PROGRAM_TYPES} from '$lib/types/program';
+    import {isFavoritesProgram, PROGRAM_TYPES} from '$lib/types/program';
     import PhaseBar from '$lib/components/studio/PhaseBar.svelte';
     import CameraPanel from '$lib/components/studio/CameraPanel.svelte';
     import {showCamera} from '$lib/studio/studio.store';
@@ -52,6 +52,7 @@
     } from '$lib/carmode/CarModeAnalytics';
     import {createCarModeNarration} from '$lib/carmode/CarModeNarration';
     import {artistStoryIdentity, shouldPlayArtistStory} from '$lib/carmode/ArtistStories';
+    import {withSpotlightBio, spotlightStoryUrl} from '$lib/carmode/spotlightNarration';
     import {createCarModeSpotify} from '$lib/carmode/CarModeSpotify';
     import posthog from 'posthog-js';
     import { captureProgramStarted, captureSpotifyOpen } from '$lib/analytics/posthog';
@@ -68,15 +69,19 @@
         markUserStartedPlayback,
         stopCurrentNarrationPhase,
         continueStoppedNarrationPhase,
+        toggleRadioBiographyPause,
+        skipRadioBiography,
         resetNarrationPhaseState,
         resetSpotifyStartState,
         setExternalRadioTrackPaused,
         setExternalRadioSpotifyHandoffReady
     } from '$lib/carmode/CarMode.poller';
 
+    import {BED_VOLUME} from '$lib/audio/audioLevels';
     import {resetPlaybackProgress} from '$lib/utils/resetPlaybackState';
     import {
         startBedUrl,
+        setBedVolume,
         stopBed,
         resetBed,
         unlockBedAudio
@@ -162,6 +167,37 @@
 
     let lastProgramKey: string | null = null;
     let artistBioPlayedThisSet = false;
+    let spotlightBioLength: 'short' | 'long' = 'short';
+    const spotlightStories = new Map<string, string | null>();
+    const spotlightStoryRequests = new Map<string, Promise<void>>();
+
+    function spotlightStoryKey(): string {
+        const selection = get(currentSelection);
+        return `${selection?.context?.artist_id}|${selection?.language ?? 'en'}`;
+    }
+
+    async function prepareSpotlightStory(): Promise<void> {
+        const selection = get(currentSelection);
+        if (selection?.programType !== PROGRAM_TYPES.PROGRAM_ARTIST ||
+            spotlightBioLength !== 'long' || !selection.context?.artist_id) return;
+        const key = spotlightStoryKey();
+        if (spotlightStories.has(key)) return;
+        const pending = spotlightStoryRequests.get(key);
+        if (pending) return pending;
+        const language = selection.language === 'ptbr' ? 'pt-BR' : selection.language ?? 'en';
+        const params = new URLSearchParams({artist_id: String(selection.context.artist_id), language});
+        const request = (async () => {
+            try {
+                const response = await fetch(`${API_BASE}/artist-spotlight/artist-story?${params}`);
+                if (!response.ok) throw new Error(`Artist story lookup: ${response.status}`);
+                spotlightStories.set(key, spotlightStoryUrl(await response.json()));
+            } finally {
+                spotlightStoryRequests.delete(key);
+            }
+        })();
+        spotlightStoryRequests.set(key, request);
+        return request;
+    }
     let artistStoriesEnabled = false;
     // Session-only game setting: never persist this with playback preferences.
     let nameThatTuneEnabled = false;
@@ -173,6 +209,7 @@
     let playbackStartInFlight = false;
     let activePlayMode: 'guided' | 'auto' | null = null;
     let requests: CarModeTrack[] = [];
+    let stagedTrackChoiceIdentity: string | null = null;
     let activeRequestIdentity: string | null = null;
     let regularResumeTrack: CarModeTrack | null = null;
     let requestedTrackIdentities = new Set<string>();
@@ -180,7 +217,49 @@
     const requestTrackIdentity = (track: CarModeTrack): string =>
         track.rankingId != null ? `ranking-${track.rankingId}` : `rank-${track.rank}`;
 
+    function findSearchedTrack(availableTracks: CarModeTrack[], url: URL): CarModeTrack | null {
+        const byId = requestedTrackFromId(availableTracks, url.searchParams.get('requestTrackId'));
+        const normalize = (value: string): string => value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en');
+        const title = normalize(url.searchParams.get('requestTrackTitle') ?? '');
+        const artist = normalize(url.searchParams.get('requestTrackArtist') ?? '');
+        if (!title || !artist) return byId;
+
+        // Search and program sequences may use different row IDs. Match the
+        // recording by both song and artist; never choose another artist's cover.
+        const matches = availableTracks.filter(track =>
+            normalize(track.trackName) === title && normalize(track.artistName) === artist
+        );
+        if (matches.length === 1) return matches[0];
+        return byId && matches.includes(byId) ? byId : null;
+    }
+
+    function stageTrackBeforePlayback(track: CarModeTrack): boolean {
+        if (get(isPlaying) || get(playbackPhase) !== 'idle' ||
+            activePlayMode !== null || playbackStartInFlight || guidedReady) return false;
+        currentTrack.set(track);
+        currentRank.set(track.rank);
+        stagedTrackChoiceIdentity = requestTrackIdentity(track);
+        resetPlaybackProgress();
+        return true;
+    }
+
+    function takeStagedTrackChoice(): boolean {
+        const identity = stagedTrackChoiceIdentity;
+        stagedTrackChoiceIdentity = null;
+        if (!identity || !$currentTrack || requestTrackIdentity($currentTrack) !== identity) return false;
+        // A staged request becomes active only when the listener chooses a mode.
+        if (requests.some(track => requestTrackIdentity(track) === identity)) {
+            activeRequestIdentity = identity;
+            requestedTrackIdentities = new Set([...requestedTrackIdentities, identity]);
+        }
+        userStartedPlaybackThisSession = true;
+        return true;
+    }
+
     function addTrackRequest(track: CarModeTrack): void {
+        // Before playback, an empty queue means this is the starting track,
+        // not a request waiting behind a song that has not started yet.
+        if (!requests.length && stageTrackBeforePlayback(track)) return;
         const nextRequests = addRequest(requests, track);
         if (nextRequests !== requests) requests = nextRequests;
     }
@@ -188,10 +267,7 @@
     function removeTrackRequest(index: number): void { requests = removeRequest(requests, index); }
     function clearTrackRequests(): void { requests = clearPendingRequests(requests, activeRequestIdentity); }
 
-    async function advanceRequestOrRegular(
-        auto = false,
-        autoWindowReady: boolean | null = null
-    ): Promise<void> {
+    function selectNextRequestedTrack(): CarModeTrack | null {
         const current = get(currentTrack);
 
         // Keep the active request in the queue until the transition after it.
@@ -211,8 +287,7 @@
                 currentRank.set(regularResumeTrack.rank);
                 regularResumeTrack = null;
             }
-            await nextTrack(auto);
-            return;
+            return null;
         }
 
         // A requested track can also be the initial display track when it was
@@ -229,6 +304,18 @@
         requestedTrackIdentities = new Set([...requestedTrackIdentities, activeRequestIdentity]);
         currentTrack.set(nextRequest);
         currentRank.set(nextRequest.rank);
+        return nextRequest;
+    }
+
+    async function advanceRequestOrRegular(
+        auto = false,
+        autoWindowReady: boolean | null = null
+    ): Promise<void> {
+        const nextRequest = selectNextRequestedTrack();
+        if (!nextRequest) {
+            await nextTrack(auto);
+            return;
+        }
         if (auto) {
             if (autoWindowReady === false && !spotify.isMobile()) {
                 activePlayMode = null;
@@ -766,12 +853,13 @@
 
             if (!url && sel.mode === 'collection') {
                 const collectionSlug =
+                    trackObj.collectionSlug ??
                     sel.context?.collection_slug ??
                     sel.context?.collectionSlug;
 
                 if (collectionSlug) {
                     const rankText =
-                        String(trackObj.rank).padStart(2, '0');
+                        String(trackObj.sourceRank ?? trackObj.rank).padStart(2, '0');
 
                     url =
                         `https://iizlnzmmhkzedqkolgir.supabase.co/storage/v1/object/public/` +
@@ -782,7 +870,7 @@
             if (url) result.push({phase: 'intro', url});
         }
 
-        if (settings.voices.includes('detail') && settings.detailLength !== 'off') {
+        if ((sel.programType === PROGRAM_TYPES.PROGRAM_ARTIST || settings.voices.includes('detail')) && settings.detailLength !== 'off') {
             const url = narrationUrls.detail;
             const fallbackUrl = narrationUrls.detailFallback;
 
@@ -790,6 +878,12 @@
         }
 
         const artistBioUrl = guidedArtistBioUrl(trackObj);
+        if (sel.programType === PROGRAM_TYPES.PROGRAM_ARTIST) {
+            const bioUrl = spotlightBioLength === 'long'
+                ? spotlightStories.get(spotlightStoryKey()) ?? null
+                : artistBioUrl;
+            return withSpotlightBio(result, bioUrl, artistBioPlayedThisSet);
+        }
         if (shouldPlayArtistStory(
             artistStoriesEnabled,
             artistStoriesPlayed,
@@ -878,12 +972,18 @@
     });
     const spotifyState = spotify.state;
 
+    function spotlightBedVolume(phase: string): number {
+        return phase === 'artist' && get(currentSelection)?.programType === PROGRAM_TYPES.PROGRAM_ARTIST
+            ? 0.035
+            : BED_VOLUME;
+    }
+
     const narration = createCarModeNarration({
         getCurrentTrack: () => get(currentTrack),
         getNarrations: guidedNarrationUrls,
         getBedUrl: guidedBedAudioUrl,
         unlockBed: unlockBedAudio,
-        startBed: startBedUrl,
+        startBed: url => startBedUrl(url, spotlightBedVolume(get(playbackPhase))),
         stopBed,
         resetBed,
         playNarration: playNarrationUrlAndWait,
@@ -896,7 +996,11 @@
         resetGuidedReadyState: () => (guidedReady = false),
         setGuidedReady: ready => (guidedReady = ready)
         ,onNarrationStart: (phase, track) => {
+            setBedVolume(spotlightBedVolume(phase));
             if (phase === 'artist') {
+                if (get(currentSelection)?.programType === PROGRAM_TYPES.PROGRAM_ARTIST) {
+                    artistBioPlayedThisSet = true;
+                }
                 artistStoriesPlayed = new Set([
                     ...artistStoriesPlayed,
                     artistStoryIdentity(track)
@@ -916,6 +1020,12 @@
             narrationPhase: startPhase
         });
         spotify.reset();
+        if (get(currentSelection)?.programType === PROGRAM_TYPES.PROGRAM_ARTIST &&
+            spotlightBioLength === 'long' && !artistBioPlayedThisSet) {
+            const selection = get(currentSelection);
+            await prepareSpotlightStory();
+            if (get(currentSelection) !== selection || get(currentTrack) !== trackObj) return false;
+        }
         const started = await narration.start(trackObj, startPhase);
         logAudioDebug('Guided narration start completed', {
             started,
@@ -1110,9 +1220,18 @@
             sel.programType === 'RADIO_COL' ||
             sel.programType === 'RADIO_ARTIST';
 
-        const guidedSupported =
-            !isRadioProgram &&
-            sel.mode !== 'artist_spotlight';
+        // Keep every Spotlight track on the same browser narration path as
+        // the initial Auto/Guided tap, including timer-driven progression.
+        if (isFavoritesProgram(sel.programType) && settings.playbackMethod === 'automatic') {
+            await autoPlay.playSelectedTrack(trackObj, {preserveSpotifyWindow: activePlayMode === 'auto'});
+            return;
+        }
+        if (sel.programType === PROGRAM_TYPES.PROGRAM_ARTIST && activePlayMode === 'auto') {
+            await autoPlay.playSelectedTrack(trackObj, {preserveSpotifyWindow: true});
+            return;
+        }
+
+        const guidedSupported = !isRadioProgram;
 
         if (settings.playbackMethod === 'guided' && guidedSupported) {
             if (nameThatTuneEnabled) {
@@ -1195,12 +1314,18 @@
                     : programGenre;
         }
 
+        if (isFavoritesProgram(sel.programType)) {
+            decadeForPlayback = trackObj.decadeSlug ?? undefined;
+            genreForPlayback = trackObj.genreSlug ?? undefined;
+        }
+
+        const launchedSpotlightBioLength = spotlightBioLength;
         const payload = {
                 track: {
                     track_id: trackObj.id,
                     ranking_id: trackObj.rankingId,
                     spotify_track_id: trackObj.spotifyTrackId,
-                    rank: trackObj.rank,
+                    rank: isFavoritesProgram(sel.programType) ? trackObj.sourceRank ?? trackObj.rank : trackObj.rank,
                     track_name: trackObj.trackName,
                     artist_name: trackObj.artistName,
                     intro: trackObj.intro,
@@ -1217,7 +1342,8 @@
                             spotify_artist_id: trackObj.spotifyArtistId,
                             genre: sel.context?.genre ?? trackObj.genreSlug,
                             language: sel.language ?? 'en',
-                            play_artist_bio: !artistBioPlayedThisSet
+                            play_artist_bio: !artistBioPlayedThisSet,
+                            bio_length: launchedSpotlightBioLength
                         }
                         : sel.mode === 'collection'
                             ? (
@@ -1231,7 +1357,7 @@
                                     }
                                     : {
                                         type: 'collection',
-                                        collection_slug: sel.context?.collection_slug
+                                        collection_slug: trackObj.collectionSlug ?? sel.context?.collection_slug
                                     }
                             )
                             : {
@@ -1313,7 +1439,7 @@
 
         const res = await fetch(`${API_BASE}/playback/play-track`, playbackTrackRequestInit(payload));
 
-        if (res.ok && sel.mode === 'artist_spotlight') {
+        if (res.ok && sel.mode === 'artist_spotlight' && spotlightBioLength === launchedSpotlightBioLength) {
             artistBioPlayedThisSet = true;
         }
     }
@@ -1322,7 +1448,8 @@
         activePlayMode = 'guided';
         if (!$currentTrack) return;
         captureProgramStartedOnce();
-        if (!userStartedPlaybackThisSession && requests.length) {
+        const stagedChoice = takeStagedTrackChoice();
+        if (!stagedChoice && !userStartedPlaybackThisSession && requests.length) {
             await advanceRequestOrRegular();
             return;
         }
@@ -1358,12 +1485,16 @@
             setStatus: message => status.set(message),
             continueAutoPlayback,
             onSpotifyHandoff: track => {
+                const trackDuration = track.durationSeconds ??
+                    (track.durationMs ? Math.floor(track.durationMs / 1000) : 0);
                 if (isBackendRadioAutoHandoffSelection()) {
+                    if (isArtistRadioSelection()) {
+                        // Every Spotify launch starts this estimated clock at zero.
+                        nostalgiaTrackClock.start(trackDuration);
+                    }
                     setExternalRadioSpotifyHandoffReady(true);
                     return;
                 }
-                const trackDuration = track.durationSeconds ??
-                    (track.durationMs ? Math.floor(track.durationMs / 1000) : 0);
                 nostalgiaTrackClock.start(trackDuration);
             },
             stopEstimatedTrackClock: () => nostalgiaTrackClock.stop(),
@@ -1387,6 +1518,15 @@
     );
 
     async function handleAutoPlay() {
+        if (isArtistRadioSelection()) {
+            try {
+                if (await toggleRadioBiographyPause()) return;
+            } catch (error) {
+                status.set('Unable to resume biography. Please try again.');
+                console.warn('Biography resume failed:', error);
+                return;
+            }
+        }
         if (needsInitialCollectionsRadioStart()) {
             // This must remain in the click stack. The backend-owned
             // collection_intro/intro/detail pipeline reaches Spotify later,
@@ -1419,7 +1559,8 @@
         if (!$currentTrack) return;
         captureProgramStartedOnce();
 
-        if (!userStartedPlaybackThisSession && requests.length) {
+        const stagedChoice = takeStagedTrackChoice();
+        if (!stagedChoice && !userStartedPlaybackThisSession && requests.length) {
             await advanceRequestOrRegular(true);
             return;
         }
@@ -1521,7 +1662,9 @@
                 activePlayMode = null;
                 isPlaying.set(false);
                 playbackPhase.set('paused');
-                status.set('Auto Play paused. Press Auto Play to resume.');
+                status.set(isArtistRadioSelection()
+                    ? 'Track stopped. Press Restart Track to play it from the beginning.'
+                    : 'Auto Play paused. Press Auto Play to resume.');
                 return;
             }
 
@@ -2048,6 +2191,7 @@
         showNarrationModal.set(false);
         playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
+        stagedTrackChoiceIdentity = null;
 
         try {
             await stopPlaybackApi();
@@ -2057,6 +2201,7 @@
     }
 
     async function handleDriveInNext(): Promise<void> {
+        if (isArtistRadioSelection() && skipRadioBiography()) return;
         if (isBackendRadioAutoHandoffSelection()) {
             if (
                 radioStartPending ||
@@ -2100,6 +2245,10 @@
         if (!$currentTrack) return;
 
         const activeSettings = get(playbackSettingsStore);
+        if (isFavoritesProgram($currentSelection?.programType) && activeSettings.playbackMethod === 'automatic') {
+            await handleAutoPlay();
+            return;
+        }
 
         if (activeSettings.playbackMethod === 'guided') {
             logAudioDebug(get(isPlaying) ? 'Pause action' : 'Guided action', {
@@ -2264,11 +2413,14 @@
     }
 
     function resetSelectionPlaybackState(): void {
+        artistBioPlayedThisSet = false;
+        spotlightBioLength = 'short';
         stopCurrentNarrationPhase({resolvePhase: false});
         stopBed();
         resetNarrationPhaseState();
         playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
+        stagedTrackChoiceIdentity = null;
         currentTrack.set(null);
         tracks.set([]);
         playbackPhase.set('idle');
@@ -2298,6 +2450,7 @@
     });
 
     async function handleJumpToTrack(track: CarModeTrack): Promise<void> {
+        if (stageTrackBeforePlayback(track)) return;
         logAudioDebug('Track List action', {
             trackRank: track.rank,
             trackName: track.trackName,
@@ -2327,7 +2480,10 @@
     }
 
     async function queueNextAutoTrack(): Promise<void> {
-        if (!navigation.queueNext()) return;
+        // Pause prepares the next selection without starting its narration.
+        // Requests must take priority over regular/shuffled progression here,
+        // just as they do for Next and a naturally completed track.
+        if (!selectNextRequestedTrack() && !navigation.queueNext()) return;
 
         guidedReady = false;
         spotify.reset();
@@ -2389,16 +2545,21 @@
             }
 
             const history = $programHistoryStore.find(p => p.key === key);
-            navigation.setPlayedRanks(history?.playedRanks ?? []);
+            navigation.setPlayedRanks(isFavoritesProgram(sel.programType) ? [] : history?.playedRanks ?? []);
         }
     }
 
-    const isRadioMode =
+    $: isRadioMode =
+        !isFavoritesProgram($currentSelection?.programType) &&
         $currentSelection?.mode === 'decade_genre' &&
         $currentSelection?.context?.decade === 'ALL';
 
     $: uiDecade =
-        $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG
+            ? ($currentSelection.context?.decade ?? 'ALL')
+            : $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_COL
+                ? 'Collections Favorites'
+                : $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
             ? 'Collections Radio'
             : $currentSelection?.mode === 'decade_genre'
             ? (
@@ -2410,7 +2571,9 @@
             toTitleCase($currentSelection?.context?.collection_slug ?? '');
 
     $: uiGenre =
-        $currentSelection?.mode === 'decade_genre'
+        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG
+            ? ($currentSelection.context?.genre === 'ALL' ? 'All Genres' : toTitleCase($currentSelection.context?.genre))
+            : $currentSelection?.mode === 'decade_genre'
             ? (
                 isRadioMode
                     ? nostalgiaRadioStationLabel(
@@ -2448,7 +2611,11 @@
                 : uiGenre;
 
     $: driveInProgramTitle =
-        interactiveRadioTest
+        $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_DG
+            ? `${uiDecade === 'ALL' ? 'All Decades' : uiDecade} ${uiGenre} Favorites`
+            : $currentSelection?.programType === PROGRAM_TYPES.FAVORITES_COL
+                ? 'Collections Favorites'
+                : interactiveRadioTest
             ? radioMarqueeTitle
             : headerMode === 'collection'
             ? uiDecade
@@ -2468,7 +2635,9 @@
                 $currentSelection?.context?.genre
             ).toUpperCase()} RADIO`;
 
-    $: radioSetLabel = interactiveRadioTest && $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
+    $: radioSetLabel = interactiveRadioTest && $currentSelection?.programType === PROGRAM_TYPES.RADIO_ARTIST
+        ? ($currentTrack?.genreName ?? '')
+        : interactiveRadioTest && $currentSelection?.programType === PROGRAM_TYPES.RADIO_COL
         ? `${$currentTrack?.collection_name ?? ''}${$currentTrack?.collection_group_name ? ` • ${$currentTrack.collection_group_name}` : ''}`.trim()
         : interactiveRadioTest && $currentTrack?.decadeName && $currentTrack?.genreName
             ? `${$currentTrack.decadeName} ${$currentTrack.genreName}`
@@ -2484,10 +2653,17 @@
 
 
     function radioChangeMusicDestination(): string {
-        const radioReturnTo = new URLSearchParams(window.location.search).get('radioReturnTo');
-        return isRadioExperienceDestination(radioReturnTo)
-            ? radioReturnTo ?? '/interactive-radio-test'
-            : '/interactive-radio-test';
+        const params = new URLSearchParams(window.location.search);
+        const returnTo = params.get('returnTo');
+        if (returnTo && isSafeJourneyReturnPath(returnTo)) return returnTo;
+
+        const radioReturnTo = params.get('radioReturnTo');
+        if (radioReturnTo && (
+            isSafeJourneyReturnPath(radioReturnTo) ||
+            isRadioExperienceDestination(radioReturnTo)
+        )) return radioReturnTo;
+
+        return '/journey-prototype/choose';
     }
 
     async function abandonInteractiveRadioAndReturn(): Promise<void> {
@@ -2522,6 +2698,7 @@
         showNarrationModal.set(false);
         playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
+        stagedTrackChoiceIdentity = null;
 
         // Bound the request so an unavailable backend cannot trap the listener
         // on the player. Aborting also prevents a stale stop from reaching a
@@ -2544,7 +2721,7 @@
             void abandonInteractiveRadioAndReturn();
             return;
         }
-        if ($currentSelection && $currentTrack) {
+        if ($currentSelection && $currentTrack && !isFavoritesProgram($currentSelection.programType)) {
 
             const settings = get(playbackSettingsStore);
 
@@ -2774,7 +2951,7 @@
             sel = buildSelectionFromUrl(url);
 
             // 🔥 Normalize programType based on selection
-            if (sel.mode === 'decade_genre') {
+            if (!isFavoritesProgram(sel.programType) && sel.mode === 'decade_genre') {
                 const isRadio =
                     sel.context?.decade === 'ALL';
 
@@ -2783,7 +2960,7 @@
                     : PROGRAM_TYPES.PROGRAM_DG;
             }
 
-            if (sel.mode === 'collection') {
+            if (!isFavoritesProgram(sel.programType) && sel.mode === 'collection') {
                 const collectionGroup =
                     sel.context?.collection_group_slug ??
                     sel.context?.collectionGroupSlug ??
@@ -2835,7 +3012,7 @@
 
         const mountedSettings = get(playbackSettingsStore);
 
-        if (mountedSettings.playbackMethod === 'automatic' && !interactiveRadioTest) {
+        if (mountedSettings.playbackMethod === 'automatic' && !interactiveRadioTest && !isFavoritesProgram(sel.programType)) {
             // Automatic Playback keeps the existing backend transport.
             try {
                 await resetPlaybackApi();
@@ -2887,18 +3064,7 @@
             return;
         }
         await loadForSelection(sel, initialRank);
-        const requestedTrack = requestedTrackFromId(
-            get(tracks),
-            url.searchParams.get('requestTrackId')
-        );
-        if (requestedTrack) {
-            // Show the requested recording immediately, but leave it in the
-            // request queue so Guided and Auto both use their normal first
-            // request handoff when the listener presses Play.
-            currentTrack.set(requestedTrack);
-            currentRank.set(requestedTrack.rank);
-            addTrackRequest(requestedTrack);
-        }
+        const requestedTrack = findSearchedTrack(get(tracks), url);
         if (languageChangedReturn) {
             const returnedTrack = findReturnedCarModeTrack(get(tracks), url);
             if (returnedTrack) {
@@ -2908,11 +3074,18 @@
         }
         playbackStartInFlight = false;
         userStartedPlaybackThisSession = false;
+        stagedTrackChoiceIdentity = null;
         isPlaying.set(false);
         playbackPhase.set('idle');
         elapsed.set(0);
         duration.set(0);
         progress.set(0);
+        if (requestedTrack && !languageChangedReturn) {
+            // The searched song is the ready starting selection, not a queued
+            // request or an automatic playback command. Stage it after reset
+            // so Guided/Auto Play keeps this explicit choice over shuffle.
+            stageTrackBeforePlayback(requestedTrack);
+        }
 
         /// ─────────────────────────────────────────────
         // Prepare Spotify playback (warmup)
@@ -3041,13 +3214,23 @@
                             : settings.detailLength}
                         artistBioLength={$currentSelection.programType === 'RADIO_ARTIST'
                             ? (($currentSelection.context?.artistBioLength as 'short' | 'long' | undefined) ?? 'short')
-                            : 'short'}
+                            : spotlightBioLength}
                         {artistStoriesEnabled}
                         {nameThatTuneEnabled}
                         onDetailLengthChange={(value) => { handleDetailLengthChange(value); if ($currentSelection.programType === 'RADIO_ARTIST') currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistDetailLength: value}} : selection); }}
                         onArtistStoriesChange={handleArtistStoriesChange}
                         onNameThatTuneChange={handleNameThatTuneChange}
-                        onArtistBioLengthChange={(value) => currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistBioLength: value}} : selection)}
+                        onArtistBioLengthChange={(value) => {
+                            if ($currentSelection.programType === PROGRAM_TYPES.PROGRAM_ARTIST) {
+                                if (spotlightBioLength === value) return;
+                                spotlightBioLength = value;
+                                if (value === 'long') {
+                                    void prepareSpotlightStory().catch(error => console.warn('Artist biography lookup failed', error));
+                                }
+                            } else {
+                                currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistBioLength: value}} : selection);
+                            }
+                        }}
             />
         {/if}
 
@@ -3080,7 +3263,8 @@
                         radioSetPosition={interactiveRadioTest ? $currentTrack.blockPosition ?? null : null}
                         radioSetSize={interactiveRadioTest ? $currentTrack.blockSize ?? null : null}
                         {radioSetLabel}
-                        radioLoadPending={radioStartPending || radioAdvancePending}
+                        radioLoadPending={radioStartPending || radioAdvancePending || radioInterruptedResumePending}
+                        radioTrackRestartPending={$currentSelection?.programType === PROGRAM_TYPES.RADIO_ARTIST && Boolean(interruptedRadioTrack)}
                         onReportProblem={() => openReportProblem()}
                         onReportNarration={openNarrationReport}
                         openTrackList={openGuidedTrackList}
