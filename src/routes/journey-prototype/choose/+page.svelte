@@ -355,6 +355,9 @@
                 genre: 'all',
                 language
             });
+            const returnQuery = new URLSearchParams({program:'artist', browse:'artist', artistCode:code,
+                artistLetter:artistSpotlights.find(artist => artist.code === code)?.name[0].toUpperCase() || artistLetter});
+            query.set('returnTo', `/journey-prototype/choose?${returnQuery}`);
             if (requestTrackId !== null) query.set('requestTrackId', String(requestTrackId));
             await goto(`/journey-prototype/artist-spotlights/${encodeURIComponent(artistId)}?${query.toString()}`);
         } catch (error) {
@@ -592,7 +595,13 @@
         const browse = returnParams.get('browse');
         if (browse === 'nostalgia' && selectedProgram === 'nostalgia') showNostalgiaBrowser = true;
         if (browse === 'collections' && selectedProgram === 'collections') showCollectionsBrowser = true;
-        if (browse === 'artist' && selectedProgram === 'artist') showArtistsBrowser = true;
+        if (browse === 'artist' && selectedProgram === 'artist') {
+            showArtistsBrowser = true;
+            const returnedLetter = returnParams.get('artistLetter');
+            if (returnedLetter && /^[A-Z]$/.test(returnedLetter)) artistLetter = returnedLetter;
+            const returnedCode = returnParams.get('artistCode');
+            if (returnedCode && artistSpotlights.some(artist => artist.code === returnedCode)) surpriseCode = returnedCode;
+        }
         if (showNostalgiaBrowser || showCollectionsBrowser || showArtistsBrowser) {
             void tick().then(() => browserCloseButton?.focus());
         }

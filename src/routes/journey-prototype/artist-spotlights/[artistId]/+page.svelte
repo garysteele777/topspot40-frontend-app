@@ -39,6 +39,18 @@
     }
 
     function browserReturnPath(): string {
+        const origin = page.url.searchParams.get('returnTo');
+        if (origin) {
+            try {
+                const destination = new URL(origin, page.url.origin);
+                if (destination.origin === page.url.origin &&
+                    destination.pathname === '/journey-prototype/choose' &&
+                    destination.searchParams.get('program') === 'artist' &&
+                    destination.searchParams.get('browse') === 'artist') {
+                    return `${destination.pathname}${destination.search}`;
+                }
+            } catch { /* Invalid return paths use the existing artist browser. */ }
+        }
         const query = new URLSearchParams();
         const category = page.url.searchParams.get('category');
         const range = page.url.searchParams.get('range');
