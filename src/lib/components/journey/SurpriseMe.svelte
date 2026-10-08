@@ -3,6 +3,8 @@
     import {createSurprisePicker} from '$lib/interactions/surpriseMe.js';
 
     export let language: 'en' | 'es' | 'ptbr' = 'en';
+    export let pickLabel: string | null = null;
+    export let againLabel: string | null = null;
     export let items: {code: string; name: string}[] = [];
     export let onHighlight: (code: string, finished: boolean) => void = () => {};
     export let onGo: (code: string) => void;
@@ -81,7 +83,7 @@
 
 <div class="surprise">
     <button type="button" class="pick" disabled={spinning || !items.length} on:click={start}>
-        <span aria-hidden="true">🎲</span> {result ? copy[language].again : copy[language].pick}
+        <span aria-hidden="true">🎲</span> {result ? (againLabel ?? copy[language].again) : (pickLabel ?? copy[language].pick)}
     </button>
     {#if displayed}
         <div class="reveal" aria-busy={spinning}>
