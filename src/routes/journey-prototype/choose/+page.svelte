@@ -6,7 +6,7 @@
     import FavoritesPlayback from '$lib/components/journey/FavoritesPlayback.svelte';
     import SurpriseMe from '$lib/components/journey/SurpriseMe.svelte';
     import PublicJourneyHeader from '$lib/components/journey/PublicJourneyHeader.svelte';
-    import {readStoredLanguagePreference} from '$lib/languagePreferences';
+    import {readStoredLanguagePreference, writeLanguagePreference} from '$lib/languagePreferences';
     import {captureExperienceSelected} from '$lib/analytics/posthog';
     import {buildExperienceDestination, EXPERIENCE_FAMILIES, type ExperienceFamily, type ExperienceMode} from '$lib/journey/experienceMode';
     import {lookupProgramCode, ProgramCodeLookupError, programCodeUrlFromPreferences} from '$lib/api/programCode.js';
@@ -388,34 +388,34 @@
     const text = {
         en: {
             title: 'Choose Your TopSpot40 Experience',
-            instruction: 'Choose an experience, then enter a catalog number or browse programs.',
+            instruction: 'Choose an experience, then browse to find a program.',
             continue: 'Continue',
             back: 'Back',
             home: 'Home',
             nostalgia: 'Nostalgia Programs',
-            nostalgiaDesc: 'Music by decade and genre',
+            nostalgiaDesc: 'Rediscover favorite songs by decade and genre.',
             collections: 'Collections Programs',
-            collectionsDesc: 'Curated musical themes',
+            collectionsDesc: 'Enjoy songs grouped by theme, style, or occasion.',
             artist: 'Artist Spotlights',
-            artistDesc: 'Music and stories of legendary artists',
+            artistDesc: 'Explore an artist’s music and the stories behind it.',
             docuseries: 'Music Docuseries',
-            docuseriesDesc: 'Music history told in documentary series'
+            docuseriesDesc: 'Hear narrated stories about music’s people, history, and events.'
         },
         es: {
-            title: 'Elige tu experiencia TopSpot40', instruction: 'Elige una experiencia y luego ingresa un número de catálogo o explora los programas.',
+            title: 'Elige tu experiencia TopSpot40', instruction: 'Elige una experiencia y luego explora sus programas.',
             continue: 'Continuar', back: 'Atrás', home: 'Inicio',
-            nostalgia: 'Programas de Nostalgia', nostalgiaDesc: 'Música por década y género',
-            collections: 'Programas de Colecciones', collectionsDesc: 'Temas musicales seleccionados',
-            artist: 'Artistas Destacados', artistDesc: 'Música e historias de artistas legendarios',
-            docuseries: 'Docuseries Musicales', docuseriesDesc: 'Historia musical en series documentales'
+            nostalgia: 'Programas de Nostalgia', nostalgiaDesc: 'Redescubre tus canciones favoritas por década y género.',
+            collections: 'Programas de Colecciones', collectionsDesc: 'Disfruta canciones agrupadas por tema, estilo u ocasión.',
+            artist: 'Artistas Destacados', artistDesc: 'Explora la música de un artista y las historias que la acompañan.',
+            docuseries: 'Docuseries Musicales', docuseriesDesc: 'Escucha relatos sobre las personas, la historia y los acontecimientos de la música.'
         },
         ptbr: {
-            title: 'Escolha sua experiência TopSpot40', instruction: 'Escolha uma experiência e depois digite um número do catálogo ou explore os programas.',
+            title: 'Escolha sua experiência TopSpot40', instruction: 'Escolha uma experiência e depois explore seus programas.',
             continue: 'Continuar', back: 'Voltar', home: 'Início',
-            nostalgia: 'Programas de Nostalgia', nostalgiaDesc: 'Música por década e gênero',
-            collections: 'Programas de Coleções', collectionsDesc: 'Temas musicais selecionados',
-            artist: 'Destaques de Artistas', artistDesc: 'Música e histórias de artistas lendários',
-            docuseries: 'Docusséries Musicais', docuseriesDesc: 'História musical em séries documentais'
+            nostalgia: 'Programas de Nostalgia', nostalgiaDesc: 'Redescubra suas músicas favoritas por década e gênero.',
+            collections: 'Programas de Coleções', collectionsDesc: 'Ouça músicas agrupadas por tema, estilo ou ocasião.',
+            artist: 'Destaques de Artistas', artistDesc: 'Explore a música de um artista e as histórias por trás dela.',
+            docuseries: 'Docusséries Musicais', docuseriesDesc: 'Ouça histórias sobre as pessoas, a história e os acontecimentos da música.'
         }
     };
 
@@ -427,15 +427,27 @@
         nostalgia: 'nostalgia', collections: 'collection', artist: 'artist_spotlight', docuseries: 'docuseries_story'
     };
     const desktopInstruction: Record<LandingLanguage, string> = {
-        en: "Choose an experience, then choose how you'd like to listen.",
-        es: 'Elige una experiencia y luego elige cómo quieres escuchar.',
-        ptbr: 'Escolha uma experiência e depois escolha como deseja ouvir.'
+        en: "Choose an experience, then select Browse to get started.",
+        es: 'Elige una experiencia y selecciona Explorar para comenzar.',
+        ptbr: 'Escolha uma experiência e selecione Explorar para começar.'
     };
     const modeCopy: Record<LandingLanguage, {program: string; radio: string}> = {
         en: {program: 'Program Mode', radio: 'Radio Mode'},
         es: {program: 'Modo Programa', radio: 'Modo Radio'},
         ptbr: {program: 'Modo Programa', radio: 'Modo Rádio'}
     };
+    const listeningNote: Record<LandingLanguage, string> = {
+        en: 'Songs play through Spotify. For automatic listening on a computer, Spotify Premium is recommended. Music Docuseries can be heard without Spotify.',
+        es: 'Las canciones se reproducen en Spotify. Para escuchar automáticamente en una computadora, se recomienda Spotify Premium. Las Docuseries Musicales se pueden escuchar sin Spotify.',
+        ptbr: 'As músicas tocam no Spotify. Para ouvir automaticamente no computador, recomendamos o Spotify Premium. As Docusséries Musicais podem ser ouvidas sem Spotify.'
+    };
+
+    const guidanceCopy: Record<LandingLanguage, {start: string; program: string; radio: string}> = {
+        en: {start: 'Start by browsing a program.', program: 'Choose a program and explore its songs and stories.', radio: 'Choose your interests and let TopSpot40 select what plays.'},
+        es: {start: 'Comienza explorando un programa.', program: 'Elige un programa y explora sus canciones e historias.', radio: 'Elige tus intereses y deja que TopSpot40 seleccione qué escuchar.'},
+        ptbr: {start: 'Comece explorando um programa.', program: 'Escolha um programa e explore suas músicas e histórias.', radio: 'Escolha seus interesses e deixe o TopSpot40 selecionar o que tocar.'}
+    };
+
     const mobileProgramCopy: Record<LandingLanguage, Record<ExperienceFamily, string>> = {
         en: {nostalgia: 'Browse by Decade', collections: 'Browse Collections', artist: 'Browse Artists', docuseries: 'Browse Docuseries'},
         es: {nostalgia: 'Explorar por década', collections: 'Explorar colecciones', artist: 'Explorar artistas', docuseries: 'Explorar docuseries'},
@@ -465,6 +477,25 @@
             unavailable: 'Esse programa não pode ser aberto porque os detalhes do catálogo estão incompletos.'
         }
     };
+
+    function changeNarrationLanguage(next: LandingLanguage) {
+        if (next === language) return;
+        writeLanguagePreference(next);
+        language = next;
+
+        // Rebuild any catalog destination using the new narration language.
+        catalogLookupVersion += 1;
+        if (catalogLookupTimer) clearTimeout(catalogLookupTimer);
+        catalogLookupTimer = null;
+        catalogDestination = null;
+        catalogStatus = null;
+        catalogStatusKind = null;
+        lookingUpCatalog = false;
+        if (catalogDigits && selectedProgram) {
+            lookingUpCatalog = true;
+            void validateCatalogNumber(catalogLookupVersion);
+        }
+    }
 
     function catalogText() {
         return catalogCopy[language];
@@ -624,7 +655,7 @@
 </svelte:head>
 
 <div class="prototype">
-    <PublicJourneyHeader {language}/>
+    <PublicJourneyHeader {language} onLanguageChange={changeNarrationLanguage}/>
     {#if showJourneyLayout}
         <main class="journey">
             <img
@@ -634,7 +665,8 @@
             />
             <div class="shade" aria-hidden="true"></div>
             <section class="journey-title"><h1>{text[language].title}</h1>
-                <p>{desktopInstruction[language]}</p></section>
+                <p>{desktopInstruction[language]}</p>
+                <p class="listening-note">{listeningNote[language]}</p></section>
             <div class="choice-layer">
                 {#each choices as choice}
                     <div class="arch-slot arch-{choice}">
@@ -644,22 +676,29 @@
                         <div class="arch-content">
                             {#if selectedProgram === choice}
                                 <form class="catalog-entry catalog-entry-desktop" on:submit|preventDefault={goToCatalogProgram}>
+
+                                    <p class="browse-hint">{guidanceCopy[language].start}</p>
+                                    {#if choice === 'nostalgia'}
+                                        <button class="browse-primary" type="button" on:click={openNostalgiaBrowser}>{nostalgiaBrowserCopy[language].open} <span aria-hidden="true">→</span></button>
+                                    {:else if choice === 'collections'}
+                                        <button class="browse-primary" type="button" on:click={openCollectionsBrowser}>{collectionsBrowserCopy[language].open} <span aria-hidden="true">→</span></button>
+                                    {:else if choice === 'artist'}
+                                        <button class="browse-primary" type="button" on:click={(event) => openArtistsBrowser(event)}>{artistsBrowserCopy[language].open} <span aria-hidden="true">→</span></button>
+                                    {:else}
+                                        <button class="browse-primary" type="button" on:click={() => startExperience('program')}>{mobileProgramCopy[language].docuseries} <span aria-hidden="true">→</span></button>
+                                    {/if}
                                     <label for="desktop-catalog-digits">{catalogText().label}</label>
                                     <div class="catalog-row">
                                         <span class="catalog-prefix" aria-hidden="true">{catalogPrefixes[choice]}</span>
                                         <input id="desktop-catalog-digits" value={catalogDigits} on:input={updateCatalogDigits} inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="desktop-catalog-status" />
                                         <button type="submit" disabled={!catalogDestination || lookingUpCatalog}>{catalogText().go}</button>
                                     </div>
-                                    {#if choice === 'nostalgia'}
-                                        <button class="browse-nostalgia" type="button" on:click={openNostalgiaBrowser}>{nostalgiaBrowserCopy[language].open}</button>
-                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
-                                    {:else if choice === 'collections'}
-                                        <button class="browse-nostalgia" type="button" on:click={openCollectionsBrowser}>{collectionsBrowserCopy[language].open}</button>
-                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
-                                    {:else if choice === 'artist'}
+
+                                    {#if choice !== 'docuseries'}
                                         <div class="artist-entry-links">
-                                            <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event)}>{artistsBrowserCopy[language].open}</button>
-                                            <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event, 'search')}>{artistsBrowserCopy[language].searchLink}</button>
+                                            {#if choice === 'artist'}
+                                                <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event, 'search')}>{artistsBrowserCopy[language].searchLink}</button>
+                                            {/if}
                                             <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
                                         </div>
                                     {/if}
@@ -671,12 +710,17 @@
                     </div>
                 {/each}
             </div>
-            {#if selectedProgram}
-                <button type="button" class="mode-button program-mode" disabled={catalogDigits.length > 0} on:click={() => startExperience('program')}>{selectedProgram === 'docuseries' ? mobileProgramCopy[language].docuseries : modeCopy[language].program} <span
-                        aria-hidden="true">→</span></button>
-                {#if selectedProgram !== 'docuseries'}
-                    <button type="button" class="mode-button radio-mode" on:click={() => startExperience('radio')}>{modeCopy[language].radio} <span aria-hidden="true">→</span></button>
-                {/if}
+            {#if selectedProgram && selectedProgram !== 'docuseries'}
+                <div class="mode-options">
+                    <div class="mode-option">
+                        <button type="button" class="mode-button program-mode" aria-describedby="program-mode-description" disabled={catalogDigits.length > 0} on:click={() => startExperience('program')}>{modeCopy[language].program} <span aria-hidden="true">→</span></button>
+                        <p id="program-mode-description">{guidanceCopy[language].program}</p>
+                    </div>
+                    <div class="mode-option">
+                        <button type="button" class="mode-button radio-mode" aria-describedby="radio-mode-description" on:click={() => startExperience('radio')}>{modeCopy[language].radio} <span aria-hidden="true">→</span></button>
+                        <p id="radio-mode-description">{guidanceCopy[language].radio}</p>
+                    </div>
+                </div>
             {/if}
         </main>
     {:else}
@@ -685,6 +729,7 @@
                 <img src="/old-dog-icon.png" alt="" class="mobile-logo"/>
                 <h1>{text[language].title}</h1>
                 <p>{text[language].instruction}</p>
+                <p class="listening-note">{listeningNote[language]}</p>
 
                 <div class="mobile-program-list">
                     {#each choices as choice}
@@ -700,26 +745,33 @@
                         </button>
                         {#if selectedProgram === choice}
                             <form class="catalog-entry catalog-entry-mobile" on:submit|preventDefault={goToCatalogProgram}>
-                                <label for="mobile-catalog-digits">{catalogText().label}</label>
+
+                                    <p class="browse-hint">{guidanceCopy[language].start}</p>
+                                    {#if choice === 'nostalgia'}
+                                        <button class="browse-primary" type="button" on:click={openNostalgiaBrowser}>{nostalgiaBrowserCopy[language].open} <span aria-hidden="true">→</span></button>
+                                    {:else if choice === 'collections'}
+                                        <button class="browse-primary" type="button" on:click={openCollectionsBrowser}>{collectionsBrowserCopy[language].open} <span aria-hidden="true">→</span></button>
+                                    {:else if choice === 'artist'}
+                                        <button class="browse-primary" type="button" on:click={(event) => openArtistsBrowser(event)}>{artistsBrowserCopy[language].open} <span aria-hidden="true">→</span></button>
+                                    {:else}
+                                        <button class="browse-primary" type="button" on:click={() => startExperience('program')}>{mobileProgramCopy[language].docuseries} <span aria-hidden="true">→</span></button>
+                                    {/if}
+                                    <label for="mobile-catalog-digits">{catalogText().label}</label>
                                 <div class="catalog-row">
                                     <span class="catalog-prefix" aria-hidden="true">{catalogPrefixes[choice]}</span>
                                     <input id="mobile-catalog-digits" value={catalogDigits} on:input={updateCatalogDigits} inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="mobile-catalog-status" />
                                     <button type="submit" disabled={!catalogDestination || lookingUpCatalog}>{catalogText().go}</button>
                                 </div>
-                                {#if choice === 'nostalgia'}
-                                    <button class="browse-nostalgia" type="button" on:click={openNostalgiaBrowser}>{nostalgiaBrowserCopy[language].open}</button>
-                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
-                                {:else if choice === 'collections'}
-                                    <button class="browse-nostalgia" type="button" on:click={openCollectionsBrowser}>{collectionsBrowserCopy[language].open}</button>
-                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
-                                {:else if choice === 'artist'}
-                                    <div class="artist-entry-links">
-                                        <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event)}>{artistsBrowserCopy[language].open}</button>
-                                        <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event, 'search')}>{artistsBrowserCopy[language].searchLink}</button>
-                                        <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
-                                    </div>
-                                {/if}
-                                <div id="mobile-catalog-status" class:catalog-error={catalogStatusKind === 'error'} role={catalogStatusKind === 'error' ? 'alert' : 'status'} aria-live="polite">{lookingUpCatalog ? catalogText().checking : catalogStatus ?? ''}</div>
+
+                                    {#if choice !== 'docuseries'}
+                                        <div class="artist-entry-links">
+                                            {#if choice === 'artist'}
+                                                <button class="browse-nostalgia" type="button" on:click={(event) => openArtistsBrowser(event, 'search')}>{artistsBrowserCopy[language].searchLink}</button>
+                                            {/if}
+                                            <button class="browse-nostalgia" type="button" on:click={openTrackSearch}>{artistsBrowserCopy[language].trackLink}</button>
+                                        </div>
+                                    {/if}
+                                    <div id="mobile-catalog-status" class:catalog-error={catalogStatusKind === 'error'} role={catalogStatusKind === 'error' ? 'alert' : 'status'} aria-live="polite">{lookingUpCatalog ? catalogText().checking : catalogStatus ?? ''}</div>
                             </form>
                             <button class="mobile-program-route" type="button" on:click={() => startExperience('program')}>
                                 {mobileProgramCopy[language][choice]} <span aria-hidden="true">→</span>
@@ -1015,7 +1067,7 @@ button {
         position: absolute;
         top: 18%;
         width: 21.5%;
-        height: 62%;
+        height: 56%;
         pointer-events: none;
     }
 
@@ -1066,28 +1118,33 @@ button {
     .choice-label small {
         margin-top: 5px;
         color: #fff4d1;
-        font-size: clamp(11px, .82vw, 14px);
+        font-size: clamp(14px, .85vw, 16px);
+        line-height: 1.35;
     }
 
-    .mode-button {
+    .mode-options {
         position: absolute;
         z-index: 12;
-        bottom: 2.5%;
-        width: min(220px, 20vw);
-        min-height: 54px;
-        border-radius: 999px;
-        font-size: 20px;
-        font-weight: 900;
-    }
-    .program-mode {
-        left: calc(50% - min(122px, 11vw));
-        bottom: 2.5%;
+        bottom: 12px;
+        left: 50%;
         transform: translateX(-50%);
-        color: #211706; background: #f7dc82; border: 2px solid #fff0b0; box-shadow: 0 0 28px rgba(247,220,130,.5);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        width: min(720px, 72vw);
     }
-    .radio-mode { left: calc(50% + min(122px, 11vw)); transform: translateX(-50%); color:#081008; background:#75ef4f; border:2px solid #b7ff9c; box-shadow:0 0 28px rgba(78,255,73,.62); }
-    .mode-button:hover, .mode-button:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+    .mode-option { padding: 10px 14px; border-radius: 14px; background: rgba(8, 5, 2, .94); text-align: center; }
+    .mode-option p { margin: 8px 0 0; color: #fff4d1; font-size: 15px; line-height: 1.35; }
+    .mode-button { width: 100%; min-height: 48px; padding: 8px 14px; border-radius: 999px; font-size: 20px; font-weight: 900; }
+    .program-mode { color: #211706; background: #f7dc82; border: 2px solid #fff0b0; }
+    .radio-mode { color: #081008; background: #75ef4f; border: 2px solid #b7ff9c; }
+    .mode-button:hover, .mode-button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
     .mode-button:disabled { cursor: not-allowed; opacity: .62; }
+
+    .browse-hint { margin: 0 0 8px; font-size: 14px; line-height: 1.35; }
+    .browse-primary { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 48px; margin-bottom: 14px; padding: 10px 12px; border: 2px solid #fff0b0; border-radius: 9px; color: #211706; background: #f7dc82; font-size: 16px; font-weight: 800; text-align: left; }
+    .browse-primary:hover { background: #ffe9a5; }
+    .browse-primary:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
     .catalog-entry {
         z-index: 12;
@@ -1376,4 +1433,11 @@ button {
         border-radius: 20px;
     }
 }
+
+    .journey-title .listening-note, .mobile-card .listening-note {
+        display: inline-block; max-width: 860px; margin: 12px 0 0;
+        padding: 10px 16px; border-radius: 10px;
+        background: rgba(8, 5, 2, .94); color: #fff4d1;
+        font-size: 16px; line-height: 1.4; font-weight: 400;
+    }
 </style>

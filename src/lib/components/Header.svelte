@@ -1,5 +1,9 @@
 <!-- $lib/components/Header.svelte -->
 <script lang="ts">
+        import NarrationLanguageSelector from '$lib/components/journey/NarrationLanguageSelector.svelte';
+        import {readLanguagePreference} from '$lib/languagePreferences';
+        import type {Language} from '$lib/types/playback';
+        let narrationLanguage: Language = 'en';
 	import { onMount, onDestroy } from 'svelte';
 	import DropdownMenu from './DropdownMenu.svelte';
 	import { browser } from '$app/environment';
@@ -71,6 +75,7 @@
 	}
 
 	onMount(() => {
+                narrationLanguage = readLanguagePreference();
 		if (browser) {
 			document.addEventListener('click', handleClickOutside);
 		}
@@ -85,6 +90,9 @@
 
 <header class="header">
 	<div class="logo">TopSpot40</div>
+        <div class="dashboard-language-control">
+                <NarrationLanguageSelector language={narrationLanguage}/>
+        </div>
 	<div class="user-profile" bind:this={dropdownRef}>
 		<button
 			type="button"
@@ -152,4 +160,16 @@
 		object-fit: cover;
 		border: 2px solid #1db954;
 	}
+
+        .header { gap: 20px; flex-wrap: wrap; }
+        .dashboard-language-control { margin-left: auto; }
+        @media (max-width: 600px) {
+                .header { padding: 12px 14px; }
+                .dashboard-language-control {
+                        order: 3;
+                        flex-basis: 100%;
+                        margin-left: 0;
+                }
+                .user-profile { margin-left: auto; }
+        }
 </style>

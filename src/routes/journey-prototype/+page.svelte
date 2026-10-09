@@ -18,25 +18,67 @@
 
     const text = {
         en: {
-            title: 'Choose Your Musical Journey',
-            instruction: 'Select a language to begin.',
+            title: 'You know the songs. Discover their stories.',
+            subtitle: 'TopSpot40 adds narrated song introductions, artist biographies, and music history to your Spotify listening.',
+            trialOffer: 'Free through December 31, 2026 · No credit card required',
+            instruction: 'Choose your language—all introductions, artist stories, and music history are narrated in English, Spanish, or Portuguese.',
             continue: 'Continue',
             home: 'Home',
             back: 'Back'
         },
         es: {
-            title: 'Elige tu viaje musical',
-            instruction: 'Selecciona un idioma para comenzar.',
+            title: 'Conoces las canciones. Descubre sus historias.',
+            subtitle: 'TopSpot40 añade introducciones narradas, biografías de artistas e historia musical a lo que escuchas en Spotify.',
+            trialOffer: 'Gratis hasta el 31 de diciembre de 2026 · No se requiere tarjeta de crédito',
+            instruction: 'Elige tu idioma: todas las introducciones, historias de artistas e historia musical se narran en inglés, español o portugués.',
             continue: 'Continuar',
             home: 'Inicio',
             back: 'Atrás'
         },
         ptbr: {
-            title: 'Escolha sua jornada musical',
-            instruction: 'Selecione um idioma para começar.',
+            title: 'Você conhece as músicas. Descubra suas histórias.',
+            subtitle: 'O TopSpot40 acrescenta introduções narradas, biografias de artistas e história da música ao que você ouve no Spotify.',
+            trialOffer: 'Grátis até 31 de dezembro de 2026 · Não é necessário cartão de crédito',
+            instruction: 'Escolha seu idioma: todas as introduções, histórias de artistas e história da música são narradas em inglês, espanhol ou português.',
             continue: 'Continuar',
             home: 'Início',
             back: 'Voltar'
+        }
+    };
+
+    const earlyMemberCopy = {
+        en: 'Create your free account by December 31, 2026 to qualify for early-member pricing: $49.99/year or $4.99/month, while continuously subscribed.',
+        es: 'Crea tu cuenta gratuita antes de finalizar el 31 de diciembre de 2026 para acceder al precio de miembro inicial: $49.99/año o $4.99/mes, mientras mantengas tu suscripción activa sin interrupciones.',
+        ptbr: 'Crie sua conta gratuita até 31 de dezembro de 2026 para ter acesso ao preço de membro inicial: $49.99/ano ou $4.99/mês, enquanto mantiver sua assinatura ativa sem interrupções.'
+    };
+
+        const landingOfferCopy = {
+        en: {
+            title: 'Explore first. Join when ready.',
+            free: 'Free through December 31, 2026',
+            card: 'Choose a language to explore. Signup is optional. No credit card required.',
+            qualify: 'Optional: create your free account by December 31, 2026 to qualify for early-member pricing.',
+            price: '$49.99/year or $4.99/month',
+            terms: 'Keep this price while continuously subscribed.',
+            action: 'View early-member offer'
+        },
+        es: {
+            title: 'Explora primero. Únete cuando quieras.',
+            free: 'Gratis hasta el 31 de diciembre de 2026',
+            card: 'Elige un idioma para explorar. Registrarte es opcional. No se requiere tarjeta de crédito.',
+            qualify: 'Opcional: crea tu cuenta gratuita antes de finalizar el 31 de diciembre de 2026 para acceder al precio de miembro inicial.',
+            price: '$49.99/año o $4.99/mes',
+            terms: 'Conserva este precio mientras mantengas tu suscripción activa sin interrupciones.',
+            action: 'Ver oferta para miembros iniciales'
+        },
+        ptbr: {
+            title: 'Explore primeiro. Cadastre-se quando quiser.',
+            free: 'Grátis até 31 de dezembro de 2026',
+            card: 'Escolha um idioma para explorar. O cadastro é opcional. Não é necessário cartão de crédito.',
+            qualify: 'Opcional: crie sua conta gratuita até 31 de dezembro de 2026 para ter direito ao preço de membro inicial.',
+            price: '$49.99/ano ou $4.99/mês',
+            terms: 'Mantenha este preço enquanto sua assinatura permanecer ativa sem interrupções.',
+            action: 'Ver oferta para membros iniciais'
         }
     };
 
@@ -57,7 +99,7 @@
 
     function performContinueJourney() {
         captureLanguageSelected(posthog, language);
-        goto('/welcome');
+        goto('/journey-prototype/choose');
     }
 
     const selectionContinue = createSingleChoiceContinue({
@@ -129,7 +171,10 @@
 
             <section class="journey-title">
                 <h1>{text[language].title}</h1>
-                <p>{text[language].instruction}</p>
+                <p class="landing-subtitle">{text[language].subtitle}</p>
+
+
+                <p class="language-instruction">{text[language].instruction}</p>
             </section>
 
             <div class="hotspot-layer">
@@ -162,21 +207,38 @@
                 >
                     <span class="screen-reader-only">Português</span>
                 </button>
-            </div>
-
-            {#if hasChosenLanguage}
+{#if hasChosenLanguage}
                 <button class="continue" on:click={continueJourney}>
                     {text[language].continue}
                     <span aria-hidden="true">→</span>
                 </button>
             {/if}
+            </div>
+
+
+
+            <aside class="landing-offer" aria-label={landingOfferCopy[language].title}>
+                <h2>{landingOfferCopy[language].title}</h2>
+                <p class="offer-free">{landingOfferCopy[language].free}</p>
+                <p class="offer-card">{landingOfferCopy[language].card}</p>
+                <p class="offer-qualify">{landingOfferCopy[language].qualify}</p>
+                <p class="offer-price">{landingOfferCopy[language].price}</p>
+                <p class="offer-terms">{landingOfferCopy[language].terms}</p>
+                <a href="/welcome" on:click={() => writeLanguagePreference(language)}>
+                    {landingOfferCopy[language].action}
+                </a>
+            </aside>
+
         </main>
     {:else}
         <main class="list-page">
             <section class="list-card">
                 <img src="/old-dog-icon.png" alt="" class="list-logo"/>
                 <h1>{text[language].title}</h1>
-                <p>{text[language].instruction}</p>
+                <p class="landing-subtitle">{text[language].subtitle}</p>
+
+
+                <p class="language-instruction">{text[language].instruction}</p>
 
                 <div class="language-list">
                     {#each languageOptions as {code, name}}
@@ -199,7 +261,19 @@
                         {text[language].continue}
                     </button>
                 {/if}
-            </section>
+
+            <aside class="landing-offer" aria-label={landingOfferCopy[language].title}>
+                <h2>{landingOfferCopy[language].title}</h2>
+                <p class="offer-free">{landingOfferCopy[language].free}</p>
+                <p class="offer-card">{landingOfferCopy[language].card}</p>
+                <p class="offer-qualify">{landingOfferCopy[language].qualify}</p>
+                <p class="offer-price">{landingOfferCopy[language].price}</p>
+                <p class="offer-terms">{landingOfferCopy[language].terms}</p>
+                <a href="/welcome" on:click={() => writeLanguagePreference(language)}>
+                    {landingOfferCopy[language].action}
+                </a>
+            </aside>
+</section>
         </main>
     {/if}
 </div>
@@ -554,6 +628,176 @@
             left: 69%;
             width: 11%;
         }
+    }
+
+
+    .journey-title {
+        width: min(1000px, 88vw);
+        top: 4%;
+        padding: 16px 24px;
+        border-radius: 18px;
+        background: rgba(8, 5, 2, .85);
+    }
+    .journey-title h1 { font-size: clamp(28px, 2.7vw, 46px); white-space: normal; }
+    .journey-title .landing-subtitle, .list-card .landing-subtitle {
+        margin: 8px 0 0; color: #fff4d1;
+        font-size: clamp(17px, 1.15vw, 20px); line-height: 1.35; font-weight: 400;
+    }
+    .journey-title .language-instruction, .list-card .language-instruction {
+        margin: 12px 0 0; color: #fff; font-size: 18px; line-height: 1.35;
+    }
+    .list-page { padding: 82px 16px 24px; }
+    .list-card { padding: 24px; }
+    .list-card h1 { margin: 12px 0 0; font-size: clamp(28px, 5vw, 42px); }
+    .language-list { margin-top: 20px; gap: 10px; }
+    .language-list button { min-height: 60px; }
+    @media (max-width: 600px) {
+        .list-card { padding: 20px 16px; }
+    }
+    .journey-title { pointer-events: auto; }
+
+    /* Separate the introduction from the membership offer. */
+    .journey-title {
+        top: 2%;
+        width: min(1050px, 86vw);
+        padding: 14px 22px;
+        background: rgba(8, 5, 2, .78);
+    }
+    .journey-title h1 {
+        font-size: clamp(28px, 2.5vw, 44px);
+        line-height: 1.12;
+        text-wrap: balance;
+    }
+    .journey-title .landing-subtitle {
+        max-width: 850px;
+        margin: 8px auto 0;
+        font-size: 18px;
+        line-height: 1.35;
+    }
+    .journey-title .language-instruction {
+        margin-top: 10px;
+    }
+    .hotspot-layer .continue {
+        top: 51%;
+        bottom: auto;
+    }
+    .landing-offer {
+        box-sizing: border-box;
+        padding: 18px;
+        border: 1px solid #c4a65a;
+        border-radius: 16px;
+        background: rgba(8, 5, 2, .88);
+        color: #fff4d1;
+        text-align: center;
+    }
+    .journey .landing-offer {
+        position: absolute;
+        z-index: 8;
+        right: 2%;
+        bottom: 3%;
+        width: min(370px, 30vw);
+    }
+    .landing-offer h2 {
+        margin: 0 0 10px;
+        font-size: 23px;
+        line-height: 1.2;
+    }
+    .landing-offer p {
+        margin: 8px 0;
+        font-size: 16px;
+        line-height: 1.35;
+    }
+    .landing-offer .offer-free,
+    .landing-offer .offer-price {
+        font-size: 19px;
+        font-weight: 700;
+        color: #ffe49b;
+    }
+    .landing-offer .offer-card { margin-top: 4px; }
+    .landing-offer a {
+        display: block;
+        margin-top: 14px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        background: #f5dc8a;
+        color: #211706;
+        font-size: 17px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .landing-offer a:hover { background: #ffebad; }
+    .landing-offer a:focus-visible {
+        outline: 3px solid white;
+        outline-offset: 4px;
+    }
+    .list-card .landing-offer { margin-top: 24px; }
+
+
+    .journey .landing-offer {
+        right: 3%;
+        bottom: 7%;
+        width: min(370px, 30vw);
+    }
+    .landing-offer h2 {
+        font-size: 21px;
+        text-wrap: balance;
+    }
+    .landing-offer .offer-qualify {
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(196, 166, 90, .5);
+    }
+    .landing-offer a {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 8px 4px;
+        background: transparent;
+        color: #ffe49b;
+        font-size: 16px;
+        font-weight: 400;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+    .landing-offer a:hover {
+        background: transparent;
+        color: white;
+    }
+
+
+    .journey .landing-offer {
+        left: 67%;
+        right: auto;
+        transform: translateX(-50%);
+    }
+    .journey-title .landing-subtitle {
+        max-width: 940px;
+        font-size: clamp(20px, 1.35vw, 25px);
+        font-weight: 700;
+        line-height: 1.4;
+        color: #fff4d1;
+        text-wrap: balance;
+    }
+    .list-card .landing-subtitle {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+
+    .journey .landing-offer {
+        top: calc(50% + 40px);
+        bottom: auto;
+        max-height: calc(50% - 56px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
+
+    .journey .landing-offer {
+        left: calc(67% - min(185px, 15vw));
+        right: auto;
+        transform: none;
+        width: min(520px, 40vw);
     }
 
 </style>
