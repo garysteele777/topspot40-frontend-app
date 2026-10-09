@@ -1,4 +1,5 @@
 <script lang="ts">
+    import NarrationLanguageSelector from '$lib/components/journey/NarrationLanguageSelector.svelte';
     import {onMount, tick} from 'svelte';
     import { getBackendUrl } from '$lib/config';
     import {readStoredLanguagePreference} from '$lib/languagePreferences';
@@ -7,6 +8,9 @@
     export let language: 'en' | 'es' | 'ptbr' = 'en';
     export let preferencesHref = '/playback-preferences';
     export let onPreferences: (() => void) | undefined = undefined;
+
+    export let onLanguageChange:
+        ((next: 'en' | 'es' | 'ptbr') => void) | undefined = undefined;
 
     type HeaderUser = {
         display_name?: string | null;
@@ -169,6 +173,11 @@ async function loadAuthenticatedUser() {
         <img src="/old-dog-icon.png" alt=""/>
         <span>TopSpot<span class="brand-number">40</span></span>
     </a>
+
+
+    <div class="narration-language-control">
+        <NarrationLanguageSelector {language} onChange={onLanguageChange}/>
+    </div>
 
     <nav class="desktop-nav" aria-label={text[language].navigation}>
         <div class="my-menu" bind:this={aboutMenu}>
@@ -649,4 +658,25 @@ async function loadAuthenticatedUser() {
         }
     }
 
+
+    .narration-language-control {
+        margin-left: auto;
+        flex: 0 0 auto;
+        font-family: Arial, sans-serif;
+    }
+    @media (min-width: 601px) and (max-width: 1250px) {
+        .topbar { flex-wrap: wrap; }
+        .narration-language-control {
+            order: 3;
+            flex-basis: 100%;
+        }
+    }
+    @media (max-width: 600px) {
+        .topbar { flex-wrap: wrap; }
+        .mobile-menu { margin-left: auto; }
+        .narration-language-control {
+            order: 3;
+            flex-basis: 100%;
+        }
+    }
 </style>

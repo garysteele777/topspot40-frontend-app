@@ -88,7 +88,11 @@
 </script>
 
 <div class="page-shell">
-    <PublicJourneyHeader {language}/>
+    <PublicJourneyHeader {language} onLanguageChange={(next) => {
+        language = next;
+        languages = [next];
+        writeLanguagePreference(next);
+    }}/>
 
     <main class="page">
         <div class="page-heading">

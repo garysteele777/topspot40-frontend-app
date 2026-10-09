@@ -1,4 +1,10 @@
 <script lang="ts">
+    import {writeLanguagePreference as saveHeaderLanguage} from '$lib/languagePreferences';
+    import {
+        buildCarModePreferencesUrl as headerPreferencesUrl,
+        getCarModePreferencesReturnUrl as headerReturnUrl,
+        buildCarModePreferencesReturnUrl as headerLanguageReturn
+    } from '$lib/carmode/CarModePreferencesReturn';
     import {onMount, onDestroy} from 'svelte';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
     import DriveInPlayerPanel from '$lib/components/car/DriveInPlayerPanel.svelte';
@@ -2161,6 +2167,30 @@
         return true;
     }
 
+    let headerLanguageChanging = false;
+
+    async function changePlaybackHeaderLanguage(next: 'en' | 'es' | 'ptbr'): Promise<void> {
+        if (headerLanguageChanging || next === $currentSelection?.language) return;
+        headerLanguageChanging = true;
+        try {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('language', $currentSelection?.language ?? 'en');
+            const preferencesUrl = new URL(headerPreferencesUrl(
+                currentUrl,
+                get(currentTrack),
+                programStartedTracker.hasStarted()
+            ), currentUrl.origin);
+            const returnUrl = headerReturnUrl(preferencesUrl);
+            if (!returnUrl) return;
+
+            saveHeaderLanguage(next);
+            await invalidateLanguageChangedPlayback();
+            window.location.assign(headerLanguageReturn(returnUrl, next));
+        } finally {
+            headerLanguageChanging = false;
+        }
+    }
+
     function openPlaybackPreferences(): void {
         preservePlaybackForPreferences = true;
         void goto(buildCarModePreferencesUrl(
@@ -3148,6 +3178,7 @@
 <PublicJourneyHeader
         language={$currentSelection?.language ?? 'en'}
         onPreferences={openPlaybackPreferences}
+        onLanguageChange={changePlaybackHeaderLanguage}
 />
 
 
