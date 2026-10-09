@@ -1,3 +1,5 @@
+import {clearCollectionFavorites} from '../journey/collectionsHistory';
+import {clearNostalgiaFavorites} from '../journey/nostalgia';
 import {browser} from '$app/environment';
 import {writable, get} from 'svelte/store';
 import {selectFavoriteEntries, type FavoritesPlaybackScope} from './playback';
@@ -148,4 +150,13 @@ export function getFavorites(
 /** Read combined favorites without losing the originating program list. */
 export function getFavoritePlaybackEntries(scope: FavoritesPlaybackScope) {
     return selectFavoriteEntries(get(favoritesStore), scope);
+}
+
+/** Batch-clear selected Nostalgia source lists and persist through the store. */
+export function clearNostalgiaFavoriteGroups(groups: string[]): void {
+    favoritesStore.update(data => clearNostalgiaFavorites(data, groups));
+}
+
+export function clearCollectionFavoriteLists(lists: string[]): void {
+    favoritesStore.update(data => clearCollectionFavorites(data, lists));
 }

@@ -1,3 +1,5 @@
+import {clearCollectionHistory} from '../journey/collectionsHistory';
+import {clearNostalgiaHistory} from '../journey/nostalgia';
 import {writable} from 'svelte/store';
 import {browser} from '$app/environment';
 
@@ -153,6 +155,19 @@ export function seedCollectionPrograms(
 
     const next = Array.from(map.values());
 
+    saveAll(next);
+    programHistoryStore.set(next);
+}
+/** Keep program totals and labels while clearing selected Nostalgia markers. */
+export function resetNostalgiaPrograms(groups: string[]): void {
+    const next = clearNostalgiaHistory(loadAll(), groups);
+    saveAll(next);
+    programHistoryStore.set(next);
+}
+
+/** Clear selected collection source lists, preserving catalog totals. */
+export function resetCollectionPrograms(lists: string[]): void {
+    const next = clearCollectionHistory(loadAll(), lists);
     saveAll(next);
     programHistoryStore.set(next);
 }
