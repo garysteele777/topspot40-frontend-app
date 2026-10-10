@@ -131,10 +131,12 @@
         if (savedLanguage) {
             language = savedLanguage;
             hasChosenLanguage = true;
-            void goto('/journey-prototype/choose', {
-                replaceState: true
-            });
-            return;
+            if (new URL(window.location.href).searchParams.get('showLanding') !== '1') {
+                void goto('/journey-prototype/choose', {
+                    replaceState: true
+                });
+                return;
+            }
         }
 
         updateLayout();
@@ -798,6 +800,35 @@
         right: auto;
         transform: none;
         width: min(520px, 40vw);
+    }
+
+
+    /* Larger text for comfortable reading. */
+    .journey-title .language-instruction,
+    .list-card .language-instruction {
+        font-size: 20px;
+        line-height: 1.45;
+    }
+    .landing-offer h2 {
+        font-size: 24px;
+        line-height: 1.3;
+    }
+    .landing-offer p {
+        font-size: 20px;
+        line-height: 1.45;
+    }
+    .landing-offer .offer-free,
+    .landing-offer .offer-price {
+        font-size: 22px;
+    }
+    .landing-offer a {
+        font-size: 20px;
+        line-height: 1.45;
+    }
+    .journey .landing-offer {
+        max-height: none;
+        overflow: visible;
+        pointer-events: auto;
     }
 
 </style>

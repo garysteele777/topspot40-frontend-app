@@ -35,6 +35,7 @@
             home: 'TopSpot40 home',
             navigation: 'TopSpot40 navigation',
             about: 'About',
+            welcomeLanguages: 'Welcome & Languages',
             discover: 'Discover TopSpot40',
             aboutTopSpot40: 'About TopSpot40',
             contact: 'Contact Us',
@@ -50,6 +51,7 @@
             home: 'Inicio de TopSpot40',
             navigation: 'Navegación de TopSpot40',
             about: 'Acerca de',
+            welcomeLanguages: 'Bienvenida e idiomas',
             discover: 'Descubrir TopSpot40',
             aboutTopSpot40: 'Acerca de TopSpot40',
             contact: 'Contáctanos',
@@ -65,6 +67,7 @@
             home: 'Início do TopSpot40',
             navigation: 'Navegação do TopSpot40',
             about: 'Sobre',
+            welcomeLanguages: 'Boas-vindas e idiomas',
             discover: 'Descobrir TopSpot40',
             aboutTopSpot40: 'Sobre o TopSpot40',
             contact: 'Fale conosco',
@@ -194,6 +197,9 @@ async function loadAuthenticatedUser() {
 
             {#if aboutMenuOpen}
                 <div class="my-menu-panel" role="menu">
+                    <a role="menuitem" href="/journey-prototype?showLanding=1" data-sveltekit-reload>
+                        {text[language].welcomeLanguages}
+                    </a>
                     <a role="menuitem" href="/welcome">
                         {text[language].discover}
                     </a>
@@ -287,6 +293,7 @@ async function loadAuthenticatedUser() {
                 <div class="mobile-primary-actions">
                     <details>
                         <summary>{text[language].about}</summary>
+                        <a href="/journey-prototype?showLanding=1" data-sveltekit-reload>{text[language].welcomeLanguages}</a>
                         <a href="/welcome">{text[language].discover}</a>
                         <a href="/about">{text[language].aboutTopSpot40}</a>
                         <button type="button" on:click={openContactModal}>{text[language].contact}</button>
