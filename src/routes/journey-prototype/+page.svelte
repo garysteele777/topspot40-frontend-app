@@ -24,7 +24,9 @@
             instruction: 'Choose your language—all introductions, artist stories, and music history are narrated in English, Spanish, or Portuguese.',
             continue: 'Continue',
             home: 'Home',
-            back: 'Back'
+            back: 'Back',
+            aboutTitle: 'What is TopSpot40?',
+            aboutText: 'TopSpot40 is a music discovery platform built around curated song rankings, nostalgia programs, artist spotlights, themed collections, and music docuseries. It combines music history, narrated song introductions, artist stories, and guided listening experiences to help you rediscover songs, decades, genres, and the stories behind the music.'
         },
         es: {
             title: 'Conoces las canciones. Descubre sus historias.',
@@ -33,7 +35,9 @@
             instruction: 'Elige tu idioma: todas las introducciones, historias de artistas e historia musical se narran en inglés, español o portugués.',
             continue: 'Continuar',
             home: 'Inicio',
-            back: 'Atrás'
+            back: 'Atrás',
+            aboutTitle: '¿Qué es TopSpot40?',
+            aboutText: 'TopSpot40 es una plataforma de descubrimiento musical basada en rankings de canciones seleccionadas, programas de nostalgia, artistas destacados, colecciones temáticas y docuseries musicales. Combina historia de la música, introducciones narradas de canciones, historias de artistas y experiencias de escucha guiada para ayudarte a redescubrir canciones, décadas, géneros y las historias detrás de la música.'
         },
         ptbr: {
             title: 'Você conhece as músicas. Descubra suas histórias.',
@@ -42,7 +46,9 @@
             instruction: 'Escolha seu idioma: todas as introduções, histórias de artistas e história da música são narradas em inglês, espanhol ou português.',
             continue: 'Continuar',
             home: 'Início',
-            back: 'Voltar'
+            back: 'Voltar',
+            aboutTitle: 'O que é o TopSpot40?',
+            aboutText: 'O TopSpot40 é uma plataforma de descoberta musical criada em torno de rankings selecionados de músicas, programas de nostalgia, destaques de artistas, coleções temáticas e docusséries musicais. Ele combina história da música, introduções narradas de canções, histórias de artistas e experiências de escuta guiada para ajudar você a redescobrir músicas, décadas, gêneros e as histórias por trás da música.'
         }
     };
 
@@ -278,9 +284,43 @@
 </section>
         </main>
     {/if}
+
+    <section class="about-topspot40" aria-labelledby="about-topspot40-title">
+        <div class="about-topspot40-inner">
+            <h2 id="about-topspot40-title">{text[language].aboutTitle}</h2>
+            <p>{text[language].aboutText}</p>
+        </div>
+    </section>
 </div>
 
 <style>
+    .about-topspot40 {
+        padding: clamp(42px, 5vw, 64px) 24px;
+        background: #0b0a07;
+        border-top: 1px solid rgba(214, 193, 122, 0.24);
+    }
+
+    .about-topspot40-inner {
+        width: min(900px, 100%);
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .about-topspot40 h2 {
+        margin: 0 0 16px;
+        color: #f7dc82;
+        font-family: Georgia, serif;
+        font-size: clamp(28px, 3vw, 42px);
+        line-height: 1.15;
+    }
+
+    .about-topspot40 p {
+        margin: 0;
+        color: #f6efe0;
+        font-size: clamp(17px, 1.5vw, 20px);
+        line-height: 1.7;
+    }
+
     :global(html),
     :global(body) {
         margin: 0;
