@@ -53,19 +53,19 @@
         display: block;
         margin-bottom: 4px;
         color: #fff4d1;
-        font-size: 12px;
+        font-size: 15px;
         text-align: center;
     }
     .options { display: flex; justify-content: center; gap: 4px; }
     button {
-        min-height: 34px;
-        padding: 6px 9px;
+        min-height: 44px;
+        padding: 8px 12px;
         border: 1px solid #a58c47;
         border-radius: 7px;
         background: #171717;
         color: #fff;
         font: inherit;
-        font-size: 14px;
+        font-size: 16px;
         cursor: pointer;
     }
     button.selected {
