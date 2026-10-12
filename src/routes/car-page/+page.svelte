@@ -265,7 +265,7 @@
     function addTrackRequest(track: CarModeTrack): void {
         // Before playback, an empty queue means this is the starting track,
         // not a request waiting behind a song that has not started yet.
-        if (!requests.length && stageTrackBeforePlayback(track)) return;
+        if (!userStartedPlaybackThisSession && !requests.length && stageTrackBeforePlayback(track)) return;
         const nextRequests = addRequest(requests, track);
         if (nextRequests !== requests) requests = nextRequests;
     }

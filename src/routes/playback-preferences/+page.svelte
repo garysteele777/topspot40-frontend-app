@@ -118,7 +118,7 @@
                 bind:selectedVoices
                 bind:detailLength
                 bind:playbackMethod
-                showPlaybackMethod={dev}
+                showPlaybackMethod={false}
                 bind:playbackOrder
                 bind:pauseMode
                 bind:skipPlayed
