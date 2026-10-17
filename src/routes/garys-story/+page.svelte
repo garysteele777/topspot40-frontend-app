@@ -53,7 +53,21 @@
     onMount(() => { const savedLanguage = readStoredLanguagePreference(); if (!savedLanguage) { void goto('/journey-prototype', {replaceState: true}); return; } language = savedLanguage; hasLanguage = true; });
 </script>
 
-<svelte:head><title>{copy[language].title}</title><meta name="description" content={copy[language].description}/></svelte:head>
+<svelte:head>
+    <title>{copy[language].title}</title>
+    <meta name="description" content={copy[language].description} />
+    <link rel="canonical" href="https://topspot40.com/garys-story" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content={copy[language].title} />
+    <meta property="og:description" content={copy[language].description} />
+    <meta property="og:url" content="https://topspot40.com/garys-story" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={copy[language].title} />
+    <meta name="twitter:description" content={copy[language].description} />
+</svelte:head>
 
 {#if hasLanguage}
     <div class="story-page"><PublicJourneyHeader {language}/><main><a class="back" href="/welcome">← {copy[language].back}</a><header><p class="eyebrow">{copy[language].eyebrow}</p><h1>{copy[language].hero}</h1><p class="subtitle">{copy[language].subtitle}</p></header><div class="story"><section><h2>{copy[language].sections[0][0]}</h2>{#each copy[language].sections[0][1] as paragraph}<p>{paragraph}</p>{/each}</section>{#each copy[language].sections.slice(1) as section}<details><summary>{section[0]}</summary><div class="detail-content">{#each section[1] as paragraph}<p>{paragraph}</p>{/each}{#if section[2]}<blockquote>{section[2]}</blockquote>{/if}</div></details>{/each}</div><footer><a class="back" href="/welcome">← {copy[language].back}</a></footer></main></div>
