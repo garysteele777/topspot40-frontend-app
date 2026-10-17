@@ -12,6 +12,22 @@
 
     type LandingLanguage = 'en' | 'es' | 'ptbr';
 
+    const seoStructuredData = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        '@id': 'https://topspot40.com/journey-prototype#webpage',
+        url: 'https://topspot40.com/journey-prototype',
+        name: 'TopSpot40 | Music Discovery, Artist Stories & Music History',
+        description: 'Discover curated song rankings, artist spotlights, music history, narrated song introductions, nostalgia programs, collections, and music docuseries with TopSpot40.',
+        isPartOf: {
+            '@type': 'WebSite',
+            '@id': 'https://topspot40.com/#website',
+            url: 'https://topspot40.com/',
+            name: 'TopSpot40'
+        },
+        inLanguage: ['en', 'es', 'pt-BR']
+    });
+
     let language: LandingLanguage = 'en';
     let hasChosenLanguage = false;
     let showJourneyLayout = false;
@@ -155,10 +171,23 @@
 </script>
 
 <svelte:head>
-    <title>Choose Your TopSpot40 Journey</title>
+    <title>TopSpot40 | Music Discovery, Artist Stories & Music History</title>
+    <link rel="canonical" href="https://topspot40.com/journey-prototype" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content="TopSpot40 | Music Discovery, Artist Stories & Music History" />
+    <meta property="og:description" content="Discover curated song rankings, artist spotlights, music history, narrated song introductions, nostalgia programs, collections, and music docuseries with TopSpot40." />
+    <meta property="og:url" content="https://topspot40.com/journey-prototype" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="TopSpot40 | Music Discovery, Artist Stories & Music History" />
+    <meta name="twitter:description" content="Discover curated song rankings, artist spotlights, music history, narrated song introductions, nostalgia programs, collections, and music docuseries with TopSpot40." />
+
+    <script type="application/ld+json">{seoStructuredData}</script>
     <meta
             name="description"
-            content="Choose the language for your TopSpot40 musical journey."
+            content="Discover curated song rankings, artist spotlights, music history, narrated song introductions, nostalgia programs, collections, and music docuseries with TopSpot40."
     />
 </svelte:head>
 
