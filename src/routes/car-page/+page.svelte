@@ -3170,6 +3170,10 @@
 
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 {#if interactiveRadioBlocked}
     <main class="interactive-radio-desktop-required">
         <p>Interactive Radio testing requires a desktop computer.</p>

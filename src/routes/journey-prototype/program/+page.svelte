@@ -114,6 +114,7 @@
 </script>
 
 <svelte:head>
+    <meta name="robots" content="noindex,follow"/>
     <title>{text[language].title}</title>
     <meta
             name="description"

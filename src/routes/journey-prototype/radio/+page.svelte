@@ -44,7 +44,10 @@
     }
 </script>
 
-<svelte:head><title>{text[language].title}</title></svelte:head>
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+    <title>{text[language].title}</title>
+</svelte:head>
 
 {#if desktopReady && family === 'nostalgia'}
     <button class="back" type="button" on:click={backToChoose}>{text[language].back}</button>

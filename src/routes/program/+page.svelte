@@ -235,6 +235,10 @@
     }
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 <section class="program-view">
     {#if !programKey}
         <h2>Program View</h2>

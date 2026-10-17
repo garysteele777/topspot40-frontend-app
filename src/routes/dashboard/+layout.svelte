@@ -37,6 +37,10 @@
     onMount(() => { language = readLanguagePreference(); });
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 <Header user={data.user} subscriptionStatus={data.subscriptionStatus} />
 
 {#if showFreePromotionNotice}

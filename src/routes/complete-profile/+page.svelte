@@ -5,5 +5,9 @@
  $: text=copy[language]; onMount(()=>{const saved=readLanguagePreference();language=saved==='es'?'es':saved==='ptbr'?'pt-BR':'en';});
  async function submit(){const name=displayName.trim();errorMessage='';if(name.length<2||name.length>50){errorMessage=text.invalid;return;}saving=true;try{const r=await fetch(`${getBackendUrl()}/api/auth/profile-completion`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({display_name:name})});if(!r.ok)throw new Error();await goto('/dashboard');}catch{errorMessage=text.failed;}finally{saving=false;}}
 </script>
+
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
 <main><section><h1>{text.title}</h1><p>{text.intro}</p><form on:submit|preventDefault={submit}><label for="display-name">{text.label}</label><input id="display-name" bind:value={displayName} minlength="2" maxlength="50" autocomplete="nickname" required disabled={saving}/><p>{text.hint}</p><button disabled={saving}>{saving?text.saving:text.save}</button></form>{#if errorMessage}<p role="alert">{errorMessage}</p>{/if}</section></main>
 <style>main{min-height:100vh;display:grid;place-items:center;background:#121212;color:white;padding:1rem}section{width:min(430px,100%);padding:2rem;border-radius:1rem;background:#202020}form{display:grid;gap:.85rem}input,button{padding:.85rem;border-radius:.6rem;font-size:1rem}button{background:#1db954;color:white;border:0}</style>

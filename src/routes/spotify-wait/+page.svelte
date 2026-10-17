@@ -14,6 +14,7 @@
 </script>
 
 <svelte:head>
+    <meta name="robots" content="noindex,follow"/>
     <title>{text.title}</title>
 </svelte:head>
 

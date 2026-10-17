@@ -275,6 +275,10 @@
 
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 {#if contentType === 'music_docuseries'}
     {#key $page.url.search}<DocuseriesPlayer search={$page.url.search}/>{/key}
 {:else}
