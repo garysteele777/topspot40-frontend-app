@@ -19,13 +19,13 @@
 
         const copy = {
                 en: {
-                        back: 'Go Back', title: 'Sign Up', intro: 'Create your TopSpot40 account with your email address.', email: 'Email address', marketing: 'Send me occasional TopSpot40 updates and early-member offers.', optional: 'Optional. You can unsubscribe at any time.', sending: 'Sending code...', send: 'Send sign-up code', sent: 'We sent a sign-up code to', code: 'Six-digit sign-up code', creating: 'Creating account...', verify: 'Verify and create account', differentEmail: 'Use a different email', account: 'Already have a TopSpot40 account?', signIn: 'Sign in', enterEmail: 'Enter your email address.', checkEmail: 'Check your email for your six-digit sign-up code.', wait: 'Please wait about 60 seconds before requesting another sign-up code.', sendError: 'We could not send your sign-up code. Please try again.', enterCode: 'Enter the sign-up code from your email.', signupError: 'TopSpot40 sign-up failed.', completeError: 'We could not complete sign-up.'
+                        back: 'Go Back', title: 'Create Your Free TopSpot40 Account', intro: 'Save your progress, personalize your TopSpot40 experience, and keep access to your listening journey across visits. No payment information is required during 2026.', email: 'Email address', marketing: 'Send me occasional TopSpot40 updates and early-member offers.', optional: 'Optional. You can unsubscribe at any time.', sending: 'Sending code...', send: 'Send sign-up code', sent: 'We sent a sign-up code to', code: 'Six-digit sign-up code', creating: 'Creating account...', verify: 'Verify and create account', differentEmail: 'Use a different email', account: 'Already have a TopSpot40 account?', signIn: 'Sign in', enterEmail: 'Enter your email address.', checkEmail: 'Check your email for your six-digit sign-up code.', wait: 'Please wait about 60 seconds before requesting another sign-up code.', sendError: 'We could not send your sign-up code. Please try again.', enterCode: 'Enter the sign-up code from your email.', signupError: 'TopSpot40 sign-up failed.', completeError: 'We could not complete sign-up.'
                 },
                 es: {
-                        back: 'Volver', title: 'Crear una cuenta', intro: 'Crea tu cuenta de TopSpot40 con tu dirección de correo electrónico.', email: 'Dirección de correo electrónico', marketing: 'Envíame novedades ocasionales de TopSpot40 y ofertas para miembros fundadores.', optional: 'Opcional. Puedes dejar de recibir estos mensajes en cualquier momento.', sending: 'Enviando código...', send: 'Enviar código de registro', sent: 'Enviamos un código de registro a', code: 'Código de registro de seis dígitos', creating: 'Creando cuenta...', verify: 'Verificar y crear cuenta', differentEmail: 'Usar otro correo electrónico', account: '¿Ya tienes una cuenta de TopSpot40?', signIn: 'Iniciar sesión', enterEmail: 'Ingresa tu dirección de correo electrónico.', checkEmail: 'Revisa tu correo electrónico para obtener tu código de registro de seis dígitos.', wait: 'Espera unos 60 segundos antes de solicitar otro código de registro.', sendError: 'No pudimos enviar tu código de registro. Inténtalo de nuevo.', enterCode: 'Ingresa el código de registro de tu correo electrónico.', signupError: 'No se pudo crear tu cuenta de TopSpot40.', completeError: 'No pudimos completar el registro.'
+                        back: 'Volver', title: 'Crea tu cuenta gratuita de TopSpot40', intro: 'Guarda tu progreso, personaliza tu experiencia en TopSpot40 y conserva el acceso a tu recorrido musical entre visitas. No se requiere información de pago durante 2026.', email: 'Dirección de correo electrónico', marketing: 'Envíame novedades ocasionales de TopSpot40 y ofertas para miembros fundadores.', optional: 'Opcional. Puedes dejar de recibir estos mensajes en cualquier momento.', sending: 'Enviando código...', send: 'Enviar código de registro', sent: 'Enviamos un código de registro a', code: 'Código de registro de seis dígitos', creating: 'Creando cuenta...', verify: 'Verificar y crear cuenta', differentEmail: 'Usar otro correo electrónico', account: '¿Ya tienes una cuenta de TopSpot40?', signIn: 'Iniciar sesión', enterEmail: 'Ingresa tu dirección de correo electrónico.', checkEmail: 'Revisa tu correo electrónico para obtener tu código de registro de seis dígitos.', wait: 'Espera unos 60 segundos antes de solicitar otro código de registro.', sendError: 'No pudimos enviar tu código de registro. Inténtalo de nuevo.', enterCode: 'Ingresa el código de registro de tu correo electrónico.', signupError: 'No se pudo crear tu cuenta de TopSpot40.', completeError: 'No pudimos completar el registro.'
                 },
                 'pt-BR': {
-                        back: 'Voltar', title: 'Criar uma conta', intro: 'Crie sua conta TopSpot40 com seu endereço de e-mail.', email: 'Endereço de e-mail', marketing: 'Quero receber novidades ocasionais do TopSpot40 e ofertas para membros fundadores.', optional: 'Opcional. Você pode deixar de receber essas mensagens a qualquer momento.', sending: 'Enviando código...', send: 'Enviar código de cadastro', sent: 'Enviamos um código de cadastro para', code: 'Código de cadastro de seis dígitos', creating: 'Criando conta...', verify: 'Verificar e criar conta', differentEmail: 'Usar outro endereço de e-mail', account: 'Já tem uma conta TopSpot40?', signIn: 'Entrar', enterEmail: 'Informe seu endereço de e-mail.', checkEmail: 'Verifique seu e-mail para encontrar o código de cadastro de seis dígitos.', wait: 'Aguarde cerca de 60 segundos antes de solicitar outro código de cadastro.', sendError: 'Não foi possível enviar seu código de cadastro. Tente novamente.', enterCode: 'Informe o código de cadastro enviado para seu e-mail.', signupError: 'Não foi possível criar sua conta TopSpot40.', completeError: 'Não foi possível concluir o cadastro.'
+                        back: 'Voltar', title: 'Crie sua conta gratuita do TopSpot40', intro: 'Salve seu progresso, personalize sua experiência no TopSpot40 e mantenha o acesso à sua jornada musical entre visitas. Nenhuma informação de pagamento é necessária durante 2026.', email: 'Endereço de e-mail', marketing: 'Quero receber novidades ocasionais do TopSpot40 e ofertas para membros fundadores.', optional: 'Opcional. Você pode deixar de receber essas mensagens a qualquer momento.', sending: 'Enviando código...', send: 'Enviar código de cadastro', sent: 'Enviamos um código de cadastro para', code: 'Código de cadastro de seis dígitos', creating: 'Criando conta...', verify: 'Verificar e criar conta', differentEmail: 'Usar outro endereço de e-mail', account: 'Já tem uma conta TopSpot40?', signIn: 'Entrar', enterEmail: 'Informe seu endereço de e-mail.', checkEmail: 'Verifique seu e-mail para encontrar o código de cadastro de seis dígitos.', wait: 'Aguarde cerca de 60 segundos antes de solicitar outro código de cadastro.', sendError: 'Não foi possível enviar seu código de cadastro. Tente novamente.', enterCode: 'Informe o código de cadastro enviado para seu e-mail.', signupError: 'Não foi possível criar sua conta TopSpot40.', completeError: 'Não foi possível concluir o cadastro.'
                 }
         } as const;
 
@@ -239,7 +239,6 @@
                                         required
                                 />
                                 <p class="marketing-supporting-text">{language === 'es' ? 'De 2 a 50 caracteres' : language === 'pt-BR' ? 'De 2 a 50 caracteres' : '2–50 characters'}</p>
-
                                 <label class="marketing-opt-in">
                                         <input
                                                 type="checkbox"
@@ -421,30 +420,6 @@
                 border-color: #1db954;
         }
 
-        .marketing-opt-in {
-                display: flex;
-                align-items: center;
-                min-height: 44px;
-                padding: 0.5rem 0;
-                gap: 0.65rem;
-                font-weight: 400;
-                line-height: 1.4;
-                cursor: pointer;
-        }
-
-        .marketing-opt-in input[type="checkbox"] {
-                width: 20px;
-                height: 20px;
-                margin: 0;
-                padding: 0;
-                flex: 0 0 auto;
-        }
-
-        .marketing-opt-in input[type="checkbox"]:focus-visible {
-                outline: 3px solid rgba(29, 185, 84, 0.75);
-                outline-offset: 3px;
-        }
-
         .marketing-supporting-text {
                 margin: -0.3rem 0 0;
                 color: #bbb;
@@ -521,5 +496,29 @@
                         padding: 0.65rem 1rem;
                         font-size: 0.95rem;
                 }
+        }
+
+        .marketing-opt-in {
+                display: flex;
+                align-items: center;
+                min-height: 44px;
+                padding: 0.5rem 0;
+                gap: 0.65rem;
+                font-weight: 400;
+                line-height: 1.4;
+                cursor: pointer;
+        }
+
+        .marketing-opt-in input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+                margin: 0;
+                padding: 0;
+                flex: 0 0 auto;
+        }
+
+        .marketing-opt-in input[type="checkbox"]:focus-visible {
+                outline: 3px solid rgba(29, 185, 84, 0.75);
+                outline-offset: 3px;
         }
 </style>
