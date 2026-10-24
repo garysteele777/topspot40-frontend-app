@@ -165,7 +165,18 @@
 
 <svelte:head>
     <title>Artist Spotlights | TopSpot40</title>
-    <meta name="description" content="Browse TopSpot40 Artist Spotlight programs by artist type, alphabet, and genre."/>
+    <meta name="description" content="Browse TopSpot40 Artist Spotlight programs by artist type, alphabet, and genre." />
+    <link rel="canonical" href="https://topspot40.com/journey-prototype/artist-spotlights" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content="Artist Spotlights | TopSpot40" />
+    <meta property="og:description" content="Browse TopSpot40 Artist Spotlight programs by artist type, alphabet, and genre." />
+    <meta property="og:url" content="https://topspot40.com/journey-prototype/artist-spotlights" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Artist Spotlights | TopSpot40" />
+    <meta name="twitter:description" content="Browse TopSpot40 Artist Spotlight programs by artist type, alphabet, and genre." />
 </svelte:head>
 
 <ProgramJourneyShell
