@@ -125,7 +125,18 @@
 
 <svelte:head>
     <title>{text[language].title} | TopSpot40</title>
-    <meta name="description" content="Explore TopSpot40 Collections Programs by collection group."/>
+    <meta name="description" content="Explore TopSpot40 Collections Programs by collection group." />
+    <link rel="canonical" href="https://topspot40.com/journey-prototype/collections" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content={`${text[language].title} | TopSpot40`} />
+    <meta property="og:description" content="Explore TopSpot40 Collections Programs by collection group." />
+    <meta property="og:url" content="https://topspot40.com/journey-prototype/collections" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={`${text[language].title} | TopSpot40`} />
+    <meta name="twitter:description" content="Explore TopSpot40 Collections Programs by collection group." />
 </svelte:head>
 
 <CollectionsJourneyShell
