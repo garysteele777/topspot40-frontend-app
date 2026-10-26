@@ -48,7 +48,7 @@ test('Narration options summary is accessible, localized, and placed beneath the
     assert.match(control, /aria-expanded=\{open\}/);
     assert.match(control, /aria-controls="narration-options-panel"/);
     assert.match(control, /aria-label=\{`\$\{text\.title\}: \$\{summary\}`\}/);
-    assert.match(control, /\$: summary = `\$\{text\.detailsLabel\}: \$\{detailValue\} • \$\{text\.biosLabel\}: \$\{biosValue\} • Name That Tune: \$\{nameThatTuneValue\}`/);
+    assert.match(control, /\$: summary = `\$\{introLabel\}: \$\{introEnabled \? text\.on : text\.off\} • \$\{text\.detailsLabel\}/);
     assert.match(control, /role="dialog"/);
     assert.match(control, /event\.key === 'Escape'/);
     assert.match(control, /trigger\?\.focus\(\)/);
@@ -106,7 +106,7 @@ test('Narration options changes the shared detail preference and leaves current 
     assert.match(control, /onDetailLengthChange\('short'\)/);
     assert.match(control, /onDetailLengthChange\('long'\)/);
     assert.match(control, /onDetailLengthChange\('off'\)/);
-    assert.match(route, /settings\.voices\.includes\('detail'\) && settings\.detailLength !== 'off'/);
+    assert.match(route, /if \(settings\.detailLength !== 'off'\)/);
     assert.doesNotMatch(control, /stopNarration|startGuidedTrack|openSpotify/);
 });
 
@@ -118,6 +118,7 @@ test('Guided narration inserts Artist Bio at the existing narration boundary and
     assert.match(narration, /onNarrationStart\?\.\(narration\.phase, track\)/);
     assert.match(route, /phase === 'artist'[\s\S]*artistStoriesPlayed = new Set/);
     assert.doesNotMatch(panel, /PLAY .* BIO|artist-bio-button|onPlayArtistBio/);
-    assert.match(route, /artistStoriesEnabled = false[\s\S]*artistStoriesPlayed = new Set/);
+    assert.match(route, /\$: artistStoriesEnabled = \$playbackSettingsStore\.voices\.includes\('artist'\)/);
+    assert.match(narration, /onNarrationComplete\?\.\(narration\.phase, track\)/);
     assert.doesNotMatch(readFileSync(new URL('../src/lib/carmode/CarModeAutoPlay.ts', import.meta.url), 'utf8'), /ArtistStories|artistStories/);
 });

@@ -22,7 +22,7 @@ export type CarModeNarrationDependencies = {
         fallbackUrl: string | undefined,
         onTiming: (timing: NarrationTiming) => void,
         onPlaybackStarted: () => void
-    ) => Promise<void>;
+    ) => Promise<void | boolean>;
     stopNarration: () => void;
     updateTiming: (timing: NarrationTiming) => void;
     resetTiming: () => void;
@@ -32,6 +32,7 @@ export type CarModeNarrationDependencies = {
     resetGuidedReadyState: () => void;
     setGuidedReady: (ready: boolean) => void;
     onNarrationStart?: (phase: CarModeNarrationPhase, track: CarModeTrack) => void;
+    onNarrationComplete?: (phase: CarModeNarrationPhase, track: CarModeTrack) => void;
 };
 
 export function createCarModeNarration(
@@ -153,9 +154,11 @@ export function createCarModeNarration(
                         }
                     }
 
-                    await narrationPlayback;
+                    const completed = await narrationPlayback;
 
-                    if (activeRunId !== runId) return false;
+                    const completedTrack = dependencies.getCurrentTrack();
+                    if (activeRunId !== runId || !completedTrack || trackToken(completedTrack) !== token) return false;
+                    if (completed !== false) dependencies.onNarrationComplete?.(narration.phase, track);
                 }
             } catch (error) {
                 dependencies.setIsPlaying(false);

@@ -172,9 +172,10 @@ export async function playNarrationUrlAndWait(
 	fallbackUrl?: string,
 	onTiming?: NarrationTimingListener,
 	onPlaybackStarted?: NarrationPlaybackStartedListener
-): Promise<void> {
-	const result = await playNarrationUrlOnceAndWait(url, onTiming, onPlaybackStarted);
-	if (result === 'error' && fallbackUrl) {
-		await playNarrationUrlOnceAndWait(fallbackUrl, onTiming, onPlaybackStarted);
-	}
+): Promise<boolean> {
+    let result = await playNarrationUrlOnceAndWait(url, onTiming, onPlaybackStarted);
+    if (result === 'error' && fallbackUrl) {
+        result = await playNarrationUrlOnceAndWait(fallbackUrl, onTiming, onPlaybackStarted);
+    }
+    return result === 'ended';
 }

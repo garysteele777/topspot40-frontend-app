@@ -6,6 +6,7 @@
         buildCarModePreferencesReturnUrl as headerLanguageReturn
     } from '$lib/carmode/CarModePreferencesReturn';
     import {onMount, onDestroy} from 'svelte';
+    import {programNarrationMemory} from '$lib/carmode/programNarrationMemory';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
     import DriveInPlayerPanel from '$lib/components/car/DriveInPlayerPanel.svelte';
     import GuidedPlaybackPanel from '$lib/components/car/GuidedPlaybackPanel.svelte';
@@ -173,7 +174,8 @@
 
     let lastProgramKey: string | null = null;
     let artistBioPlayedThisSet = false;
-    let spotlightBioLength: 'short' | 'long' = 'short';
+    let narrationMemory = {artists: new Set<string>(), spotlightPlayed: false};
+    $: spotlightBioLength = $playbackSettingsStore.spotlightBioLength ?? 'short';
     const spotlightStories = new Map<string, string | null>();
     const spotlightStoryRequests = new Map<string, Promise<void>>();
 
@@ -204,7 +206,7 @@
         spotlightStoryRequests.set(key, request);
         return request;
     }
-    let artistStoriesEnabled = false;
+    $: artistStoriesEnabled = $playbackSettingsStore.voices.includes('artist');
     // Session-only game setting: never persist this with playback preferences.
     let nameThatTuneEnabled = false;
     let artistStoriesPlayed = new Set<string>();
@@ -531,7 +533,7 @@
         currentTrack.set(null);
         currentRank.set(1);
         artistBioPlayedThisSet = false;
-        artistStoriesEnabled = false;
+        narrationMemory = {artists: new Set<string>(), spotlightPlayed: false};
         artistStoriesPlayed = new Set<string>();
         navigation.resetPlayedRanks();
 
@@ -854,7 +856,7 @@
             fallbackUrl?: string;
         }[] = [];
 
-        if (settings.voices.includes('intro')) {
+        if (sel.programType !== PROGRAM_TYPES.PROGRAM_ARTIST && settings.voices.includes('intro')) {
             let url = narrationUrls.intro;
 
             if (!url && sel.mode === 'collection') {
@@ -876,7 +878,7 @@
             if (url) result.push({phase: 'intro', url});
         }
 
-        if ((sel.programType === PROGRAM_TYPES.PROGRAM_ARTIST || settings.voices.includes('detail')) && settings.detailLength !== 'off') {
+        if (settings.detailLength !== 'off') {
             const url = narrationUrls.detail;
             const fallbackUrl = narrationUrls.detailFallback;
 
@@ -885,7 +887,7 @@
 
         const artistBioUrl = guidedArtistBioUrl(trackObj);
         if (sel.programType === PROGRAM_TYPES.PROGRAM_ARTIST) {
-            const bioUrl = spotlightBioLength === 'long'
+            const bioUrl = spotlightBioLength === 'off' ? null : spotlightBioLength === 'long'
                 ? spotlightStories.get(spotlightStoryKey()) ?? null
                 : artistBioUrl;
             return withSpotlightBio(result, bioUrl, artistBioPlayedThisSet);
@@ -1001,16 +1003,17 @@
         setIsPlaying: playing => isPlaying.set(playing),
         resetGuidedReadyState: () => (guidedReady = false),
         setGuidedReady: ready => (guidedReady = ready)
-        ,onNarrationStart: (phase, track) => {
+        ,onNarrationStart: (phase) => {
             setBedVolume(spotlightBedVolume(phase));
+        },
+        onNarrationComplete: (phase, track) => {
             if (phase === 'artist') {
                 if (get(currentSelection)?.programType === PROGRAM_TYPES.PROGRAM_ARTIST) {
                     artistBioPlayedThisSet = true;
+                    narrationMemory.spotlightPlayed = true;
                 }
-                artistStoriesPlayed = new Set([
-                    ...artistStoriesPlayed,
-                    artistStoryIdentity(track)
-                ]);
+                narrationMemory.artists.add(artistStoryIdentity(track));
+                artistStoriesPlayed = new Set(narrationMemory.artists);
             }
         }
     });
@@ -1348,8 +1351,8 @@
                             spotify_artist_id: trackObj.spotifyArtistId,
                             genre: sel.context?.genre ?? trackObj.genreSlug,
                             language: sel.language ?? 'en',
-                            play_artist_bio: !artistBioPlayedThisSet,
-                            bio_length: launchedSpotlightBioLength
+                            play_artist_bio: launchedSpotlightBioLength !== 'off' && !artistBioPlayedThisSet,
+                            bio_length: launchedSpotlightBioLength === 'off' ? 'short' : launchedSpotlightBioLength
                         }
                         : sel.mode === 'collection'
                             ? (
@@ -1489,7 +1492,7 @@
             returnSpotifyToWaitingPage: spotify.returnToWaitingPage,
             queueNextTrack: queueNextAutoTrack,
             setStatus: message => status.set(message),
-            continueAutoPlayback,
+            continueAutoPlayback: localRecorderContinue,
             onSpotifyHandoff: track => {
                 const trackDuration = track.durationSeconds ??
                     (track.durationMs ? Math.floor(track.durationMs / 1000) : 0);
@@ -2106,7 +2109,10 @@
     }
 
     function handleArtistStoriesChange(enabled: boolean): void {
-        artistStoriesEnabled = enabled;
+        playbackSettingsStore.update(current => ({
+            ...current,
+            voices: [...current.voices.filter(part => part !== 'artist'), ...(enabled ? ['artist' as const] : [])]
+        }));
         queueRadioNarrationPolicyUpdate(
             get(playbackSettingsStore).detailLength,
             enabled
@@ -2192,6 +2198,7 @@
     }
 
     function openPlaybackPreferences(): void {
+        programNarrationMemory.current = narrationMemory;
         preservePlaybackForPreferences = true;
         void goto(buildCarModePreferencesUrl(
             new URL(window.location.href),
@@ -2444,7 +2451,8 @@
 
     function resetSelectionPlaybackState(): void {
         artistBioPlayedThisSet = false;
-        spotlightBioLength = 'short';
+        narrationMemory = {artists: new Set<string>(), spotlightPlayed: false};
+        artistStoriesPlayed = new Set<string>();
         stopCurrentNarrationPhase({resolvePhase: false});
         stopBed();
         resetNarrationPhaseState();
@@ -2569,7 +2577,7 @@
                 activeRequestIdentity = null;
                 regularResumeTrack = null;
                 requestedTrackIdentities = new Set<string>();
-                artistStoriesEnabled = false;
+                narrationMemory = {artists: new Set<string>(), spotlightPlayed: false};
                 artistStoriesPlayed = new Set<string>();
                 guidedSpotifyOpenedThisProgram = false;
             }
@@ -2956,6 +2964,11 @@
             programStartedTracker.markStarted();
         }
 
+        if (languageUnchangedReturn && programNarrationMemory.current) {
+            narrationMemory = programNarrationMemory.current;
+            artistBioPlayedThisSet = narrationMemory.spotlightPlayed;
+            artistStoriesPlayed = new Set(narrationMemory.artists);
+        }
         if (languageUnchangedReturn) {
             // The previous Car Mode instance deliberately kept its session alive.
             // Do not reload tracks or touch browser/backend playback for this return.
@@ -3168,7 +3181,98 @@
         }
     });
 
+
+    // TOPSPOT_LOCAL_RECORDER_V2_BEGIN
+    import LocalProgramRecorder from '$lib/components/car/LocalProgramRecorder.svelte';
+    let localRecorderMounted = false;
+    let localRecorderState = {active: false, done: false, error: '', completed: [] as number[]};
+    let localRecorderPlan: CarModeTrack[] = [];
+    function localRecorderEnabled(): boolean {
+        return import.meta.env.DEV && typeof window !== 'undefined' &&
+            ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+    }
+    function localRecorderSnapshot() {
+        const selection = get(currentSelection);
+        return {...localRecorderState, completed: [...localRecorderState.completed],
+            rank: get(currentTrack)?.rank ?? null, phase: get(playbackPhase), playing: get(isPlaying),
+            status: get(status), language: selection?.language ?? 'en',
+            mode: selection?.mode, context: selection?.context ?? {},
+            preferences: {...get(playbackSettingsStore), artistStoriesEnabled, nameThatTuneEnabled},
+            tracks: get(tracks)};
+    }
+    function localRecorderStop(message = '', closeWindow = true): void {
+        localRecorderState.active = false;
+        if (message) localRecorderState.error = message;
+        autoPlay.cancel();
+        if (closeWindow) spotify.close();
+        else spotify.returnToWaitingPage();
+        nostalgiaTrackClock.stop();
+        activePlayMode = null;
+        guidedReady = false;
+        isPlaying.set(false);
+        playbackPhase.set('idle');
+        stopNarration(); stopBed();
+        status.set(message || 'Recording section finished.');
+    }
+    function localRecorderPrepare(ranks: number[]) {
+        if (!localRecorderEnabled()) throw new Error('Local recorder is not enabled.');
+        if (localRecorderState.active || get(isPlaying)) throw new Error('Stop playback before recording.');
+        if (!['decade_genre', 'collection'].includes(get(currentSelection)?.mode ?? '')) throw new Error('Choose a Nostalgia or Collections program first.');
+        if (requests.length) throw new Error('Clear Requests before recording.');
+        if (!ranks.length || ranks.length > 999 || ranks.some((rank, i) => !Number.isInteger(rank) || rank < 1 || rank > 999 || (i > 0 && rank <= ranks[i - 1])))
+            throw new Error('Recording ranks must be unique and ascending.');
+        const available = get(tracks);
+        const plan = ranks.map(rank => {
+            const matches = available.filter(t => Number(t.rank) === rank);
+            if (matches.length !== 1) throw new Error(`Rank ${rank} is missing or duplicated.`);
+            const track = matches[0];
+            if (!track.spotifyTrackId || !((track.durationSeconds ?? (track.durationMs ? track.durationMs / 1000 : 0)) > 0))
+                throw new Error(`Rank ${rank} has no Spotify ID or duration.`);
+            return track;
+        });
+        localRecorderPlan = plan;
+        stopPlaybackPolling(); resetNarrationPhaseState();
+        localRecorderState = {active: false, done: false, error: '', completed: []};
+        return localRecorderSnapshot();
+    }
+    async function localRecorderStart(): Promise<void> {
+        if (!localRecorderEnabled() || localRecorderState.active || !localRecorderPlan.length) throw new Error('No prepared recording.');
+        localRecorderState.active = true;
+        userStartedPlaybackThisSession = true;
+        currentTrack.set(localRecorderPlan[0]); currentRank.set(localRecorderPlan[0].rank);
+        playbackPhase.set('idle');
+        try { await autoPlay.playSelectedTrack(localRecorderPlan[0], {preserveSpotifyWindow: true}); }
+        catch (error) { localRecorderStop(String(error)); throw error; }
+    }
+    async function localRecorderContinue(): Promise<void> {
+        if (!localRecorderState.active) { await continueAutoPlayback(); return; }
+        try {
+            const expected = localRecorderPlan[localRecorderState.completed.length];
+            if (Number(get(currentTrack)?.rank) !== Number(expected?.rank)) throw new Error('Playback rank changed. Recording stopped.');
+            localRecorderState.completed = [...localRecorderState.completed, Number(expected.rank)];
+            if (localRecorderState.completed.length === localRecorderPlan.length) {
+                localRecorderStop('', false); localRecorderState.done = true; return;
+            }
+            const next = localRecorderPlan[localRecorderState.completed.length];
+            if (!spotify.returnToWaitingPage()) throw new Error('Spotify companion window was closed.');
+            currentTrack.set(next); currentRank.set(next.rank);
+            await autoPlay.playSelectedTrack(next, {preserveSpotifyWindow: true});
+        } catch (error) { localRecorderStop(String(error)); }
+    }
+    const localRecorderController = {snapshot: localRecorderSnapshot, prepare: localRecorderPrepare,
+        reserve: () => spotify.prepareAutoWindow(), start: localRecorderStart,
+        stop: (message = '') => localRecorderStop(message)};
+    onMount(() => {
+        localRecorderMounted = localRecorderEnabled();
+        return () => { if (localRecorderState.active) localRecorderStop('Recording page closed.'); };
+    });
+    // TOPSPOT_LOCAL_RECORDER_V2_END
 </script>
+<!-- TOPSPOT_LOCAL_RECORDER_V2_UI_BEGIN -->
+{#if localRecorderMounted}
+    <LocalProgramRecorder controller={localRecorderController} />
+{/if}
+<!-- TOPSPOT_LOCAL_RECORDER_V2_UI_END -->
 
 {#if interactiveRadioBlocked}
     <main class="interactive-radio-desktop-required">
@@ -3247,6 +3351,8 @@
                             ? (($currentSelection.context?.artistBioLength as 'short' | 'long' | undefined) ?? 'short')
                             : spotlightBioLength}
                         {artistStoriesEnabled}
+                        introEnabled={settings.voices.includes('intro')}
+                        onIntroChange={(enabled) => playbackSettingsStore.update(current => ({...current, voices: [...current.voices.filter(part => part !== 'intro'), ...(enabled ? ['intro' as const] : [])]}))}
                         {nameThatTuneEnabled}
                         onDetailLengthChange={(value) => { handleDetailLengthChange(value); if ($currentSelection.programType === 'RADIO_ARTIST') currentSelection.update(selection => selection ? {...selection, context: {...selection.context, artistDetailLength: value}} : selection); }}
                         onArtistStoriesChange={handleArtistStoriesChange}
@@ -3254,7 +3360,7 @@
                         onArtistBioLengthChange={(value) => {
                             if ($currentSelection.programType === PROGRAM_TYPES.PROGRAM_ARTIST) {
                                 if (spotlightBioLength === value) return;
-                                spotlightBioLength = value;
+                                playbackSettingsStore.update(current => ({...current, spotlightBioLength: value}));
                                 if (value === 'long') {
                                     void prepareSpotlightStory().catch(error => console.warn('Artist biography lookup failed', error));
                                 }

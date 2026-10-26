@@ -354,7 +354,7 @@
         language = selection.language;
         languages = selection.languages ?? [selection.language];
 
-        selectedVoices = (selection.voices ?? ['intro']) as VoicePart[];
+        selectedVoices = [...get(playbackSettingsStore).voices];
         startRank = selection.startRank ?? 1;
         const totalTracks = getTotalTracksForSelection(
             selection.mode,

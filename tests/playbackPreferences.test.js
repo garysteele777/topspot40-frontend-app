@@ -42,7 +42,8 @@ test('keeps the playback settings defaults at guided Intro+Detail/shuffle/contin
         pauseMode: 'continuous',
         voices: ['intro', 'detail'],
         voicePlayMode: 'before',
-        detailLength: 'short'
+        detailLength: 'short',
+        spotlightBioLength: 'short'
     });
 });
 
@@ -105,7 +106,7 @@ test('maps narration booleans exactly from selected voices', () => {
     });
 });
 
-test('keeps Detail Length as the only durably persisted playback preference', () => {
+test('persists narration choices alongside the legacy Detail Length key', () => {
     writes.length = 0;
     playbackSettingsStore.set({
         ...get(playbackSettingsStore),
@@ -116,15 +117,21 @@ test('keeps Detail Length as the only durably persisted playback preference', ()
         voices: ['artist'],
         voicePlayMode: 'over'
     });
-    assert.deepEqual(writes, [['topspot_detail_length', 'short']]);
+    assert.deepEqual(writes.map(([key]) => key), ['topspot_narration_preferences_v1', 'topspot_detail_length', 'topspot_playback_order', 'topspot_skip_played']);
+    assert.equal(JSON.parse(writes[0][1]).detailLength, 'short');
+    assert.equal(writes[1][1], 'short');
 
     writes.length = 0;
     playbackSettingsStore.update(settings => ({...settings, detailLength: 'long'}));
-    assert.deepEqual(writes, [['topspot_detail_length', 'long']]);
+    assert.deepEqual(writes.map(([key]) => key), ['topspot_narration_preferences_v1', 'topspot_detail_length', 'topspot_playback_order', 'topspot_skip_played']);
+    assert.equal(JSON.parse(writes[0][1]).detailLength, 'long');
+    assert.equal(writes[1][1], 'long');
 
     writes.length = 0;
     playbackSettingsStore.update(settings => ({...settings, detailLength: 'off'}));
-    assert.deepEqual(writes, [['topspot_detail_length', 'off']]);
+    assert.deepEqual(writes.map(([key]) => key), ['topspot_narration_preferences_v1', 'topspot_detail_length', 'topspot_playback_order', 'topspot_skip_played']);
+    assert.equal(JSON.parse(writes[0][1]).detailLength, 'off');
+    assert.equal(writes[1][1], 'off');
 });
 
 test('Details Off preserves intro resolution but does not request detail narration', () => {

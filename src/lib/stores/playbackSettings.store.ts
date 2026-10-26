@@ -1,6 +1,7 @@
 // src/lib/stores/playbackSettings.store.ts
 
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
+import {normalizeNarrationPreferences, readNarrationPreferences, NARRATION_STORAGE_KEY} from '$lib/narrationPreferences';
 import { browser } from '$app/environment';
 import type {
     DetailLength,
@@ -10,19 +11,14 @@ import type {
     VoicePlayMode
 } from '$lib/types/playback';
 import {
-    normalizeDetailLength,
     type PlaybackMethod
 } from '$lib/playbackPreferences';
 
 export type {PlaybackMethod} from '$lib/playbackPreferences';
-const DETAIL_LENGTH_STORAGE_KEY = 'topspot_detail_length';
-
-function initialDetailLength(): DetailLength {
-	if (!browser) return 'short';
-	return normalizeDetailLength(
-		localStorage.getItem(DETAIL_LENGTH_STORAGE_KEY),
-		'short'
-	);
+function initialNarrationPreferences() {
+    if (!browser) return normalizeNarrationPreferences({voices: ['intro'], detailLength: 'short'});
+    try { return readNarrationPreferences(localStorage); }
+    catch { return normalizeNarrationPreferences({voices: ['intro'], detailLength: 'short'}); }
 }
 
 export type PlaybackSettings = {
@@ -33,6 +29,7 @@ export type PlaybackSettings = {
 	voices: VoicePart[];
 	voicePlayMode: VoicePlayMode;
 	detailLength: DetailLength;
+	spotlightBioLength?: DetailLength;
 };
 
 const ORDER_STORAGE_KEY = 'topspot_playback_order';
@@ -59,22 +56,34 @@ function initialSkipPlayed(): boolean {
     return true;
 }
 
-export const playbackSettingsStore = writable<PlaybackSettings>({
+const settingsStore = writable<PlaybackSettings>({
 	playbackMethod: 'guided',
 	playbackOrder: initialPlaybackOrder(),
 	skipPlayed: initialSkipPlayed(),
 	pauseMode: 'continuous',
-	voices: ['intro', 'detail'],
 	voicePlayMode: 'before',
-	detailLength: initialDetailLength()
+	...initialNarrationPreferences()
 });
 
+export const playbackSettingsStore = {
+    subscribe: settingsStore.subscribe,
+    set(value: PlaybackSettings) {
+        const current = get(settingsStore);
+        const next = {...current, ...value, spotlightBioLength: value.spotlightBioLength ?? current.spotlightBioLength};
+        settingsStore.set({...next, ...normalizeNarrationPreferences(next)});
+    },
+    update(updater: (current: PlaybackSettings) => PlaybackSettings) {
+        this.set(updater(get(settingsStore)));
+    }
+};
+
 if (browser) {
-	playbackSettingsStore.subscribe(({ detailLength, playbackOrder, skipPlayed }) => {
-		try {
-                    localStorage.setItem(DETAIL_LENGTH_STORAGE_KEY, detailLength);
-                    localStorage.setItem(ORDER_STORAGE_KEY, playbackOrder);
-                    localStorage.setItem(SKIP_PLAYED_STORAGE_KEY, String(skipPlayed));
-                } catch {}
-	});
+    settingsStore.subscribe(value => {
+        try {
+            localStorage.setItem(NARRATION_STORAGE_KEY, JSON.stringify(normalizeNarrationPreferences(value)));
+            localStorage.setItem('topspot_detail_length', value.detailLength);
+            localStorage.setItem(ORDER_STORAGE_KEY, value.playbackOrder);
+            localStorage.setItem(SKIP_PLAYED_STORAGE_KEY, String(value.skipPlayed));
+        } catch { /* Playback remains available if browser storage is blocked. */ }
+    });
 }

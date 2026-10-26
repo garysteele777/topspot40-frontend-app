@@ -13,6 +13,7 @@ type PlaybackSettingsForLaunch = {
 type SelectionForLaunch = {
     language?: string;
     languages?: string[];
+    programType?: string;
 };
 
 /**
@@ -39,11 +40,14 @@ export function buildPlaybackSelection<T extends SelectionForLaunch>(
         ...selection,
         languages: selection.languages ?? [selection.language ?? 'en'],
         playbackOrder: settings.playbackOrder,
-        voices: settings.voices,
+        voices: selection.programType === 'PROGRAM_ARTIST' ? settings.voices.filter(part => part !== 'intro' && part !== 'artist') : settings.voices,
         voicePlayMode: settings.voicePlayMode,
         pauseMode: settings.pauseMode,
         continuous: settings.pauseMode === 'continuous',
-        detailLength: resolvedDetailLength(settings)
+        detailLength: resolvedDetailLength(settings),
+        playIntro: selection.programType !== 'PROGRAM_ARTIST' && settings.voices.includes('intro'),
+        playDetail: resolvedDetailLength(settings) !== 'off',
+        playArtistDescription: selection.programType !== 'PROGRAM_ARTIST' && settings.voices.includes('artist')
     };
 }
 
