@@ -59,7 +59,7 @@ test('root sends authentication fetch failures to language selection', async () 
     }, '/journey-prototype');
 });
 
-test('language selection preserves the first-visit path and skips welcome for a valid remembered language', async () => {
+test('new and remembered language selections open experience selection', async () => {
     const languagePage = await readFile(
         new URL('../src/routes/journey-prototype/+page.svelte', import.meta.url),
         'utf8'
@@ -67,7 +67,7 @@ test('language selection preserves the first-visit path and skips welcome for a 
 
     assert.match(languagePage, /let hasChosenLanguage = false;/);
     assert.match(languagePage, /function setLanguage\(value: LandingLanguage\) \{[\s\S]*?writeLanguagePreference\(value\);/);
-    assert.match(languagePage, /function performContinueJourney\(\) \{\s*captureLanguageSelected\(posthog, language\);\s*goto\('\/welcome'\);/s);
+    assert.match(languagePage, /function performContinueJourney\(\) \{\s*captureLanguageSelected\(posthog, language\);\s*goto\('\/journey-prototype\/choose'\);/s);
     assert.match(languagePage, /if \(savedLanguage\)[\s\S]*?goto\('\/journey-prototype\/choose',\s*\{\s*replaceState: true/s);
     assert.doesNotMatch(languagePage, /goto\('\/'/);
 });

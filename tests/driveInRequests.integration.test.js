@@ -29,6 +29,20 @@ test('a searched request already displayed as current is not resumed and played 
     );
     assert.match(
         route,
-        /currentTrack\.set\(requestedTrack\);[\s\S]*currentRank\.set\(requestedTrack\.rank\);[\s\S]*addTrackRequest\(requestedTrack\)/
+        /stageTrackBeforePlayback\(requestedTrack\)/
     );
+});
+
+
+test('searched songs are staged without queuing or starting playback', () => {
+    const stage = route.match(/function stageTrackBeforePlayback\(track: CarModeTrack\): boolean \{([\s\S]*?)\r?\n    \}/)?.[1] ?? '';
+    assert.match(stage, /get\(isPlaying\)/);
+    assert.match(stage, /get\(playbackPhase\) !== 'idle'/);
+    assert.match(stage, /currentTrack\.set\(track\)/);
+    assert.match(stage, /currentRank\.set\(track\.rank\)/);
+    assert.match(stage, /stagedTrackChoiceIdentity = requestTrackIdentity\(track\)/);
+    assert.doesNotMatch(stage, /addTrackRequest|startGuidedTrack|playSelectedTrack/);
+    const add = route.match(/function addTrackRequest\(track: CarModeTrack\): void \{([\s\S]*?)\r?\n    \}/)?.[1] ?? '';
+    assert.match(add, /addRequest\(requests, track\)/);
+    assert.doesNotMatch(add, /currentTrack\.set|startGuidedTrack|playSelectedTrack/);
 });

@@ -5,12 +5,12 @@ import {readFile} from 'node:fs/promises';
 
 const source = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('a new language selection continues through welcome, while a remembered language opens experience selection', async () => {
+test('new and remembered language selections open experience selection', async () => {
     const languagePage = await source('../src/routes/journey-prototype/+page.svelte');
 
     const setLanguageBody = languagePage.match(/function setLanguage\(value: LandingLanguage\)\s*\{([\s\S]*?)\r?\n\s*\}/)?.[1] ?? '';
     assert.doesNotMatch(setLanguageBody, /captureLanguageSelected/);
-    assert.match(languagePage, /function performContinueJourney\(\)\s*\{\s*captureLanguageSelected\(posthog, language\);\s*goto\('\/welcome'\);/s);
+    assert.match(languagePage, /function performContinueJourney\(\)\s*\{\s*captureLanguageSelected\(posthog, language\);\s*goto\('\/journey-prototype\/choose'\);/s);
     assert.match(languagePage, /if \(savedLanguage\)[\s\S]*?goto\('\/journey-prototype\/choose',\s*\{\s*replaceState: true/s);
 });
 

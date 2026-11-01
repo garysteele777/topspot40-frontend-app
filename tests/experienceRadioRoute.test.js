@@ -54,10 +54,10 @@ test('Nostalgia reuses the established Interactive Radio launcher and return con
 });
 
 test('chooser copy and mobile program navigation remain intact', () => {
-    assert.match(chooser, /Choose an experience, then choose how you'd like to listen\./);
+    assert.match(chooser, /Choose an experience, then select Browse to get started\./);
     assert.match(chooser, /modeCopy\[language\]\.program/);
     assert.match(chooser, /modeCopy\[language\]\.radio/);
-    const mobileStart = chooser.indexOf('{:else}');
+    const mobileStart = chooser.indexOf('<main class="mobile-page">');
     const mobile = chooser.slice(mobileStart, chooser.indexOf('</main>', mobileStart));
     assert.match(mobile, /startExperience\('program'\)/);
     assert.match(chooser, /goto\(buildExperienceDestination\(selectedProgram, mode\)\)/);
