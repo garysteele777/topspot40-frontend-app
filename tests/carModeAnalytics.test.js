@@ -208,10 +208,10 @@ test('Car Mode routes both user playback handlers through the one-time program-s
     );
 
     const guidedHandler = page.match(
-        /async function handleGuidedPlay\(\)\s*\{([\s\S]*?)\n\s*\}/
+        /async function handleGuidedPlay\(\)\s*\{([\s\S]*?)\r?\n    \}/
     );
     const autoHandler = page.match(
-        /async function handleAutoPlay\(\)\s*\{([\s\S]*?)\n\s*\}/
+        /async function handleAutoPlay\(\)\s*\{([\s\S]*?)\r?\n    \}/
     );
 
     assert.ok(guidedHandler);

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {getPlaybackPreferencesCopy} from '$lib/components/options-v2/playbackPreferencesCopy';
     import {onMount} from 'svelte';
     import {goto} from '$app/navigation';
     import {dev} from '$app/environment';
@@ -85,6 +86,7 @@
 
         history.back();
     }
+    $: copy = getPlaybackPreferencesCopy(language);
 </script>
 
 <svelte:head>
@@ -105,13 +107,13 @@
                     type="button"
                     on:click={goBack}
             >
-                ← Back
+                ← {copy.back}
             </button>
 
             <div>
-                <h1>⚙️ TopSpot40 Playback Preferences</h1>
+                <h1>⚙️ {copy.title}</h1>
                 <p>
-                    Choose how TopSpot40 sounds and plays your music.
+                    {copy.description}
                 </p>
             </div>
         </div>
@@ -122,7 +124,7 @@
                 bind:selectedVoices
                 bind:detailLength
                 bind:playbackMethod
-                showPlaybackMethod={dev}
+                showPlaybackMethod={false}
                 bind:playbackOrder
                 bind:pauseMode
                 bind:skipPlayed

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {getPlaybackPreferencesCopy} from '$lib/components/options-v2/playbackPreferencesCopy';
     import LanguageSelector from '$lib/components/options-v2/LanguageSelector.svelte';
     import VoiceContentSelector from '$lib/components/options-v2/VoiceContentSelector.svelte';
 
@@ -29,29 +30,35 @@
         languages.map(l => l === 'ptbr' ? 'PT-BR' : l.toUpperCase()).join(' + ');
 
     $: methodSummary =
-        playbackMethod === 'guided' ? 'Guided Spotify' : 'Automatic Spotify';
+        playbackMethod === 'guided' ? copy.guidedSpotify : copy.automaticSpotify;
 
     $: orderSummary =
-        playbackOrder === 'up' ? 'Up' : playbackOrder === 'down' ? 'Down' : 'Shuffle';
+        playbackOrder === 'up' ? copy.up : playbackOrder === 'down' ? copy.down : copy.shuffle;
 
     $: flowSummary =
-        pauseMode === 'continuous' ? 'Continuous' : 'Pause';
+        pauseMode === 'continuous' ? copy.continuous : copy.pause;
 
     $: trackStrategySummary =
-        skipPlayed ? 'Favor New' : 'All Equal';
+        skipPlayed ? copy.favorNew : copy.allEqual;
 
+    $: effectiveVoices = [
+        ...(selectedVoices.includes('intro') ? ['intro'] : []),
+        ...(detailLength !== 'off' ? ['detail'] : []),
+        ...(selectedVoices.includes('artist') ? ['artist'] : [])
+    ];
     $: voiceSummary =
-        selectedVoices.length === 0
-            ? 'Track Only'
-            : selectedVoices
+        effectiveVoices.length === 0
+            ? copy.trackOnly
+            : effectiveVoices
                 .map(v =>
                     v === 'intro'
-                        ? 'Intro'
+                        ? copy.intro
                         : v === 'detail'
-                            ? `Detail (${detailLength === 'off' ? 'Off' : detailLength === 'short' ? 'Short' : 'Long'})`
-                            : 'Artist'
+                            ? `${copy.detail} (${detailLength === 'off' ? copy.off : detailLength === 'short' ? copy.short : copy.long})`
+                            : copy.artist
                 )
                 .join('+');
+    $: copy = getPlaybackPreferencesCopy(language);
 </script>
 
 <div class="opt-cell playback-preferences-card">
@@ -68,7 +75,7 @@
                     }
                 }}
         >
-            <h3 class="section-title">⚙ TopSpot40 Playback Preferences</h3>
+            <h3 class="section-title">⚙ {copy.title}</h3>
             <span class="section-toggle">{collapsed ? '▼' : '▲'}</span>
         </div>
 
@@ -81,17 +88,17 @@
         <div class="radio-buttons">
             <button type="button" class:active={activePanel === 'languages'}
                     on:click|stopPropagation={() => activePanel = 'languages'}>
-                🌐 Languages
+                🌐 {copy.languages}
             </button>
 
             <button type="button" class:active={activePanel === 'voice'}
                     on:click|stopPropagation={() => activePanel = 'voice'}>
-                🎙 Voice
+                🎙 {copy.voice}
             </button>
 
             <button type="button" class:active={activePanel === 'playback'}
                     on:click|stopPropagation={() => activePanel = 'playback'}>
-                ▶ Playback
+                ▶ {copy.playback}
             </button>
         </div>
 
@@ -103,100 +110,100 @@
             {/if}
 
             {#if activePanel === 'voice'}
-                <VoiceContentSelector bind:selectedVoices bind:detailLength/>
+                <VoiceContentSelector {language} bind:selectedVoices bind:detailLength/>
             {/if}
 
             {#if activePanel === 'playback'}
                 <div class="preference-tile">
-                    <h3 class="tile-title">Playback</h3>
+                    <h3 class="tile-title">{copy.playback}</h3>
 
                     <div class="playback-section">
 
                         {#if showPlaybackMethod}
                             <div class="playback-group">
-                                <div class="label">Method</div>
+                                <div class="label">{copy.method}</div>
 
                                 <div class="grid grid-2">
                                     <button
                                             class:selected={playbackMethod === 'automatic'}
                                             on:click|stopPropagation={() => playbackMethod = 'automatic'}
                                     >
-                                        Automatic Spotify
+                                    {copy.automaticSpotify}
                                     </button>
 
                                     <button
                                             class:selected={playbackMethod === 'guided'}
                                             on:click|stopPropagation={() => playbackMethod = 'guided'}
                                     >
-                                        Guided Spotify
+                                    {copy.guidedSpotify}
                                     </button>
                                 </div>
                             </div>
                         {/if}
 
                         <div class="playback-group">
-                            <div class="label">Order</div>
+                            <div class="label">{copy.order}</div>
 
                             <div class="grid">
                                 <button
                                         class:selected={playbackOrder === 'up'}
                                         on:click|stopPropagation={() => playbackOrder = 'up'}
                                 >
-                                    Up
+                                    {copy.up}
                                 </button>
 
                                 <button
                                         class:selected={playbackOrder === 'down'}
                                         on:click|stopPropagation={() => playbackOrder = 'down'}
                                 >
-                                    Down
+                                    {copy.down}
                                 </button>
 
                                 <button
                                         class:selected={playbackOrder === 'shuffle'}
                                         on:click|stopPropagation={() => playbackOrder = 'shuffle'}
                                 >
-                                    Shuffle
+                                    {copy.shuffle}
                                 </button>
                             </div>
                         </div>
 
                         <div class="playback-group">
-                            <div class="label">Tracks</div>
+                            <div class="label">{copy.tracks}</div>
 
                             <div class="grid grid-2">
                                 <button
                                         class:selected={skipPlayed}
                                         on:click|stopPropagation={() => skipPlayed = true}
                                 >
-                                    Favor New
+                                    {copy.favorNew}
                                 </button>
 
                                 <button
                                         class:selected={!skipPlayed}
                                         on:click|stopPropagation={() => skipPlayed = false}
                                 >
-                                    All Equal
+                                    {copy.allEqual}
                                 </button>
                             </div>
                         </div>
 
                         <div class="playback-group">
-                            <div class="label">Flow</div>
+                            <div class="label">{copy.flow}</div>
 
                             <div class="grid grid-2">
                                 <button
                                         class:selected={pauseMode === 'pause'}
                                         on:click|stopPropagation={() => pauseMode = 'pause'}
                                 >
-                                    Pause
+                                    {copy.pause}
                                 </button>
 
                                 <button
                                         class:selected={pauseMode === 'continuous'}
                                         on:click|stopPropagation={() => pauseMode = 'continuous'}
                                 >
-                                    Continuous
+                                    {copy.continuous}
                                 </button>
                             </div>
                         </div>
@@ -307,7 +314,7 @@
 
     .playback-group {
         display: grid;
-        grid-template-columns: 70px 1fr;
+        grid-template-columns: 110px minmax(0, 1fr);
         align-items: center;
         column-gap: 10px;
     }
@@ -328,6 +335,9 @@
     }
 
     .grid button {
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
         padding: 5px 10px;
         border-radius: 999px;
         border: 1px solid #444;
@@ -364,5 +374,11 @@
         font-size: 1rem;
         color: #f5f5f5;
         font-weight: 700;
+    }
+    @media (max-width: 600px) {
+        .playback-group {
+            grid-template-columns: minmax(0, 1fr);
+            row-gap: 5px;
+        }
     }
 </style>

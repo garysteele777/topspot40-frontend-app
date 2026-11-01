@@ -185,12 +185,21 @@
     }
 
     let surpriseCode = '';
+    let manualBrowseSelection: {code: string; name: string} | null = null;
     $: nostalgiaSurprises = nostalgiaDecades.flatMap((decade, decadeIndex) =>
         nostalgiaGenres.map((_, genreIndex) => ({
             code: nostalgiaCode(decadeIndex, genreIndex),
             name: `${decade} ${nostalgiaGenreLabels[language][genreIndex]}`
         })));
     const collectionSurprises = collectionGroups.flatMap(group => group.items.map(([code, name]) => ({code, name})));
+
+    function selectBrowseCode(code: string) {
+        const item = nostalgiaSurprises.find(item => item.code === code)
+            ?? collectionSurprises.find(item => item.code === code)
+            ?? artistSpotlights.find(item => item.code === code);
+        if (!item) return;
+        manualBrowseSelection = {code: item.code, name: item.name};
+    }
 
     function highlightSurprise(code: string, finished: boolean) {
         surpriseCode = code;
@@ -588,11 +597,11 @@
         void goto(`${destination.pathname}${destination.search}`);
     }
 
-    function description(choice: ExperienceFamily) {
-        if (choice === 'nostalgia') return text[language].nostalgiaDesc;
-        if (choice === 'collections') return text[language].collectionsDesc;
-        if (choice === 'artist') return text[language].artistDesc;
-        return text[language].docuseriesDesc;
+    function description(choice: ExperienceFamily, selectedLanguage: LandingLanguage) {
+        if (choice === 'nostalgia') return text[selectedLanguage].nostalgiaDesc;
+        if (choice === 'collections') return text[selectedLanguage].collectionsDesc;
+        if (choice === 'artist') return text[selectedLanguage].artistDesc;
+        return text[selectedLanguage].docuseriesDesc;
     }
 
     function startExperience(mode: ExperienceMode) {
@@ -672,7 +681,7 @@
                 {#each choices as choice}
                     <div class="arch-slot arch-{choice}">
                         <button class="program-choice" class:active={selectedProgram === choice}
-                                aria-label={`${text[language][choice]}: ${description(choice)}`}
+                                aria-label={`${text[language][choice]}: ${description(choice, language)}`}
                                 aria-pressed={selectedProgram === choice} on:click={() => setProgram(choice)}></button>
                         <div class="arch-content">
                             {#if selectedProgram === choice}
@@ -706,7 +715,7 @@
                                     <div id="desktop-catalog-status" class:catalog-error={catalogStatusKind === 'error'} role={catalogStatusKind === 'error' ? 'alert' : 'status'} aria-live="polite">{lookingUpCatalog ? catalogText().checking : catalogStatus ?? ''}</div>
                                 </form>
                             {/if}
-                            <span class="choice-label"><strong>{text[language][choice]}</strong><small>{description(choice)}</small></span>
+                            <span class="choice-label"><strong>{text[language][choice]}</strong><small>{description(choice, language)}</small></span>
                         </div>
                     </div>
                 {/each}
@@ -738,7 +747,7 @@
                         <button class="mobile-browse" type="button" aria-pressed={selectedProgram === choice} on:click={() => setProgram(choice)}>
                         <span class="mobile-choice-text">
                             <strong>{text[language][choice]}</strong>
-                            <small>{description(choice)}</small>
+                            <small>{description(choice, language)}</small>
                         </span>
                             <span aria-hidden="true">
                             {selectedProgram === choice ? '✓' : '→'}
@@ -795,7 +804,7 @@
                     <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeNostalgiaBrowser} aria-label={nostalgiaBrowserCopy[language].close}>×</button>
                 </div>
                 <FavoritesPlayback program="DG" {language} options={nostalgiaGenres.map((value, index) => ({value, label: nostalgiaGenreLabels[language][index]}))}/>
-                <SurpriseMe {language} items={nostalgiaSurprises} onHighlight={highlightSurprise} onGo={openNostalgiaCode}/>
+                <SurpriseMe {language} items={nostalgiaSurprises} manualSelection={manualBrowseSelection?.code.startsWith("N-") ? manualBrowseSelection : null} onHighlight={highlightSurprise} onGo={openNostalgiaCode}/>
                 {#if showJourneyLayout}
                     <table class="nostalgia-matrix">
                         <thead><tr><th scope="col">{nostalgiaBrowserCopy[language].genre}</th>{#each nostalgiaDecades as decade}<th scope="col">{decade}</th>{/each}</tr></thead>
@@ -803,7 +812,7 @@
                             {#each nostalgiaGenres as genre, genreIndex}
                                 <tr><th scope="row">{nostalgiaGenreLabels[language][genreIndex]}</th>
                                     {#each nostalgiaDecades as _, decadeIndex}
-                                        <td><button type="button" class:surprise-highlight={surpriseCode === nostalgiaCode(decadeIndex, genreIndex)} on:click={() => openNostalgiaCode(nostalgiaCode(decadeIndex, genreIndex))} aria-label={`${nostalgiaDecades[decadeIndex]} ${nostalgiaGenreLabels[language][genreIndex]}: ${nostalgiaCode(decadeIndex, genreIndex)}`}>{nostalgiaCode(decadeIndex, genreIndex)}</button></td>
+                                        <td><button type="button" class:surprise-highlight={surpriseCode === nostalgiaCode(decadeIndex, genreIndex)} on:click={() => selectBrowseCode(nostalgiaCode(decadeIndex, genreIndex))} aria-label={`${nostalgiaDecades[decadeIndex]} ${nostalgiaGenreLabels[language][genreIndex]}: ${nostalgiaCode(decadeIndex, genreIndex)}`}>{nostalgiaCode(decadeIndex, genreIndex)}</button></td>
                                     {/each}
                                 </tr>
                             {/each}
@@ -816,7 +825,7 @@
                     </select>
                     <div class="browser-mobile-list">
                         {#each nostalgiaGenres as genre, genreIndex}
-                            <button type="button" class:surprise-highlight={surpriseCode === nostalgiaCode(browserDecade, genreIndex)} on:click={() => openNostalgiaCode(nostalgiaCode(browserDecade, genreIndex))}>
+                            <button type="button" class:surprise-highlight={surpriseCode === nostalgiaCode(browserDecade, genreIndex)} on:click={() => selectBrowseCode(nostalgiaCode(browserDecade, genreIndex))}>
                                 <span>{nostalgiaGenreLabels[language][genreIndex]}</span><strong>{nostalgiaCode(browserDecade, genreIndex)}</strong>
                             </button>
                         {/each}
@@ -836,7 +845,7 @@
                     <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeCollectionsBrowser} aria-label={collectionsBrowserCopy[language].close}>×</button>
                 </div>
                 <FavoritesPlayback program="COL" {language} options={collectionGroups.map(group => ({value: group.slug, label: group.name}))}/>
-                <SurpriseMe {language} items={collectionSurprises} onHighlight={highlightSurprise} onGo={openCollectionCode}/>
+                <SurpriseMe {language} items={collectionSurprises} manualSelection={manualBrowseSelection?.code.startsWith("C-") ? manualBrowseSelection : null} onHighlight={highlightSurprise} onGo={openCollectionCode}/>
                 <div class="collections-desktop-groups">
                     {#each [0, 1, 2] as column}
                         <div class="collections-column">
@@ -844,7 +853,7 @@
                                 <section class="collections-group">
                                     <h3>{group.name}</h3>
                                     {#each group.items as [code, name]}
-                                        <button type="button" class:surprise-highlight={surpriseCode === code} on:click={() => openCollectionCode(code)} aria-label={`${code}: ${name}`}><strong>{code}</strong><span>{name}</span></button>
+                                        <button type="button" class:surprise-highlight={surpriseCode === code} on:click={() => selectBrowseCode(code)} aria-label={`${code}: ${name}`}><strong>{code}</strong><span>{name}</span></button>
                                     {/each}
                                 </section>
                             {/each}
@@ -858,7 +867,7 @@
                     </select>
                     <div class="browser-mobile-list">
                         {#each collectionGroups[collectionGroupIndex].items as [code, name]}
-                            <button type="button" class:surprise-highlight={surpriseCode === code} on:click={() => openCollectionCode(code)}><span>{name}</span><strong>{code}</strong></button>
+                            <button type="button" class:surprise-highlight={surpriseCode === code} on:click={() => selectBrowseCode(code)}><span>{name}</span><strong>{code}</strong></button>
                         {/each}
                     </div>
                 </div>
@@ -875,7 +884,7 @@
                     </div>
                     <button class="browser-close" type="button" bind:this={browserCloseButton} on:click={closeArtistsBrowser} aria-label={artistsBrowserCopy[language].close}>×</button>
                 </div>
-                <SurpriseMe {language} items={artistSpotlights} onHighlight={highlightSurprise} onGo={openArtistCode}/>
+                <SurpriseMe {language} items={artistSpotlights} manualSelection={manualBrowseSelection?.code.startsWith("A-") ? manualBrowseSelection : null} onHighlight={highlightSurprise} onGo={openArtistCode}/>
                 <div class="artist-controls">
                     <div>
                         <label for="artist-letter">{artistsBrowserCopy[language].letter}</label>
@@ -886,7 +895,7 @@
                 </div>
                 <div class="artists-results" aria-live="polite">
                     {#each visibleArtists as artist (artist.code)}
-                        <button type="button" class:surprise-highlight={surpriseCode === artist.code} on:click={() => openArtistCode(artist.code)}><span>{artist.name}</span><strong>{artist.code}</strong></button>
+                        <button type="button" class:surprise-highlight={surpriseCode === artist.code} on:click={() => selectBrowseCode(artist.code)}><span>{artist.name}</span><strong>{artist.code}</strong></button>
                     {:else}
                         <p>{artistsBrowserCopy[language].noResults}</p>
                     {/each}

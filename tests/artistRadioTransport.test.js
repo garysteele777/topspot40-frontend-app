@@ -64,14 +64,15 @@ test('manual Auto Next coalesces repeated clicks into one backend-owned continua
     auto.cancel();
 });
 
-test('radio Next is enabled only for an installed playable track and is guarded while loading', async () => {
+test('radio Next supports biography skipping and guards backend advancement while loading', async () => {
     const panel = await readFile(panelPath, 'utf8');
     const page = await readFile(pagePath, 'utf8');
 
-    assert.match(panel, /disabled=\{radioAutoOnly && \(radioLoadPending \|\| phase !== 'track'\)\}/);
-    assert.match(page, /radioLoadPending=\{radioStartPending \|\| radioAdvancePending\}/);
+    assert.match(panel, /disabled=\{radioAutoOnly && \(radioLoadPending \|\| \(phase !== 'track' && phase !== 'artist' && phase !== 'paused'\)\)\}/);
+    assert.match(page, /radioLoadPending=\{radioStartPending \|\| radioAdvancePending \|\| radioInterruptedResumePending\}/);
 
-    const nextHandler = page.match(/async function handleDriveInNext\(\): Promise<void> \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+    const nextHandler = page.match(/async function handleDriveInNext\(\): Promise<void> \{([\s\S]*?)\r?\n    \}/)?.[1] ?? '';
+    assert.match(nextHandler, /isArtistRadioSelection\(\) && skipRadioBiography\(\)/);
     assert.match(nextHandler, /isBackendRadioAutoHandoffSelection\(\)/);
     assert.match(nextHandler, /get\(playbackPhase\) !== 'track'/);
     assert.match(nextHandler, /radioAdvancePending/);
@@ -82,8 +83,8 @@ test('radio Next is enabled only for an installed playable track and is guarded 
 
 test('Artist Radio Next waits for an accepted backend completion and the next status-track installation', async () => {
     const [page, poller] = await Promise.all([readFile(pagePath, 'utf8'), readFile(pollerPath, 'utf8')]);
-    const continuation = page.match(/async function continueAutoPlayback\(\) \{([\s\S]*?)\n    \}/)?.[1] ?? '';
-    const advance = page.match(/async function advancePrivateRadioTrack\(trackOverride\?: CarModeTrack\): Promise<boolean> \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+    const continuation = page.match(/async function continueAutoPlayback\(\) \{([\s\S]*?)\r?\n    \}/)?.[1] ?? '';
+    const advance = page.match(/async function advancePrivateRadioTrack\(trackOverride\?: CarModeTrack\): Promise<boolean> \{([\s\S]*?)\r?\n    \}/)?.[1] ?? '';
 
     assert.match(continuation, /isBackendRadioAutoHandoffSelection\(\)/);
     assert.match(continuation, /await advancePrivateRadioTrack\(\)/);
@@ -101,7 +102,7 @@ test('Artist Radio Next waits for an accepted backend completion and the next st
 
 test('an ignored backend completion cannot leave Artist Radio paused on its unchanged track', async () => {
     const page = await readFile(pagePath, 'utf8');
-    const nextHandler = page.match(/async function handleDriveInNext\(\): Promise<void> \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+    const nextHandler = page.match(/async function handleDriveInNext\(\): Promise<void> \{([\s\S]*?)\r?\n    \}/)?.[1] ?? '';
 
     assert.match(nextHandler, /const advanced = await advancePrivateRadioTrack\(track\)/);
     assert.match(nextHandler, /if \(!advanced\) \{/);
@@ -111,7 +112,7 @@ test('an ignored backend completion cannot leave Artist Radio paused on its unch
 
 test('Artist Radio pauses and resumes through the guarded interruption path without replacing its track', async () => {
     const page = await readFile(pagePath, 'utf8');
-    const autoHandler = page.match(/async function handleAutoPlay\(\) \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+    const autoHandler = page.match(/async function handleAutoPlay\(\) \{([\s\S]*?)\r?\n    \}/)?.[1] ?? '';
 
     assert.match(autoHandler, /if \(isArtistRadioSelection\(\)\)/);
     assert.match(autoHandler, /if \(!hasInstalledPrivateRadioTrack\(\)\)/);

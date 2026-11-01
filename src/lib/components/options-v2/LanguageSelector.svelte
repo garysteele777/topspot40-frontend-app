@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {getPlaybackPreferencesCopy} from '$lib/components/options-v2/playbackPreferencesCopy';
     type Language = 'en' | 'es' | 'ptbr';
 
     export let language: Language = 'en';
@@ -14,11 +15,12 @@
     function isSelected(lang: Language): boolean {
         return languages.includes(lang);
     }
+    $: copy = getPlaybackPreferencesCopy(language);
 </script>
 
 <div class="card">
-    <h3>Narration Languages</h3>
-    <p class="hint">Select one narration language.</p>
+    <h3>{copy.narrationLanguages}</h3>
+    <p class="hint">{copy.selectLanguage}</p>
 
     <div class="grid">
         <button

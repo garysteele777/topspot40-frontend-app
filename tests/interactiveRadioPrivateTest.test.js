@@ -314,13 +314,14 @@ test('Change Music abandons an active radio runtime before returning to its laun
     assert.match(poller, /activeNarrationGeneration !== narrationGeneration/);
 });
 
-test('Change Music keeps private and journey radio return destinations separate', async () => {
+test('Change Music validates explicit return destinations and defaults to experience selection', async () => {
     const carPage = await readFile(carPagePath, 'utf8');
     const destination = carPage.match(/function radioChangeMusicDestination\(\): string \{([\s\S]*?)\n    \}/)?.[1] ?? '';
 
     assert.match(destination, /radioReturnTo/);
     assert.match(destination, /isRadioExperienceDestination/);
-    assert.match(destination, /'\/interactive-radio-test'/);
+    assert.match(destination, /returnTo && isSafeJourneyReturnPath\(returnTo\)/);
+    assert.match(destination, /return '\/journey-prototype\/choose'/);
 });
 
 test('Track 1 completion is guarded once and backend clock data cannot render epoch time', async () => {

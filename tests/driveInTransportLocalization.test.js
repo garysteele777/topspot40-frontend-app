@@ -62,11 +62,11 @@ test('Drive-In Guided Play switches visible and aria labels to Pause only during
 test('Drive-In Auto Play switches visible and aria labels to Pause only during Auto Play', () => {
     assert.match(
         driveInPanel,
-        /aria-label=\{\s*isPlaying && activePlayMode === 'auto'\s*\? transportCopy\.autoPauseAria\s*:\s*transportCopy\.autoAria\s*\}/
+        /aria-label=\{\s*radioTrackRestartPending\s*\? restartTrackLabel\s*:\s*isPlaying && activePlayMode === 'auto'\s*\? transportCopy\.autoPauseAria\s*:\s*transportCopy\.autoAria\s*\}/
     );
     assert.match(
         driveInPanel,
-        /\{isPlaying && activePlayMode === 'auto' \? transportCopy\.pause : transportCopy\.auto\}/
+        /\{radioTrackRestartPending\s*\? restartTrackLabel\s*:\s*radioAutoOnly && phase === 'paused'\s*\? \(language === 'en' \? 'Resume' : 'Continuar'\)\s*:\s*isPlaying && activePlayMode === 'auto' \? transportCopy\.pause : transportCopy\.auto\}/
     );
 });
 

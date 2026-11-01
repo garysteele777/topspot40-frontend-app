@@ -5,6 +5,8 @@
     export let language: Language = 'en';
     export let detailLength: 'off' | 'short' | 'long' = 'short';
     export let artistStoriesEnabled = false;
+    export let introEnabled = true;
+    export let onIntroChange: (enabled: boolean) => void = () => {};
     export let nameThatTuneEnabled = false;
     export let narrationOptionsLocked = false;
     export let onDetailLengthChange: (value: 'off' | 'short' | 'long') => void;
@@ -20,10 +22,11 @@
     let trigger: HTMLButtonElement;
     let panel: HTMLDivElement;
     $: text = copy[language];
+    $: introLabel = language === 'es' ? 'Introducciones' : language === 'ptbr' ? 'Introduções' : 'Introductions';
     $: detailValue = detailLength === 'off' ? text.offDetails : detailLength === 'short' ? text.shortDetails : text.longDetails;
     $: biosValue = artistStoriesEnabled ? text.storiesOn : text.storiesOff;
     $: nameThatTuneValue = nameThatTuneEnabled ? 'On' : 'Off';
-    $: summary = `${text.detailsLabel}: ${detailValue} • ${text.biosLabel}: ${biosValue} • Name That Tune: ${nameThatTuneValue}`;
+    $: summary = `${introLabel}: ${introEnabled ? text.on : text.off} • ${text.detailsLabel}: ${detailValue} • ${text.biosLabel}: ${biosValue} • Name That Tune: ${nameThatTuneValue}`;
 
     async function show(): Promise<void> { open = true; await tick(); panel?.focus(); }
     function close(): void { open = false; tick().then(() => trigger?.focus()); }
@@ -34,6 +37,8 @@
     <button bind:this={trigger} type="button" class="summary" aria-expanded={open} aria-controls="narration-options-panel" aria-haspopup="dialog" aria-label={`${text.title}: ${summary}`} on:click={show}>
         <span aria-hidden="true">⚙</span>
         <span class="summary-content" aria-hidden="true">
+            <span class="summary-pair"><span class="summary-label">{introLabel}:</span><span class="summary-value">{introEnabled ? text.on : text.off}</span></span>
+            <span class="summary-separator">•</span>
             <span class="summary-pair"><span class="summary-label">{text.detailsLabel}:</span><span class="summary-value">{detailValue}</span></span>
             <span class="summary-separator">•</span>
             <span class="summary-pair"><span class="summary-label">{text.biosLabel}:</span><span class="summary-value">{biosValue}</span></span>
@@ -47,6 +52,13 @@
     <div class="backdrop" aria-hidden="true" on:click={close}></div>
     <div bind:this={panel} id="narration-options-panel" class="panel" role="dialog" aria-modal="true" aria-labelledby="narration-options-title" tabindex="-1" on:click|stopPropagation on:keydown={handleKeydown}>
         <h2 id="narration-options-title">{text.title}</h2>
+        <section aria-labelledby="intro-options-title">
+            <h3 id="intro-options-title">{introLabel}</h3>
+            <div class="choices" role="group" aria-label={introLabel}>
+                <button type="button" disabled={narrationOptionsLocked} class:selected={!introEnabled} aria-pressed={!introEnabled} on:click={() => onIntroChange(false)}>{text.off}</button>
+                <button type="button" disabled={narrationOptionsLocked} class:selected={introEnabled} aria-pressed={introEnabled} on:click={() => onIntroChange(true)}>{text.on}</button>
+            </div>
+        </section>
         <section aria-labelledby="detail-options-title">
             <h3 id="detail-options-title">{text.details}</h3><p>{text.detailsHelp}</p>
             <div class="choices" role="group" aria-label={text.details}>

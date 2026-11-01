@@ -267,6 +267,11 @@
                 </div>
 
                 <div class="header-actions">
+                    <!-- TOPSPOT_LOCAL_RECORDER_V2_BUTTON_BEGIN -->
+                    {#if import.meta.env.DEV && typeof window !== 'undefined' && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) && (programType === 'DG' || programType === 'COL') && !embedded}
+                        <button type="button" class="export-button" on:click={() => window.dispatchEvent(new CustomEvent('topspot-open-recorder', {detail: {name: catalogLookupName}}))}>● Record Program</button>
+                    {/if}
+                    <!-- TOPSPOT_LOCAL_RECORDER_V2_BUTTON_END -->
                     <div class="export-wrapper">
                         <button
                                 type="button"

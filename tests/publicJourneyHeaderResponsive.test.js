@@ -32,8 +32,8 @@ test('the mobile journey menu uses one-column vertical primary actions at 320px 
     assert.match(header, /\.mobile-primary-actions,[\s\S]*?\.mobile-account-actions\s*\{\s*display: flex;\s*flex-direction: column;\s*align-items: stretch;/s);
     assert.doesNotMatch(header, /\.mobile-account-actions\s*\{[\s\S]*?display: grid;/s);
     assert.match(header, /\.mobile-menu-panel summary,[\s\S]*?max-width: 100%;[\s\S]*?box-sizing: border-box;[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: anywhere;/);
-    assert.match(header, /signUp: 'Registrarse'/);
-    assert.match(header, /signUp: 'Cadastrar'/);
+    assert.match(header, /signUp: 'Crear cuenta gratis'/);
+    assert.match(header, /signUp: 'Criar conta grátis'/);
     assert.match(header, /preferences: 'Preferências de reprodução'/);
 });
 
@@ -81,7 +81,7 @@ test('the logo remains on the Experience Selection Page when a language is selec
     ]);
 
     assert.match(header, /\? '\/journey-prototype\/choose'/);
-    assert.match(choosePage, /<PublicJourneyHeader \{language\}\/>/);
+    assert.match(choosePage, /<PublicJourneyHeader \{language\}(?: onLanguageChange=\{changeNarrationLanguage\})?\s*\/>/);
 });
 
 test('the logo without a selected language returns to language selection', async () => {
@@ -94,7 +94,7 @@ test('the logo without a selected language returns to language selection', async
     ]);
 
     assert.match(header, /readStoredLanguagePreference\(\)\s*\? '\/journey-prototype\/choose'\s*:\ '\/journey-prototype'/s);
-    assert.match(languageSelectionPage, /instruction: 'Select a language to begin\.'/);
+    assert.match(languageSelectionPage, /instruction: 'Choose your language[^']*English, Spanish, or Portuguese\.'/);
 });
 
 test('the global journey header sends Discover TopSpot40 to welcome', async () => {
@@ -113,6 +113,6 @@ test('welcome and both journey selection pages use the shared responsive header'
         '../src/routes/journey-prototype/choose/+page.svelte'
     ]) {
         const page = await readFile(new URL(path, import.meta.url), 'utf8');
-        assert.match(page, /<PublicJourneyHeader \{language\}\/>/);
+        assert.match(page, /<PublicJourneyHeader \{language\}(?: onLanguageChange=\{changeNarrationLanguage\})?\s*\/>/);
     }
 });

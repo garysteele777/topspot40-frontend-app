@@ -8,6 +8,9 @@
     export let items: {code: string; name: string}[] = [];
     export let onHighlight: (code: string, finished: boolean) => void = () => {};
     export let onGo: (code: string) => void;
+    export let manualSelection: {code: string; name: string} | null = null;
+    let appliedManualSelection: {code: string; name: string} | null = null;
+    let randomResult = false;
     let spinning = false;
     let displayed: {code: string; name: string} | null = null;
     let result: {code: string; name: string} | null = null;
@@ -67,23 +70,40 @@
         },
         onFinish: (item: {code: string; name: string}) => {
             result = item;
+            randomResult = true;
             finishMusic();
             spinning = false;
             onHighlight(item.code, true);
         }
     });
     function start() {
+        randomResult = false;
         spinning = true;
         result = null;
         startMusic();
         picker.start(items);
     }
+    function applyManualSelection(item: {code: string; name: string}) {
+        appliedManualSelection = item;
+        picker.stop();
+        stopMusic();
+        spinning = false;
+        randomResult = false;
+        displayed = item;
+        result = item;
+        onHighlight(item.code, true);
+    }
+
+    $: if (manualSelection && manualSelection !== appliedManualSelection) {
+        applyManualSelection(manualSelection);
+    }
+
     onDestroy(() => {picker.stop(); stopMusic(); onHighlight('', false);});
 </script>
 
 <div class="surprise">
     <button type="button" class="pick" disabled={spinning || !items.length} on:click={start}>
-        <span aria-hidden="true">🎲</span> {result ? (againLabel ?? copy[language].again) : (pickLabel ?? copy[language].pick)}
+        <span aria-hidden="true">🎲</span> {result && randomResult ? (againLabel ?? copy[language].again) : (pickLabel ?? copy[language].pick)}
     </button>
     {#if displayed}
         <div class="reveal" aria-busy={spinning}>
@@ -98,7 +118,7 @@
 </div>
 
 <style>
-    .surprise {display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px; margin: 0 0 18px; background: #242015; border: 1px solid #b49a4c; border-radius: 12px;}
+    .surprise {position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px; margin: 0 0 18px; background: #242015; border: 1px solid #b49a4c; border-radius: 12px;}
     button {min-height: 46px; padding: 10px 18px; border: 2px solid #f7dc82; border-radius: 999px; background: #f7dc82; color: #181309; font: inherit; font-weight: 800; cursor: pointer;}
     button:disabled {opacity: .65; cursor: default;}
     button:focus-visible {outline: 3px solid white; outline-offset: 3px;}

@@ -19,7 +19,7 @@ test('signup keeps marketing consent optional and sends it separately from accou
     assert.match(page, /readLanguagePreference/);
     assert.match(page, /Quero receber novidades ocasionais do TopSpot40 e ofertas para membros fundadores\./);
     assert.match(page, /Opcional\. Você pode deixar de receber essas mensagens a qualquer momento\./);
-    assert.match(page, /'pt-BR': \{[\s\S]*?back: 'Voltar'[\s\S]*?title: 'Criar uma conta'[\s\S]*?send: 'Enviar código de cadastro'/);
+    assert.match(page, /'pt-BR': \{[\s\S]*?back: 'Voltar'[\s\S]*?title: 'Crie sua conta gratuita do TopSpot40'[\s\S]*?send: 'Enviar código de cadastro'/);
     assert.match(page, /display_name: displayName\.trim\(\)/);
     assert.match(page, /preferred_language: language/);
     assert.match(page, /savedLanguage === 'es' \? 'es' : savedLanguage === 'ptbr' \? 'pt-BR' : 'en'/);
