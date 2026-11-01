@@ -659,6 +659,7 @@
 <svelte:window on:keydown={handleBrowserKeydown}/>
 
 <svelte:head>
+    <meta name="robots" content="noindex,follow"/>
     <title>{text[language].title}</title>
     <meta name="description" content="Choose a TopSpot40 program experience."/>
 </svelte:head>

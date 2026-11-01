@@ -150,7 +150,18 @@
 
 <svelte:head>
     <title>{title} | TopSpot40</title>
-    <meta name="description" content={artistName ? `Preview the ${artistName} Artist Spotlight program.` : 'Preview a TopSpot40 Artist Spotlight program.'}/>
+    <meta name="description" content={artistName ? `Preview the ${artistName} Artist Spotlight program.` : 'Preview a TopSpot40 Artist Spotlight program.'} />
+    <link rel="canonical" href={`https://topspot40.com/journey-prototype/artist-spotlights/${page.params.artistId}`} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content={`${title} | TopSpot40`} />
+    <meta property="og:description" content={artistName ? `Preview the ${artistName} Artist Spotlight program.` : 'Preview a TopSpot40 Artist Spotlight program.'} />
+    <meta property="og:url" content={`https://topspot40.com/journey-prototype/artist-spotlights/${page.params.artistId}`} />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={`${title} | TopSpot40`} />
+    <meta name="twitter:description" content={artistName ? `Preview the ${artistName} Artist Spotlight program.` : 'Preview a TopSpot40 Artist Spotlight program.'} />
 </svelte:head>
 
 <ProgramJourneyShell

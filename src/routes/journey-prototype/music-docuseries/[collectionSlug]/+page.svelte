@@ -6,6 +6,7 @@
     import {
         MUSIC_DOCUSERIES_ACCENT,
         MUSIC_DOCUSERIES_JOURNEY_ARTWORK,
+        musicDocuseriesCollectionDescription,
         musicDocuseriesCollectionPresentation
     } from '$lib/config/musicDocuseriesJourney';
     import {
@@ -68,7 +69,21 @@
     $: progress = docuseriesProgress(stories, $docuseriesHistoryStore);
 </script>
 
-<svelte:head><title>{title} | TopSpot40</title></svelte:head>
+<svelte:head>
+    <title>{title} | TopSpot40</title>
+    <meta name="description" content={collection ? musicDocuseriesCollectionDescription(collection) : 'Explore TopSpot40 Music Docuseries stories and music history.'} />
+    <link rel="canonical" href={`https://topspot40.com/journey-prototype/music-docuseries/${page.params.collectionSlug}`} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content={`${title} | TopSpot40`} />
+    <meta property="og:description" content={collection ? musicDocuseriesCollectionDescription(collection) : 'Explore TopSpot40 Music Docuseries stories and music history.'} />
+    <meta property="og:url" content={`https://topspot40.com/journey-prototype/music-docuseries/${page.params.collectionSlug}`} />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={`${title} | TopSpot40`} />
+    <meta name="twitter:description" content={collection ? musicDocuseriesCollectionDescription(collection) : 'Explore TopSpot40 Music Docuseries stories and music history.'} />
+</svelte:head>
 
 <ProgramJourneyShell
     {language}

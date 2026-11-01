@@ -150,6 +150,7 @@
 </script>
 
 <svelte:head>
+    <meta name="robots" content="noindex,follow"/>
     <title>Choose Your Musical Genre</title>
 </svelte:head>
 

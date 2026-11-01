@@ -83,7 +83,18 @@
 
 <svelte:head>
     <title>{copy[language].title}</title>
-    <meta name="description" content={copy[language].description}/>
+    <meta name="description" content={copy[language].description} />
+    <link rel="canonical" href="https://topspot40.com/welcome" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content={copy[language].title} />
+    <meta property="og:description" content={copy[language].description} />
+    <meta property="og:url" content="https://topspot40.com/welcome" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={copy[language].title} />
+    <meta name="twitter:description" content={copy[language].description} />
 </svelte:head>
 
 {#if hasLanguage}

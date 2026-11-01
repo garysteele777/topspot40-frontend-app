@@ -254,7 +254,21 @@
     const accent = MUSIC_DOCUSERIES_ACCENT;
 </script>
 
-<svelte:head><title>{text[language].title} | TopSpot40</title><meta name="description" content="Browse TopSpot40 Music Docuseries collections."/></svelte:head>
+<svelte:head>
+    <title>{text[language].title} | TopSpot40</title>
+    <meta name="description" content="Browse TopSpot40 Music Docuseries collections." />
+    <link rel="canonical" href="https://topspot40.com/journey-prototype/music-docuseries" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content={`${text[language].title} | TopSpot40`} />
+    <meta property="og:description" content="Browse TopSpot40 Music Docuseries collections." />
+    <meta property="og:url" content="https://topspot40.com/journey-prototype/music-docuseries" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={`${text[language].title} | TopSpot40`} />
+    <meta name="twitter:description" content="Browse TopSpot40 Music Docuseries collections." />
+</svelte:head>
 
 <ProgramJourneyShell {language} title={text[language].title} instruction={text[language].instruction} backHref="/journey-prototype/choose" backLabel={text[language].back} homeLabel={text[language].home} {accent} artwork={MUSIC_DOCUSERIES_JOURNEY_ARTWORK} artworkAlt="A cinematic TopSpot40 music library prepared for a documentary journey">
     {#if collectionsLoading}

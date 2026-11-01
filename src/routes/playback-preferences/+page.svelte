@@ -89,6 +89,10 @@
     $: copy = getPlaybackPreferencesCopy(language);
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 <div class="page-shell">
     <PublicJourneyHeader {language} onLanguageChange={(next) => {
         language = next;

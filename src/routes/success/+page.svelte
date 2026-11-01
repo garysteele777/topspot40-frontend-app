@@ -62,6 +62,10 @@
 	});
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 <main class="success-container" aria-live="polite">
 	{#if state === 'verifying'}
 		<h1>{text.verifying}</h1>

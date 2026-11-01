@@ -15,6 +15,30 @@
         window.location.reload();
     }
 </script>
+<svelte:head>
+    <title>About TopSpot40 | Music Discovery & Music History</title>
+    <meta
+        name="description"
+        content="Learn how TopSpot40 combines curated song rankings, artist spotlights, collections, music history, and radio-inspired narration with Spotify link-out playback."
+    />
+    <link rel="canonical" href="https://topspot40.com/about" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content="About TopSpot40 | Music Discovery & Music History" />
+    <meta
+        property="og:description"
+        content="Learn how TopSpot40 combines curated song rankings, artist spotlights, collections, music history, and radio-inspired narration with Spotify link-out playback."
+    />
+    <meta property="og:url" content="https://topspot40.com/about" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="About TopSpot40 | Music Discovery & Music History" />
+    <meta
+        name="twitter:description"
+        content="Learn how TopSpot40 combines curated song rankings, artist spotlights, collections, music history, and radio-inspired narration with Spotify link-out playback."
+    />
+</svelte:head>
 
 <div class="go-back-button-wrapper">
     <button on:click={goBack} class="go-back-button"> Go Back</button>

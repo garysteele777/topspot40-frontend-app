@@ -104,7 +104,18 @@
 
 <svelte:head>
     <title>{title} | TopSpot40</title>
-    <meta name="description" content={story?.short_description ?? 'Preview a TopSpot40 Music Docuseries story.'}/>
+    <meta name="description" content={story?.short_description ?? 'Preview a TopSpot40 Music Docuseries story.'} />
+    <link rel="canonical" href={`https://topspot40.com/journey-prototype/music-docuseries/${page.params.collectionSlug}/${page.params.storySlug}`} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content={`${title} | TopSpot40`} />
+    <meta property="og:description" content={story?.short_description ?? 'Preview a TopSpot40 Music Docuseries story.'} />
+    <meta property="og:url" content={`https://topspot40.com/journey-prototype/music-docuseries/${page.params.collectionSlug}/${page.params.storySlug}`} />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={`${title} | TopSpot40`} />
+    <meta name="twitter:description" content={story?.short_description ?? 'Preview a TopSpot40 Music Docuseries story.'} />
 </svelte:head>
 
 <ProgramJourneyShell

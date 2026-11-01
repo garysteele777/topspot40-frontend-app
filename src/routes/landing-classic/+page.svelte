@@ -95,6 +95,10 @@
     });
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 <div class="hero-section">
 	<div class="hero-logo">
 		<a href="/app" class="logo">

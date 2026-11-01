@@ -139,6 +139,10 @@
 	}
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 <main class="container">
 	{#if accessState === 'free_2026'}
 		<h1>{text.freeTitle}</h1>

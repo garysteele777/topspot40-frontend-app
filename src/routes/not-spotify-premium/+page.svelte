@@ -11,6 +11,10 @@
 	}
 </script>
 
+<svelte:head>
+    <meta name="robots" content="noindex,follow"/>
+</svelte:head>
+
 <div class="go-back-button-wrapper">
 	<button on:click={goBack} class="go-back-button"> Go Back </button>
 </div>

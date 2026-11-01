@@ -66,6 +66,18 @@
 
 <svelte:head>
     <title>{title} | TopSpot40</title>
+    <meta name="description" content={group ? localizedCollectionCopy(group.presentation.description, language) : 'Browse TopSpot40 music collection programs.'} />
+    <link rel="canonical" href={`https://topspot40.com/journey-prototype/collections/${page.params.groupSlug}`} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TopSpot40" />
+    <meta property="og:title" content={`${title} | TopSpot40`} />
+    <meta property="og:description" content={group ? localizedCollectionCopy(group.presentation.description, language) : 'Browse TopSpot40 music collection programs.'} />
+    <meta property="og:url" content={`https://topspot40.com/journey-prototype/collections/${page.params.groupSlug}`} />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={`${title} | TopSpot40`} />
+    <meta name="twitter:description" content={group ? localizedCollectionCopy(group.presentation.description, language) : 'Browse TopSpot40 music collection programs.'} />
 </svelte:head>
 
 <CollectionsJourneyShell
