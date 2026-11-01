@@ -5,7 +5,7 @@
         getCarModePreferencesReturnUrl as headerReturnUrl,
         buildCarModePreferencesReturnUrl as headerLanguageReturn
     } from '$lib/carmode/CarModePreferencesReturn';
-    import {onMount, onDestroy} from 'svelte';
+    import {onMount, onDestroy, tick} from 'svelte';
     import {programNarrationMemory} from '$lib/carmode/programNarrationMemory';
     import CarModePlayerPanel from '$lib/components/car/CarModePlayerPanel.svelte';
     import DriveInPlayerPanel from '$lib/components/car/DriveInPlayerPanel.svelte';
@@ -67,7 +67,8 @@
         programHistoryStore,
         type ProgramKey
     } from '$lib/carmode/programHistory';
-    import {goto} from '$app/navigation';
+    import {goto, replaceState} from '$app/navigation';
+    import {programCodeUrlFromPreferences} from '$lib/api/programCode.js';
     import {isRadioExperienceDestination} from '$lib/journey/experienceMode';
     import {isSafeJourneyReturnPath} from '$lib/journey/changeMusicReturn.js';
     import {
@@ -265,9 +266,7 @@
     }
 
     function addTrackRequest(track: CarModeTrack): void {
-        // Before playback, an empty queue means this is the starting track,
-        // not a request waiting behind a song that has not started yet.
-        if (!userStartedPlaybackThisSession && !requests.length && stageTrackBeforePlayback(track)) return;
+        // Collect requests even before playback starts.
         const nextRequests = addRequest(requests, track);
         if (nextRequests !== requests) requests = nextRequests;
     }
@@ -3259,9 +3258,42 @@
             await autoPlay.playSelectedTrack(next, {preserveSpotifyWindow: true});
         } catch (error) { localRecorderStop(String(error)); }
     }
+    // TOPSPOT_ROCK_EN_BATCH_V1: load through the normal program loader without
+    // navigating away from the recorder or losing the reserved Spotify window.
+    async function localRecorderLoadRock(code: string, target: Record<string, any>, cancelled: () => boolean) {
+        const decades = Array.from({length: 8}, (_, i) => `${1950 + i * 10}s`);
+        const index = decades.indexOf(target?.decade_slug);
+        if (!localRecorderEnabled() || cancelled()) throw new Error('Recording cancelled.');
+        if (!/^N-\d{3}$/.test(code) || index < 0 || target?.genre_slug !== 'rock')
+            throw new Error('Invalid Rock batch destination.');
+        if (localRecorderState.active || get(isPlaying)) throw new Error('Stop playback before loading the next program.');
+        if (requests.length) throw new Error('Clear Requests before recording.');
+        const previous = get(currentSelection);
+        const preferences = get(playbackSettingsStore);
+        if (!previous || previous.language !== 'en')
+            throw new Error('English is required for this batch.');
+        localRecorderStop('', false);
+        stopPlaybackPolling();
+        resetSelectionPlaybackState();
+        const selection = {...previous, mode: 'decade_genre' as const, programType: PROGRAM_TYPES.PROGRAM_DG,
+            language: 'en' as const, languages: ['en' as const],
+            context: {decade: target.decade_slug, genre: target.genre_slug},
+            startRank: 1, endRank: 45, currentRank: 1};
+        currentSelection.set(selection);
+        localRecorderPlan = [];
+        localRecorderState = {active: false, done: false, error: '', completed: []};
+        await loadForSelection(selection, 1);
+        await tick();
+        if (cancelled()) throw new Error('Recording cancelled.');
+        if (get(currentSelection) !== selection) throw new Error('Program changed while loading.');
+        if (!get(tracks).length) throw new Error(`${code}: track loading failed. Batch stopped.`);
+        const url = programCodeUrlFromPreferences({kind: 'nostalgia', target}, 'en', preferences);
+        if (url) replaceState(url, {});
+        return localRecorderSnapshot();
+    }
     const localRecorderController = {snapshot: localRecorderSnapshot, prepare: localRecorderPrepare,
         reserve: () => spotify.prepareAutoWindow(), start: localRecorderStart,
-        stop: (message = '') => localRecorderStop(message)};
+        stop: (message = '') => localRecorderStop(message), loadRock: localRecorderLoadRock};
     onMount(() => {
         localRecorderMounted = localRecorderEnabled();
         return () => { if (localRecorderState.active) localRecorderStop('Recording page closed.'); };

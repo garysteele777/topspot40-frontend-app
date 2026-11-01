@@ -597,11 +597,11 @@
         void goto(`${destination.pathname}${destination.search}`);
     }
 
-    function description(choice: ExperienceFamily) {
-        if (choice === 'nostalgia') return text[language].nostalgiaDesc;
-        if (choice === 'collections') return text[language].collectionsDesc;
-        if (choice === 'artist') return text[language].artistDesc;
-        return text[language].docuseriesDesc;
+    function description(choice: ExperienceFamily, selectedLanguage: LandingLanguage) {
+        if (choice === 'nostalgia') return text[selectedLanguage].nostalgiaDesc;
+        if (choice === 'collections') return text[selectedLanguage].collectionsDesc;
+        if (choice === 'artist') return text[selectedLanguage].artistDesc;
+        return text[selectedLanguage].docuseriesDesc;
     }
 
     function startExperience(mode: ExperienceMode) {
@@ -680,7 +680,7 @@
                 {#each choices as choice}
                     <div class="arch-slot arch-{choice}">
                         <button class="program-choice" class:active={selectedProgram === choice}
-                                aria-label={`${text[language][choice]}: ${description(choice)}`}
+                                aria-label={`${text[language][choice]}: ${description(choice, language)}`}
                                 aria-pressed={selectedProgram === choice} on:click={() => setProgram(choice)}></button>
                         <div class="arch-content">
                             {#if selectedProgram === choice}
@@ -714,7 +714,7 @@
                                     <div id="desktop-catalog-status" class:catalog-error={catalogStatusKind === 'error'} role={catalogStatusKind === 'error' ? 'alert' : 'status'} aria-live="polite">{lookingUpCatalog ? catalogText().checking : catalogStatus ?? ''}</div>
                                 </form>
                             {/if}
-                            <span class="choice-label"><strong>{text[language][choice]}</strong><small>{description(choice)}</small></span>
+                            <span class="choice-label"><strong>{text[language][choice]}</strong><small>{description(choice, language)}</small></span>
                         </div>
                     </div>
                 {/each}
@@ -746,7 +746,7 @@
                         <button class="mobile-browse" type="button" aria-pressed={selectedProgram === choice} on:click={() => setProgram(choice)}>
                         <span class="mobile-choice-text">
                             <strong>{text[language][choice]}</strong>
-                            <small>{description(choice)}</small>
+                            <small>{description(choice, language)}</small>
                         </span>
                             <span aria-hidden="true">
                             {selectedProgram === choice ? '✓' : '→'}

@@ -85,9 +85,33 @@ export async function resetPlaybackApi(): Promise<Response> {
     });
 }
 
+let diagnosticDisabled = false;
+let diagnosticInFlight = false;
+let diagnosticLastSent = 0;
+
 export async function sendPlaybackDiagnostic(payload: Record<string, unknown>): Promise<Response> {
-    return fetchPlaybackApi('/playback/client-diagnostic', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-    });
+    const now = Date.now();
+    if (diagnosticDisabled || diagnosticInFlight || now - diagnosticLastSent < 2000) {
+        return new Response(null, {status: 204});
+    }
+
+    diagnosticInFlight = true;
+    diagnosticLastSent = now;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    try {
+        const response = await fetchPlaybackApi('/playback/client-diagnostic', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        if (response.status === 401 || response.status === 403) {
+            diagnosticDisabled = true;
+        }
+        return response;
+    } finally {
+        clearTimeout(timeout);
+        diagnosticInFlight = false;
+    }
 }
