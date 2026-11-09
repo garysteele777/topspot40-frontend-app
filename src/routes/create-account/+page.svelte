@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AccessCodeForm from '$lib/components/profile-components/AccessCodeForm.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { createEarlyMemberCheckout, createStandardCheckout, type SubscriptionStatus } from '$lib/api/membership';
@@ -177,6 +178,7 @@
 			{loadingPlan === 'standard' ? text.loading : text.standardButton}
 		</button>
 	{/if}
+	<AccessCodeForm />
 	{#if errorMessage}
 		<p class="error" role="alert">{errorMessage}</p>
 	{/if}
