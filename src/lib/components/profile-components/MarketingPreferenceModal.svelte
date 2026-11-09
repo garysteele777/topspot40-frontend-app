@@ -1,4 +1,6 @@
 <script lang="ts">
+	import AccessCodeForm from './AccessCodeForm.svelte';
+	import { getBackendUrl } from '$lib/config';
 	import {
 		getMarketingPreference,
 		setMarketingPreference,
@@ -21,9 +23,9 @@
 	let preference: MarketingPreference | null = null;
 	let language: 'en' | 'es' | 'ptbr' = 'en';
 	const membershipCopy = {
-		en: { complimentary: 'Complimentary Membership', noPayment: 'No payment is required for your complimentary membership.', expires: 'Your complimentary access ends:' },
-		es: { complimentary: 'Membresía de cortesía', noPayment: 'No se requiere pago para tu membresía de cortesía.', expires: 'Tu acceso de cortesía termina:' },
-		ptbr: { complimentary: 'Assinatura de cortesia', noPayment: 'Nenhum pagamento é necessário para sua assinatura de cortesia.', expires: 'Seu acesso de cortesia termina em:' }
+		en: { complimentary: 'Complimentary Membership', noPayment: 'No payment is required for your complimentary membership.', expires: 'Your complimentary access ends:', noExpiration: 'No expiration' },
+		es: { complimentary: 'Membresía de cortesía', noPayment: 'No se requiere pago para tu membresía de cortesía.', expires: 'Tu acceso de cortesía termina:', noExpiration: 'Sin fecha de vencimiento' },
+		ptbr: { complimentary: 'Assinatura de cortesia', noPayment: 'Nenhum pagamento é necessário para sua assinatura de cortesia.', expires: 'Seu acesso de cortesia termina em:', noExpiration: 'Sem data de expiração' }
 	} as const;
 	$: memberText = membershipCopy[language];
 	onMount(() => { language = readLanguagePreference(); });
@@ -118,13 +120,24 @@
 		}
 	}
 
+	async function refreshSubscriptionStatus() {
+        try {
+            const response = await fetch(`${getBackendUrl()}/api/subscription-status`, {
+                credentials: 'include', cache: 'no-store'
+            });
+            if (response.ok) subscriptionStatus = await response.json();
+        } catch {
+            // Keep the redemption confirmation visible; retry on the next visit.
+        }
+    }
+
 	function formatDate(value: string | null | undefined): string {
 		if (!value) return '';
 
 		const date = new Date(value);
 		if (Number.isNaN(date.getTime())) return value;
 
-		return new Intl.DateTimeFormat('en-US', {
+		return new Intl.DateTimeFormat(language === 'ptbr' ? 'pt-BR' : language, {
 			year: 'numeric',
 			month: 'long',
 			day: 'numeric'
@@ -173,6 +186,8 @@
 						<p class="status">{memberText.noPayment}</p>
 						{#if subscriptionStatus.access_expires_at}
 							<p class="status">{memberText.expires} <strong>{formatDate(subscriptionStatus.access_expires_at)}</strong></p>
+                        {:else}
+                            <p class="status">{memberText.noExpiration}</p>
 						{/if}
 					{/if}
 
@@ -207,6 +222,8 @@
 					<p class="status">Subscription information is unavailable.</p>
 				{/if}
 			</section>
+
+			<AccessCodeForm onApplied={refreshSubscriptionStatus} />
 
 			<section class="section">
 				<h3>Marketing Emails</h3>
@@ -279,7 +296,10 @@
 		color: white;
 		padding: 2rem;
 		border-radius: 12px;
-		width: 350px;
+		width: min(430px, calc(100vw - 2rem));
+		box-sizing: border-box;
+		max-height: 90vh;
+		overflow-y: auto;
 		text-align: left;
 	}
 
